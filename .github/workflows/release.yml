@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Semver to release (e.g. 0.1.0)"
+        description: "Semver to release (e.g. 0.2.0)"
         required: true
         type: string
 
@@ -26,11 +26,16 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Decode keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      - name: Decode keystore (if secret present)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$HOME/openlumen-release.jks"
-          echo "OPENLUMEN_KEYSTORE=$HOME/openlumen-release.jks" >> "$GITHUB_ENV"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$HOME/openlumen-release.jks"
+            echo "OPENLUMEN_KEYSTORE=$HOME/openlumen-release.jks" >> "$GITHUB_ENV"
+          else
+            echo "No KEYSTORE_BASE64 secret — building unsigned release APK."
+          fi
 
       - name: Build release APK
         env:
@@ -39,11 +44,12 @@ jobs:
           OPENLUMEN_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease --stacktrace
 
-      - name: Rename APK
+      - name: Stage APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk \
-             "dist/OpenLumen-v${{ inputs.version }}-release.apk"
+          # Signed builds produce app-release.apk; unsigned produce app-release-unsigned.apk.
+          SRC=$(ls app/build/outputs/apk/release/app-release*.apk | head -n 1)
+          cp "$SRC" "dist/OpenLumen-v${{ inputs.version }}-release.apk"
 
       - name: SHA-256
         run: |
