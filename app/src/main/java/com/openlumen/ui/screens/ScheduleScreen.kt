@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
+import java.time.ZoneId
 import kotlin.math.roundToInt
 
 @Composable
@@ -53,6 +55,16 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.schedule_title), style = MaterialTheme.typography.titleMedium)
+        // Timezone hint (C27). Fixed-time schedules fire against the device's
+        // current zone, not UTC and not the location entered for solar mode.
+        // Showing it explicitly prevents the "I set 22:00 but it fires at
+        // weird-looking time after travel" support thread.
+        val zoneLabel = remember { ZoneId.systemDefault().id }
+        Text(
+            stringResource(R.string.schedule_timezone, zoneLabel),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         val modes = listOf(
             ScheduleModeDto.AlwaysOff to stringResource(R.string.schedule_off),

@@ -131,6 +131,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   completion) and what doesn't (light sensor, preference changes, UI
   surface taps, smooth-transition ramp). Includes `adb` commands for
   independent verification.
+- Android 16 / API 36 readiness inventory at
+  `docs/api-36-readiness.md`. Lists already-handled behavior changes
+  and expected upcoming ones with OpenLumen exposure ratings and
+  mitigations. Includes a smoke-test plan for the first preview build
+  and a migration policy (target-SDK bumps get their own release).
+- Schedule screen now surfaces the device timezone label so users know
+  which clock fixed-time schedules fire against (e.g.
+  `America/New_York`). Prevents the "I set 22:00 but it fires weird"
+  support thread after travel.
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a

@@ -34,6 +34,7 @@
     <string name="schedule_solar">Sunset → sunrise</string>
     <string name="schedule_start">Start</string>
     <string name="schedule_end">End</string>
+    <string name="schedule_timezone">Schedules fire against your device clock (%1$s).</string>
     <string name="transition_duration_title">Transition duration</string>
     <string name="transition_duration_subtitle">How smoothly the filter fades in or out at schedule boundaries. User-driven changes (sliders, preset taps) remain instant.</string>
     <string name="transition_instant">Instant</string>
