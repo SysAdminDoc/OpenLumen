@@ -1,6 +1,7 @@
 package com.openlumen.engine.engines
 
 import android.content.Context
+import android.util.Log
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
@@ -12,49 +13,100 @@ import kotlinx.coroutines.withContext
  * Writes to the KCAL kernel driver's sysfs nodes. Requires:
  *   - root
  *   - Qualcomm SoC
- *   - a custom kernel that exposes /sys/devices/platform/kcal_ctrl.0/kcal*
+ *   - a custom kernel that exposes a KCAL sysfs surface
  *
  * KCAL is a scalar-per-channel driver (no cross-channel matrix). We map LumenMatrix to
- * RGB triplets in 0-256 and combine the dim factor into the per-channel scalar.
+ * RGB triplets in 0–256 and combine the dim factor into the per-channel scalar.
+ *
+ * Tied to roadmap candidate **C04** (KCAL variant probing). Different kernel forks
+ * place the KCAL surface in different directories — most commonly
+ * `/sys/devices/platform/kcal_ctrl.0/`, but `/sys/class/misc/kcal/` and a couple
+ * of others show up on minority kernels. The engine now probes a list of known
+ * roots at `isAvailable()` time and caches the winner.
  */
 class KcalEngine : ColorEngine {
     override val kind = EngineKind.KCAL
 
-    private companion object {
-        const val BASE = "/sys/devices/platform/kcal_ctrl.0"
-        const val NODE_RGB = "$BASE/kcal"          // "R G B"  range 0-256
-        const val NODE_MIN = "$BASE/kcal_min"      // global minimum
-        const val NODE_ENABLE = "$BASE/kcal_enable" // 0/1
-    }
+    @Volatile private var resolvedPaths: Paths? = null
+
+    /**
+     * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
+     * the driver report can record the exact path the engine is writing to.
+     */
+    val activeBasePath: String?
+        get() = resolvedPaths?.base
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         if (!Su.isAvailable()) return@withContext false
-        Su.runCommand("test -f $NODE_RGB && test -f $NODE_ENABLE && echo ok")
-            .stdout.contains("ok")
+        for (base in CANDIDATE_BASES) {
+            val paths = Paths(base)
+            // Both the RGB node and the enable node must exist. `kcal_min` is optional
+            // (some forks skip it); we'll handle that at apply() time.
+            val test = Su.runCommand(
+                "test -e '${paths.rgb}' && test -e '${paths.enable}' && echo ok"
+            )
+            if (test.exitCode == 0 && test.stdout.contains("ok")) {
+                Log.d(TAG, "probe: KCAL at $base (rgb=${paths.rgb}, enable=${paths.enable})")
+                resolvedPaths = paths
+                return@withContext true
+            }
+        }
+        Log.w(TAG, "probe: no known KCAL sysfs surface found")
+        false
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
+        val paths = resolvedPaths ?: return@withContext
         val s = matrix.scaledRgb()
         val r = (s[0] * 256f).toInt().coerceIn(0, 256)
         val g = (s[1] * 256f).toInt().coerceIn(0, 256)
         val b = (s[2] * 256f).toInt().coerceIn(0, 256)
+        // kcal_min is optional on some kernels — we still attempt the write; the
+        // shell's `>` redirect will fail quietly on a missing path without
+        // breaking the rest of the script.
+        val script = buildString {
+            append("echo '1' > '").append(paths.enable).append("'\n")
+            if (paths.min != null) {
+                append("echo '20' > '").append(paths.min).append("' 2>/dev/null || true\n")
+            }
+            append("echo '$r $g $b' > '").append(paths.rgb).append("'\n")
+        }
+        Su.runShell(script)
+        Unit
+    }
+
+    override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
+        val paths = resolvedPaths ?: return@withContext
         Su.runShell(
             """
-            echo '1' > $NODE_ENABLE
-            echo '20' > $NODE_MIN
-            echo '$r $g $b' > $NODE_RGB
+            echo '256 256 256' > '${paths.rgb}'
+            echo '0' > '${paths.enable}'
             """.trimIndent()
         )
         Unit
     }
 
-    override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
-        Su.runShell(
-            """
-            echo '256 256 256' > $NODE_RGB
-            echo '0' > $NODE_ENABLE
-            """.trimIndent()
+    private data class Paths(val base: String) {
+        val rgb: String = "$base/kcal"
+        val min: String? = "$base/kcal_min"
+        val enable: String = "$base/kcal_enable"
+    }
+
+    private companion object {
+        const val TAG = "OpenLumen/KCAL"
+
+        /**
+         * Known KCAL sysfs roots, most-common first. New forks land here when a
+         * driver report (Driver tab → Share report) shows a device whose kernel
+         * exposes the KCAL nodes under a different parent.
+         */
+        val CANDIDATE_BASES: List<String> = listOf(
+            // OnePlus / Nothing / OmniROM and the majority of Qualcomm custom kernels.
+            "/sys/devices/platform/kcal_ctrl.0",
+            // Some Snapdragon LineageOS branches.
+            "/sys/module/msm_drm/parameters",
+            // Older AnyKernel ROMs (rare; included for completeness).
+            "/sys/class/misc/kcal"
         )
-        Unit
     }
 }

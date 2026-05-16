@@ -140,6 +140,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which clock fixed-time schedules fire against (e.g.
   `America/New_York`). Prevents the "I set 22:00 but it fires weird"
   support thread after travel.
+- `SurfaceFlingerEngine` now picks transaction codes from a per-API
+  candidate ladder: `1015 → 1023 → 1030 → 1036` depending on which
+  Android version is running. The first code that succeeds for the
+  identity matrix is cached and exposed as `activeTransactionCode` so
+  the driver report captures exactly which code is in use. Per-API
+  list grows-or-stays as Android advances — covered by new unit tests.
+- `KcalEngine` now probes a list of known KCAL sysfs roots
+  (`/sys/devices/platform/kcal_ctrl.0/`,
+  `/sys/module/msm_drm/parameters/`,
+  `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
+  The winning base path is exposed as `activeBasePath` and recorded
+  in the driver report.
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a

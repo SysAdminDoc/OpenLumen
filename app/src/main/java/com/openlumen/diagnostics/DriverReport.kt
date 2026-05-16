@@ -8,6 +8,8 @@ import android.os.Build
 import android.provider.Settings
 import com.openlumen.BuildConfig
 import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.engines.KcalEngine
+import com.openlumen.engine.engines.SurfaceFlingerEngine
 import com.openlumen.prefs.Preferences
 import java.time.Instant
 
@@ -109,6 +111,22 @@ object DriverReport {
             probes.forEach { p ->
                 val mark = if (p.available) "AVAILABLE" else "not available"
                 appendLine("- ${p.engine.kind.name} (rank ${p.engine.kind.rank}, root=${p.engine.kind.requiresRoot}): $mark")
+                // Per-engine diagnostic detail (C03, C04). Helps a reviewer see
+                // exactly which SurfaceFlinger transaction code or KCAL sysfs
+                // surface the probe picked on this device.
+                when (val e = p.engine) {
+                    is SurfaceFlingerEngine -> {
+                        e.activeTransactionCode?.let {
+                            appendLine("    transaction code: $it")
+                        }
+                    }
+                    is KcalEngine -> {
+                        e.activeBasePath?.let {
+                            appendLine("    kcal sysfs: $it")
+                        }
+                    }
+                    else -> Unit
+                }
             }
         }
         appendLine()
