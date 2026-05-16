@@ -1,6 +1,6 @@
 # OpenLumen
 
-[![Version](https://img.shields.io/badge/version-0.1.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE)
 [![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements)
 [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)
@@ -44,13 +44,19 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 The app falls back gracefully — if none of the root paths work, you still get the
 overlay driver. If you want to pin a specific driver, Settings → Driver lets you.
 
-## Features (v0.1.0)
+## Features (v0.2.0)
 
 - Named presets: Night · Amber · Red · Salmon · Sepia · Grayscale · Deep Sleep · Protan · Deutan · Tritan
-- Custom R/G/B + dim slider
+- Custom R/G/B picker on Home with live color preview
+- Per-channel gamma sliders (γR / γG / γB, range 0.5–2.5)
+- Intensity slider (0–100% lerp toward identity) + dim slider (0–95%)
 - Solar-position schedule (NOAA algorithm, hand-rolled, no external library)
-- Fixed-time schedule (wraps midnight)
-- Light-sensor adapter (EMA-smoothed lux)
+- Sunset / sunrise offset sliders (±180 minutes)
+- Fixed-time schedule with Material 3 24-hour time pickers
+- Manual location entry (decimal degrees, validated)
+- Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
+- Live lux readout + "calibrate: use current reading" button
+- Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
 - Quick Settings tile
 - Boot persistence
 - Foreground service with `specialUse` type (Android 14+ compliant)

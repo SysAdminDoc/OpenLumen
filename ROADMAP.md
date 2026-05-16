@@ -3,16 +3,17 @@
 Tracking from v0.1.0 (scaffold) → v1.0.0 (CF.Lumen parity). Items are grouped by
 release; check the box when an item is shipped and tagged.
 
-## v0.2.0 — UI completeness
+## v0.2.0 — UI completeness ✅ (shipped 2026-05-16)
 
-- [ ] Time-picker dialog for fixed-time schedule (currently text-only)
-- [ ] Location picker: manual coordinate entry + optional FusedLocationProvider
-- [ ] Custom RGB color picker on Home screen (currently only intensity slider)
-- [ ] Sunset / sunrise offset spinners (already in prefs, no UI)
-- [ ] Per-channel gamma sliders (R / G / B independent gamma)
-- [ ] Light-sensor calibration UI (capture "dark room" baseline reading)
-- [ ] Permission rationale dialog for SYSTEM_ALERT_WINDOW (overlay driver)
-- [ ] App-open transition animation (fade vs slide)
+- [x] Time-picker dialog for fixed-time schedule
+- [x] Location picker: manual coordinate entry (FusedLocationProvider deferred —
+      adds Play Services dep that breaks F-Droid build)
+- [x] Custom RGB color picker on Home screen
+- [x] Sunset / sunrise offset sliders
+- [x] Per-channel gamma sliders (R / G / B) — `pow(scale*(1-dim), 1/gamma)` math
+- [x] Light-sensor calibration UI (live lux + threshold + "use current" button)
+- [x] Permission rationale dialog for SYSTEM_ALERT_WINDOW (overlay driver)
+- [ ] App-open transition animation (fade vs slide) — deferred to v0.4.0 polish
 
 ## v0.3.0 — Persistence and reliability
 
