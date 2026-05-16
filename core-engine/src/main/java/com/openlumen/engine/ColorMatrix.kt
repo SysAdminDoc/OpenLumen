@@ -23,12 +23,29 @@ data class LumenMatrix(
     /** Scale factor [0,1] for a final brightness reduction beyond panel minimum. */
     val effectiveDim: Float get() = dim.coerceIn(0f, 0.95f)
 
-    /** Per-channel scalar after dim is folded in. */
-    fun scaledRgb(): FloatArray = floatArrayOf(
-        r * (1f - effectiveDim),
-        g * (1f - effectiveDim),
-        b * (1f - effectiveDim)
-    )
+    /**
+     * Per-channel scalar after dim and per-channel gamma have been folded in.
+     *
+     * Gamma math: effective = pow(scale * (1 - dim), 1 / gamma).
+     * At gamma=1.0 (default) this collapses to the simple `scale * (1 - dim)` form.
+     * Gamma > 1.0 lifts mid-tones (less aggressive); gamma < 1.0 deepens them.
+     *
+     * For overlay/scalar engines this is a "feel" knob, not a per-pixel gamma —
+     * a true gamma LUT would require touching the GPU shader, which root engines
+     * effectively do via SurfaceFlinger's color matrix but is out of reach for
+     * the overlay path.
+     */
+    fun scaledRgb(): FloatArray {
+        val dimFactor = (1f - effectiveDim).toDouble()
+        val rd = (r.toDouble() * dimFactor).coerceAtLeast(0.0)
+        val gd = (g.toDouble() * dimFactor).coerceAtLeast(0.0)
+        val bd = (b.toDouble() * dimFactor).coerceAtLeast(0.0)
+        return floatArrayOf(
+            Math.pow(rd, 1.0 / gammaR.coerceAtLeast(0.05f)).toFloat(),
+            Math.pow(gd, 1.0 / gammaG.coerceAtLeast(0.05f)).toFloat(),
+            Math.pow(bd, 1.0 / gammaB.coerceAtLeast(0.05f)).toFloat()
+        )
+    }
 
     /** 4x4 row-major matrix for SurfaceFlinger. */
     fun toSurfaceFlinger16(): FloatArray {

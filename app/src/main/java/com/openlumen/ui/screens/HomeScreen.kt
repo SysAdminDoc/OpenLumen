@@ -143,6 +143,61 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 }
             }
         }
+
+        // Advanced: per-channel gamma sliders.
+        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Per-channel gamma", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "1.0 = neutral. Higher lifts mid-tones; lower deepens them.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                GammaSlider(
+                    label = "γR",
+                    value = prefs.customMatrix.gammaR,
+                    track = Color(0xFFF38BA8),
+                    onChange = { vm.setGamma(it, prefs.customMatrix.gammaG, prefs.customMatrix.gammaB) }
+                )
+                GammaSlider(
+                    label = "γG",
+                    value = prefs.customMatrix.gammaG,
+                    track = Color(0xFFA6E3A1),
+                    onChange = { vm.setGamma(prefs.customMatrix.gammaR, it, prefs.customMatrix.gammaB) }
+                )
+                GammaSlider(
+                    label = "γB",
+                    value = prefs.customMatrix.gammaB,
+                    track = Color(0xFF89B4FA),
+                    onChange = { vm.setGamma(prefs.customMatrix.gammaR, prefs.customMatrix.gammaG, it) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GammaSlider(
+    label: String,
+    value: Float,
+    track: Color,
+    onChange: (Float) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .background(color = track, shape = RoundedCornerShape(4.dp))
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Slider(
+            value = value,
+            onValueChange = onChange,
+            valueRange = 0.5f..2.5f,
+            modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+        )
+        Text("%.2f".format(value), style = MaterialTheme.typography.bodySmall)
     }
 }
 

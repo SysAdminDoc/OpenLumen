@@ -159,18 +159,19 @@ class LumenService : LifecycleService() {
         val raw = preset ?: LumenMatrix(
             r = p.customMatrix.r,
             g = p.customMatrix.g,
-            b = p.customMatrix.b,
-            gammaR = p.customMatrix.gammaR,
-            gammaG = p.customMatrix.gammaG,
-            gammaB = p.customMatrix.gammaB
+            b = p.customMatrix.b
         )
         // Lerp toward identity by (1 - presetIntensity) so the user's intensity slider
-        // smoothly fades the filter strength in and out.
+        // smoothly fades the filter strength in and out. User's gamma settings always
+        // apply on top of either preset or custom — they're a separate "tone" knob.
         val t = p.presetIntensity.coerceIn(0f, 1f)
         return raw.copy(
             r = 1f + (raw.r - 1f) * t,
             g = 1f + (raw.g - 1f) * t,
             b = 1f + (raw.b - 1f) * t,
+            gammaR = p.customMatrix.gammaR,
+            gammaG = p.customMatrix.gammaG,
+            gammaB = p.customMatrix.gammaB,
             dim = p.dim
         )
     }
