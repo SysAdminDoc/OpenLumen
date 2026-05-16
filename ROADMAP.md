@@ -156,6 +156,13 @@ Design-doc deliverables (deferred implementations, durable analysis in tree):
 - **C90** — Emergency unlock gesture → notification action + tile + ADB command are the shipped failsafes; touch-gesture option requires a second overlay surface (deferred)
 - **C95** — AGP 9 migration spike → spike branch process documented; waits for AGP 9 stable
 - **C96** — Hilt Compose artifact migration → rides with C95
+
+The remaining v0.5.0+ candidates (Wear OS, Android TV, alarm-based schedule presets, contrast,
+AMOLED black clamp, content-aware dimming, partial-screen filters, system brightness, pixel-grid
+AMOLED, CVD LUT correction, work-profile behavior, IPC sockets, final icon, screenshot capture,
+melanopic estimate, Compose / instrumented tests) carry design sketches in
+[docs/deferred-candidates.md](docs/deferred-candidates.md). Each entry names the blocker
+(hardware / design / tier-correct) and the plan a future contributor would start from.
 - **C94** — SBOM and advisory scan → [.github/workflows/sbom.yml](.github/workflows/sbom.yml) + [docs/sbom-and-advisories.md](docs/sbom-and-advisories.md)
 - **C98** — Dynamic ramp duration presets → Instant / 30s / 5m / 15m / 30m radio options (Next-tier candidate, landed alongside C23/C24)
 - **C51** — OWASP MASVS-lite threat model → [docs/threat-model.md](docs/threat-model.md)

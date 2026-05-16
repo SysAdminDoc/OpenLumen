@@ -127,6 +127,7 @@ OpenLumen/
 - [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
 - [Translations and localization](docs/translations.md) — how to contribute a translation
 - [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md) — why per-app behavior is deferred until the trust posture is sorted
+- [Deferred roadmap candidates](docs/deferred-candidates.md) — design sketches for Wear OS / Android TV / alarm schedules / contrast / AMOLED / CVD LUT / etc.
 - [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
 - [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
 - [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning
