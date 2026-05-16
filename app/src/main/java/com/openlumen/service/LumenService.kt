@@ -136,16 +136,6 @@ class LumenService : LifecycleService() {
         }
     }
 
-    private fun startScheduleTicker() {
-        tickerJob?.cancel()
-        tickerJob = lifecycleScope.launch {
-            while (true) {
-                latestPrefs.get()?.let { applyIfShouldBeActive(it) }
-                delay(60_000)
-            }
-        }
-    }
-
     private suspend fun ensureEngine(p: Preferences) {
         val want = when (p.engine) {
             EngineKindDto.Auto -> probe.pickBest(this).kind
