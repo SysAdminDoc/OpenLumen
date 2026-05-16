@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.openlumen.R
 import com.openlumen.schedule.OfflineCities
 
 /**
@@ -63,20 +65,20 @@ fun LocationEntryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Set location") },
+        title = { Text(stringResource(R.string.location_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    "Decimal degrees. Latitude must be -90 to 90, longitude -180 to 180.",
+                    stringResource(R.string.location_decimal_degrees_help),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = latText,
                     onValueChange = { latText = it },
-                    label = { Text("Latitude") },
+                    label = { Text(stringResource(R.string.location_latitude)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     isError = latText.isNotEmpty() && (latVal == null || latVal !in -90.0..90.0),
@@ -85,7 +87,7 @@ fun LocationEntryDialog(
                 OutlinedTextField(
                     value = lngText,
                     onValueChange = { lngText = it },
-                    label = { Text("Longitude") },
+                    label = { Text(stringResource(R.string.location_longitude)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     isError = lngText.isNotEmpty() && (lngVal == null || lngVal !in -180.0..180.0),
@@ -93,13 +95,13 @@ fun LocationEntryDialog(
                 )
 
                 Text(
-                    "Or pick a nearby city:",
+                    stringResource(R.string.location_pick_city),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text("Search cities") },
+                    label = { Text(stringResource(R.string.location_search_cities)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -130,7 +132,7 @@ fun LocationEntryDialog(
                                     latText = "%.4f".format(city.latitude)
                                     lngText = "%.4f".format(city.longitude)
                                 },
-                                label = { Text("Use") },
+                                label = { Text(stringResource(R.string.location_use_city)) },
                                 colors = AssistChipDefaults.assistChipColors()
                             )
                         }
@@ -146,10 +148,10 @@ fun LocationEntryDialog(
                     if (lat != null && lng != null && canSave) onSave(lat, lng)
                 },
                 enabled = canSave
-            ) { Text("Save") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = {
-            LumenTextButton(onClick = onDismiss) { Text("Cancel") }
+            LumenTextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }

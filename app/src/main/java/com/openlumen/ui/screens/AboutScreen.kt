@@ -39,6 +39,10 @@ import com.openlumen.BuildConfig
 import com.openlumen.CrashLogger
 import com.openlumen.R
 import com.openlumen.diagnostics.DiagnosticsLog
+import com.openlumen.presetDisplayName
+import com.openlumen.prefs.EngineKindDto
+import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenTextButton
@@ -94,10 +98,9 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Backup", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.about_backup_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Save or restore your preferences as a JSON file. Useful for moving " +
-                        "between devices or sharing presets.",
+                    stringResource(R.string.about_backup_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -106,27 +109,26 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json")
                     },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Export profile") }
+                ) { Text(stringResource(R.string.about_export_profile)) }
                 LumenOutlinedButton(
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Import profile") }
+                ) { Text(stringResource(R.string.about_import_profile)) }
             }
         }
 
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Diagnostics", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.about_diagnostics_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "OpenLumen keeps a local crash log in app-private storage. It never " +
-                        "leaves the device.",
+                    stringResource(R.string.about_diagnostics_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 LumenOutlinedButton(
                     onClick = { showCrashLog = true },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("View crash log") }
+                ) { Text(stringResource(R.string.about_view_crash_log)) }
                 LumenOutlinedButton(
                     onClick = { showDiagLog = true },
                     modifier = Modifier.fillMaxWidth()
@@ -204,7 +206,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 Text(command, style = MaterialTheme.typography.bodySmall)
                 LumenOutlinedButton(
                     onClick = {
-                        copyToClipboardAbout(ctx, "OpenLumen emergency off", command)
+                        copyToClipboardAbout(ctx, ctx.getString(R.string.clipboard_emergency_off), command)
                         Toast.makeText(
                             ctx,
                             ctx.getString(R.string.about_emergency_off_copied),
@@ -261,13 +263,15 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 }
             },
             confirmButton = {
-                LumenTextButton(onClick = { showDiagLog = false }) { Text("Close") }
+                LumenTextButton(onClick = { showDiagLog = false }) {
+                    Text(stringResource(R.string.action_close))
+                }
             },
             dismissButton = {
                 LumenTextButton(onClick = {
                     DiagnosticsLog.clear(ctx)
                     showDiagLog = false
-                }) { Text("Clear") }
+                }) { Text(stringResource(R.string.action_clear)) }
             }
         )
     }
@@ -276,23 +280,25 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         val log = remember { CrashLogger.read(ctx) }
         AlertDialog(
             onDismissRequest = { showCrashLog = false },
-            title = { Text("Crash log") },
+            title = { Text(stringResource(R.string.about_crash_log_title)) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        if (log.isBlank()) "No crashes recorded." else log,
+                        if (log.isBlank()) stringResource(R.string.about_crash_log_empty) else log,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             },
             confirmButton = {
-                LumenTextButton(onClick = { showCrashLog = false }) { Text("Close") }
+                LumenTextButton(onClick = { showCrashLog = false }) {
+                    Text(stringResource(R.string.action_close))
+                }
             },
             dismissButton = {
                 LumenTextButton(onClick = {
                     CrashLogger.clear(ctx)
                     showCrashLog = false
-                }) { Text("Clear") }
+                }) { Text(stringResource(R.string.action_clear)) }
             }
         )
     }
@@ -306,7 +312,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             title = { Text(stringResource(R.string.import_preview_title)) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    val lines = describeDiff(currentPrefs, pending.decoded)
+                    val lines = describeDiff(ctx, currentPrefs, pending.decoded)
                     if (lines.isEmpty()) {
                         Text(stringResource(R.string.import_preview_unchanged))
                     } else {
@@ -336,49 +342,84 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
  * dialog body shouldn't scroll for typical profile imports.
  */
 private fun describeDiff(
-    current: com.openlumen.prefs.Preferences,
-    next: com.openlumen.prefs.Preferences
+    context: Context,
+    current: Preferences,
+    next: Preferences
 ): List<String> {
     val out = mutableListOf<String>()
-    fun <T> diff(label: String, a: T, b: T) {
-        if (a != b) out += "$label: $a → $b"
+    fun diff(labelRes: Int, a: String, b: String) {
+        if (a != b) {
+            out += context.getString(R.string.diff_line, context.getString(labelRes), a, b)
+        }
     }
-    diff("Active preset", current.activePresetKey, next.activePresetKey)
-    diff("Engine", current.engine.name, next.engine.name)
-    diff("Schedule mode", current.schedule.mode.name, next.schedule.mode.name)
     diff(
-        "Schedule start",
+        R.string.diff_active_preset,
+        presetDisplayName(context, current.activePresetKey),
+        presetDisplayName(context, next.activePresetKey)
+    )
+    diff(R.string.diff_engine, engineLabel(context, current.engine), engineLabel(context, next.engine))
+    diff(
+        R.string.diff_schedule_mode,
+        scheduleModeLabel(context, current.schedule.mode),
+        scheduleModeLabel(context, next.schedule.mode)
+    )
+    diff(
+        R.string.diff_schedule_start,
         "%02d:%02d".format(current.schedule.startHour, current.schedule.startMinute),
         "%02d:%02d".format(next.schedule.startHour, next.schedule.startMinute)
     )
     diff(
-        "Schedule end",
+        R.string.diff_schedule_end,
         "%02d:%02d".format(current.schedule.endHour, current.schedule.endMinute),
         "%02d:%02d".format(next.schedule.endHour, next.schedule.endMinute)
     )
-    val currentCoords = current.schedule.latitude?.let { "%.2f,%.2f".format(it, current.schedule.longitude ?: 0.0) } ?: "unset"
-    val nextCoords = next.schedule.latitude?.let { "%.2f,%.2f".format(it, next.schedule.longitude ?: 0.0) } ?: "unset"
-    diff("Location", currentCoords, nextCoords)
-    diff("Intensity", "%.2f".format(current.presetIntensity), "%.2f".format(next.presetIntensity))
-    diff("Dim", "%.2f".format(current.dim), "%.2f".format(next.dim))
-    diff("Light sensor", current.lightSensorEnabled, next.lightSensorEnabled)
+    val unset = context.getString(R.string.value_unset)
+    val currentCoords = current.schedule.latitude?.let {
+        "%.2f,%.2f".format(it, current.schedule.longitude ?: 0.0)
+    } ?: unset
+    val nextCoords = next.schedule.latitude?.let {
+        "%.2f,%.2f".format(it, next.schedule.longitude ?: 0.0)
+    } ?: unset
+    diff(R.string.diff_location, currentCoords, nextCoords)
+    diff(R.string.diff_intensity, "%.2f".format(current.presetIntensity), "%.2f".format(next.presetIntensity))
+    diff(R.string.diff_dim, "%.2f".format(current.dim), "%.2f".format(next.dim))
+    diff(R.string.diff_light_sensor, enabledLabel(context, current.lightSensorEnabled), enabledLabel(context, next.lightSensorEnabled))
     diff(
-        "Favorites",
-        current.favoritePresetKeys.joinToString(","),
-        next.favoritePresetKeys.joinToString(",")
+        R.string.diff_favorites,
+        current.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) },
+        next.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) }
     )
     diff(
-        "Transition",
-        formatDuration(current.transitionDurationMs),
-        formatDuration(next.transitionDurationMs)
+        R.string.diff_transition,
+        formatDuration(context, current.transitionDurationMs),
+        formatDuration(context, next.transitionDurationMs)
     )
     return out
 }
 
-private fun formatDuration(ms: Long): String = when {
-    ms <= 0 -> "instant"
-    ms < 60_000 -> "${ms / 1000}s"
-    else -> "${ms / 60_000}m"
+private fun engineLabel(context: Context, engine: EngineKindDto): String = when (engine) {
+    EngineKindDto.Auto -> context.getString(R.string.driver_auto)
+    EngineKindDto.ColorDisplayManager -> context.getString(R.string.driver_color_display)
+    EngineKindDto.SurfaceFlinger -> context.getString(R.string.driver_surfaceflinger)
+    EngineKindDto.Kcal -> context.getString(R.string.driver_kcal)
+    EngineKindDto.Overlay -> context.getString(R.string.driver_overlay)
+}
+
+private fun scheduleModeLabel(context: Context, mode: ScheduleModeDto): String = when (mode) {
+    ScheduleModeDto.AlwaysOff -> context.getString(R.string.schedule_off)
+    ScheduleModeDto.AlwaysOn -> context.getString(R.string.schedule_always)
+    ScheduleModeDto.FixedTime -> context.getString(R.string.schedule_fixed)
+    ScheduleModeDto.Solar -> context.getString(R.string.schedule_solar)
+    ScheduleModeDto.UntilNextAlarm -> context.getString(R.string.schedule_until_next_alarm)
+}
+
+private fun enabledLabel(context: Context, enabled: Boolean): String =
+    context.getString(if (enabled) R.string.value_enabled else R.string.value_disabled)
+
+private fun formatDuration(context: Context, ms: Long): String = when {
+    ms <= 0 -> context.getString(R.string.duration_instant)
+    ms < 60_000 -> context.getString(R.string.duration_seconds_short, ms / 1000)
+    else -> context.getString(R.string.duration_minutes_short, ms / 60_000)
 }
 
 // Built around the runtime package name so the debug build prints the

@@ -145,8 +145,9 @@ view). Each entry lists where the work landed.
 - **C31** — Named profile library → `ProfileSnapshot` + `NamedProfile` model, `Profiles.{snapshot,apply,saveCurrentAs,loadByName,delete}` pure transforms, About-screen list UI, sanitized into `Preferences.savedProfiles` (cap 32, name ≤48 chars, last-write-wins on duplicate names)
 - **C32** — Red Moon profile import (notes) → [docs/profile-import-formats.md](docs/profile-import-formats.md) (importer not implemented; format and mapping documented)
 - **C33** — CF.Lumen import notes → same doc; manual mapping table provided since the source is unavailable
-- **C58** — RTL layout support → manifest `supportsRtl=true` already set; layout audit conventions documented in `docs/translations.md`
+- **C58** — RTL / string-resource baseline → manifest `supportsRtl=true` already set; layout audit conventions documented in `docs/translations.md`; remaining Compose screen/dialog copy moved into `strings.xml`; preset labels localized through app-layer helpers used by Compose, widgets, and the QS tile
 - **C59** — Weblate/translation workflow → [docs/translations.md](docs/translations.md) (PR-based today; platform deferred until string count grows)
+- **C55** — Slider TalkBack state descriptions → ambient-light threshold, solar offsets, RGB, gamma, Kelvin, intensity, dim, and contrast sliders now expose explicit state descriptions
 - **C99** — Event-driven ambient sampling → `LumenService` registers an `ACTION_SCREEN_OFF` receiver that invalidates the cached lux reading so stale daytime readings can't trigger the filter at dusk
 - **C82** — Android 16/API 36 readiness → [docs/api-36-readiness.md](docs/api-36-readiness.md) inventory of expected behavior changes + test plan + migration policy
 
@@ -204,6 +205,9 @@ Partial:
   rows pending real hardware test runs.
 - **C36** — Store screenshot matrix: layout in place under
   `fastlane/metadata/android/en-US/`, captures pending finalized icon (C35).
+- **C55/C56/C57** — Accessibility scanner, dynamic font-scale, and CVD contrast
+  audit still need a real device / Android Studio scanner pass; this slice only
+  landed string externalization and slider state-description coverage.
 
 ## Now: v0.5.0, Trustworthy First Public Release
 

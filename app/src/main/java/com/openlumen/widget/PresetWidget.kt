@@ -11,6 +11,7 @@ import android.widget.RemoteViews
 import com.openlumen.MainActivity
 import com.openlumen.R
 import com.openlumen.engine.Presets
+import com.openlumen.presetDisplayName
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.service.LumenService
@@ -84,7 +85,7 @@ class PresetWidget : AppWidgetProvider() {
                 continue
             }
             views.setViewVisibility(slot.containerId, View.VISIBLE)
-            views.setTextViewText(slot.labelId, entry.displayName)
+            views.setTextViewText(slot.labelId, presetDisplayName(context, entry.key, entry.displayName))
             views.setInt(
                 slot.swatchId,
                 "setColorFilter",

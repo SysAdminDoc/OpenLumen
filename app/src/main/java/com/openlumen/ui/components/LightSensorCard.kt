@@ -13,7 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import com.openlumen.R
 
 /**
  * Ambient-light-sensor-driven activation card.
@@ -43,12 +47,15 @@ fun LightSensorCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    Text("Ambient-light trigger", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.light_sensor_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
                     Text(
                         if (currentLux < 0)
-                            "Sensor unavailable or no reading yet"
+                            stringResource(R.string.light_sensor_unavailable)
                         else
-                            "Now: %.0f lux".format(currentLux),
+                            stringResource(R.string.light_sensor_now, currentLux.toInt()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -56,12 +63,17 @@ fun LightSensorCard(
                 Switch(checked = enabled, onCheckedChange = onToggle)
             }
 
-            Text("Threshold: %.0f lux".format(threshold))
+            val thresholdLux = threshold.toInt()
+            val thresholdState = stringResource(R.string.light_sensor_threshold_state, thresholdLux)
+            Text(stringResource(R.string.light_sensor_threshold, thresholdLux))
             Slider(
                 value = threshold,
                 onValueChange = onThresholdChange,
                 valueRange = 0f..200f,
-                steps = 39
+                steps = 39,
+                modifier = Modifier.semantics {
+                    stateDescription = thresholdState
+                }
             )
 
             LumenOutlinedButton(
@@ -69,7 +81,7 @@ fun LightSensorCard(
                 enabled = currentLux >= 0,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Calibrate: use current reading as threshold")
+                Text(stringResource(R.string.light_sensor_calibrate))
             }
         }
     }

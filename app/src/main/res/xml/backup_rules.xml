@@ -3,5 +3,4 @@
     <include domain="file" path="datastore/" />
     <include domain="sharedpref" path="." />
     <include domain="database" path="." />
-    <exclude domain="file" path="crash.log" />
 </full-backup-content>

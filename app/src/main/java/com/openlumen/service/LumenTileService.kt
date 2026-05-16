@@ -7,6 +7,7 @@ import android.service.quicksettings.TileService
 import android.util.Log
 import com.openlumen.R
 import com.openlumen.engine.Presets
+import com.openlumen.presetDisplayName
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -99,7 +100,8 @@ class LumenTileService : TileService() {
         if (p == null || !p.enabled) {
             return getString(R.string.tile_subtitle_off)
         }
-        val presetName = Presets.byKey(p.activePresetKey)?.displayName
+        val presetName = Presets.byKey(p.activePresetKey)
+            ?.let { presetDisplayName(this, it.key, it.displayName) }
             ?: p.activePresetKey.replaceFirstChar { it.uppercaseChar() }
         return getString(R.string.tile_subtitle_on, presetName)
     }

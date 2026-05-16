@@ -74,9 +74,15 @@ fun isActive(
  */
 private fun isActiveUntilAlarm(now: ZonedDateTime, mode: ScheduleMode.UntilNextAlarm): Boolean {
     val todayStart = mode.start.atDate(now.toLocalDate()).atZone(now.zone)
-    val effectiveStart = if (now.isBefore(todayStart)) todayStart.minusDays(1) else todayStart
+    val effectiveStart = if (now.isBefore(todayStart) && mode.nextAlarmAt?.isAfter(todayStart) == true) {
+        todayStart
+    } else if (now.isBefore(todayStart)) {
+        todayStart.minusDays(1)
+    } else {
+        todayStart
+    }
     val end = mode.nextAlarmAt ?: effectiveStart.plusHours(12)
-    return now.isAfter(effectiveStart) && now.isBefore(end)
+    return !now.isBefore(effectiveStart) && now.isBefore(end)
 }
 
 private fun inWrappedWindow(now: LocalTime, start: LocalTime, end: LocalTime): Boolean {

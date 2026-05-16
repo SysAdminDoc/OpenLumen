@@ -40,7 +40,7 @@ class KelvinTest {
         assertThat(aboveMax).isEqualTo(highest)
     }
 
-    @Test fun `every output stays in 0..1`() {
+    @Test fun `every output stays between zero and one`() {
         for (k in Kelvin.MIN_K..Kelvin.MAX_K step 500) {
             val rgb = Kelvin.toRgb(k)
             assertThat(rgb.r).isAtLeast(0f)

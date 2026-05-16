@@ -13,7 +13,9 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.openlumen.R
 
 /**
  * Material 3 TimePicker wrapped in an AlertDialog. Caller passes initial hour/minute
@@ -47,12 +49,12 @@ fun TimePickerDialog(
         },
         confirmButton = {
             LumenTextButton(onClick = { onConfirm(state.hour, state.minute) }) {
-                Text("OK")
+                Text(stringResource(R.string.action_ok))
             }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                LumenTextButton(onClick = onDismiss) { Text("Cancel") }
+                LumenTextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
             }
         }
     )

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.item
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.Presets
+import com.openlumen.presetLabel
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenViewModel
 
@@ -56,6 +56,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             ?.let(Presets::byKey)
         if (previousEntry != null) {
             item {
+                val previousLabel = presetLabel(previousEntry.key, previousEntry.displayName)
                 Card(
                     shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(
@@ -70,7 +71,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Previous: ${previousEntry.displayName}",
+                            text = stringResource(R.string.preset_previous, previousLabel),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )
@@ -85,6 +86,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         items(Presets.ALL) { entry ->
             val selected = entry.key == prefs.activePresetKey
             val isFavorite = entry.key in favorites
+            val entryLabel = presetLabel(entry.key, entry.displayName)
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
@@ -109,7 +111,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     )
                     Spacer(Modifier.size(12.dp))
                     Text(
-                        text = entry.displayName,
+                        text = entryLabel,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.weight(1f)

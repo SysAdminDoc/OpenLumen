@@ -13,8 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   overlay mode was effectively invisible unless the Dim slider was above zero.
 - Schedule alarms no longer reschedule into the past when a transition calculation
   returns a stale boundary.
+- Until-next-alarm schedules no longer activate before the configured start time
+  when the next alarm belongs to the upcoming overnight window.
 - Driver availability on the Driver screen now maps DTO names to engine kinds
   correctly instead of silently hiding availability status.
+- Kelvin unit tests now avoid JUnit display-name characters that break Kotlin
+  test compilation on this toolchain.
 
 ### Changed
 - Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
@@ -22,7 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The foreground service subscribes to the light sensor only while the filter and
   ambient-light trigger are both enabled.
 - Preset and driver cards are whole-card clickable for consistency with schedule cards.
-- Backup rules now include DataStore preferences and exclude the local crash log.
+- Remaining Compose screen and dialog copy now routes through Android string
+  resources; preset labels are localized through an app-layer helper used by
+  Compose, widgets, and the Quick Settings tile.
+- Backup rules now include DataStore preferences while leaving the local crash log
+  outside the included backup paths.
 
 ### Added
 - `CONTRIBUTING.md`, `docs/ARCHITECTURE.md`, `docs/troubleshooting.md`,
@@ -87,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to mark favorites in the Presets tab. Refreshes via the same
   prefs-emission broadcast pattern as the 1x1 widget but on a separate
   `PRESET_REFRESH` action namespace.
+- Accessibility baseline pass: ambient-light, solar-offset, RGB, gamma,
+  Kelvin, intensity, dim, and contrast sliders expose TalkBack state
+  descriptions.
 - Smooth transition engine. New `Preferences.transitionDurationMs` (0
   default; clamped 0..30 min). When non-zero, the foreground service
   interpolates from the last-applied matrix toward the new target over

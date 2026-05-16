@@ -87,7 +87,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         Text(label, style = MaterialTheme.typography.bodyLarge)
                         if (kind != EngineKindDto.Auto && availability != null) {
                             Text(
-                                if (availability) "Available" else "Not available on this device",
+                                if (availability) stringResource(R.string.driver_available)
+                                else stringResource(R.string.driver_not_available),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -158,7 +159,11 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 )
                 LumenOutlinedButton(
                     onClick = {
-                        copyToClipboard(ctx, label = "OpenLumen adb grant", text = command)
+                        copyToClipboard(
+                            ctx,
+                            label = ctx.getString(R.string.clipboard_adb_grant),
+                            text = command
+                        )
                         Toast.makeText(
                             ctx,
                             ctx.getString(R.string.command_copied),
@@ -182,7 +187,11 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             LumenOutlinedButton(
                 onClick = {
                     val report = vm.buildDriverReport()
-                    copyToClipboard(ctx, label = "OpenLumen driver report", text = report)
+                    copyToClipboard(
+                        ctx,
+                        label = ctx.getString(R.string.clipboard_driver_report),
+                        text = report
+                    )
                     Toast.makeText(
                         ctx,
                         ctx.getString(R.string.report_copied),
@@ -197,7 +206,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     val report = vm.buildDriverReport()
                     val send = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_SUBJECT, "OpenLumen driver report")
+                        putExtra(Intent.EXTRA_SUBJECT, ctx.getString(R.string.driver_report_subject))
                         putExtra(Intent.EXTRA_TEXT, report)
                     }
                     ctx.startActivity(

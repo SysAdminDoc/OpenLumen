@@ -26,6 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
@@ -104,8 +106,12 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "${stringResource(R.string.schedule_start)}: " +
-                                "%02d:%02d".format(prefs.schedule.startHour, prefs.schedule.startMinute)
+                            stringResource(
+                                R.string.schedule_time_value,
+                                stringResource(R.string.schedule_start),
+                                prefs.schedule.startHour,
+                                prefs.schedule.startMinute
+                            )
                         )
                     }
                     LumenOutlinedButton(
@@ -113,8 +119,12 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "${stringResource(R.string.schedule_end)}: " +
-                                "%02d:%02d".format(prefs.schedule.endHour, prefs.schedule.endMinute)
+                            stringResource(
+                                R.string.schedule_time_value,
+                                stringResource(R.string.schedule_end),
+                                prefs.schedule.endHour,
+                                prefs.schedule.endMinute
+                            )
                         )
                     }
                 }
@@ -132,14 +142,18 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         val lng = prefs.schedule.longitude
                         Text(
                             if (lat == null || lng == null)
-                                "Set location"
+                                stringResource(R.string.schedule_set_location)
                             else
                                 "%.3f, %.3f".format(lat, lng)
                         )
                     }
 
+                    val sunsetOffsetLabel = stringResource(
+                        R.string.schedule_sunset_offset,
+                        prefs.schedule.sunsetOffsetMin
+                    )
                     Text(
-                        "Sunset offset: ${prefs.schedule.sunsetOffsetMin}m",
+                        sunsetOffsetLabel,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Slider(
@@ -148,11 +162,18 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                             vm.setScheduleOffsets(v.roundToInt(), prefs.schedule.sunriseOffsetMin)
                         },
                         valueRange = -180f..180f,
-                        steps = 71
+                        steps = 71,
+                        modifier = Modifier.semantics {
+                            stateDescription = sunsetOffsetLabel
+                        }
                     )
 
+                    val sunriseOffsetLabel = stringResource(
+                        R.string.schedule_sunrise_offset,
+                        prefs.schedule.sunriseOffsetMin
+                    )
                     Text(
-                        "Sunrise offset: ${prefs.schedule.sunriseOffsetMin}m",
+                        sunriseOffsetLabel,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Slider(
@@ -161,7 +182,10 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                             vm.setScheduleOffsets(prefs.schedule.sunsetOffsetMin, v.roundToInt())
                         },
                         valueRange = -180f..180f,
-                        steps = 71
+                        steps = 71,
+                        modifier = Modifier.semantics {
+                            stateDescription = sunriseOffsetLabel
+                        }
                     )
                 }
             }
@@ -175,8 +199,12 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "${stringResource(R.string.schedule_start)}: " +
-                                "%02d:%02d".format(prefs.schedule.startHour, prefs.schedule.startMinute)
+                            stringResource(
+                                R.string.schedule_time_value,
+                                stringResource(R.string.schedule_start),
+                                prefs.schedule.startHour,
+                                prefs.schedule.startMinute
+                            )
                         )
                     }
                     Text(

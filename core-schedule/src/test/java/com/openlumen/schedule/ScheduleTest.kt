@@ -85,6 +85,7 @@ class ScheduleTest {
         val mode = ScheduleMode.UntilNextAlarm(start, alarmAt)
 
         assertThat(isActive(mode, at(20, 0), zone)).isFalse() // before today's 22:00
+        assertThat(isActive(mode, at(22, 0), zone)).isTrue()   // exact start edge
         assertThat(isActive(mode, at(22, 30), zone)).isTrue()  // inside the evening window
         assertThat(isActive(mode, at(6, 0).plusDays(1), zone)).isTrue()  // wraps midnight
         assertThat(isActive(mode, at(7, 30).plusDays(1), zone)).isFalse() // after alarm

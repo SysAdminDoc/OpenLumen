@@ -37,6 +37,7 @@ import com.openlumen.R
 import com.openlumen.diagnostics.MatrixPreview
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
+import com.openlumen.presetLabel
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.viewmodel.OpenLumenViewModel
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,6 +49,8 @@ import kotlin.math.roundToInt
 fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val prefs by vm.state.collectAsState()
     val preset = Presets.byKey(prefs.activePresetKey)
+    val activePresetLabel = preset?.let { presetLabel(it.key, it.displayName) }
+        ?: prefs.activePresetKey
 
     Column(
         modifier = Modifier
@@ -79,7 +82,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = preset?.displayName ?: prefs.activePresetKey,
+                        text = activePresetLabel,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -90,8 +93,10 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
+                val intensityPct = (prefs.presetIntensity * 100).toInt()
+                val intensityState = stringResource(R.string.home_percent_state, intensityPct)
                 Text(stringResource(R.string.home_intensity), style = MaterialTheme.typography.titleMedium)
-                Text("${(prefs.presetIntensity * 100).toInt()}%",
+                Text(stringResource(R.string.home_percent_value, intensityPct),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
@@ -99,13 +104,15 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     onValueChange = vm::setIntensity,
                     valueRange = 0f..1f,
                     modifier = Modifier.semantics {
-                        stateDescription = "${(prefs.presetIntensity * 100).toInt()} percent"
+                        stateDescription = intensityState
                     }
                 )
 
                 Spacer(Modifier.height(8.dp))
+                val dimPct = (prefs.dim * 100).toInt()
+                val dimState = stringResource(R.string.home_percent_state, dimPct)
                 Text(stringResource(R.string.home_dim), style = MaterialTheme.typography.titleMedium)
-                Text("${(prefs.dim * 100).toInt()}%",
+                Text(stringResource(R.string.home_percent_value, dimPct),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
@@ -113,13 +120,14 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     onValueChange = vm::setDim,
                     valueRange = 0f..0.95f,
                     modifier = Modifier.semantics {
-                        stateDescription = "${(prefs.dim * 100).toInt()} percent"
+                        stateDescription = dimState
                     }
                 )
 
                 Spacer(Modifier.height(8.dp))
+                val contrastState = stringResource(R.string.home_contrast_state, prefs.contrast)
                 Text(stringResource(R.string.home_contrast), style = MaterialTheme.typography.titleMedium)
-                Text("%.2f×".format(prefs.contrast),
+                Text(stringResource(R.string.home_contrast_value, prefs.contrast),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
@@ -127,7 +135,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     onValueChange = vm::setContrast,
                     valueRange = com.openlumen.prefs.Preferences.CONTRAST_MIN..com.openlumen.prefs.Preferences.CONTRAST_MAX,
                     modifier = Modifier.semantics {
-                        stateDescription = "%.2f times".format(prefs.contrast)
+                        stateDescription = contrastState
                     }
                 )
 
@@ -172,19 +180,19 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 Text(stringResource(R.string.presets_custom), style = MaterialTheme.typography.titleMedium)
 
                 RgbSlider(
-                    label = "R",
+                    label = stringResource(R.string.channel_red_short),
                     value = prefs.customMatrix.r,
                     track = Color(0xFFF38BA8),
                     onChange = { vm.setCustomRgb(it, prefs.customMatrix.g, prefs.customMatrix.b) }
                 )
                 RgbSlider(
-                    label = "G",
+                    label = stringResource(R.string.channel_green_short),
                     value = prefs.customMatrix.g,
                     track = Color(0xFFA6E3A1),
                     onChange = { vm.setCustomRgb(prefs.customMatrix.r, it, prefs.customMatrix.b) }
                 )
                 RgbSlider(
-                    label = "B",
+                    label = stringResource(R.string.channel_blue_short),
                     value = prefs.customMatrix.b,
                     track = Color(0xFF89B4FA),
                     onChange = { vm.setCustomRgb(prefs.customMatrix.r, prefs.customMatrix.g, it) }
@@ -192,7 +200,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Preview", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.home_preview), style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.size(8.dp))
                     Box(
                         modifier = Modifier
@@ -219,9 +227,10 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         var kelvinSliderK by rememberSaveable { mutableIntStateOf(Kelvin.DEFAULT_K) }
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
+                val kelvinState = stringResource(R.string.home_kelvin_state, kelvinSliderK)
                 Text(stringResource(R.string.home_kelvin_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "${kelvinSliderK} K",
+                    stringResource(R.string.home_kelvin_value, kelvinSliderK),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -234,7 +243,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     },
                     valueRange = Kelvin.MIN_K.toFloat()..Kelvin.MAX_K.toFloat(),
                     modifier = Modifier.semantics {
-                        stateDescription = "$kelvinSliderK Kelvin"
+                        stateDescription = kelvinState
                     }
                 )
                 Text(
@@ -248,26 +257,26 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         // Advanced: per-channel gamma sliders.
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("Per-channel gamma", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_gamma_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "1.0 = neutral. Higher lifts mid-tones; lower deepens them.",
+                    stringResource(R.string.home_gamma_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 GammaSlider(
-                    label = "γR",
+                    label = stringResource(R.string.gamma_red_short),
                     value = prefs.customMatrix.gammaR,
                     track = Color(0xFFF38BA8),
                     onChange = { vm.setGamma(it, prefs.customMatrix.gammaG, prefs.customMatrix.gammaB) }
                 )
                 GammaSlider(
-                    label = "γG",
+                    label = stringResource(R.string.gamma_green_short),
                     value = prefs.customMatrix.gammaG,
                     track = Color(0xFFA6E3A1),
                     onChange = { vm.setGamma(prefs.customMatrix.gammaR, it, prefs.customMatrix.gammaB) }
                 )
                 GammaSlider(
-                    label = "γB",
+                    label = stringResource(R.string.gamma_blue_short),
                     value = prefs.customMatrix.gammaB,
                     track = Color(0xFF89B4FA),
                     onChange = { vm.setGamma(prefs.customMatrix.gammaR, prefs.customMatrix.gammaG, it) }
@@ -284,6 +293,7 @@ private fun GammaSlider(
     track: Color,
     onChange: (Float) -> Unit
 ) {
+    val gammaState = stringResource(R.string.home_gamma_state, label, value)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -296,9 +306,12 @@ private fun GammaSlider(
             value = value,
             onValueChange = onChange,
             valueRange = 0.5f..2.5f,
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp)
+                .semantics { stateDescription = gammaState }
         )
-        Text("%.2f".format(value), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.home_gamma_value, value), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -309,6 +322,8 @@ private fun RgbSlider(
     track: Color,
     onChange: (Float) -> Unit
 ) {
+    val percent = (value * 100).toInt()
+    val rgbState = stringResource(R.string.home_rgb_state, label, percent)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -321,8 +336,11 @@ private fun RgbSlider(
             value = value,
             onValueChange = onChange,
             valueRange = 0f..1f,
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp)
+                .semantics { stateDescription = rgbState }
         )
-        Text("${(value * 100).toInt()}", style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.home_rgb_value, percent), style = MaterialTheme.typography.bodySmall)
     }
 }
