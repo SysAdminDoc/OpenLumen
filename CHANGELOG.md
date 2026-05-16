@@ -152,6 +152,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- Offline city picker in the Location entry dialog. `OfflineCities` in
+  `core-schedule` bundles ~95 major cities with IANA timezones and
+  coordinates accurate to four decimal places. Search is
+  case-insensitive substring on `"City, Country"`; `nearest(lat, lng)`
+  returns the closest bundled city for a given coordinate. The picker
+  fills the lat/lng fields but doesn't lock out manual entry. No
+  network dependency, no Play Services dependency — all bundled.
 - Local diagnostics log at `filesDir/diagnostics.log`. Bounded
   (~64 KB cap, trimmed to ~32 KB), append-only, grep-friendly text
   format `<instant> <LEVEL> <CATEGORY> <message>`. The

@@ -124,6 +124,8 @@ OpenLumen/
 - [Dependency verification](docs/dependency-verification.md) — Gradle metadata procedure (opt-in)
 - [Wake / alarm / battery audit](docs/wake-and-vitals.md) — what wakes the device and why
 - [Play FGS evidence pack](docs/play-fgs-evidence.md) — Play `specialUse` justification
+- [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
+- [Translations and localization](docs/translations.md) — how to contribute a translation
 - [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
 - [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
 - [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning

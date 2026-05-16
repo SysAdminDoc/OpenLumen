@@ -136,6 +136,11 @@ view). Each entry lists where the work landed.
 - **C54** — Wake/alarm/battery audit → [docs/wake-and-vitals.md](docs/wake-and-vitals.md)
 - **C93** — Play FGS evidence pack → [docs/play-fgs-evidence.md](docs/play-fgs-evidence.md)
 - **C27** — Automatic timezone fallback → Schedule screen shows the system zone label so users know which clock fixed-time schedules fire against
+- **C26** — Offline city picker → `core-schedule/OfflineCities` (~95 cities, IANA zones), search + nearest helpers, wired into LocationEntryDialog
+- **C32** — Red Moon profile import (notes) → [docs/profile-import-formats.md](docs/profile-import-formats.md) (importer not implemented; format and mapping documented)
+- **C33** — CF.Lumen import notes → same doc; manual mapping table provided since the source is unavailable
+- **C58** — RTL layout support → manifest `supportsRtl=true` already set; layout audit conventions documented in `docs/translations.md`
+- **C59** — Weblate/translation workflow → [docs/translations.md](docs/translations.md) (PR-based today; platform deferred until string count grows)
 - **C82** — Android 16/API 36 readiness → [docs/api-36-readiness.md](docs/api-36-readiness.md) inventory of expected behavior changes + test plan + migration policy
 - **C94** — SBOM and advisory scan → [.github/workflows/sbom.yml](.github/workflows/sbom.yml) + [docs/sbom-and-advisories.md](docs/sbom-and-advisories.md)
 - **C98** — Dynamic ramp duration presets → Instant / 30s / 5m / 15m / 30m radio options (Next-tier candidate, landed alongside C23/C24)
