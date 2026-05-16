@@ -1,5 +1,8 @@
 package com.openlumen.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,10 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,8 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.BuildConfig
 import com.openlumen.CrashLogger
@@ -66,13 +69,17 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-        Text("${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
-            style = MaterialTheme.typography.bodyLarge)
+        Text(
+            "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
+            style = MaterialTheme.typography.bodyLarge
+        )
         Text(stringResource(R.string.about_license), style = MaterialTheme.typography.bodyMedium)
         Text(stringResource(R.string.about_source), style = MaterialTheme.typography.bodyMedium)
-        Text(stringResource(R.string.about_offline),
+        Text(
+            stringResource(R.string.about_offline),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         Spacer(Modifier.height(16.dp))
 
@@ -86,7 +93,9 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 LumenButton(
-                    onClick = { exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json") },
+                    onClick = {
+                        exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json")
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Export profile") }
                 LumenOutlinedButton(
@@ -109,6 +118,37 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     onClick = { showCrashLog = true },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("View crash log") }
+            }
+        }
+
+        // Emergency-off ADB command (C13). Surfaced in About so the command
+        // is discoverable even when the on-screen tint is too strong to read
+        // the rest of the UI — users learn it exists, can stash it in a
+        // password manager, and can reach it from a paired computer.
+        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.about_emergency_off_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    stringResource(R.string.about_emergency_off_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                val command = emergencyOffCommand(ctx.packageName)
+                Text(command, style = MaterialTheme.typography.bodySmall)
+                LumenOutlinedButton(
+                    onClick = {
+                        copyToClipboardAbout(ctx, "OpenLumen emergency off", command)
+                        Toast.makeText(
+                            ctx,
+                            ctx.getString(R.string.about_emergency_off_copied),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.about_emergency_off_copy)) }
             }
         }
     }
@@ -137,4 +177,18 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         )
     }
+}
+
+// Built around the runtime package name so the debug build prints the
+// `.debug`-suffixed package — same convention as the Driver-screen ADB grant.
+// Matches LumenService.ACTION_TURN_OFF, which writes enabled=false and stops
+// the service even if the foreground UI is completely obscured.
+private fun emergencyOffCommand(packageName: String): String =
+    "adb shell am startservice -a com.openlumen.action.TURN_OFF " +
+        "-n $packageName/com.openlumen.service.LumenService"
+
+private fun copyToClipboardAbout(context: Context, label: String, text: String) {
+    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        ?: return
+    cm.setPrimaryClip(ClipData.newPlainText(label, text))
 }

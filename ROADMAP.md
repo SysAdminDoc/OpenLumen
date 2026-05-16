@@ -119,7 +119,13 @@ without violating the no-network philosophy.
 Completed candidates (commit history is authoritative; this is the human
 view). Each entry lists where the work landed.
 
+- **C02** — In-app driver report export → `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt`, Driver screen Copy/Share buttons
 - **C05** — Root prompt safety and recovery docs → [docs/root-safety.md](docs/root-safety.md)
+- **C07** — Guided WRITE_SECURE_SETTINGS grant → Driver screen now shows grant state and a copyable per-package adb command
+- **C09** — Overlay alpha cap explanation → Driver screen info card when Overlay/Auto selected
+- **C13** — Emergency off command → About screen ADB command with copy-to-clipboard
+- **C17** — QS tile long-press deep link → `PREFERENCES_ACTIVITY` meta-data on tile service
+- **C18** — QS tile secondary state label → tile subtitle now shows active preset name
 - **C34** — F-Droid metadata → [fastlane/metadata/android/](fastlane/metadata/android/)
 - **C37** — Reproducible build notes → [docs/reproducible-build.md](docs/reproducible-build.md)
 - **C38** — Artifact attestations → `actions/attest-build-provenance@v2` in release workflow
@@ -138,8 +144,9 @@ view). Each entry lists where the work landed.
 
 Partial:
 
-- **C01** — Device validation and driver report: `docs/device-matrix.md` skeleton
-  exists; per-engine smoke flow documented; in-app "Share report" UX still pending.
+- **C01** — Device validation and driver report: in-app share UX shipped (see C02);
+  per-engine smoke flow documented in `docs/device-matrix.md`; per-device coverage
+  rows pending real hardware test runs.
 - **C36** — Store screenshot matrix: layout in place under
   `fastlane/metadata/android/en-US/`, captures pending finalized icon (C35).
 

@@ -60,6 +60,15 @@
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
+            <!--
+                Long-press destination for the QS tile. Android routes the
+                long-press intent to this activity instead of generic App Info.
+                Honored on API 24+; OpenLumen's minSdk is 26 so this is always
+                effective. Tied to roadmap candidate C17.
+            -->
+            <meta-data
+                android:name="android.service.quicksettings.PREFERENCES_ACTIVITY"
+                android:value="com.openlumen.MainActivity" />
         </service>
 
         <receiver

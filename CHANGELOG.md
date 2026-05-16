@@ -39,6 +39,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or if any Play Services / Firebase artifact reaches the release classpath.
 - Release workflow now generates an `actions/attest-build-provenance` for each
   release APK.
+- In-app driver report on the Driver tab: Copy and Share buttons produce a
+  paste-friendly device summary (build, SoC, granted permissions, exact-alarm
+  state, every engine's probe result, and the user's current configuration).
+  The report intentionally redacts solar coordinates and contains no PII.
+- Driver screen now shows `WRITE_SECURE_SETTINGS` grant state and a per-package
+  copyable adb command (debug builds get the `.debug`-suffixed variant).
+- Overlay engine info card on the Driver tab explains the Android 12+ alpha
+  cap and the untrusted-touch behavior on system installer / permission
+  dialogs.
+- About tab now exposes the emergency-off ADB command, copyable to clipboard,
+  so users can stash it before something goes wrong.
+- Quick Settings tile subtitle shows the active preset name when the filter
+  is on (API 29+), and the tile's long-press destination now opens the app
+  directly via the `PREFERENCES_ACTIVITY` manifest meta-data.
 
 ### Tests
 - Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only

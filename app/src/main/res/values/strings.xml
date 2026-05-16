@@ -36,11 +36,25 @@
     <string name="driver_overlay">Overlay (rootless)</string>
     <string name="driver_refresh">Re-probe</string>
     <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
+    <string name="driver_grant_status_granted">Granted on this device.</string>
+    <string name="driver_grant_status_not_granted">Not granted. The ColorDisplayManager driver is unavailable until this is granted via the ADB command below.</string>
+    <string name="driver_copy_command">Copy command</string>
+    <string name="driver_copy_report">Copy report</string>
+    <string name="driver_share_report">Share report</string>
+    <string name="command_copied">Command copied</string>
+    <string name="report_copied">Report copied</string>
+    <string name="overlay_caveats_title">About the Overlay driver</string>
+    <string name="overlay_alpha_cap_explanation">Overlay alpha is capped at ~80%% by Android 12+ untrusted-touch rules. For deeper dim, use ColorDisplayManager or a root driver.</string>
+    <string name="overlay_touch_pass_explanation">While the overlay is on, Android may block taps on system installer / permission dialogs. This is the platform\'s tapjacking protection, not an OpenLumen bug — disable the filter via tile or notification before installing apps.</string>
 
     <string name="about_version">Version</string>
     <string name="about_license">License: GPL-3.0-or-later</string>
     <string name="about_source">Source: github.com/SysAdminDoc/OpenLumen</string>
     <string name="about_offline">100%% offline — no INTERNET permission requested.</string>
+    <string name="about_emergency_off_title">Emergency off</string>
+    <string name="about_emergency_off_body">If the filter ever sticks and the tile / notification is unreachable, you can force-clear from a computer via ADB:</string>
+    <string name="about_emergency_off_copy">Copy ADB command</string>
+    <string name="about_emergency_off_copied">Emergency-off command copied</string>
 
     <string name="notif_channel_id">openlumen.filter</string>
     <string name="notif_channel_name">Filter status</string>
@@ -50,6 +64,8 @@
 
     <string name="tile_off">Off</string>
     <string name="tile_on">On</string>
+    <string name="tile_subtitle_off">Filter off</string>
+    <string name="tile_subtitle_on">%1$s</string>
 
     <string name="perm_overlay_title">Allow display over other apps</string>
     <string name="perm_overlay_rationale">Required for the rootless overlay driver. Skip if you only use root drivers.</string>

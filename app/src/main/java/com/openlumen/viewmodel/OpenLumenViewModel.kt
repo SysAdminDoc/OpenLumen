@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Preferences
@@ -139,6 +140,16 @@ class OpenLumenViewModel @Inject constructor(
     fun refreshProbes() = viewModelScope.launch {
         _probes.value = probe.probeAll(getApplication())
     }
+
+    /**
+     * Synchronous snapshot of the human-readable driver report.
+     *
+     * Tied to roadmap candidate C02. Composition: latest probe results from
+     * [_probes], current [state] preferences, plus device + permission info
+     * pulled from the Android `Context`. No I/O.
+     */
+    fun buildDriverReport(): String =
+        DriverReport.build(getApplication(), state.value, _probes.value)
 
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
