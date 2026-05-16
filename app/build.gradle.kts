@@ -15,8 +15,8 @@ android {
         applicationId = "com.openlumen"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.3.1"
     }
 
     signingConfigs {
@@ -27,6 +27,11 @@ android {
                 storePassword = System.getenv("OPENLUMEN_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("OPENLUMEN_KEY_ALIAS")
                 keyPassword = System.getenv("OPENLUMEN_KEY_PASSWORD")
+                // v1 = legacy JAR; useful only for API < 24, but we keep it for any future
+                // minSdk lowering. v2 + v3 cover Android 7+ with key-rotation support.
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }

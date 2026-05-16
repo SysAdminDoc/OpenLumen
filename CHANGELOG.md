@@ -4,6 +4,18 @@ All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-05-16
+
+### Fixed
+- Material 3 `Button`/`OutlinedButton`/`TextButton` default to a fully-rounded
+  pill (CircleShape). Replaced every call site with project-local
+  `LumenButton`/`LumenOutlinedButton`/`LumenTextButton` wrappers in
+  `ui/components/LumenButton.kt` that pin the shape to
+  `MaterialTheme.shapes.medium` (10dp). No more pill backdrops in the UI.
+- Signing config now explicitly enables v1 + v2 + v3 schemes (was v2-only).
+  Improves install compatibility on Android 8.0 (API 26) devices and supports
+  future key rotation via APK Signature Scheme v3.
+
 ## [0.3.0] — 2026-05-16
 
 ### Added

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -65,7 +64,7 @@ fun LightSensorCard(
                 steps = 39
             )
 
-            OutlinedButton(
+            LumenOutlinedButton(
                 onClick = onUseCurrent,
                 enabled = currentLux >= 0,
                 modifier = Modifier.fillMaxWidth()

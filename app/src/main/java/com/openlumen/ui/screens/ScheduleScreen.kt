@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -32,6 +31,7 @@ import com.openlumen.R
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.ui.components.LightSensorCard
 import com.openlumen.ui.components.LocationEntryDialog
+import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
 
@@ -85,7 +85,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         if (prefs.schedule.mode == ScheduleModeDto.FixedTime) {
             Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
+                    LumenOutlinedButton(
                         onClick = { showStartPicker = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -94,7 +94,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                                 "%02d:%02d".format(prefs.schedule.startHour, prefs.schedule.startMinute)
                         )
                     }
-                    OutlinedButton(
+                    LumenOutlinedButton(
                         onClick = { showEndPicker = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -110,7 +110,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         if (prefs.schedule.mode == ScheduleModeDto.Solar) {
             Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
+                    LumenOutlinedButton(
                         onClick = { showLocationDialog = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {

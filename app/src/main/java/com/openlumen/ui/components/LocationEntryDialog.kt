@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,13 +73,13 @@ fun LocationEntryDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            LumenTextButton(
                 onClick = { if (canSave) onSave(latVal!!, lngVal!!) },
                 enabled = canSave
             ) { Text("Save") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            LumenTextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
 }

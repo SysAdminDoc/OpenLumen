@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
@@ -30,11 +28,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.TextButton
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.BuildConfig
 import com.openlumen.CrashLogger
 import com.openlumen.R
+import com.openlumen.ui.components.LumenButton
+import com.openlumen.ui.components.LumenOutlinedButton
+import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
@@ -85,11 +85,11 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Button(
+                LumenButton(
                     onClick = { exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json") },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Export profile") }
-                OutlinedButton(
+                LumenOutlinedButton(
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Import profile") }
@@ -105,7 +105,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                OutlinedButton(
+                LumenOutlinedButton(
                     onClick = { showCrashLog = true },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("View crash log") }
@@ -127,10 +127,10 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showCrashLog = false }) { Text("Close") }
+                LumenTextButton(onClick = { showCrashLog = false }) { Text("Close") }
             },
             dismissButton = {
-                TextButton(onClick = {
+                LumenTextButton(onClick = {
                     CrashLogger.clear(ctx)
                     showCrashLog = false
                 }) { Text("Clear") }

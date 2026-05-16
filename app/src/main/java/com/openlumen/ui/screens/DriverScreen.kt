@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.ui.components.LumenButton
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
@@ -77,7 +77,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
 
-        Button(onClick = { vm.refreshProbes() }, modifier = Modifier.fillMaxWidth()) {
+        LumenButton(onClick = { vm.refreshProbes() }, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.driver_refresh))
         }
 
