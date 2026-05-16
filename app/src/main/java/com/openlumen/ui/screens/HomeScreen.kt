@@ -1,6 +1,7 @@
 package com.openlumen.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
@@ -52,7 +55,9 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = MaterialTheme.shapes.large,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { vm.setEnabled(!prefs.enabled) }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -86,7 +91,10 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 Slider(
                     value = prefs.presetIntensity,
                     onValueChange = vm::setIntensity,
-                    valueRange = 0f..1f
+                    valueRange = 0f..1f,
+                    modifier = Modifier.semantics {
+                        stateDescription = "${(prefs.presetIntensity * 100).toInt()} percent"
+                    }
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -97,7 +105,10 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 Slider(
                     value = prefs.dim,
                     onValueChange = vm::setDim,
-                    valueRange = 0f..0.95f
+                    valueRange = 0f..0.95f,
+                    modifier = Modifier.semantics {
+                        stateDescription = "${(prefs.dim * 100).toInt()} percent"
+                    }
                 )
             }
         }

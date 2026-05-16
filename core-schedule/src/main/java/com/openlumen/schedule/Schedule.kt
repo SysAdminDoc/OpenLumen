@@ -77,13 +77,19 @@ private fun nextFixedTransition(
     end: LocalTime
 ): ZonedDateTime {
     val today = now.toLocalDate()
-    val candidates = listOf(
+    // We need the *chronologically earliest* future boundary, not just the first one
+    // we list. For a wrapping window like 22:00 → 07:00, today's events may both be
+    // in the past while tomorrow's start (22:00 +1d) sits LATER than tomorrow's end
+    // (07:00 +1d). Sort, then pick the soonest future.
+    return listOf(
         start.atDate(today).atZone(now.zone),
         end.atDate(today).atZone(now.zone),
         start.atDate(today.plusDays(1)).atZone(now.zone),
         end.atDate(today.plusDays(1)).atZone(now.zone)
-    )
-    return candidates.first { it.isAfter(now) }
+    ).asSequence()
+        .filter { it.isAfter(now) }
+        .minByOrNull { it.toEpochSecond() }
+        ?: end.atDate(today.plusDays(2)).atZone(now.zone) // unreachable safety net
 }
 
 private fun nextSolarTransition(
@@ -93,11 +99,13 @@ private fun nextSolarTransition(
 ): ZonedDateTime {
     val today = SolarCalculator.computeTimes(now.toLocalDate(), mode.latitude, mode.longitude, zoneId)
     val tomorrow = SolarCalculator.computeTimes(now.toLocalDate().plusDays(1), mode.latitude, mode.longitude, zoneId)
-    val candidates = listOf(
+    return listOf(
         today.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong()),
         today.sunset.plusMinutes(mode.sunsetOffsetMin.toLong()),
         tomorrow.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong()),
         tomorrow.sunset.plusMinutes(mode.sunsetOffsetMin.toLong())
-    )
-    return candidates.first { it.isAfter(now) }
+    ).asSequence()
+        .filter { it.isAfter(now) }
+        .minByOrNull { it.toEpochSecond() }
+        ?: tomorrow.sunrise.plusDays(1) // unreachable safety net for polar day
 }

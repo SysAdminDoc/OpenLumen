@@ -1,6 +1,6 @@
 # OpenLumen
 
-[![Version](https://img.shields.io/badge/version-0.3.1-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
+[![Version](https://img.shields.io/badge/version-0.4.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE)
 [![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements)
 [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)

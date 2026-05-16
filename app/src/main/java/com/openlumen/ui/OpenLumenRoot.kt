@@ -64,7 +64,7 @@ fun OpenLumenRoot() {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(dest.icon, contentDescription = null) },
+                            icon = { Icon(dest.icon, contentDescription = stringResource(dest.labelRes)) },
                             label = { Text(stringResource(dest.labelRes)) }
                         )
                     }

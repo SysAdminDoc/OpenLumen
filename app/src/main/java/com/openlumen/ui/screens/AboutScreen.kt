@@ -21,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,7 +42,7 @@ import com.openlumen.viewmodel.OpenLumenViewModel
 fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
     val result by vm.exportResult.collectAsState()
-    var showCrashLog by remember { mutableStateOf(false) }
+    var showCrashLog by rememberSaveable { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -52,10 +53,9 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     ) { uri -> uri?.let(vm::importFrom) }
 
     LaunchedEffect(result) {
-        result?.let {
-            Toast.makeText(ctx, it, Toast.LENGTH_SHORT).show()
-            vm.consumeExportResult()
-        }
+        val msg = result ?: return@LaunchedEffect
+        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+        vm.consumeExportResult()
     }
 
     Column(

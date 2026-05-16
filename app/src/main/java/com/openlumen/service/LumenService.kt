@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -28,35 +29,55 @@ import com.openlumen.schedule.isActive
 import com.openlumen.schedule.nextTransition
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 /**
- * Foreground service that owns the active ColorEngine. Lives as long as the user has
- * the filter enabled. Re-evaluates schedule once per minute; cheap to do, and saves
- * us from setting alarms with the heavyweight AlarmManager API.
+ * Foreground service that owns the active [ColorEngine]. Lives as long as the user has
+ * the filter enabled. The schedule's next state-flip drives an [AlarmManager] alarm
+ * (via [ScheduleAlarmReceiver]); the light sensor drives a Flow collector — no polling.
  *
- * IMPORTANT: We declare foregroundServiceType="specialUse" because Android 14+ requires
+ * IMPORTANT: We declare `foregroundServiceType="specialUse"` because Android 14+ requires
  * a typed FGS and `dataSync` / `systemExempted` are likely to be rejected on Play / F-Droid
- * review. The PROPERTY_SPECIAL_USE_FGS_SUBTYPE manifest property documents the use.
+ * review. The `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` manifest property documents the use.
+ *
+ * Concurrency model:
+ *   - Prefs and lux are AtomicReferences so the alarm receiver / sensor callback can
+ *     read the latest snapshot without coupling to the collector coroutine.
+ *   - All engine `apply()` and `clear()` calls are serialized through [applyMutex] so
+ *     concurrent su subprocesses never trample each other on the SurfaceFlinger /
+ *     KCAL paths.
+ *   - The prefs flow is `.conflate()`d before collection — if the user drags a slider
+ *     and produces many emissions while a slow su apply is in flight, only the latest
+ *     value is queued.
  */
 @AndroidEntryPoint
 class LumenService : LifecycleService() {
+
+    private val tag = "OpenLumen/LumenSvc"
 
     @Inject lateinit var prefs: PreferencesStore
     @Inject lateinit var probe: DriverProbe
     @Inject lateinit var lightSensor: LightSensorAdapter
 
-    private var engine: ColorEngine? = null
+    @Volatile private var engine: ColorEngine? = null
     private var lightJob: Job? = null
+    private val applyMutex = Mutex()
+
     private val latestPrefs = AtomicReference<Preferences?>(null)
     private val latestLux = AtomicReference(-1f)
-    private var lastApplied: LumenMatrix? = null
-    private var lastShouldBeActive: Boolean = false
+    @Volatile private var lastApplied: LumenMatrix? = null
+    @Volatile private var lastShouldBeActive: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
@@ -80,7 +101,7 @@ class LumenService : LifecycleService() {
         when (intent?.action) {
             ACTION_TURN_OFF -> lifecycleScope.launch {
                 prefs.update { it.copy(enabled = false) }
-                stopSelf()
+                // observePreferences will see enabled=false next emit, clear + stopSelf.
             }
             ACTION_REEVALUATE -> lifecycleScope.launch {
                 latestPrefs.get()?.let { applyIfShouldBeActive(it) }
@@ -110,30 +131,45 @@ class LumenService : LifecycleService() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(0, getString(R.string.notif_action_off), offIntent)
             .build()
-        if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (t: Throwable) {
+            // Android 12+ throws ForegroundServiceStartNotAllowedException if started from
+            // the wrong context. Log and bail rather than crashing the process.
+            Log.e(tag, "startForeground failed: ${t.message}", t)
+            stopSelf()
         }
     }
 
     /**
-     * Single long-lived collector on the prefs flow. Updates [latestPrefs] for the
-     * ticker, and reacts to changes immediately for engine/matrix application.
+     * Single long-lived collector on the prefs flow. `.conflate()` drops intermediate
+     * emissions while the current apply is in flight, so slider drags can't queue up
+     * dozens of su calls.
      */
     private fun observePreferences() {
         lifecycleScope.launch {
-            prefs.flow.collectLatest { p ->
+            prefs.flow.conflate().collect { p ->
                 latestPrefs.set(p)
                 if (!p.enabled) {
-                    engine?.clear(this@LumenService)
-                    stopSelf()
-                    return@collectLatest
+                    clearAndStop()
+                    return@collect
                 }
                 ensureEngine(p)
                 applyIfShouldBeActive(p)
             }
         }
+    }
+
+    private suspend fun clearAndStop() {
+        applyMutex.withLock {
+            runCatching { engine?.clear(this@LumenService) }
+                .onFailure { Log.w(tag, "engine.clear() failed: ${it.message}") }
+        }
+        stopSelf()
     }
 
     private suspend fun ensureEngine(p: Preferences) {
@@ -144,11 +180,22 @@ class LumenService : LifecycleService() {
             EngineKindDto.Kcal -> EngineKind.KCAL
             EngineKindDto.Overlay -> EngineKind.OVERLAY
         }
-        if (engine?.kind == want) return
-        engine?.clear(this)
-        engine = probe.engineOf(want)
-        // Overlay engine needs the service context to addView before first apply.
-        (engine as? OverlayEngine)?.installView(this, Presets.OFF)
+        val current = engine
+        if (current?.kind == want) return
+        applyMutex.withLock {
+            runCatching { current?.clear(this@LumenService) }
+            val next = probe.engineOf(want)
+            if (next == null) {
+                Log.e(tag, "DriverProbe returned null for $want — staying on previous engine")
+                return@withLock
+            }
+            // OverlayEngine needs the service window token before first apply.
+            (next as? OverlayEngine)?.installView(this@LumenService, Presets.OFF)
+            engine = next
+            // Reset cached state so the new engine receives a fresh apply on the next call.
+            lastApplied = null
+            lastShouldBeActive = false
+        }
     }
 
     /**
@@ -162,18 +209,26 @@ class LumenService : LifecycleService() {
     private suspend fun applyIfShouldBeActive(p: Preferences) {
         val mode = mapMode(p)
         val scheduleActive = isActive(mode)
+        val luxNow = latestLux.get()
         val lightActive = p.lightSensorEnabled &&
-            latestLux.get() >= 0f &&
-            latestLux.get() < p.lightSensorLuxThreshold
+            luxNow >= 0f && luxNow < p.lightSensorLuxThreshold
         val shouldBeActive = scheduleActive || lightActive
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
         if (shouldBeActive != lastShouldBeActive || matrix != lastApplied) {
-            lastShouldBeActive = shouldBeActive
-            engine?.apply(this, matrix)
-            lastApplied = matrix
+            applyMutex.withLock {
+                val e = engine
+                if (e == null) {
+                    Log.w(tag, "applyIfShouldBeActive: no engine yet, skipping")
+                } else {
+                    runCatching { e.apply(this@LumenService, matrix) }
+                        .onFailure { Log.w(tag, "engine.apply() failed: ${it.message}") }
+                }
+                lastShouldBeActive = shouldBeActive
+                lastApplied = matrix
+            }
         }
-        // Always reschedule — the next transition time depends on the current mode.
+        // Always reschedule — the next transition time depends on the current mode and clock.
         rescheduleNextTransition(mode)
     }
 
@@ -183,12 +238,16 @@ class LumenService : LifecycleService() {
      * on devices that deny SCHEDULE_EXACT_ALARM.
      */
     private fun rescheduleNextTransition(mode: ScheduleMode) {
-        val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val am = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val pi = schedulePendingIntent()
         am.cancel(pi)
 
         val next: ZonedDateTime = nextTransition(mode) ?: return // AlwaysOn/AlwaysOff
         val triggerMs = next.toInstant().toEpochMilli()
+        if (triggerMs <= System.currentTimeMillis()) {
+            // Don't bother scheduling a past time — set it 1 minute out as a safety net.
+            Log.w(tag, "nextTransition() returned a past time, deferring by 60s")
+        }
 
         try {
             if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
@@ -196,9 +255,13 @@ class LumenService : LifecycleService() {
             } else {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
             }
-        } catch (_: SecurityException) {
-            // Some OEMs reject exact alarms even with the permission declared. Fall back.
-            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+        } catch (e: SecurityException) {
+            Log.w(tag, "SecurityException scheduling exact alarm, falling back: ${e.message}")
+            try {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+            } catch (e2: SecurityException) {
+                Log.e(tag, "Both exact and inexact scheduling rejected: ${e2.message}")
+            }
         }
     }
 
@@ -231,22 +294,28 @@ class LumenService : LifecycleService() {
         )
     }
 
+    /**
+     * Defensive: corrupted import data could give us hour 25 or minute 70. We clamp into
+     * the valid LocalTime range so we never throw inside the foreground service.
+     */
     private fun mapMode(p: Preferences): ScheduleMode = when (p.schedule.mode) {
         com.openlumen.prefs.ScheduleModeDto.AlwaysOn -> ScheduleMode.AlwaysOn
         com.openlumen.prefs.ScheduleModeDto.AlwaysOff -> ScheduleMode.AlwaysOff
         com.openlumen.prefs.ScheduleModeDto.FixedTime -> ScheduleMode.FixedTime(
-            LocalTime.of(p.schedule.startHour, p.schedule.startMinute),
-            LocalTime.of(p.schedule.endHour, p.schedule.endMinute)
+            LocalTime.of(p.schedule.startHour.coerceIn(0, 23), p.schedule.startMinute.coerceIn(0, 59)),
+            LocalTime.of(p.schedule.endHour.coerceIn(0, 23), p.schedule.endMinute.coerceIn(0, 59))
         )
         com.openlumen.prefs.ScheduleModeDto.Solar -> {
-            if (p.schedule.latitude.isNaN() || p.schedule.longitude.isNaN()) {
+            val lat = p.schedule.latitude
+            val lng = p.schedule.longitude
+            if (lat.isNaN() || lng.isNaN() || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
                 ScheduleMode.AlwaysOff
             } else {
                 ScheduleMode.Solar(
-                    latitude = p.schedule.latitude,
-                    longitude = p.schedule.longitude,
-                    sunsetOffsetMin = p.schedule.sunsetOffsetMin,
-                    sunriseOffsetMin = p.schedule.sunriseOffsetMin
+                    latitude = lat,
+                    longitude = lng,
+                    sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
+                    sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
                 )
             }
         }
@@ -259,12 +328,23 @@ class LumenService : LifecycleService() {
 
     override fun onDestroy() {
         lightJob?.cancel()
-        // Cancel pending schedule alarm so it doesn't try to re-spawn us while disabled.
         runCatching {
-            val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            am.cancel(schedulePendingIntent())
+            val am = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            am?.cancel(schedulePendingIntent())
         }
-        lifecycleScope.launch { engine?.clear(this@LumenService) }
+        // Synchronously clear the engine — the lifecycleScope is about to be cancelled,
+        // so a normal `launch { engine?.clear() }` would race with cancellation. We
+        // block on a short timeout so we never hang shutdown if su is misbehaving.
+        val e = engine
+        if (e != null) {
+            runBlocking {
+                withContext(NonCancellable) {
+                    withTimeoutOrNull(2_000L) {
+                        runCatching { e.clear(this@LumenService) }
+                    }
+                }
+            }
+        }
         super.onDestroy()
     }
 

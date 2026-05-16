@@ -56,15 +56,69 @@ class PreferencesStore(private val context: Context) {
         }
     }
 
-    /** Reads from the URI returned by ACTION_OPEN_DOCUMENT and replaces the active prefs. */
+    /**
+     * Reads from the URI returned by ACTION_OPEN_DOCUMENT and replaces the active prefs.
+     *
+     * Defensive: an imported file might be corrupted or malicious. We:
+     *  - Cap the read at 64 KB so a giant blob can't OOM us.
+     *  - Decode with `ignoreUnknownKeys` (already set).
+     *  - Clamp every numeric field into its valid range before persisting.
+     *  - Always preserve the user's current `enabled` state — importing should not
+     *    silently flip the filter on/off behind the user's back.
+     */
     suspend fun importFrom(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
             val text = context.contentResolver.openInputStream(uri).use { input ->
                 checkNotNull(input) { "openInputStream returned null for $uri" }
-                input.bufferedReader(Charsets.UTF_8).readText()
+                val sb = StringBuilder()
+                input.bufferedReader(Charsets.UTF_8).use { reader ->
+                    val buf = CharArray(4096)
+                    while (true) {
+                        val n = reader.read(buf)
+                        if (n < 0) break
+                        sb.append(buf, 0, n)
+                        if (sb.length > MAX_IMPORT_BYTES) {
+                            error("Import file exceeds ${MAX_IMPORT_BYTES} bytes")
+                        }
+                    }
+                    sb.toString()
+                }
             }
-            val imported = json.decodeFromString(Preferences.serializer(), text)
-            update { imported }
+            val raw = json.decodeFromString(Preferences.serializer(), text)
+            update { current -> sanitize(raw, preserveEnabled = current.enabled) }
         }
+    }
+
+    private fun sanitize(p: Preferences, preserveEnabled: Boolean): Preferences = p.copy(
+        enabled = preserveEnabled,
+        presetIntensity = p.presetIntensity.coerceIn(0f, 1f),
+        dim = p.dim.coerceIn(0f, 0.95f),
+        customMatrix = p.customMatrix.copy(
+            r = p.customMatrix.r.coerceIn(0f, 1f),
+            g = p.customMatrix.g.coerceIn(0f, 1f),
+            b = p.customMatrix.b.coerceIn(0f, 1f),
+            biasR = p.customMatrix.biasR.coerceIn(-1f, 1f),
+            biasG = p.customMatrix.biasG.coerceIn(-1f, 1f),
+            biasB = p.customMatrix.biasB.coerceIn(-1f, 1f),
+            dim = p.customMatrix.dim.coerceIn(0f, 0.95f),
+            gammaR = p.customMatrix.gammaR.coerceIn(0.1f, 5f),
+            gammaG = p.customMatrix.gammaG.coerceIn(0.1f, 5f),
+            gammaB = p.customMatrix.gammaB.coerceIn(0.1f, 5f)
+        ),
+        schedule = p.schedule.copy(
+            startHour = p.schedule.startHour.coerceIn(0, 23),
+            startMinute = p.schedule.startMinute.coerceIn(0, 59),
+            endHour = p.schedule.endHour.coerceIn(0, 23),
+            endMinute = p.schedule.endMinute.coerceIn(0, 59),
+            latitude = if (p.schedule.latitude in -90.0..90.0) p.schedule.latitude else Double.NaN,
+            longitude = if (p.schedule.longitude in -180.0..180.0) p.schedule.longitude else Double.NaN,
+            sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
+            sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
+        ),
+        lightSensorLuxThreshold = p.lightSensorLuxThreshold.coerceAtLeast(0f)
+    )
+
+    private companion object {
+        const val MAX_IMPORT_BYTES = 64 * 1024
     }
 }

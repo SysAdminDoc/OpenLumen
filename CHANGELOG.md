@@ -4,6 +4,107 @@ All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-05-16
+
+Deep engineering audit pass. Every major file was reviewed for correctness,
+race conditions, error handling, and UX polish; this release rolls up every
+fix found.
+
+### Concurrency and lifecycle
+- `LumenService.applyMutex` (kotlinx.coroutines.sync.Mutex) now serializes every
+  `ColorEngine.apply()` / `clear()` call. Previously concurrent invocations
+  (prefs change + alarm fire + light-sensor flip) could spawn overlapping `su`
+  subprocesses on the SurfaceFlinger / KCAL paths.
+- Prefs flow is `.conflate()`d before collection. Dragging an RGB slider rapidly
+  no longer queues dozens of engine applies — only the latest value is taken
+  once the current apply releases the mutex.
+- `engine`, `lastApplied`, and `lastShouldBeActive` are `@Volatile`. The alarm
+  receiver and sensor callback observe these from different threads.
+- `LumenService.onDestroy()` runs `engine.clear()` synchronously inside
+  `runBlocking { withContext(NonCancellable) { withTimeoutOrNull(2s) {…} } }`.
+  Previously we launched a coroutine *after* `lifecycleScope` was about to be
+  cancelled, racing teardown with cleanup.
+- `LumenTileService` now creates a fresh `CoroutineScope` on every `onCreate()`
+  and cancels it on `onDestroy()`. The old service held a module-level scope
+  that leaked across rebinds.
+- Tile toggle uses `prefs.update { current -> current.copy(enabled = !current.enabled) }`
+  — atomic with respect to the stored value, so rapid double-taps cannot land
+  in an inconsistent state.
+
+### `su` wrapper hardening (`core-engine/Su.kt`)
+- Removed the double-invocation bug in `isAvailable()` (previously spawned
+  `su -c id` twice; would prompt Magisk twice on first run).
+- `redirectErrorStream(true)` on both `runCommand` and `runShell`. Eliminates
+  the classic "pipe buffer full on the un-read stream" deadlock.
+- `BufferedReader.use { }` on every stream — no FD leaks on timeout paths.
+- `runShell` now has a 4-second wall-clock timeout matching `runCommand`. Old
+  implementation could hang forever if `su` prompted interactively.
+- `runShell` drains stdout to prevent script-output deadlock on KCAL writes.
+- All failure paths log via android.util.Log under `OpenLumen/Su`.
+
+### Engine fixes
+- `OverlayEngine.installView()` checks `Settings.canDrawOverlays()` before
+  calling `wm.addView()` and catches the exception path. Returns false on
+  failure instead of crashing the service.
+- `OverlayEngine.clear()` dropped a dead `else` branch that could only fire if
+  `hostView != null && hostWm == null` — impossible by code flow.
+- `ColorDisplayManagerEngine` tries the `(Context)` constructor first, falls
+  back to no-arg. Previous code only tried no-arg, breaking on AOSP builds
+  that require the Context overload.
+- `ColorDisplayManagerEngine` caches the reflected `Method` handles and the
+  manager instance — no more reflection on every apply().
+
+### Boot reliability
+- `BootReceiver` no longer registers for `LOCKED_BOOT_COMPLETED`. DataStore
+  lives in user-protected storage, so listening for the locked-boot signal
+  just deadlocked `prefs.flow.first()` until the system killed our
+  `PendingResult`. Direct-boot support is deferred to v0.5+.
+- `BootReceiver` wraps the whole body in try/finally and a 8-second timeout
+  on the prefs read so a hung DataStore can never leak the PendingResult.
+
+### UI / Compose / accessibility
+- The Home tab's top toggle Card is now whole-card-clickable. Previous tap
+  target was just the Switch thumb (~48dp wide on a ~340dp card).
+- Intensity and Dim sliders now expose `Modifier.semantics { stateDescription = "N percent" }`
+  so TalkBack reads "75 percent" instead of "0.75" or just "slider".
+- Bottom-nav icons now carry `contentDescription = labelRes`. Was null, which
+  would have read just "Home button" without context if a future label change
+  broke the visible text rendering.
+- `AlertDialog`-driven flags (`showStartPicker`, `showEndPicker`,
+  `showLocationDialog`, `showCrashLog`) are now `rememberSaveable` so a rotation
+  or process death survives the dialog state.
+- `AboutScreen.LaunchedEffect(result)` no longer fires its body twice (once
+  for the new value, once for the cleared null). Uses `return@LaunchedEffect`
+  early-out.
+
+### Defensive input handling
+- `PreferencesStore.importFrom()` reads up to 64 KB, decodes, then **sanitizes**
+  every numeric field (R/G/B/dim/gamma/lat/lng/offsets/hour/minute) into its
+  valid range. Out-of-range latitudes become `NaN` (= AlwaysOff). Importing
+  a malicious profile cannot crash the service.
+- Import preserves the user's current `enabled` state — replacing settings
+  must not silently toggle the filter on/off.
+- `LumenService.mapMode()` clamps `startHour/startMinute/endHour/endMinute`
+  before constructing `LocalTime`, so corrupted prefs never throw inside the
+  foreground service.
+
+### Diagnostics
+- Added `core-engine/Log.kt` (`EngineLog`) — thin android.util.Log wrapper that
+  enforces the 23-char tag length cap.
+- Every catch/fallback path in the service + engines now logs under tags like
+  `OpenLumen/LumenSvc`, `OpenLumen/Overlay`, `OpenLumen/Su`, `OpenLumen/CDM`,
+  `OpenLumen/BootRecv`, `OpenLumen/Tile`.
+
+### Tests
+- Added `core-engine/src/test/java/.../LumenMatrixTest.kt` covering identity,
+  dim coercion, gamma math, and SurfaceFlinger matrix layout.
+- Added `core-schedule/src/test/java/.../SolarCalculatorTest.kt` cross-checking
+  NOAA sunrise/sunset for New York, Sydney, Quito, Tromsø.
+- Added `core-schedule/src/test/java/.../ScheduleTest.kt` covering AlwaysOn/Off,
+  FixedTime midnight wrap, edge boundaries, and `nextTransition` correctness.
+- JUnit 4 + Truth wired in via `gradle/libs.versions.toml`. Run with
+  `./gradlew :core-engine:test :core-schedule:test`.
+
 ## [0.3.1] — 2026-05-16
 
 ### Fixed
