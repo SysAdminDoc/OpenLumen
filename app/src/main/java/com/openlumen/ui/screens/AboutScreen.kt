@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +50,8 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val result by vm.exportResult.collectAsState()
     var showCrashLog by rememberSaveable { mutableStateOf(false) }
     var showDiagLog by rememberSaveable { mutableStateOf(false) }
+    var showSaveProfileDialog by rememberSaveable { mutableStateOf(false) }
+    var saveProfileName by rememberSaveable { mutableStateOf("") }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -130,6 +134,57 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
 
+        // Named profile library (C31). Save the current configuration under a
+        // name; load it back later. Loading also records the previous active
+        // preset so the C14 restore path round-trips with profile loading.
+        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.about_profiles_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    stringResource(R.string.about_profiles_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LumenOutlinedButton(
+                    onClick = {
+                        saveProfileName = ""
+                        showSaveProfileDialog = true
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.about_profiles_save)) }
+
+                if (currentPrefs.savedProfiles.isEmpty()) {
+                    Text(
+                        stringResource(R.string.about_profiles_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    currentPrefs.savedProfiles.forEach { profile ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Text(
+                                profile.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            LumenTextButton(onClick = { vm.loadProfile(profile.name) }) {
+                                Text(stringResource(R.string.about_profiles_load))
+                            }
+                            LumenTextButton(onClick = { vm.deleteProfile(profile.name) }) {
+                                Text(stringResource(R.string.about_profiles_delete))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Emergency-off ADB command (C13). Surfaced in About so the command
         // is discoverable even when the on-screen tint is too strong to read
         // the rest of the UI — users learn it exists, can stash it in a
@@ -160,6 +215,36 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 ) { Text(stringResource(R.string.about_emergency_off_copy)) }
             }
         }
+    }
+
+    if (showSaveProfileDialog) {
+        AlertDialog(
+            onDismissRequest = { showSaveProfileDialog = false },
+            title = { Text(stringResource(R.string.about_profiles_save_title)) },
+            text = {
+                OutlinedTextField(
+                    value = saveProfileName,
+                    onValueChange = { saveProfileName = it },
+                    label = { Text(stringResource(R.string.about_profiles_name_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                LumenTextButton(
+                    onClick = {
+                        vm.saveProfileAs(saveProfileName)
+                        showSaveProfileDialog = false
+                    },
+                    enabled = saveProfileName.trim().isNotEmpty()
+                ) { Text(stringResource(R.string.about_profiles_save)) }
+            },
+            dismissButton = {
+                LumenTextButton(onClick = { showSaveProfileDialog = false }) {
+                    Text(stringResource(R.string.import_preview_cancel))
+                }
+            }
+        )
     }
 
     if (showDiagLog) {

@@ -73,6 +73,14 @@
     <string name="about_view_diag_log">View diagnostics log</string>
     <string name="about_diag_log_title">Diagnostics log</string>
     <string name="about_diag_log_empty">No events recorded yet.</string>
+    <string name="about_profiles_title">Profiles</string>
+    <string name="about_profiles_body">Save the current preset, schedule, intensity, dim, and favorites as a named profile. Load it later from this list.</string>
+    <string name="about_profiles_save">Save current as…</string>
+    <string name="about_profiles_save_title">Save profile</string>
+    <string name="about_profiles_name_label">Profile name</string>
+    <string name="about_profiles_load">Load</string>
+    <string name="about_profiles_delete">Delete</string>
+    <string name="about_profiles_empty">No profiles saved yet.</string>
 
     <string name="notif_channel_id">openlumen.filter</string>
     <string name="notif_channel_name">Filter status</string>

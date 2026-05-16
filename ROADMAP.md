@@ -137,6 +137,7 @@ view). Each entry lists where the work landed.
 - **C93** — Play FGS evidence pack → [docs/play-fgs-evidence.md](docs/play-fgs-evidence.md)
 - **C27** — Automatic timezone fallback → Schedule screen shows the system zone label so users know which clock fixed-time schedules fire against
 - **C26** — Offline city picker → `core-schedule/OfflineCities` (~95 cities, IANA zones), search + nearest helpers, wired into LocationEntryDialog
+- **C31** — Named profile library → `ProfileSnapshot` + `NamedProfile` model, `Profiles.{snapshot,apply,saveCurrentAs,loadByName,delete}` pure transforms, About-screen list UI, sanitized into `Preferences.savedProfiles` (cap 32, name ≤48 chars, last-write-wins on duplicate names)
 - **C32** — Red Moon profile import (notes) → [docs/profile-import-formats.md](docs/profile-import-formats.md) (importer not implemented; format and mapping documented)
 - **C33** — CF.Lumen import notes → same doc; manual mapping table provided since the source is unavailable
 - **C58** — RTL layout support → manifest `supportsRtl=true` already set; layout audit conventions documented in `docs/translations.md`

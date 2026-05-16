@@ -152,6 +152,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- Named profile library. `Preferences.savedProfiles` holds up to 32
+  `NamedProfile`s; each is a `(name, ProfileSnapshot)` pair where the
+  snapshot covers preset, custom RGB matrix, intensity, dim,
+  schedule, engine, light-sensor settings, favorites, and transition
+  duration. Saving captures the current configuration; loading
+  applies it while preserving runtime state (enabled, schemaVersion,
+  the saved-profile library itself, firstRunComplete) and stamping
+  the previous active preset so C14 restore round-trips through
+  profile loads. Pure transforms in `core-prefs/Profiles.kt` are
+  unit-tested separately from the UI. About tab gets a Profiles card
+  with Save / Load / Delete affordances.
 - Offline city picker in the Location entry dialog. `OfflineCities` in
   `core-schedule` bundles ~95 major cities with IANA timezones and
   coordinates accurate to four decimal places. Search is

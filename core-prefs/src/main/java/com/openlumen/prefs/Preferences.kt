@@ -2,6 +2,35 @@ package com.openlumen.prefs
 
 import kotlinx.serialization.Serializable
 
+/**
+ * Frozen snapshot of the user-tunable fields of [Preferences], used as the
+ * payload of a [NamedProfile]. Tied to roadmap candidate **C31** (Named
+ * profile library).
+ *
+ * Excludes runtime state — `enabled`, `firstRunComplete`,
+ * `previousPresetKey`, and `schemaVersion`. Importing a profile must never
+ * silently flip the filter on or change the schema-version marker.
+ */
+@Serializable
+data class ProfileSnapshot(
+    val activePresetKey: String,
+    val customMatrix: MatrixDto,
+    val presetIntensity: Float,
+    val dim: Float,
+    val schedule: ScheduleDto,
+    val engine: EngineKindDto,
+    val lightSensorEnabled: Boolean,
+    val lightSensorLuxThreshold: Float,
+    val favoritePresetKeys: List<String>,
+    val transitionDurationMs: Long
+)
+
+@Serializable
+data class NamedProfile(
+    val name: String,
+    val snapshot: ProfileSnapshot
+)
+
 /** Serializable mirror of LumenMatrix (core-engine has no kotlinx-serialization dep). */
 @Serializable
 data class MatrixDto(
@@ -84,7 +113,13 @@ data class Preferences(
      * [PresetCycle.restorePrevious] can flip back to it. Tied to roadmap
      * candidate C14. Null means "no previous preset recorded yet".
      */
-    val previousPresetKey: String? = null
+    val previousPresetKey: String? = null,
+    /**
+     * Named profile library (C31). Each entry is a (name, snapshot) pair;
+     * names are unique within the list and capped at [MAX_PROFILES] to keep
+     * the persisted blob bounded.
+     */
+    val savedProfiles: List<NamedProfile> = emptyList()
 ) {
     companion object {
         /**
@@ -114,5 +149,19 @@ data class Preferences(
          * interpolation loop.
          */
         const val TRANSITION_MAX_MS: Long = 30L * 60 * 1000
+
+        /**
+         * Maximum number of [NamedProfile] entries persisted. Bounds the size
+         * of the JSON blob and the rendering cost of the in-app profile
+         * list. Sanitize drops the tail beyond this.
+         */
+        const val MAX_PROFILES: Int = 32
+
+        /**
+         * Maximum length of a [NamedProfile.name]. Long enough for "After-
+         * dinner reading, dim" and short enough that the profile list fits
+         * on a phone screen.
+         */
+        const val MAX_PROFILE_NAME_LENGTH: Int = 48
     }
 }

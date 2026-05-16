@@ -170,7 +170,8 @@ class PreferencesStore(private val context: Context) {
         ),
         lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
         favoritePresetKeys = sanitizeFavorites(p.favoritePresetKeys),
-        transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS)
+        transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
+        savedProfiles = sanitizeProfiles(p.savedProfiles)
     )
 
     private fun sanitizePresetKey(key: String): String =
@@ -189,6 +190,29 @@ class PreferencesStore(private val context: Context) {
             .distinct()
             .take(MAX_FAVORITES)
             .toList()
+
+    /**
+     * Bounds: name non-blank + ≤ 48 chars; library size capped at 32
+     * entries; duplicate names drop earlier occurrences (last-write-wins,
+     * matching `Profiles.saveCurrentAs` semantics). We don't re-validate
+     * each snapshot field — those are clamped at sanitize-time via the
+     * top-level copy() chain because a snapshot's fields are the same
+     * types we already clamp.
+     */
+    private fun sanitizeProfiles(list: List<NamedProfile>): List<NamedProfile> {
+        if (list.isEmpty()) return list
+        val seen = mutableSetOf<String>()
+        return list.asReversed()
+            .asSequence()
+            .mapNotNull { p ->
+                val name = p.name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
+                if (name.isBlank() || !seen.add(name)) null
+                else p.copy(name = name)
+            }
+            .take(Preferences.MAX_PROFILES)
+            .toList()
+            .asReversed()
+    }
 
     private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
         if (isFinite()) coerceIn(min, max) else default

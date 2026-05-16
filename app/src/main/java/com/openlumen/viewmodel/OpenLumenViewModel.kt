@@ -71,6 +71,19 @@ class OpenLumenViewModel @Inject constructor(
         prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
     }
 
+    /** Save the current configuration into the named-profile library (C31). */
+    fun saveProfileAs(name: String) = viewModelScope.launch {
+        prefs.update { com.openlumen.prefs.Profiles.saveCurrentAs(it, name) }
+    }
+
+    fun loadProfile(name: String) = viewModelScope.launch {
+        prefs.update { com.openlumen.prefs.Profiles.loadByName(it, name) }
+    }
+
+    fun deleteProfile(name: String) = viewModelScope.launch {
+        prefs.update { com.openlumen.prefs.Profiles.delete(it, name) }
+    }
+
     fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {
         prefs.update { it.copy(schedule = it.schedule.copy(mode = mode)) }
     }
