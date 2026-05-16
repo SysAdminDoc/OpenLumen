@@ -124,6 +124,8 @@ view). Each entry lists where the work landed.
 - **C16** — Notification preset cycle → "Next preset" action on the foreground notification; uses `PresetCycle.next`
 - **C19** — Home-screen 1x1 toggle widget → `ToggleWidget` AppWidgetProvider, refresh broadcast from `LumenService.observePreferences()`
 - **C03** — SurfaceFlinger code registry → `SurfaceFlingerEngine.candidatesFor(api)` per-API ladder, `activeTransactionCode` diagnostic, captured in driver report
+- **C52** — Local diagnostics bundle → `DiagnosticsLog` ring-buffered event log; tail appended to every driver report
+- **C53** — Structured log viewer → About → "View diagnostics log" dialog over the bounded event log
 - **C04** — KCAL variant probing → `KcalEngine.CANDIDATE_BASES` with three known sysfs roots, `activeBasePath` diagnostic, captured in driver report
 - **C20** — Home-screen 4x1 preset widget → `PresetWidget` renders the first four favorites as tappable swatches; click dispatches `LumenService.ACTION_SET_PRESET`
 - **C23** — Smooth fixed-time transitions → `transitionDurationMs` pref + `LumenMatrix.lerp` + `LumenService.applyMatrix(target, durationMs)` ramp coroutine

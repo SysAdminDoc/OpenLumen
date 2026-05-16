@@ -27,6 +27,7 @@ import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
 import com.openlumen.schedule.nextTransition
+import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.widget.PresetWidget
 import com.openlumen.widget.ToggleWidget
 import dagger.hilt.android.AndroidEntryPoint
@@ -86,6 +87,7 @@ class LumenService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+        DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onCreate")
         startInForeground()
         observePreferences()
     }
@@ -359,7 +361,16 @@ class LumenService : LifecycleService() {
         if (triggerMs <= nowMs) {
             // Don't schedule a past time; use a short safety-net delay instead.
             Log.w(tag, "nextTransition() returned a past time, deferring by 60s")
+            DiagnosticsLog.log(
+                this, DiagnosticsLog.Level.WARN, DiagnosticsLog.Category.SCHEDULE,
+                "nextTransition returned past time; deferred 60s"
+            )
             triggerMs = nowMs + 60_000L
+        } else {
+            DiagnosticsLog.log(
+                this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SCHEDULE,
+                "scheduled next transition in ${(triggerMs - nowMs) / 1000}s"
+            )
         }
 
         try {
@@ -440,6 +451,7 @@ class LumenService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onDestroy")
         transitionJob?.cancel()
         lightJob?.cancel()
         runCatching {

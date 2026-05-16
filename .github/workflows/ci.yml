@@ -34,6 +34,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: |
           ./gradlew \
+            :app:testDebugUnitTest \
             :core-engine:test \
             :core-schedule:test \
             :core-prefs:test \

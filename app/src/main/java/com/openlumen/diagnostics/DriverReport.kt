@@ -42,7 +42,30 @@ object DriverReport {
         appendPermissions(context)
         appendProbes(probes)
         appendConfig(prefs)
+        appendDiagnostics(context)
         appendFooter()
+    }
+
+    /**
+     * Append the tail of the local diagnostics log (last ~3 KB) so a paste
+     * captures recent event history without including the full bounded log.
+     * Tied to roadmap candidate C52.
+     */
+    private fun StringBuilder.appendDiagnostics(context: Context) {
+        appendLine("Recent diagnostics")
+        appendLine("---")
+        val full = DiagnosticsLog.read(context)
+        if (full.isBlank()) {
+            appendLine("(no events recorded)")
+        } else {
+            val tail = if (full.length > 3000) full.substring(full.length - 3000) else full
+            // Drop any partial first line after the cut so the report stays
+            // parseable.
+            val cleanTail = if (tail.startsWith(full)) tail
+                            else tail.substringAfter('\n', tail)
+            appendLine(cleanTail.trimEnd())
+        }
+        appendLine()
     }
 
     private fun StringBuilder.appendHeader() {

@@ -70,6 +70,9 @@
     <string name="about_emergency_off_body">If the filter ever sticks and the tile / notification is unreachable, you can force-clear from a computer via ADB:</string>
     <string name="about_emergency_off_copy">Copy ADB command</string>
     <string name="about_emergency_off_copied">Emergency-off command copied</string>
+    <string name="about_view_diag_log">View diagnostics log</string>
+    <string name="about_diag_log_title">Diagnostics log</string>
+    <string name="about_diag_log_empty">No events recorded yet.</string>
 
     <string name="notif_channel_id">openlumen.filter</string>
     <string name="notif_channel_name">Filter status</string>

@@ -36,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.BuildConfig
 import com.openlumen.CrashLogger
 import com.openlumen.R
+import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenTextButton
@@ -46,6 +47,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
     val result by vm.exportResult.collectAsState()
     var showCrashLog by rememberSaveable { mutableStateOf(false) }
+    var showDiagLog by rememberSaveable { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -121,6 +123,10 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     onClick = { showCrashLog = true },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("View crash log") }
+                LumenOutlinedButton(
+                    onClick = { showDiagLog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.about_view_diag_log)) }
             }
         }
 
@@ -154,6 +160,31 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 ) { Text(stringResource(R.string.about_emergency_off_copy)) }
             }
         }
+    }
+
+    if (showDiagLog) {
+        val log = remember { DiagnosticsLog.read(ctx) }
+        AlertDialog(
+            onDismissRequest = { showDiagLog = false },
+            title = { Text(stringResource(R.string.about_diag_log_title)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        if (log.isBlank()) stringResource(R.string.about_diag_log_empty) else log,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                LumenTextButton(onClick = { showDiagLog = false }) { Text("Close") }
+            },
+            dismissButton = {
+                LumenTextButton(onClick = {
+                    DiagnosticsLog.clear(ctx)
+                    showDiagLog = false
+                }) { Text("Clear") }
+            }
+        )
     }
 
     if (showCrashLog) {

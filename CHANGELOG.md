@@ -152,6 +152,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- Local diagnostics log at `filesDir/diagnostics.log`. Bounded
+  (~64 KB cap, trimmed to ~32 KB), append-only, grep-friendly text
+  format `<instant> <LEVEL> <CATEGORY> <message>`. The
+  foreground service writes lifecycle and schedule-reschedule events.
+  Tail of the log is included in every driver report
+  (last ~3 KB). About → "View diagnostics log" opens an in-app
+  dialog with Clear; the log never leaves the device unless the user
+  shares it manually. The app module now runs its own
+  `testDebugUnitTest` in CI; format-level tests on `DiagnosticsLog`
+  ride alongside.
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a
