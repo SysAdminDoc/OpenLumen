@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenLumen</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_presets">Presets</string>
+    <string name="nav_driver">Driver</string>
+    <string name="nav_about">About</string>
+
+    <string name="home_filter_off">Filter is off</string>
+    <string name="home_filter_on">Filter is on</string>
+    <string name="home_toggle">Toggle filter</string>
+    <string name="home_intensity">Intensity</string>
+    <string name="home_dim">Dim below minimum</string>
+
+    <string name="presets_title">Choose a preset</string>
+    <string name="presets_custom">Custom RGB</string>
+    <string name="presets_red">Red</string>
+    <string name="presets_amber">Amber</string>
+    <string name="presets_night">Night</string>
+
+    <string name="schedule_title">When should it run?</string>
+    <string name="schedule_off">Off</string>
+    <string name="schedule_always">Always</string>
+    <string name="schedule_fixed">Fixed time</string>
+    <string name="schedule_solar">Sunset → sunrise</string>
+    <string name="schedule_start">Start</string>
+    <string name="schedule_end">End</string>
+
+    <string name="driver_title">Display driver</string>
+    <string name="driver_auto">Auto (best available)</string>
+    <string name="driver_color_display">AOSP ColorDisplayManager</string>
+    <string name="driver_surfaceflinger">SurfaceFlinger (root)</string>
+    <string name="driver_kcal">KCAL kernel (root, Qualcomm)</string>
+    <string name="driver_overlay">Overlay (rootless)</string>
+    <string name="driver_refresh">Re-probe</string>
+    <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
+
+    <string name="about_version">Version</string>
+    <string name="about_license">License: GPL-3.0-or-later</string>
+    <string name="about_source">Source: github.com/SysAdminDoc/OpenLumen</string>
+    <string name="about_offline">100%% offline — no INTERNET permission requested.</string>
+
+    <string name="notif_channel_id">openlumen.filter</string>
+    <string name="notif_channel_name">Filter status</string>
+    <string name="notif_channel_desc">Indicates that OpenLumen is currently tinting the display.</string>
+    <string name="notif_title">OpenLumen active</string>
+    <string name="notif_action_off">Turn off</string>
+
+    <string name="tile_off">Off</string>
+    <string name="tile_on">On</string>
+
+    <string name="perm_overlay_title">Allow display over other apps</string>
+    <string name="perm_overlay_rationale">Required for the rootless overlay driver. Skip if you only use root drivers.</string>
+    <string name="perm_overlay_grant">Open settings</string>
+</resources>

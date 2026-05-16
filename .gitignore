@@ -1,0 +1,48 @@
+# Gradle
+.gradle/
+build/
+**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+gradle-wrapper.properties.bak
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.apk
+*.aab
+*.aar
+*.dex
+release/
+*.hprof
+
+# Signing
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# AI working files (local only, never committed)
+CLAUDE.md
+CODEX_CHANGELOG.md
+.claude/
+.cursor/
+.aider*
+
+# Misc
+*.bak
+*.log
+*.tmp

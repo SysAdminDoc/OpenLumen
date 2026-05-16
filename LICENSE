@@ -1,0 +1,33 @@
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2026 OpenLumen contributors
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the
+  Free Software Foundation, either version 3 of the License, or (at your
+  option) any later version.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+For the full GPL-3.0 text, see: https://www.gnu.org/licenses/gpl-3.0.txt
+
+================================================================================
+
+OpenLumen is licensed under GPL-3.0-or-later.
+
+Why GPL-3.0?
+- Aligns with Red Moon (LibreShift/red-moon), which OpenLumen draws lineage from.
+- Strong copyleft means any derivative that ships a binary must publish source —
+  important for a system-level app that touches root drivers.
+- Compatible with F-Droid's inclusion policies.
+
+If you want a permissive license carve-out for a specific module, open an issue.
