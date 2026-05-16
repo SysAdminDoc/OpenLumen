@@ -33,6 +33,13 @@
     <string name="schedule_solar">Sunset → sunrise</string>
     <string name="schedule_start">Start</string>
     <string name="schedule_end">End</string>
+    <string name="transition_duration_title">Transition duration</string>
+    <string name="transition_duration_subtitle">How smoothly the filter fades in or out at schedule boundaries. User-driven changes (sliders, preset taps) remain instant.</string>
+    <string name="transition_instant">Instant</string>
+    <string name="transition_30s">30 seconds</string>
+    <string name="transition_5m">5 minutes</string>
+    <string name="transition_15m">15 minutes</string>
+    <string name="transition_30m">30 minutes</string>
 
     <string name="driver_title">Display driver</string>
     <string name="driver_auto">Auto (best available)</string>

@@ -69,7 +69,15 @@ data class Preferences(
     val lightSensorEnabled: Boolean = false,
     val lightSensorLuxThreshold: Float = 2f,
     val firstRunComplete: Boolean = false,
-    val favoritePresetKeys: List<String> = DEFAULT_FAVORITES
+    val favoritePresetKeys: List<String> = DEFAULT_FAVORITES,
+    /**
+     * Smooth-transition duration in milliseconds (roadmap C23/C24). 0 means
+     * instant — the engine receives the new matrix in a single apply call,
+     * which is the legacy behavior. Non-zero values cause the foreground
+     * service to interpolate from the last-applied matrix toward the new
+     * target over this duration. Clamped to `0..TRANSITION_MAX_MS`.
+     */
+    val transitionDurationMs: Long = 0L
 ) {
     companion object {
         /**
@@ -91,5 +99,13 @@ data class Preferences(
          * Validated against [com.openlumen.engine.Presets] at use sites.
          */
         val DEFAULT_FAVORITES: List<String> = listOf("night", "amber", "red", "deep")
+
+        /**
+         * Upper bound on smooth-transition duration. 30 minutes matches the
+         * longest sensible ramp for a sunset/sunrise transition and prevents
+         * an imported profile from pinning the service into a multi-hour
+         * interpolation loop.
+         */
+        const val TRANSITION_MAX_MS: Long = 30L * 60 * 1000
     }
 }

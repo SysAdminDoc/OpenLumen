@@ -89,6 +89,44 @@ class LumenMatrixTest {
         assertThat(alpha).isAtMost(204)
     }
 
+    @Test fun `lerp at t equals zero returns the receiver`() {
+        val a = LumenMatrix(r = 1f, g = 0.5f, b = 0.25f, dim = 0.3f)
+        val b = LumenMatrix(r = 0.4f, g = 0.8f, b = 0.9f, dim = 0.6f)
+
+        val result = a.lerp(b, 0f)
+
+        assertThat(result).isEqualTo(a)
+    }
+
+    @Test fun `lerp at t equals one returns the target`() {
+        val a = LumenMatrix(r = 1f, g = 0.5f, b = 0.25f, dim = 0.3f)
+        val b = LumenMatrix(r = 0.4f, g = 0.8f, b = 0.9f, dim = 0.6f)
+
+        val result = a.lerp(b, 1f)
+
+        assertThat(result).isEqualTo(b)
+    }
+
+    @Test fun `lerp at t equals half interpolates each field`() {
+        val a = LumenMatrix(r = 1.0f, g = 0.0f, b = 0.5f, dim = 0.0f)
+        val b = LumenMatrix(r = 0.0f, g = 1.0f, b = 0.5f, dim = 0.5f)
+
+        val mid = a.lerp(b, 0.5f)
+
+        assertThat(mid.r).isWithin(EPS).of(0.5f)
+        assertThat(mid.g).isWithin(EPS).of(0.5f)
+        assertThat(mid.b).isWithin(EPS).of(0.5f)
+        assertThat(mid.dim).isWithin(EPS).of(0.25f)
+    }
+
+    @Test fun `lerp clamps t into the unit interval`() {
+        val a = LumenMatrix(r = 1f)
+        val b = LumenMatrix(r = 0f)
+
+        assertThat(a.lerp(b, -10f).r).isEqualTo(1f)
+        assertThat(a.lerp(b, 10f).r).isEqualTo(0f)
+    }
+
     @Test fun `SurfaceFlinger16 matrix has identity layout for IDENTITY`() {
         val m = LumenMatrix.IDENTITY.toSurfaceFlinger16()
         // Row-major 4x4: diagonal should be (1, 1, 1, 1); off-diagonal zero except bias row.

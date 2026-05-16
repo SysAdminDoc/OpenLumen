@@ -124,6 +124,9 @@ view). Each entry lists where the work landed.
 - **C16** — Notification preset cycle → "Next preset" action on the foreground notification; uses `PresetCycle.next`
 - **C19** — Home-screen 1x1 toggle widget → `ToggleWidget` AppWidgetProvider, refresh broadcast from `LumenService.observePreferences()`
 - **C20** — Home-screen 4x1 preset widget → `PresetWidget` renders the first four favorites as tappable swatches; click dispatches `LumenService.ACTION_SET_PRESET`
+- **C23** — Smooth fixed-time transitions → `transitionDurationMs` pref + `LumenMatrix.lerp` + `LumenService.applyMatrix(target, durationMs)` ramp coroutine
+- **C24** — Smooth solar transitions → same ramp path as C23; UI in Schedule tab covers both modes uniformly
+- **C98** — Dynamic ramp duration presets → Instant / 30s / 5m / 15m / 30m radio options (Next-tier candidate, landed alongside C23/C24)
 - **C51** — OWASP MASVS-lite threat model → [docs/threat-model.md](docs/threat-model.md)
 - **C85** — Local panic reset on boot → `BootReceiver` skips auto-restore if `crash.log` was touched within 5 minutes of boot
 - **C70** — Tasker intents → documented action surface (ACTION_TURN_ON/OFF/TOGGLE/CYCLE_PRESET/SET_PRESET/SET_INTENSITY/SET_DIM) with EXTRA_PRESET_KEY/EXTRA_VALUE

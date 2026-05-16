@@ -87,6 +87,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to mark favorites in the Presets tab. Refreshes via the same
   prefs-emission broadcast pattern as the 1x1 widget but on a separate
   `PRESET_REFRESH` action namespace.
+- Smooth transition engine. New `Preferences.transitionDurationMs` (0
+  default; clamped 0..30 min). When non-zero, the foreground service
+  interpolates from the last-applied matrix toward the new target over
+  the duration on schedule-driven state flips, applying at ~1 Hz with a
+  200 ms floor and a 600-step cap. User-driven changes (sliders, preset
+  taps) remain instant so the UI never feels laggy. Ramps cancel cleanly
+  on the next state change or service shutdown. New radio picker in the
+  Schedule tab: Instant / 30 s / 5 min / 15 min / 30 min.
+- `LumenMatrix.lerp(target, t)` linearly interpolates all ten fields and
+  clamps `t` into 0..1. Unit-tested against the boundary cases (t=0,
+  t=1, t=0.5, out-of-range t).
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a

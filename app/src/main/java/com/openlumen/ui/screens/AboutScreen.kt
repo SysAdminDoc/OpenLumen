@@ -251,7 +251,18 @@ private fun describeDiff(
         current.favoritePresetKeys.joinToString(","),
         next.favoritePresetKeys.joinToString(",")
     )
+    diff(
+        "Transition",
+        formatDuration(current.transitionDurationMs),
+        formatDuration(next.transitionDurationMs)
+    )
     return out
+}
+
+private fun formatDuration(ms: Long): String = when {
+    ms <= 0 -> "instant"
+    ms < 60_000 -> "${ms / 1000}s"
+    else -> "${ms / 60_000}m"
 }
 
 // Built around the runtime package name so the debug build prints the

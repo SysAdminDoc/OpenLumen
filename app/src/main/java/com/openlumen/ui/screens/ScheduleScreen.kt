@@ -162,6 +162,51 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             onThresholdChange = { vm.setLightSensor(prefs.lightSensorEnabled, it) },
             onUseCurrent = { if (lux >= 0) vm.setLightSensor(prefs.lightSensorEnabled, lux) }
         )
+
+        // Smooth-transition duration (C23/C24). Visible regardless of mode
+        // because both fixed-time and solar modes use the same ramp path —
+        // the duration is per-app, not per-mode.
+        Card(
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    stringResource(R.string.transition_duration_title),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    stringResource(R.string.transition_duration_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                val options = listOf(
+                    0L to stringResource(R.string.transition_instant),
+                    30_000L to stringResource(R.string.transition_30s),
+                    5L * 60_000L to stringResource(R.string.transition_5m),
+                    15L * 60_000L to stringResource(R.string.transition_15m),
+                    30L * 60_000L to stringResource(R.string.transition_30m)
+                )
+                options.forEach { (durationMs, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { vm.setTransitionDuration(durationMs) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = prefs.transitionDurationMs == durationMs,
+                            onClick = { vm.setTransitionDuration(durationMs) }
+                        )
+                        Text(label, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
     }
 
     if (showStartPicker) {

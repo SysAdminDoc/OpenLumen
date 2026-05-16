@@ -137,6 +137,14 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Smooth-transition duration (C23/C24). Sanitization clamps the value
+     * into 0..TRANSITION_MAX_MS; 0 disables the ramp entirely.
+     */
+    fun setTransitionDuration(durationMs: Long) = viewModelScope.launch {
+        prefs.update { it.copy(transitionDurationMs = durationMs) }
+    }
+
     fun refreshProbes() = viewModelScope.launch {
         _probes.value = probe.probeAll(getApplication())
     }

@@ -169,7 +169,8 @@ class PreferencesStore(private val context: Context) {
             sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
         ),
         lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
-        favoritePresetKeys = sanitizeFavorites(p.favoritePresetKeys)
+        favoritePresetKeys = sanitizeFavorites(p.favoritePresetKeys),
+        transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS)
     )
 
     private fun sanitizePresetKey(key: String): String =

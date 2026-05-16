@@ -32,6 +32,8 @@ import com.openlumen.widget.ToggleWidget
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
@@ -74,6 +76,7 @@ class LumenService : LifecycleService() {
 
     @Volatile private var engine: ColorEngine? = null
     private var lightJob: Job? = null
+    @Volatile private var transitionJob: Job? = null
     private val applyMutex = Mutex()
 
     private val latestPrefs = AtomicReference<Preferences?>(null)
@@ -269,20 +272,72 @@ class LumenService : LifecycleService() {
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
         if (shouldBeActive != lastShouldBeActive || matrix != lastApplied) {
-            applyMutex.withLock {
-                val e = engine
-                if (e == null) {
-                    Log.w(tag, "applyIfShouldBeActive: no engine yet, skipping")
-                } else {
-                    runCatching { e.apply(this@LumenService, matrix) }
-                        .onFailure { Log.w(tag, "engine.apply() failed: ${it.message}") }
-                }
-                lastShouldBeActive = shouldBeActive
-                lastApplied = matrix
-            }
+            // Ramp only the state-flip transitions (active <-> inactive). User-
+            // driven slider drags shouldn't lerp — they should feel direct.
+            // Approximation: when only the matrix changed (not the active
+            // flag), apply instantly even if a transition duration is set.
+            val isFlip = shouldBeActive != lastShouldBeActive
+            val rampMs = if (isFlip) p.transitionDurationMs.coerceAtLeast(0L) else 0L
+            applyMatrix(matrix, rampMs)
+            lastShouldBeActive = shouldBeActive
+            lastApplied = matrix
         }
         // Always reschedule — the next transition time depends on the current mode and clock.
         rescheduleNextTransition(mode)
+    }
+
+    /**
+     * Apply [target] to the active engine. If [durationMs] > 0 and we have a
+     * starting matrix to interpolate from, run a smooth ramp on a coroutine
+     * launched from [lifecycleScope]. The ramp is cancellable; the next
+     * `applyMatrix` call cancels any in-flight ramp so user actions always
+     * win.
+     *
+     * Tied to roadmap candidates C23 (fixed-time ramps) and C24 (solar ramps).
+     */
+    private suspend fun applyMatrix(target: LumenMatrix, durationMs: Long) {
+        val previous = lastApplied
+        transitionJob?.cancel()
+        transitionJob = null
+
+        if (durationMs <= 0 || previous == null || previous == target) {
+            applyOnce(target)
+            return
+        }
+
+        // Step interval: 1 second floor, 60 frames over the duration, 200 ms
+        // floor for very short ramps. The engine apply already serializes
+        // through applyMutex so a slow apply can't race itself.
+        val totalSteps = (durationMs / 1_000L).coerceAtLeast(2L).coerceAtMost(MAX_RAMP_STEPS.toLong())
+        val stepMs = (durationMs / totalSteps).coerceAtLeast(MIN_RAMP_STEP_MS)
+
+        transitionJob = lifecycleScope.launch {
+            try {
+                val startNs = System.nanoTime()
+                while (isActive) {
+                    val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
+                    val t = (elapsedMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                    val step = previous.lerp(target, t)
+                    applyOnce(step)
+                    if (t >= 1f) break
+                    delay(stepMs)
+                }
+            } catch (t: Throwable) {
+                Log.w(tag, "transition ramp aborted: ${t.message}")
+            }
+        }
+    }
+
+    private suspend fun applyOnce(matrix: LumenMatrix) {
+        applyMutex.withLock {
+            val e = engine
+            if (e == null) {
+                Log.w(tag, "applyOnce: no engine yet, skipping")
+            } else {
+                runCatching { e.apply(this@LumenService, matrix) }
+                    .onFailure { Log.w(tag, "engine.apply() failed: ${it.message}") }
+            }
+        }
     }
 
     /**
@@ -382,6 +437,7 @@ class LumenService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        transitionJob?.cancel()
         lightJob?.cancel()
         runCatching {
             val am = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
@@ -423,5 +479,16 @@ class LumenService : LifecycleService() {
 
         const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
         const val EXTRA_VALUE = "com.openlumen.extra.VALUE"
+
+        /** Floor on a single ramp step to avoid hammering slow su engines. */
+        private const val MIN_RAMP_STEP_MS = 200L
+
+        /**
+         * Cap on the number of ramp steps regardless of duration. Even a
+         * 30-minute ramp at 1-second granularity is 1800 steps; we
+         * deliberately cap at 600 so we don't lock the lifecycle scope
+         * into a long loop if a misconfigured profile somehow lands here.
+         */
+        private const val MAX_RAMP_STEPS = 600
     }
 }

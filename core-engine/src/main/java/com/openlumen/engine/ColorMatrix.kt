@@ -74,6 +74,35 @@ data class LumenMatrix(
         return (a shl 24) or (rr shl 16) or (gg shl 8) or bb
     }
 
+    /**
+     * Linearly interpolate every field of this matrix toward [target] by
+     * factor `t` (clamped to 0..1). At `t = 0` returns `this`; at `t = 1`
+     * returns [target]. Each field is interpolated independently — there's
+     * no perceptual color-space conversion. This is the right primitive for
+     * smooth schedule transitions (roadmap C23/C24): the visual result is
+     * a steady glide, and the user sees consecutive intermediate matrices
+     * apply over time.
+     */
+    fun lerp(target: LumenMatrix, t: Float): LumenMatrix {
+        val u = t.coerceIn(0f, 1f)
+        if (u <= 0f) return this
+        if (u >= 1f) return target
+        return LumenMatrix(
+            r = lerpF(r, target.r, u),
+            g = lerpF(g, target.g, u),
+            b = lerpF(b, target.b, u),
+            biasR = lerpF(biasR, target.biasR, u),
+            biasG = lerpF(biasG, target.biasG, u),
+            biasB = lerpF(biasB, target.biasB, u),
+            dim = lerpF(dim, target.dim, u),
+            gammaR = lerpF(gammaR, target.gammaR, u),
+            gammaG = lerpF(gammaG, target.gammaG, u),
+            gammaB = lerpF(gammaB, target.gammaB, u)
+        )
+    }
+
+    private fun lerpF(a: Float, b: Float, u: Float): Float = a + (b - a) * u
+
     private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
         if (isFinite()) coerceIn(min, max) else default
 
