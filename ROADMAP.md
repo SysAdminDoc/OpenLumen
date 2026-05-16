@@ -15,14 +15,17 @@ release; check the box when an item is shipped and tagged.
 - [x] Permission rationale dialog for SYSTEM_ALERT_WINDOW (overlay driver)
 - [ ] App-open transition animation (fade vs slide) — deferred to v0.4.0 polish
 
-## v0.3.0 — Persistence and reliability
+## v0.3.0 — Persistence and reliability ✅ (shipped 2026-05-16)
 
-- [ ] AlarmManager fallback for schedule transitions (replace 1-minute ticker on
-      devices where Doze is aggressive)
-- [ ] Profile export / import as JSON file (Settings → Backup)
-- [ ] Migration framework for `Preferences` schema bumps
-- [ ] Restore on `LOCKED_BOOT_COMPLETED` for direct-boot-aware devices
-- [ ] Crash log (local file only, never network) accessible from About screen
+- [x] AlarmManager-driven schedule transitions (replaced 1-minute ticker)
+- [x] Profile export / import as JSON file (About → Backup)
+- [ ] Migration framework for `Preferences` schema bumps — deferred. With
+      `ignoreUnknownKeys = true` + Kotlin defaults, additive changes are already
+      free; we don't need a runner until we have a *transforming* migration.
+- [ ] Restore on `LOCKED_BOOT_COMPLETED` for direct-boot-aware devices —
+      deferred. Requires moving DataStore to device-protected storage which is
+      a bigger surgery than v0.3 budget allows.
+- [x] Crash log (local file only, never network) accessible from About screen
 
 ## v0.4.0 — Polish + tile UX
 

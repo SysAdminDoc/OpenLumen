@@ -4,6 +4,39 @@ All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-05-16
+
+### Added
+- `Schedule.nextTransition()` — pure function that returns the next moment the
+  active state would flip for a given `ScheduleMode`. Returns null for
+  `AlwaysOn`/`AlwaysOff`.
+- `ScheduleAlarmReceiver` — fires the `ACTION_REEVALUATE` intent at the
+  scheduled transition time, nudging the foreground service to re-apply.
+- AlarmManager-driven schedule: `LumenService` now reschedules
+  `setExactAndAllowWhileIdle` after every re-evaluation. Survives Doze; falls
+  back to `setAndAllowWhileIdle` if `SCHEDULE_EXACT_ALARM` is denied or the OEM
+  throws a SecurityException.
+- Profile export / import via Storage Access Framework
+  (`ActivityResultContracts.CreateDocument` + `OpenDocument`). Default filename
+  uses today's date. JSON is pretty-printed.
+- `CrashLogger` — local-only uncaught-exception handler that appends a
+  timestamped stack trace to `filesDir/crash.log`. Auto-trims to ~32 KB once it
+  exceeds 64 KB. About screen gains a "View crash log" dialog with Clear/Close.
+- About screen is now scrollable; gains "Backup" and "Diagnostics" cards.
+
+### Changed
+- `LumenService` 60-second ticker has been removed. Schedule transitions are
+  driven by the AlarmManager broadcast, light-sensor changes by the existing
+  Flow collector. Net effect: zero background work between transitions.
+- Manifest declares `SCHEDULE_EXACT_ALARM` + `USE_EXACT_ALARM` permissions and
+  the `ScheduleAlarmReceiver`.
+- `PreferencesStore` Json now uses `prettyPrint = true` so exported files are
+  human-readable.
+
+### Privacy
+- Crash log is **local-only** — the app still has no `INTERNET` permission. No
+  upload, no telemetry. Users can share manually if they choose.
+
 ## [0.2.0] — 2026-05-16
 
 ### Added
