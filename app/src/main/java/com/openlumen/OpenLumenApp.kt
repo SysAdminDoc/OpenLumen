@@ -11,6 +11,7 @@ import dagger.hilt.android.HiltAndroidApp
 class OpenLumenApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        CrashLogger.install(this)
         registerNotificationChannel()
     }
 

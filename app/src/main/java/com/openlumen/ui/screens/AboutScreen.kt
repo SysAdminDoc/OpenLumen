@@ -16,16 +16,24 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.TextButton
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.BuildConfig
+import com.openlumen.CrashLogger
 import com.openlumen.R
 import com.openlumen.viewmodel.OpenLumenViewModel
 
@@ -33,6 +41,7 @@ import com.openlumen.viewmodel.OpenLumenViewModel
 fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
     val result by vm.exportResult.collectAsState()
+    var showCrashLog by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -50,7 +59,10 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(PaddingValues(16.dp)),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
@@ -83,5 +95,46 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 ) { Text("Import profile") }
             }
         }
+
+        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Diagnostics", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "OpenLumen keeps a local crash log in app-private storage. It never " +
+                        "leaves the device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedButton(
+                    onClick = { showCrashLog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("View crash log") }
+            }
+        }
+    }
+
+    if (showCrashLog) {
+        val log = remember { CrashLogger.read(ctx) }
+        AlertDialog(
+            onDismissRequest = { showCrashLog = false },
+            title = { Text("Crash log") },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        if (log.isBlank()) "No crashes recorded." else log,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCrashLog = false }) { Text("Close") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    CrashLogger.clear(ctx)
+                    showCrashLog = false
+                }) { Text("Clear") }
+            }
+        )
     }
 }
