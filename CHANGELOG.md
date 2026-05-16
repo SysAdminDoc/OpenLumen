@@ -115,6 +115,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collect if we ever pursue a Play listing. F-Droid remains primary;
   this document lets a maintainer recreate the evidence pack from
   primary sources without re-deriving the rationale.
+- SBOM CI workflow at `.github/workflows/sbom.yml`. Generates an
+  SPDX-JSON SBOM of the release classpath and runs an Anchore
+  advisory scan on every release and weekly Monday 06:00 UTC. Both
+  artifacts upload with a 30-day retention. Workflow does not fail
+  builds on findings — triage policy in `docs/sbom-and-advisories.md`
+  with an "Accepted exposures" register for future entries.
+- Gradle dependency-verification procedure at
+  `docs/dependency-verification.md`. Documents the regeneration
+  workflow, failure modes, and the explicit decision to defer
+  enforcement until after the AGP 9 migration spike so the lockfile
+  doesn't trample every Dependabot PR.
+- Wake / alarm / battery audit at `docs/wake-and-vitals.md`. Inventory
+  of what wakes the device (only the schedule alarm and boot
+  completion) and what doesn't (light sensor, preference changes, UI
+  surface taps, smooth-transition ramp). Includes `adb` commands for
+  independent verification.
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a

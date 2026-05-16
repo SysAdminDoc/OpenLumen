@@ -119,6 +119,11 @@ OpenLumen/
 - [Root mode safety and recovery](docs/root-safety.md) — what can go wrong with root drivers, and how to recover
 - [Release checklist](docs/release-checklist.md) — pre-flight, verification, no-INTERNET assertion
 - [Reproducible build notes](docs/reproducible-build.md) — environment pinning, verification procedure
+- [Threat model](docs/threat-model.md) — MASVS-lite categories with mitigations
+- [SBOM and advisory scan](docs/sbom-and-advisories.md) — CI workflow and triage policy
+- [Dependency verification](docs/dependency-verification.md) — Gradle metadata procedure (opt-in)
+- [Wake / alarm / battery audit](docs/wake-and-vitals.md) — what wakes the device and why
+- [Play FGS evidence pack](docs/play-fgs-evidence.md) — Play `specialUse` justification
 - [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
 - [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
 - [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning

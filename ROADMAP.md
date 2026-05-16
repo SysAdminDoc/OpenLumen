@@ -128,7 +128,10 @@ view). Each entry lists where the work landed.
 - **C24** — Smooth solar transitions → same ramp path as C23; UI in Schedule tab covers both modes uniformly
 - **C14** — Previous profile restore → `Preferences.previousPresetKey`, `PresetCycle.restorePrevious/setActiveKey`, in-app "Restore" affordance, `ACTION_RESTORE_PREVIOUS` intent
 - **C44** — Public compatibility table → [docs/compatibility-table.md](docs/compatibility-table.md)
+- **C48** — Gradle dependency verification → [docs/dependency-verification.md](docs/dependency-verification.md) (procedure; opt-in deferred until post-AGP-9)
+- **C54** — Wake/alarm/battery audit → [docs/wake-and-vitals.md](docs/wake-and-vitals.md)
 - **C93** — Play FGS evidence pack → [docs/play-fgs-evidence.md](docs/play-fgs-evidence.md)
+- **C94** — SBOM and advisory scan → [.github/workflows/sbom.yml](.github/workflows/sbom.yml) + [docs/sbom-and-advisories.md](docs/sbom-and-advisories.md)
 - **C98** — Dynamic ramp duration presets → Instant / 30s / 5m / 15m / 30m radio options (Next-tier candidate, landed alongside C23/C24)
 - **C51** — OWASP MASVS-lite threat model → [docs/threat-model.md](docs/threat-model.md)
 - **C85** — Local panic reset on boot → `BootReceiver` skips auto-restore if `crash.log` was touched within 5 minutes of boot
