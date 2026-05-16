@@ -44,26 +44,59 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 The app falls back gracefully — if none of the root paths work, you still get the
 overlay driver. If you want to pin a specific driver, Settings → Driver lets you.
 
-## Features (v0.4.0)
+## Features (v0.5.0 — in development)
+
+**Color**
 
 - Named presets: Night · Amber · Red · Salmon · Sepia · Grayscale · Deep Sleep · Protan · Deutan · Tritan
 - Custom R/G/B picker on Home with live color preview
+- Kelvin color-temperature slider (1000–10 000 K) with Tanner Helland conversion
 - Per-channel gamma sliders (γR / γG / γB, range 0.5–2.5)
-- Intensity slider (0–100% lerp toward identity) + dim slider (0–95%)
+- Intensity slider (0–100% lerp toward identity) and dim slider (0–95%)
+- Contrast multiplier (0.5–2.0×)
+- AMOLED true-black clamp (opt-in; snaps very dim subpixels to fully off)
+- Blue-channel reduction indicator (physical measurement; not a sleep claim)
+
+**Scheduling**
+
 - Solar-position schedule (NOAA algorithm, hand-rolled, no external library)
 - Sunset / sunrise offset sliders (±180 minutes)
 - Fixed-time schedule with Material 3 24-hour time pickers
-- Manual location entry (decimal degrees, validated)
+- "Until my next alarm" mode driven by the system alarm clock
+- Manual location entry with bundled offline city picker (~95 cities, no Play Services)
 - No runtime location permission; solar scheduling uses coordinates the user enters
 - Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
 - Live lux readout + "calibrate: use current reading" button
-- Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
-- Quick Settings tile
-- Boot persistence
+- Smooth fade-in / fade-out transitions (Instant / 30 s / 5 min / 15 min / 30 min)
+- Schedule timezone hint so fixed-time windows are unambiguous after travel
+
+**Command surfaces**
+
+- Quick Settings tile (subtitle shows active preset; long-press opens the app)
+- 1 × 1 toggle widget
+- 4 × 1 favorites widget (tap a chip to switch presets)
+- Foreground-service notification with Turn-off and Next-preset actions
+- Documented Tasker / Termux / ADB intent surface (`docs/automation.md`)
+
+**Persistence + reliability**
+
 - Foreground service with `specialUse` type (Android 14+ compliant)
 - AlarmManager-driven schedule transitions (`setExactAndAllowWhileIdle`, Doze-resilient)
-- Profile export / import as JSON via Storage Access Framework
-- Local-only crash log (`filesDir/crash.log`, viewable in-app)
+- Boot persistence with crash-window safety net (no auto-restart after a recent crash)
+- Profile export / import as JSON via Storage Access Framework, with diff preview
+- Named profile library — save current configuration, load it back later
+- Previous-preset restore (one-tap undo of a preset change)
+- Local-only crash log + structured diagnostics log (`filesDir/`, viewable in-app)
+- Versioned preference schema with explicit migrations
+
+**Trust + privacy**
+
+- No INTERNET permission, ever (CI rejects builds that contain one)
+- No Play Services / Firebase / Google APIs (CI rejects builds that pull them in)
+- No accessibility service, no usage-stats permission, no foreground-app detection
+- Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
+- In-app driver report (Copy or Share) with zero PII — captures device, build,
+  granted permissions, every engine's probe result
 
 ## Privacy
 
@@ -111,25 +144,41 @@ OpenLumen/
 
 ## Documentation
 
-- [Architecture overview](docs/ARCHITECTURE.md) — modules, runtime flow, engine contract
-- [Automation](docs/automation.md) — Tasker / Termux / ADB intent reference
-- [Troubleshooting](docs/troubleshooting.md) — common driver and overlay problems
-- [Compatibility table](docs/compatibility-table.md) — public summary of which engines work on which hardware
-- [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
+### For users
+
+- [Troubleshooting](docs/troubleshooting.md) — common driver and overlay problems, recovery from stuck states
+- [Compatibility table](docs/compatibility-table.md) — which engines work on which hardware
 - [Root mode safety and recovery](docs/root-safety.md) — what can go wrong with root drivers, and how to recover
+- [Automation](docs/automation.md) — Tasker / Termux / ADB intent reference
+- [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
+
+### For contributors
+
+- [Architecture overview](docs/ARCHITECTURE.md) — modules, runtime flow, engine contract
+- [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
+- [Translations and localization](docs/translations.md) — how to contribute a translation
+- [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
+- [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
+
+### For distributors and packagers
+
 - [Release checklist](docs/release-checklist.md) — pre-flight, verification, no-INTERNET assertion
 - [Reproducible build notes](docs/reproducible-build.md) — environment pinning, verification procedure
+- [Play FGS evidence pack](docs/play-fgs-evidence.md) — Play `specialUse` justification
+
+### Security and supply chain
+
 - [Threat model](docs/threat-model.md) — MASVS-lite categories with mitigations
 - [SBOM and advisory scan](docs/sbom-and-advisories.md) — CI workflow and triage policy
 - [Dependency verification](docs/dependency-verification.md) — Gradle metadata procedure (opt-in)
 - [Wake / alarm / battery audit](docs/wake-and-vitals.md) — what wakes the device and why
-- [Play FGS evidence pack](docs/play-fgs-evidence.md) — Play `specialUse` justification
-- [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
-- [Translations and localization](docs/translations.md) — how to contribute a translation
+
+### Roadmap and design
+
+- [Roadmap](ROADMAP.md) — source-backed release plan with the candidate inventory
 - [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md) — why per-app behavior is deferred until the trust posture is sorted
-- [Deferred roadmap candidates](docs/deferred-candidates.md) — design sketches for Wear OS / Android TV / alarm schedules / contrast / AMOLED / CVD LUT / etc.
-- [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
-- [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
+- [Deferred roadmap candidates](docs/deferred-candidates.md) — design sketches for Wear OS / Android TV / etc.
+- [API 36 readiness](docs/api-36-readiness.md) — forward-looking Android-version migration notes
 - [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning
 
 ## Emergency off
@@ -146,13 +195,19 @@ See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the source-backed release plan. Near-term highlights:
+See [ROADMAP.md](ROADMAP.md) for the source-backed release plan and the
+candidate inventory. The `Now: v0.5.0` section is largely shipped; the
+deferred items have design sketches in
+[docs/deferred-candidates.md](docs/deferred-candidates.md) and
+[docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md).
 
-- Device validation matrix and shareable driver reports
-- F-Droid metadata, reproducible-build notes, and release checklist
-- Overlay-safe pause/emergency-off flows
-- Notification, Quick Settings, and widget command surfaces
-- Versioned profile migrations and import preview
+Post-v0.5.0 work clusters around:
+
+- A Shizuku-backed privileged path for per-app behavior (C06)
+- Direct Boot restore (C28)
+- AGP 9 + Hilt Compose artifact migration (C95 + C96)
+- Wear OS companion as a separate F-Droid package (C21)
+- Real-device validation rows in `docs/device-matrix.md` (C01)
 
 ## License
 
