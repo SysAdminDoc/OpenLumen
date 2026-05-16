@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest a new feature or change. Read ROADMAP.md first.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening this, check **ROADMAP.md**:
+
+        - If your idea is in the **Now / Next / Later** sections, comment on the
+          existing tracking issue (or open one and link to the roadmap row).
+        - If your idea is in **Rejected**, it's probably not coming back —
+          mention what's changed in the world that would justify reopening.
+        - If your idea isn't listed, this is the right place.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: |
+        Describe the user-side problem, not the implementation. "I can't do X" is
+        better than "you should add Y".
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What would the app do differently?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Existing workarounds, other apps that solve this, things that didn't work.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check (please be honest — these are veto criteria)
+      options:
+        - label: This doesn't require an `INTERNET` permission.
+          required: true
+        - label: This doesn't pull in Google Play Services or other non-F-Droid-clean dependencies.
+          required: true
+        - label: This isn't a health/medical claim (see `docs/health-evidence.md`).
+          required: true
+        - label: This isn't ads, paywall, account login, or cloud sync.
+          required: true

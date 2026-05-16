@@ -11,6 +11,8 @@ on:
 permissions:
   contents: write
 
+# Actions pinned to major-version tags. See .github/workflows/ci.yml for the
+# pinning policy.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,6 +46,21 @@ jobs:
           OPENLUMEN_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease --stacktrace
 
+      - name: Assert no INTERNET / ACCESS_NETWORK_STATE in release APK
+        run: |
+          set -euo pipefail
+          SRC=$(ls app/build/outputs/apk/release/app-release*.apk | head -n 1)
+          AAPT="$ANDROID_HOME/build-tools/$(ls -1 "$ANDROID_HOME/build-tools" | tail -n1)/aapt2"
+          if [ ! -x "$AAPT" ]; then
+            AAPT="$ANDROID_HOME/build-tools/$(ls -1 "$ANDROID_HOME/build-tools" | tail -n1)/aapt"
+          fi
+          PERMS=$("$AAPT" dump permissions "$SRC" || true)
+          echo "$PERMS"
+          if echo "$PERMS" | grep -E "android\.permission\.(INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE)" > /dev/null; then
+            echo "::error::Release APK contains a network permission. Refusing to publish." >&2
+            exit 1
+          fi
+
       - name: Stage APK
         run: |
           mkdir -p dist
@@ -55,6 +72,11 @@ jobs:
         run: |
           cd dist
           sha256sum * > SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "dist/OpenLumen-v${{ inputs.version }}-release.apk"
 
       - name: Create / update release
         env:

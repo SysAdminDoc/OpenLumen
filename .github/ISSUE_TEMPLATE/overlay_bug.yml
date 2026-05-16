@@ -1,0 +1,83 @@
+name: Overlay engine bug
+description: Issue specific to the rootless Overlay engine — wrong alpha, blocked touches, stuck overlay, etc.
+labels: ["bug", "overlay"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Overlay engine bugs deserve their own template because they're often
+        tied to Android 12+ untrusted-touch behavior — that's working as
+        intended in most cases but can still be a usability problem worth
+        fixing on our side.
+
+  - type: input
+    id: version
+    attributes:
+      label: OpenLumen version
+      placeholder: "0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device + Android version
+      placeholder: "Pixel 8, Android 15"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: symptom
+    attributes:
+      label: What's wrong with the overlay?
+      options:
+        - Tint is invisible or much weaker than expected
+        - Tint is correct but I can't tap underneath
+        - Tint is stuck and the toggle does not clear it
+        - Overlay does not appear at all
+        - Overlay flickers or redraws repeatedly
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Which app/screen is affected, which preset/intensity/dim values are set, etc.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: blocked_app
+    attributes:
+      label: If touches are blocked, which app?
+      description: Android 12+ blocks touches on system installer / permission / settings flows while a non-trusted overlay is shown — this is documented behavior.
+      options:
+        - "n/a — not a touch-blocking issue"
+        - "System installer / Play Store install button"
+        - "System permission dialog"
+        - "System Settings"
+        - "A third-party app"
+    validations:
+      required: false
+
+  - type: textarea
+    id: driver_report
+    attributes:
+      label: Driver report
+      description: Paste the output of Driver tab → "Share report".
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logcat (overlay-relevant)
+      description: |
+        `adb logcat -s OpenLumen/Overlay InputDispatcher WindowManager` is usually
+        the most informative slice for overlay bugs.
+      render: text
+    validations:
+      required: false

@@ -1,0 +1,42 @@
+OpenLumen is an offline display color filter for Android. It runs as a
+foreground service, owns the display color transform, and falls back
+gracefully across four drivers depending on what your device supports:
+
+* AOSP ColorDisplayManager (rootless, framebuffer transform — same path the
+  built-in Night Light uses)
+* SurfaceFlinger color matrix (root, framebuffer transform)
+* KCAL kernel driver (root, Qualcomm panels with KCAL kernels)
+* Overlay (rootless, universal fallback — capped at ~80% opacity by
+  Android 12+ rules)
+
+OpenLumen does not request INTERNET. It has no telemetry, no remote crash
+reporting, no remote config, and no analytics. The manifest does not
+contain a network permission and CI enforces this on every build.
+
+Features:
+
+* Named presets — Night, Amber, Red, Salmon, Sepia, Grayscale, Deep Sleep,
+  and three color-vision-deficiency channel-remap presets
+* Custom R/G/B picker with per-channel gamma sliders
+* Intensity and dim sliders, both range-clamped on every read and write
+* Fixed-time and solar (sunset/sunrise, NOAA algorithm) schedules with
+  configurable offsets
+* Ambient-light-sensor trigger that engages the filter when the room dims
+* Quick Settings tile for one-tap toggle
+* AlarmManager-driven schedule transitions — no background polling
+* Boot persistence
+* Profile export/import as JSON via the Storage Access Framework
+* Local crash log in app-private storage (never sent anywhere)
+
+Privacy and trust:
+
+* GPL-3.0-or-later
+* F-Droid-first distribution; reproducible builds are a release goal
+* No accounts, no ads, no paywall
+* No "improves your sleep" claims — see the Health Evidence note in the
+  repository
+
+OpenLumen does not request location permission. Solar schedules use
+coordinates you enter yourself.
+
+Source code: https://github.com/SysAdminDoc/OpenLumen

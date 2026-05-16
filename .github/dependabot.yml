@@ -1,0 +1,47 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+    groups:
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin:*"
+          - "org.jetbrains.kotlinx:*"
+      androidx:
+        patterns:
+          - "androidx.*:*"
+      hilt:
+        patterns:
+          - "com.google.dagger:hilt-*"
+      compose:
+        patterns:
+          - "androidx.compose.*:*"
+      build-tools:
+        patterns:
+          - "com.android.tools.build:*"
+      test:
+        patterns:
+          - "junit:junit"
+          - "com.google.truth:*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"

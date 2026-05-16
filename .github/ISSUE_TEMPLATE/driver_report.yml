@@ -1,0 +1,104 @@
+name: Driver compatibility report
+description: Report how a specific OpenLumen display engine behaves on your device. Helps grow the compatibility matrix.
+labels: ["driver-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to report device/engine behavior — works or doesn't,
+        either is useful. We aggregate these into `docs/device-matrix.md`.
+
+  - type: input
+    id: version
+    attributes:
+      label: OpenLumen version
+      placeholder: "0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Make / model / variant
+      placeholder: "Pixel 6 (GB7N6)"
+    validations:
+      required: true
+
+  - type: input
+    id: android
+    attributes:
+      label: Android version + fingerprint
+      description: "`adb shell getprop ro.build.fingerprint`"
+      placeholder: "google/oriole/oriole:15/AP4A.250105.002/13174299:user/release-keys"
+    validations:
+      required: true
+
+  - type: input
+    id: rom
+    attributes:
+      label: OEM software / ROM
+      placeholder: "Stock Pixel / One UI 6.1 / OxygenOS 14 / HyperOS / LineageOS 21"
+    validations:
+      required: true
+
+  - type: input
+    id: root
+    attributes:
+      label: Root status
+      placeholder: "Magisk 28 / KernelSU / none"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      options:
+        - ColorDisplayManager (CDM)
+        - SurfaceFlinger
+        - KCAL
+        - Overlay
+    validations:
+      required: true
+
+  - type: dropdown
+    id: status
+    attributes:
+      label: Status
+      options:
+        - "Works (probe pass, apply works, clear works)"
+        - "Works with caveats"
+        - "Probe passes but apply has no visible effect"
+        - "Probe passes but apply leaves stuck/black state"
+        - "Probe fails / engine reports Not available"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: driver_report
+    attributes:
+      label: Driver report
+      description: Paste the output of Driver tab → "Share report".
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Anything weird — flicker, latency, conflicts with other apps, kernel KCAL path, su-prompt behavior, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirms
+    attributes:
+      label: Confirmations
+      options:
+        - label: I tested with the latest release.
+          required: true
+        - label: I tried the engine's smoke flow from `docs/device-matrix.md`.
+          required: false

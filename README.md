@@ -109,6 +109,30 @@ OpenLumen/
 └── core-prefs/      — DataStore-backed prefs, JSON serialization
 ```
 
+## Documentation
+
+- [Architecture overview](docs/ARCHITECTURE.md) — modules, runtime flow, engine contract
+- [Troubleshooting](docs/troubleshooting.md) — common driver and overlay problems
+- [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
+- [Root mode safety and recovery](docs/root-safety.md) — what can go wrong with root drivers, and how to recover
+- [Release checklist](docs/release-checklist.md) — pre-flight, verification, no-INTERNET assertion
+- [Reproducible build notes](docs/reproducible-build.md) — environment pinning, verification procedure
+- [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
+- [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
+- [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning
+
+## Emergency off
+
+If a release goes wrong and the overlay or root driver leaves your screen
+in a bad state, the canonical escape hatch is:
+
+```bash
+adb shell am startservice -a com.openlumen.action.TURN_OFF \
+    -n com.openlumen/.service.LumenService
+```
+
+See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
+
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for the source-backed release plan. Near-term highlights:

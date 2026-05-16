@@ -1,0 +1,97 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly in OpenLumen.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The single most useful artifact
+        you can include is the in-app driver report — Driver tab → "Share report".
+        Paste it into the "Driver report" field below.
+
+        If your issue is specific to a particular display engine (overlay,
+        SurfaceFlinger, KCAL, ColorDisplayManager), please use the matching
+        template instead so it gets the right labels.
+
+  - type: input
+    id: version
+    attributes:
+      label: OpenLumen version
+      description: Find this in About tab (e.g. 0.4.0)
+      placeholder: "0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device + Android version
+      description: Manufacturer / model / Android version (e.g. Pixel 6, Android 15)
+      placeholder: "Pixel 6, Android 15 (AP4A.250105.002)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_source
+    attributes:
+      label: Install source
+      options:
+        - F-Droid
+        - GitHub Releases APK
+        - Self-built from source
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      description: One paragraph. What were you doing, what did you expect, what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the app
+        2. Driver tab → pick X
+        3. Home → toggle on
+        4. Observe …
+    validations:
+      required: true
+
+  - type: textarea
+    id: driver_report
+    attributes:
+      label: Driver report
+      description: Paste the output of Driver tab → "Share report" (verbatim).
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logcat
+      description: |
+        `adb logcat -s OpenLumen LumenService Su` — paste the last ~200 lines
+        if applicable. OpenLumen never logs PII; the contents should be safe to
+        share, but please scan first.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirms
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched the issue tracker and did not find an existing bug for this.
+          required: true
+        - label: I am running a current release; the bug reproduces against it.
+          required: true
+        - label: I redacted any PII from logcat / driver report before pasting.
+          required: true

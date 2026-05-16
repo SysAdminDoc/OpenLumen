@@ -114,6 +114,35 @@ without violating the no-network philosophy.
   distribution, or dependency concerns.
 - Rejected: contradicts repo philosophy, costs too much for value, or has weak evidence.
 
+## Progress toward v0.5.0
+
+Completed candidates (commit history is authoritative; this is the human
+view). Each entry lists where the work landed.
+
+- **C05** — Root prompt safety and recovery docs → [docs/root-safety.md](docs/root-safety.md)
+- **C34** — F-Droid metadata → [fastlane/metadata/android/](fastlane/metadata/android/)
+- **C37** — Reproducible build notes → [docs/reproducible-build.md](docs/reproducible-build.md)
+- **C38** — Artifact attestations → `actions/attest-build-provenance@v2` in release workflow
+- **C40** — README troubleshooting table → [docs/troubleshooting.md](docs/troubleshooting.md)
+- **C41** — CONTRIBUTING.md → [CONTRIBUTING.md](CONTRIBUTING.md)
+- **C42** — ARCHITECTURE.md → [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **C43** — Issue templates → [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/)
+- **C45** — Release checklist → [docs/release-checklist.md](docs/release-checklist.md)
+- **C46** — Dependency update cadence → Dependabot weekly schedule
+- **C47** — Dependabot/Renovate → [.github/dependabot.yml](.github/dependabot.yml)
+- **C49** — Pin GitHub Actions → version-tag pinning policy documented in workflow files
+- **C50** — No-INTERNET CI assertion → `permissions-audit` job in CI
+- **C60** — Health evidence note → [docs/health-evidence.md](docs/health-evidence.md)
+- **C97** — Awesome/topic-index watchlist → [docs/research-watchlist.md](docs/research-watchlist.md)
+- **C100** — Medical/pain-mode disclaimer templates → covered in `docs/health-evidence.md`
+
+Partial:
+
+- **C01** — Device validation and driver report: `docs/device-matrix.md` skeleton
+  exists; per-engine smoke flow documented; in-app "Share report" UX still pending.
+- **C36** — Store screenshot matrix: layout in place under
+  `fastlane/metadata/android/en-US/`, captures pending finalized icon (C35).
+
 ## Now: v0.5.0, Trustworthy First Public Release
 
 1. Device validation and driver report

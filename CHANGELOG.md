@@ -24,6 +24,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preset and driver cards are whole-card clickable for consistency with schedule cards.
 - Backup rules now include DataStore preferences and exclude the local crash log.
 
+### Added
+- `CONTRIBUTING.md`, `docs/ARCHITECTURE.md`, `docs/troubleshooting.md`,
+  `docs/device-matrix.md`, `docs/release-checklist.md`,
+  `docs/reproducible-build.md`, `docs/root-safety.md`,
+  `docs/health-evidence.md`, and `docs/research-watchlist.md` for the v0.5.0
+  trust-and-distribution pass.
+- F-Droid metadata skeleton at `fastlane/metadata/android/en-US/`.
+- GitHub issue templates (bug, driver report, overlay bug, feature request) and
+  `dependabot.yml` for weekly Gradle and Actions updates.
+- CI now runs `core-engine`, `core-schedule`, and `core-prefs` unit tests on
+  every PR, and a `permissions-audit` job that fails the build if the merged
+  manifest contains `INTERNET`, `ACCESS_NETWORK_STATE`, or `ACCESS_WIFI_STATE`,
+  or if any Play Services / Firebase artifact reaches the release classpath.
+- Release workflow now generates an `actions/attest-build-provenance` for each
+  release APK.
+
 ### Tests
 - Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only
   presets, fixed schedules with identical start/end times, and default preference JSON
