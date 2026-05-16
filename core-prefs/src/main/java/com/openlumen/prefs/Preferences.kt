@@ -77,7 +77,14 @@ data class Preferences(
      * service to interpolate from the last-applied matrix toward the new
      * target over this duration. Clamped to `0..TRANSITION_MAX_MS`.
      */
-    val transitionDurationMs: Long = 0L
+    val transitionDurationMs: Long = 0L,
+    /**
+     * Previous preset key, tracked across user-driven preset changes so the
+     * "Undo last preset change" notification action and the in-app
+     * [PresetCycle.restorePrevious] can flip back to it. Tied to roadmap
+     * candidate C14. Null means "no previous preset recorded yet".
+     */
+    val previousPresetKey: String? = null
 ) {
     companion object {
         /**

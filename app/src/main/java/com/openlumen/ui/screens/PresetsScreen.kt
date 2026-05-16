@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.item
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.Presets
+import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
@@ -46,6 +48,40 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        // Undo affordance (C14). Shown only when there's something to restore
+        // and the previous key resolves to a real preset — guards against a
+        // stale `previousPresetKey` after a preset is renamed or removed.
+        val previousEntry = prefs.previousPresetKey
+            ?.takeIf { it != prefs.activePresetKey }
+            ?.let(Presets::byKey)
+        if (previousEntry != null) {
+            item {
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Previous: ${previousEntry.displayName}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        LumenTextButton(onClick = { vm.restorePreviousPreset() }) {
+                            Text(stringResource(R.string.preset_restore_previous))
+                        }
+                    }
+                }
+            }
+        }
+
         items(Presets.ALL) { entry ->
             val selected = entry.key == prefs.activePresetKey
             val isFavorite = entry.key in favorites

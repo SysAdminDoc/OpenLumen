@@ -56,6 +56,19 @@ adb shell am startservice \
 
 Flips `enabled`. The QS tile uses this internally.
 
+### Restore the previous preset
+
+```bash
+adb shell am startservice \
+  -a com.openlumen.action.RESTORE_PREVIOUS \
+  -n com.openlumen/.service.LumenService
+```
+
+Flips `activePresetKey` back to whatever it was before the last
+preset change, and records the now-displaced key as the new previous.
+No-op if no previous preset is recorded (fresh install, or every change
+so far has been an undo). Tied to roadmap candidate C14.
+
 ### Cycle to the next favorite preset
 
 ```bash

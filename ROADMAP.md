@@ -126,6 +126,9 @@ view). Each entry lists where the work landed.
 - **C20** — Home-screen 4x1 preset widget → `PresetWidget` renders the first four favorites as tappable swatches; click dispatches `LumenService.ACTION_SET_PRESET`
 - **C23** — Smooth fixed-time transitions → `transitionDurationMs` pref + `LumenMatrix.lerp` + `LumenService.applyMatrix(target, durationMs)` ramp coroutine
 - **C24** — Smooth solar transitions → same ramp path as C23; UI in Schedule tab covers both modes uniformly
+- **C14** — Previous profile restore → `Preferences.previousPresetKey`, `PresetCycle.restorePrevious/setActiveKey`, in-app "Restore" affordance, `ACTION_RESTORE_PREVIOUS` intent
+- **C44** — Public compatibility table → [docs/compatibility-table.md](docs/compatibility-table.md)
+- **C93** — Play FGS evidence pack → [docs/play-fgs-evidence.md](docs/play-fgs-evidence.md)
 - **C98** — Dynamic ramp duration presets → Instant / 30s / 5m / 15m / 30m radio options (Next-tier candidate, landed alongside C23/C24)
 - **C51** — OWASP MASVS-lite threat model → [docs/threat-model.md](docs/threat-model.md)
 - **C85** — Local panic reset on boot → `BootReceiver` skips auto-restore if `crash.log` was touched within 5 minutes of boot

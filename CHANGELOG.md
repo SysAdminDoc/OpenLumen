@@ -98,6 +98,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LumenMatrix.lerp(target, t)` linearly interpolates all ten fields and
   clamps `t` into 0..1. Unit-tested against the boundary cases (t=0,
   t=1, t=0.5, out-of-range t).
+- Previous-preset restore. `Preferences.previousPresetKey` is recorded on
+  every preset change; `PresetCycle.restorePrevious(current)` flips back
+  and stamps the now-displaced key as the new previous so a double-undo
+  round-trips. Surfaced as a Restore affordance at the top of the
+  Presets screen when relevant, and as a `RESTORE_PREVIOUS` intent on
+  the service for Tasker / ADB users.
+- Public-facing compatibility table at `docs/compatibility-table.md`
+  summarizing engine support by SoC family, OEM / ROM, and Android
+  version. Distinct from the per-test record in
+  `docs/device-matrix.md` — that's the testing record, this is the
+  user-facing summary.
+- Play Store `specialUse` foreground-service evidence pack at
+  `docs/play-fgs-evidence.md`: the reasoning, the narrative we'd submit
+  to a Play reviewer, and the not-in-Git list of artifacts we'd
+  collect if we ever pursue a Play listing. F-Droid remains primary;
+  this document lets a maintainer recreate the evidence pack from
+  primary sources without re-deriving the rationale.
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a

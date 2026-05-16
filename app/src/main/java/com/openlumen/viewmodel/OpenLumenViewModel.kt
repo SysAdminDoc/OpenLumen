@@ -63,7 +63,12 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun selectPreset(key: String) = viewModelScope.launch {
-        prefs.update { it.copy(activePresetKey = key) }
+        prefs.update { com.openlumen.prefs.PresetCycle.setActiveKey(it, key) }
+    }
+
+    /** Restore the previously-active preset (C14). No-op if none recorded. */
+    fun restorePreviousPreset() = viewModelScope.launch {
+        prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
     }
 
     fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {

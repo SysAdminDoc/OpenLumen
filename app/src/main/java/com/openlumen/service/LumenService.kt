@@ -128,8 +128,11 @@ class LumenService : LifecycleService() {
             ACTION_SET_PRESET -> lifecycleScope.launch {
                 val key = intent.getStringExtra(EXTRA_PRESET_KEY)?.takeIf { it.isNotBlank() }
                 if (key != null) {
-                    prefs.update { it.copy(activePresetKey = key) }
+                    prefs.update { com.openlumen.prefs.PresetCycle.setActiveKey(it, key) }
                 }
+            }
+            ACTION_RESTORE_PREVIOUS -> lifecycleScope.launch {
+                prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
             }
             ACTION_SET_INTENSITY -> lifecycleScope.launch {
                 val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
@@ -474,6 +477,7 @@ class LumenService : LifecycleService() {
         const val ACTION_REEVALUATE = "com.openlumen.action.REEVALUATE"
         const val ACTION_CYCLE_PRESET = "com.openlumen.action.CYCLE_PRESET"
         const val ACTION_SET_PRESET = "com.openlumen.action.SET_PRESET"
+        const val ACTION_RESTORE_PREVIOUS = "com.openlumen.action.RESTORE_PREVIOUS"
         const val ACTION_SET_INTENSITY = "com.openlumen.action.SET_INTENSITY"
         const val ACTION_SET_DIM = "com.openlumen.action.SET_DIM"
 

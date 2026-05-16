@@ -30,6 +30,37 @@ object PresetCycle {
         if (favs.isEmpty()) return current
         val idx = favs.indexOf(current.activePresetKey)
         val nextKey = if (idx < 0) favs.first() else favs[(idx + 1) % favs.size]
-        return current.copy(activePresetKey = nextKey)
+        return current.copy(
+            previousPresetKey = current.activePresetKey,
+            activePresetKey = nextKey
+        )
+    }
+
+    /**
+     * Flip back to [Preferences.previousPresetKey] if any, otherwise a no-op.
+     * Recording the *current* key as the new previous so a double-undo round-
+     * trips. Tied to roadmap candidate C14 (Previous profile restore).
+     */
+    fun restorePrevious(current: Preferences): Preferences {
+        val prev = current.previousPresetKey ?: return current
+        if (prev == current.activePresetKey) return current
+        return current.copy(
+            activePresetKey = prev,
+            previousPresetKey = current.activePresetKey
+        )
+    }
+
+    /**
+     * Record `newKey` as the active preset, capturing the previous key in
+     * [Preferences.previousPresetKey] for later restore. Used by both the
+     * `SET_PRESET` intent and the in-app preset picker so the undo trail
+     * is consistent across surfaces.
+     */
+    fun setActiveKey(current: Preferences, newKey: String): Preferences {
+        if (newKey.isBlank() || newKey == current.activePresetKey) return current
+        return current.copy(
+            previousPresetKey = current.activePresetKey,
+            activePresetKey = newKey
+        )
     }
 }
