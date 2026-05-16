@@ -1,23 +1,54 @@
 package com.openlumen.ui.screens
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.BuildConfig
 import com.openlumen.R
+import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
-fun AboutScreen() {
+fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
+    val result by vm.exportResult.collectAsState()
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> uri?.let(vm::exportTo) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let(vm::importFrom) }
+
+    LaunchedEffect(result) {
+        result?.let {
+            Toast.makeText(ctx, it, Toast.LENGTH_SHORT).show()
+            vm.consumeExportResult()
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -30,5 +61,27 @@ fun AboutScreen() {
         Text(stringResource(R.string.about_offline),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Spacer(Modifier.height(16.dp))
+
+        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Backup", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Save or restore your preferences as a JSON file. Useful for moving " +
+                        "between devices or sharing presets.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Button(
+                    onClick = { exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json") },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Export profile") }
+                OutlinedButton(
+                    onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Import profile") }
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.openlumen.viewmodel
 
 import android.app.Application
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -128,6 +129,21 @@ class OpenLumenViewModel @Inject constructor(
     fun refreshProbes() = viewModelScope.launch {
         _probes.value = probe.probeAll(getApplication())
     }
+
+    private val _exportResult = MutableStateFlow<String?>(null)
+    val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
+
+    fun exportTo(uri: Uri) = viewModelScope.launch {
+        val result = prefs.exportTo(uri)
+        _exportResult.value = if (result.isSuccess) "Exported" else "Export failed: ${result.exceptionOrNull()?.message}"
+    }
+
+    fun importFrom(uri: Uri) = viewModelScope.launch {
+        val result = prefs.importFrom(uri)
+        _exportResult.value = if (result.isSuccess) "Imported" else "Import failed: ${result.exceptionOrNull()?.message}"
+    }
+
+    fun consumeExportResult() { _exportResult.value = null }
 
     private fun startService() {
         val ctx = getApplication<Application>()
