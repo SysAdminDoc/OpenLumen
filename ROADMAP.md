@@ -121,6 +121,9 @@ view). Each entry lists where the work landed.
 
 - **C02** — In-app driver report export → `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt`, Driver screen Copy/Share buttons
 - **C15** — Favorite presets → `favoritePresetKeys` in `Preferences`; Presets screen star toggle; consumed by upcoming notification/widget surfaces
+- **C16** — Notification preset cycle → "Next preset" action on the foreground notification; uses `PresetCycle.next`
+- **C70** — Tasker intents → documented action surface (ACTION_TURN_ON/OFF/TOGGLE/CYCLE_PRESET/SET_PRESET/SET_INTENSITY/SET_DIM) with EXTRA_PRESET_KEY/EXTRA_VALUE
+- **C71** — Shell/ADB command docs → [docs/automation.md](docs/automation.md) covers ADB, Tasker, Termux, Macrodroid, Automate
 - **C29** — Versioned preference migrations → `PreferencesMigrations` runner, `schemaVersion` field, on-disk-vs-default detection in `PreferencesStore`
 - **C30** — Profile import preview → `previewImport(uri)` + import-preview dialog with field-level diff in About tab
 - **C05** — Root prompt safety and recovery docs → [docs/root-safety.md](docs/root-safety.md)

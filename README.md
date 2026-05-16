@@ -112,6 +112,7 @@ OpenLumen/
 ## Documentation
 
 - [Architecture overview](docs/ARCHITECTURE.md) — modules, runtime flow, engine contract
+- [Automation](docs/automation.md) — Tasker / Termux / ADB intent reference
 - [Troubleshooting](docs/troubleshooting.md) — common driver and overlay problems
 - [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
 - [Root mode safety and recovery](docs/root-safety.md) — what can go wrong with root drivers, and how to recover

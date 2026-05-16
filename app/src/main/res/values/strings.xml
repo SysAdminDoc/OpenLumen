@@ -67,6 +67,7 @@
     <string name="notif_channel_desc">Indicates that OpenLumen is currently tinting the display.</string>
     <string name="notif_title">OpenLumen active</string>
     <string name="notif_action_off">Turn off</string>
+    <string name="notif_action_cycle">Next preset</string>
 
     <string name="tile_off">Off</string>
     <string name="tile_on">On</string>

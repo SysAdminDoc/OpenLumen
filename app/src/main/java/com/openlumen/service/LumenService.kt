@@ -108,8 +108,35 @@ class LumenService : LifecycleService() {
                 prefs.update { it.copy(enabled = false) }
                 // observePreferences will see enabled=false next emit, clear + stopSelf.
             }
+            ACTION_TURN_ON -> lifecycleScope.launch {
+                prefs.update { it.copy(enabled = true) }
+            }
+            ACTION_TOGGLE -> lifecycleScope.launch {
+                prefs.update { it.copy(enabled = !it.enabled) }
+            }
             ACTION_REEVALUATE -> lifecycleScope.launch {
                 latestPrefs.get()?.let { applyIfShouldBeActive(it) }
+            }
+            ACTION_CYCLE_PRESET -> lifecycleScope.launch {
+                prefs.update { current -> com.openlumen.prefs.PresetCycle.next(current) }
+            }
+            ACTION_SET_PRESET -> lifecycleScope.launch {
+                val key = intent.getStringExtra(EXTRA_PRESET_KEY)?.takeIf { it.isNotBlank() }
+                if (key != null) {
+                    prefs.update { it.copy(activePresetKey = key) }
+                }
+            }
+            ACTION_SET_INTENSITY -> lifecycleScope.launch {
+                val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
+                if (v.isFinite()) {
+                    prefs.update { it.copy(presetIntensity = v.coerceIn(0f, 1f)) }
+                }
+            }
+            ACTION_SET_DIM -> lifecycleScope.launch {
+                val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
+                if (v.isFinite()) {
+                    prefs.update { it.copy(dim = v.coerceIn(0f, 0.95f)) }
+                }
             }
         }
         return START_STICKY
@@ -126,6 +153,11 @@ class LumenService : LifecycleService() {
             Intent(this, LumenService::class.java).setAction(ACTION_TURN_OFF),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val cycleIntent = PendingIntent.getService(
+            this, 2,
+            Intent(this, LumenService::class.java).setAction(ACTION_CYCLE_PRESET),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val notification: Notification = NotificationCompat.Builder(this, getString(R.string.notif_channel_id))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.notif_title))
@@ -134,6 +166,10 @@ class LumenService : LifecycleService() {
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            // Cycle action is always present; the handler is a no-op when
+            // favorites is empty. This avoids two notification layouts and
+            // the rebuilds that would entail on every favorites edit.
+            .addAction(0, getString(R.string.notif_action_cycle), cycleIntent)
             .addAction(0, getString(R.string.notif_action_off), offIntent)
             .build()
         try {
@@ -362,7 +398,23 @@ class LumenService : LifecycleService() {
 
     companion object {
         private const val NOTIFICATION_ID = 4242
+
+        // Documented intent actions. Tied to roadmap candidates C13 (off),
+        // C16 (cycle), and C70 (Tasker/automation). See docs/automation.md
+        // for the full ADB command reference. Changing these strings is a
+        // breaking change for anyone scripting against them — bump
+        // `Preferences.CURRENT_SCHEMA_VERSION` and document the move if
+        // you must rename one.
         const val ACTION_TURN_OFF = "com.openlumen.action.TURN_OFF"
+        const val ACTION_TURN_ON = "com.openlumen.action.TURN_ON"
+        const val ACTION_TOGGLE = "com.openlumen.action.TOGGLE"
         const val ACTION_REEVALUATE = "com.openlumen.action.REEVALUATE"
+        const val ACTION_CYCLE_PRESET = "com.openlumen.action.CYCLE_PRESET"
+        const val ACTION_SET_PRESET = "com.openlumen.action.SET_PRESET"
+        const val ACTION_SET_INTENSITY = "com.openlumen.action.SET_INTENSITY"
+        const val ACTION_SET_DIM = "com.openlumen.action.SET_DIM"
+
+        const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
+        const val EXTRA_VALUE = "com.openlumen.extra.VALUE"
     }
 }

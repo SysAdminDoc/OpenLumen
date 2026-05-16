@@ -65,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every preset card. Defaults to Night/Amber/Red/Deep. Capped at 8 in
   sanitize. Used by the upcoming notification preset-cycle action (C16)
   and 4x1 widget (C20).
+- Foreground notification gets a "Next preset" action that cycles through
+  favorites (no-op when favorites is empty; visible regardless to avoid
+  notification rebuilds on edit). The cycle logic lives in
+  `core-prefs/PresetCycle` so it's unit-testable on the JVM.
+- Documented automation surface: LumenService now accepts
+  `TURN_ON` / `TOGGLE` / `CYCLE_PRESET` / `SET_PRESET` / `SET_INTENSITY` /
+  `SET_DIM` in addition to the existing `TURN_OFF` and `REEVALUATE`.
+  Full ADB / Tasker / Termux command reference at `docs/automation.md`.
+  These action strings are part of the stable API; renaming requires a
+  schema-version bump and a deprecation period.
 
 ### Tests
 - Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only
