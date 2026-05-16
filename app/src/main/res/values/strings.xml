@@ -19,6 +19,12 @@
     <string name="presets_red">Red</string>
     <string name="presets_amber">Amber</string>
     <string name="presets_night">Night</string>
+    <string name="preset_favorite">Add to favorites</string>
+    <string name="preset_unfavorite">Remove from favorites</string>
+    <string name="import_preview_title">Preview imported profile</string>
+    <string name="import_preview_apply">Apply</string>
+    <string name="import_preview_cancel">Cancel</string>
+    <string name="import_preview_unchanged">No changes</string>
 
     <string name="schedule_title">When should it run?</string>
     <string name="schedule_off">Off</string>

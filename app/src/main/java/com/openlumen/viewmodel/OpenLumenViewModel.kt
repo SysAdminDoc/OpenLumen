@@ -166,6 +166,50 @@ class OpenLumenViewModel @Inject constructor(
 
     fun consumeExportResult() { _exportResult.value = null }
 
+    /**
+     * Import preview (C30). Decodes + migrates + sanitizes the incoming
+     * profile without writing it. UI uses the [Preferences] for a diff view;
+     * if the user confirms, the same URI goes through [importFrom] to apply.
+     */
+    private val _pendingImport = MutableStateFlow<PendingImport?>(null)
+    val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
+
+    data class PendingImport(val uri: Uri, val decoded: Preferences)
+
+    fun beginImportPreview(uri: Uri) = viewModelScope.launch {
+        val result = prefs.previewImport(uri)
+        if (result.isSuccess) {
+            _pendingImport.value = PendingImport(uri, result.getOrThrow())
+        } else {
+            _exportResult.value = "Import failed: ${result.exceptionOrNull()?.message}"
+        }
+    }
+
+    fun confirmPendingImport() = viewModelScope.launch {
+        val pending = _pendingImport.value ?: return@launch
+        _pendingImport.value = null
+        importFrom(pending.uri)
+    }
+
+    fun cancelPendingImport() {
+        _pendingImport.value = null
+    }
+
+    /**
+     * Favorites toggle (C15). Used by the Presets screen and by upcoming
+     * notification-cycle / 4x1 widget command surfaces.
+     */
+    fun toggleFavorite(key: String) = viewModelScope.launch {
+        prefs.update { current ->
+            val next = if (key in current.favoritePresetKeys) {
+                current.favoritePresetKeys - key
+            } else {
+                current.favoritePresetKeys + key
+            }
+            current.copy(favoritePresetKeys = next)
+        }
+    }
+
     private fun startService(): Boolean {
         val ctx = getApplication<Application>()
         val intent = Intent(ctx, LumenService::class.java)

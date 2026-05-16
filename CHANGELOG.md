@@ -53,6 +53,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quick Settings tile subtitle shows the active preset name when the filter
   is on (API 29+), and the tile's long-press destination now opens the app
   directly via the `PREFERENCES_ACTIVITY` manifest meta-data.
+- Versioned preference schema: `Preferences.schemaVersion` (current = 1)
+  plus a `PreferencesMigrations` runner that walks pre-C29 blobs (no
+  `schemaVersion` key on disk) through to the current layout. Migrations
+  are pure functions; sanitization runs after.
+- Profile import preview: the About tab's Import button now shows a
+  field-level diff (preset, engine, schedule mode + times, location,
+  intensity, dim, light sensor, favorites) and waits for explicit
+  confirmation before writing to DataStore.
+- Favorite presets: `Preferences.favoritePresetKeys` with a star-toggle on
+  every preset card. Defaults to Night/Amber/Red/Deep. Capped at 8 in
+  sanitize. Used by the upcoming notification preset-cycle action (C16)
+  and 4x1 widget (C20).
 
 ### Tests
 - Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only

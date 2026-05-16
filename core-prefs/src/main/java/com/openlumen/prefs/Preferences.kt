@@ -36,8 +36,27 @@ enum class ScheduleModeDto { AlwaysOn, AlwaysOff, FixedTime, Solar }
 @Serializable
 enum class EngineKindDto { Auto, ColorDisplayManager, SurfaceFlinger, Kcal, Overlay }
 
+/**
+ * Single persisted preferences blob. See [PreferencesStore] for the read/write path.
+ *
+ * Schema versioning (tied to roadmap candidate C29):
+ * - [schemaVersion] is the canonical version of the on-disk layout.
+ * - Bump [Preferences.CURRENT_SCHEMA_VERSION] when a field's *interpretation*
+ *   changes — adding a field with a default does NOT require a bump because
+ *   `ignoreUnknownKeys = true` plus Kotlin defaults already handle additive
+ *   evolution.
+ * - When you bump, add a migration entry to [PreferencesMigrations]. The
+ *   `[PreferencesStore]` runs migrations on every read AND every import.
+ *
+ * Favorites (tied to roadmap candidate C15):
+ * - [favoritePresetKeys] is the user-marked list of preset keys to surface in
+ *   command surfaces (notification cycle, 4x1 widget). Cardinality is bounded
+ *   by the preset library size; we re-validate against [com.openlumen.engine.Presets]
+ *   at use sites rather than coupling core-prefs to core-engine.
+ */
 @Serializable
 data class Preferences(
+    val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
     val enabled: Boolean = false,
     val activePresetKey: String = "night",
     val customMatrix: MatrixDto = MatrixDto(r = 1f, g = 0.78f, b = 0.55f),
@@ -49,5 +68,28 @@ data class Preferences(
     val engine: EngineKindDto = EngineKindDto.Auto,
     val lightSensorEnabled: Boolean = false,
     val lightSensorLuxThreshold: Float = 2f,
-    val firstRunComplete: Boolean = false
-)
+    val firstRunComplete: Boolean = false,
+    val favoritePresetKeys: List<String> = DEFAULT_FAVORITES
+) {
+    companion object {
+        /**
+         * Bump this when the *meaning* of an existing field changes.
+         *
+         * Pre-history:
+         * - v0 (implicit, before C29): no `schemaVersion` field. All shipped
+         *   v0.1.0–v0.4.0 builds wrote pre-v1 blobs. The migration runner
+         *   treats any decoded `schemaVersion == 0` as a pre-history blob.
+         * - v1 (current, v0.5.0+): introduced `schemaVersion` and
+         *   `favoritePresetKeys`. Both have defaults, so v0 blobs upgrade
+         *   transparently on the next read.
+         */
+        const val CURRENT_SCHEMA_VERSION: Int = 1
+
+        /**
+         * Default favorites for new installs: the four most-commonly-used
+         * presets across competitor projects (Red Moon, Twilight, CF.Lumen).
+         * Validated against [com.openlumen.engine.Presets] at use sites.
+         */
+        val DEFAULT_FAVORITES: List<String> = listOf("night", "amber", "red", "deep")
+    }
+}

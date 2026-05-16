@@ -53,7 +53,10 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
-    ) { uri -> uri?.let(vm::importFrom) }
+    ) { uri -> uri?.let(vm::beginImportPreview) }
+
+    val pendingImport by vm.pendingImport.collectAsState()
+    val currentPrefs by vm.state.collectAsState()
 
     LaunchedEffect(result) {
         val msg = result ?: return@LaunchedEffect
@@ -177,6 +180,78 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         )
     }
+
+    // Import preview (C30). The dialog renders a diff of what the imported
+    // profile would change vs the user's current preferences. The user must
+    // confirm before any DataStore write happens.
+    pendingImport?.let { pending ->
+        AlertDialog(
+            onDismissRequest = { vm.cancelPendingImport() },
+            title = { Text(stringResource(R.string.import_preview_title)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    val lines = describeDiff(currentPrefs, pending.decoded)
+                    if (lines.isEmpty()) {
+                        Text(stringResource(R.string.import_preview_unchanged))
+                    } else {
+                        lines.forEach { line ->
+                            Text(line, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                LumenTextButton(onClick = { vm.confirmPendingImport() }) {
+                    Text(stringResource(R.string.import_preview_apply))
+                }
+            },
+            dismissButton = {
+                LumenTextButton(onClick = { vm.cancelPendingImport() }) {
+                    Text(stringResource(R.string.import_preview_cancel))
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Human-readable summary of the differences between two [com.openlumen.prefs.Preferences]
+ * snapshots. Used by the import preview dialog (C30). Deliberately terse — the
+ * dialog body shouldn't scroll for typical profile imports.
+ */
+private fun describeDiff(
+    current: com.openlumen.prefs.Preferences,
+    next: com.openlumen.prefs.Preferences
+): List<String> {
+    val out = mutableListOf<String>()
+    fun <T> diff(label: String, a: T, b: T) {
+        if (a != b) out += "$label: $a → $b"
+    }
+    diff("Active preset", current.activePresetKey, next.activePresetKey)
+    diff("Engine", current.engine.name, next.engine.name)
+    diff("Schedule mode", current.schedule.mode.name, next.schedule.mode.name)
+    diff(
+        "Schedule start",
+        "%02d:%02d".format(current.schedule.startHour, current.schedule.startMinute),
+        "%02d:%02d".format(next.schedule.startHour, next.schedule.startMinute)
+    )
+    diff(
+        "Schedule end",
+        "%02d:%02d".format(current.schedule.endHour, current.schedule.endMinute),
+        "%02d:%02d".format(next.schedule.endHour, next.schedule.endMinute)
+    )
+    val currentCoords = current.schedule.latitude?.let { "%.2f,%.2f".format(it, current.schedule.longitude ?: 0.0) } ?: "unset"
+    val nextCoords = next.schedule.latitude?.let { "%.2f,%.2f".format(it, next.schedule.longitude ?: 0.0) } ?: "unset"
+    diff("Location", currentCoords, nextCoords)
+    diff("Intensity", "%.2f".format(current.presetIntensity), "%.2f".format(next.presetIntensity))
+    diff("Dim", "%.2f".format(current.dim), "%.2f".format(next.dim))
+    diff("Light sensor", current.lightSensorEnabled, next.lightSensorEnabled)
+    diff(
+        "Favorites",
+        current.favoritePresetKeys.joinToString(","),
+        next.favoritePresetKeys.joinToString(",")
+    )
+    return out
 }
 
 // Built around the runtime package name so the debug build prints the

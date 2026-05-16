@@ -13,8 +13,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -24,15 +29,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.openlumen.R
 import com.openlumen.engine.Presets
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
 fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val prefs by vm.state.collectAsState()
+    val favorites = prefs.favoritePresetKeys.toSet()
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -40,6 +48,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     ) {
         items(Presets.ALL) { entry ->
             val selected = entry.key == prefs.activePresetKey
+            val isFavorite = entry.key in favorites
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
@@ -69,6 +78,19 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.weight(1f)
                     )
+                    // Favorite toggle (C15). Independent of selection — a
+                    // user can favorite presets they don't currently have
+                    // active so the notification/widget cycle (C16/C20) has
+                    // a useful list to walk.
+                    IconButton(onClick = { vm.toggleFavorite(entry.key) }) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                            contentDescription = stringResource(
+                                if (isFavorite) R.string.preset_unfavorite
+                                else R.string.preset_favorite
+                            )
+                        )
+                    }
                     RadioButton(
                         selected = selected,
                         onClick = { vm.selectPreset(entry.key) }

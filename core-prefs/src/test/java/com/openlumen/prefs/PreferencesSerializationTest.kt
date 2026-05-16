@@ -30,4 +30,12 @@ class PreferencesSerializationTest {
         assertThat(decoded.schedule.longitude).isNull()
         assertThat(decoded.enabled).isFalse()
     }
+
+    @Test fun `defaults include the canonical favorites list`() {
+        val defaults = Preferences()
+
+        assertThat(defaults.favoritePresetKeys).containsExactly("night", "amber", "red", "deep").inOrder()
+        assertThat(defaults.schemaVersion).isEqualTo(Preferences.CURRENT_SCHEMA_VERSION)
+    }
 }
+

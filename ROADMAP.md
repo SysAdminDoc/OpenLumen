@@ -120,6 +120,9 @@ Completed candidates (commit history is authoritative; this is the human
 view). Each entry lists where the work landed.
 
 - **C02** — In-app driver report export → `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt`, Driver screen Copy/Share buttons
+- **C15** — Favorite presets → `favoritePresetKeys` in `Preferences`; Presets screen star toggle; consumed by upcoming notification/widget surfaces
+- **C29** — Versioned preference migrations → `PreferencesMigrations` runner, `schemaVersion` field, on-disk-vs-default detection in `PreferencesStore`
+- **C30** — Profile import preview → `previewImport(uri)` + import-preview dialog with field-level diff in About tab
 - **C05** — Root prompt safety and recovery docs → [docs/root-safety.md](docs/root-safety.md)
 - **C07** — Guided WRITE_SECURE_SETTINGS grant → Driver screen now shows grant state and a copyable per-package adb command
 - **C09** — Overlay alpha cap explanation → Driver screen info card when Overlay/Auto selected
