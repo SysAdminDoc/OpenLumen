@@ -123,6 +123,7 @@ view). Each entry lists where the work landed.
 - **C15** — Favorite presets → `favoritePresetKeys` in `Preferences`; Presets screen star toggle; consumed by upcoming notification/widget surfaces
 - **C16** — Notification preset cycle → "Next preset" action on the foreground notification; uses `PresetCycle.next`
 - **C19** — Home-screen 1x1 toggle widget → `ToggleWidget` AppWidgetProvider, refresh broadcast from `LumenService.observePreferences()`
+- **C20** — Home-screen 4x1 preset widget → `PresetWidget` renders the first four favorites as tappable swatches; click dispatches `LumenService.ACTION_SET_PRESET`
 - **C51** — OWASP MASVS-lite threat model → [docs/threat-model.md](docs/threat-model.md)
 - **C85** — Local panic reset on boot → `BootReceiver` skips auto-restore if `crash.log` was touched within 5 minutes of boot
 - **C70** — Tasker intents → documented action surface (ACTION_TURN_ON/OFF/TOGGLE/CYCLE_PRESET/SET_PRESET/SET_INTENSITY/SET_DIM) with EXTRA_PRESET_KEY/EXTRA_VALUE

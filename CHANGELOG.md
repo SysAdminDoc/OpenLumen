@@ -80,6 +80,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the in-app toggle via a `ToggleWidget.broadcastRefresh()` nudge
   that the service fires on every prefs emission. The receiver is
   no-op when no widgets are installed.
+- 4x1 home-screen preset widget. Renders the first four entries of
+  `favoritePresetKeys` as tappable color chips. Tap a chip to
+  `SET_PRESET` (immediate, no app launch). If fewer than four favorites
+  are marked, unused slots are hidden and a center hint reminds the user
+  to mark favorites in the Presets tab. Refreshes via the same
+  prefs-emission broadcast pattern as the 1x1 widget but on a separate
+  `PRESET_REFRESH` action namespace.
 - OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
   crypto, auth, network, platform-interaction, and code-quality risks with
   specific mitigations. Includes data and permission inventories and a

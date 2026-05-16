@@ -73,6 +73,7 @@
     <string name="tile_on">On</string>
     <string name="tile_subtitle_off">Filter off</string>
     <string name="tile_subtitle_on">%1$s</string>
+    <string name="widget_preset_hint">Mark favorites in Presets to fill these slots</string>
 
     <string name="perm_overlay_title">Allow display over other apps</string>
     <string name="perm_overlay_rationale">Required for the rootless overlay driver. Skip if you only use root drivers.</string>

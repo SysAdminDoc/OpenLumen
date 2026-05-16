@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AppWidgetProviderInfo for the 4x1 preset widget. Tied to C20.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_preset"
+    android:previewImage="@drawable/ic_lumen_tile"
+    android:previewLayout="@layout/widget_preset"
+    android:resizeMode="horizontal"
+    android:widgetCategory="home_screen"
+    android:configure="" />

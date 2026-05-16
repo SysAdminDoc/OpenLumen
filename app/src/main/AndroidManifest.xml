@@ -101,5 +101,24 @@
                 android:resource="@xml/widget_toggle_info" />
         </receiver>
 
+        <!--
+            4x1 preset widget (roadmap C20). Renders the first four
+            favorited presets as tappable chips. Uses an action-namespaced
+            refresh broadcast so it doesn't fight ToggleWidget's intent
+            filter.
+        -->
+        <receiver
+            android:name=".widget.PresetWidget"
+            android:exported="false"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.openlumen.widget.action.PRESET_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_preset_info" />
+        </receiver>
+
     </application>
 </manifest>

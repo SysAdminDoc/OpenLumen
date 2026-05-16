@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    White-filled circle used as a tintable swatch in the 4x1 preset widget.
+    PresetWidget tints this drawable at runtime via setColorFilter on the
+    enclosing ImageView so the chip shows the preset's RGB at a glance.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#FFFFFFFF" />
+    <size android:width="20dp" android:height="20dp" />
+</shape>
