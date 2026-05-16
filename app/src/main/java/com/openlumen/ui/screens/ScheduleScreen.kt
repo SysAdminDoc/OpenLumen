@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.ui.components.LightSensorCard
 import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -37,6 +38,7 @@ import com.openlumen.viewmodel.OpenLumenViewModel
 @Composable
 fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val prefs by vm.state.collectAsState()
+    val lux by vm.lux.collectAsState()
 
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
@@ -148,6 +150,15 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 }
             }
         }
+
+        LightSensorCard(
+            enabled = prefs.lightSensorEnabled,
+            threshold = prefs.lightSensorLuxThreshold,
+            currentLux = lux,
+            onToggle = { vm.setLightSensor(it, prefs.lightSensorLuxThreshold) },
+            onThresholdChange = { vm.setLightSensor(prefs.lightSensorEnabled, it) },
+            onUseCurrent = { if (lux >= 0) vm.setLightSensor(prefs.lightSensorEnabled, lux) }
+        )
     }
 
     if (showStartPicker) {

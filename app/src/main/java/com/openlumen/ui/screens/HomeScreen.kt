@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.Presets
+import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
@@ -46,6 +47,8 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             .padding(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        OverlayPermissionCard()
+
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = MaterialTheme.shapes.large,

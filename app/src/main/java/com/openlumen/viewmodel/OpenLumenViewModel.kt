@@ -10,6 +10,7 @@ import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.service.LumenService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class OpenLumenViewModel @Inject constructor(
     application: Application,
     private val prefs: PreferencesStore,
-    private val probe: DriverProbe
+    private val probe: DriverProbe,
+    private val lightSensor: LightSensorAdapter
 ) : AndroidViewModel(application) {
 
     val state: StateFlow<Preferences> = prefs.flow
@@ -32,6 +34,10 @@ class OpenLumenViewModel @Inject constructor(
 
     private val _probes = MutableStateFlow<List<DriverProbe.Probe>>(emptyList())
     val probes: StateFlow<List<DriverProbe.Probe>> = _probes.asStateFlow()
+
+    /** Live ambient-light lux reading. -1 means no sensor / not yet emitted. */
+    val lux: StateFlow<Float> = lightSensor.lux()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1f)
 
     init {
         refreshProbes()

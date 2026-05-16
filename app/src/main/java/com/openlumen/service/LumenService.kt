@@ -20,6 +20,7 @@ import com.openlumen.engine.engines.OverlayEngine
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
+import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,18 +46,32 @@ class LumenService : LifecycleService() {
 
     @Inject lateinit var prefs: PreferencesStore
     @Inject lateinit var probe: DriverProbe
+    @Inject lateinit var lightSensor: LightSensorAdapter
 
     private var engine: ColorEngine? = null
     private var tickerJob: Job? = null
+    private var lightJob: Job? = null
     private val latestPrefs = AtomicReference<Preferences?>(null)
+    private val latestLux = AtomicReference(-1f)
     private var lastApplied: LumenMatrix? = null
-    private var lastScheduleActive: Boolean = false
+    private var lastShouldBeActive: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
         startInForeground()
         observePreferences()
+        observeLightSensor()
         startScheduleTicker()
+    }
+
+    private fun observeLightSensor() {
+        lightJob?.cancel()
+        lightJob = lifecycleScope.launch {
+            lightSensor.lux().collect { lux ->
+                latestLux.set(lux)
+                latestPrefs.get()?.let { applyIfShouldBeActive(it) }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -114,7 +129,7 @@ class LumenService : LifecycleService() {
                     return@collectLatest
                 }
                 ensureEngine(p)
-                applyIfScheduleActive(p)
+                applyIfShouldBeActive(p)
             }
         }
     }
@@ -123,7 +138,7 @@ class LumenService : LifecycleService() {
         tickerJob?.cancel()
         tickerJob = lifecycleScope.launch {
             while (true) {
-                latestPrefs.get()?.let { applyIfScheduleActive(it) }
+                latestPrefs.get()?.let { applyIfShouldBeActive(it) }
                 delay(60_000)
             }
         }
@@ -144,12 +159,24 @@ class LumenService : LifecycleService() {
         (engine as? OverlayEngine)?.installView(this, Presets.OFF)
     }
 
-    private suspend fun applyIfScheduleActive(p: Preferences) {
-        val mode: ScheduleMode = mapMode(p)
-        val active = isActive(mode)
-        val matrix = if (active) matrixFor(p) else LumenMatrix.IDENTITY
-        if (active == lastScheduleActive && matrix == lastApplied) return
-        lastScheduleActive = active
+    /**
+     * Filter is active when either:
+     *  - The schedule is active right now (time / solar / always-on), OR
+     *  - The light sensor is enabled and the latest lux reading is below threshold.
+     *
+     * The light sensor acts as an "additional" trigger — it can engage the filter even
+     * outside the user's schedule window, useful for dark-room sessions during the day.
+     */
+    private suspend fun applyIfShouldBeActive(p: Preferences) {
+        val scheduleActive = isActive(mapMode(p))
+        val lightActive = p.lightSensorEnabled &&
+            latestLux.get() >= 0f &&
+            latestLux.get() < p.lightSensorLuxThreshold
+        val shouldBeActive = scheduleActive || lightActive
+
+        val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
+        if (shouldBeActive == lastShouldBeActive && matrix == lastApplied) return
+        lastShouldBeActive = shouldBeActive
         engine?.apply(this, matrix)
         lastApplied = matrix
     }
@@ -204,6 +231,7 @@ class LumenService : LifecycleService() {
 
     override fun onDestroy() {
         tickerJob?.cancel()
+        lightJob?.cancel()
         lifecycleScope.launch { engine?.clear(this@LumenService) }
         super.onDestroy()
     }
