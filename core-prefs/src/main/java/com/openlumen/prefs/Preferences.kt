@@ -23,7 +23,8 @@ data class ProfileSnapshot(
     val lightSensorLuxThreshold: Float,
     val favoritePresetKeys: List<String>,
     val transitionDurationMs: Long,
-    val contrast: Float = 1.0f
+    val contrast: Float = 1.0f,
+    val amoledBlackClamp: Boolean = false
 )
 
 @Serializable
@@ -108,6 +109,15 @@ data class Preferences(
      * target over this duration. Clamped to `0..TRANSITION_MAX_MS`.
      */
     val transitionDurationMs: Long = 0L,
+    /**
+     * AMOLED true-black clamp (roadmap **C66**). Opt-in. When set, the
+     * engine respects `LumenMatrix.amoledClamp` and snaps any channel
+     * scalar below the panel-noise threshold to true zero. Effective on
+     * the SurfaceFlinger and KCAL engines (and the CDM engine where the
+     * AOSP path passes scalars through unchanged); the overlay engine
+     * also benefits because its alpha is derived from the same scalars.
+     */
+    val amoledBlackClamp: Boolean = false,
     /**
      * Per-channel contrast multiplier (roadmap C64). 1.0 = identity, <1.0
      * compresses mid-tones, >1.0 expands them. Clamped to

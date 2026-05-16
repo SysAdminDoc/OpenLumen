@@ -189,19 +189,18 @@ plus split-screen and pop-up-view modes on tablet form factors.
 
 **Why deferred**: tooling needs real device.
 
-## Melanopic / circadian estimate UI — C61 (Later)
+## Melanopic / circadian estimate UI — C61 (shipped as blue-channel reduction)
 
-**Status**: Later-tier.
-
-**Plan**: surface an "estimated melanopic-DER reduction" % alongside
-the active preset, derived from the current matrix's blue-channel
-suppression.
-
-**Why deferred**: the melanopic estimate is approximate (~10–20%
-error) and easy to misread as a health claim. We'd need to land it
-alongside more thorough copy in
-[docs/health-evidence.md](health-evidence.md) explaining the
-limits. Until then, the risk-reward is wrong.
+Shipped as a "Blue channel reduced by N%" indicator on the Home tab,
+computed by `MatrixPreview.blueSuppression(prefs)`. This is the
+narrow, defensible form of the candidate — a *physical*
+measurement of the output (1 - effective blue scalar), not a
+melanopic / circadian / sleep claim. The richer melanopic-DER
+estimate the candidate originally described is still deferred per
+the rationale in `docs/health-evidence.md`: the dose-response from
+display tinting is small and highly individual, and any in-app
+number that suggests otherwise would be a health claim we can't
+support.
 
 ## Color-vision-deficiency LUT correction — C63 (Later)
 
@@ -226,16 +225,21 @@ replacing either. Bias takes effect on the SurfaceFlinger engine; the
 other engines get the contrast-scaled channel values without bias —
 acceptable degradation given they don't model bias at all.
 
-## AMOLED black clamp — C66 (Later)
+## AMOLED black clamp — C66 (shipped in v0.5.0, scalar-level form)
 
-**Status**: Later-tier; hardware-sensitive.
+Shipped as an opt-in `Preferences.amoledBlackClamp` flag and a
+`LumenMatrix.amoledClamp` field. When the flag is set,
+`LumenMatrix.scaledRgb()` snaps any channel scalar below
+`AMOLED_CLAMP_THRESHOLD = 0.02` to zero. On OLED panels this turns the
+matching subpixels fully off in the warm/dim end of the tinting
+range; on LCD panels it's a no-op (the backlight stays lit regardless).
 
-**Plan**: detect near-black pixels and force them to 0,0,0 to
-preserve OLED true-black power savings. Requires the root engines —
-the overlay engine can't reach individual pixels.
-
-**Why deferred**: needs framebuffer access; OEM kernels expose
-this surface inconsistently. Real value but high engineering cost.
+The shipped form is the scalar-level clamp, not the per-pixel
+framebuffer transform the candidate originally described. Per-pixel
+true-black would require shader access (SurfaceFlinger does not
+expose pixel-level transforms through its color-matrix path) and is
+explicitly out of scope. The scalar clamp delivers the practical OLED
+savings without the kernel-level surface dependency.
 
 ## Content-aware dimming — C67 (Later; privacy-heavy)
 

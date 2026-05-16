@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
+import com.openlumen.diagnostics.MatrixPreview
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
 import com.openlumen.ui.components.OverlayPermissionCard
@@ -129,6 +130,39 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         stateDescription = "%.2f times".format(prefs.contrast)
                     }
                 )
+
+                Spacer(Modifier.height(8.dp))
+                // Blue-channel suppression indicator (C61). Physical measurement
+                // of the output; not a health metric — see
+                // `docs/health-evidence.md`.
+                val blueSuppressionPct = (MatrixPreview.blueSuppression(prefs) * 100f).toInt()
+                Text(
+                    stringResource(R.string.home_blue_suppression, blueSuppressionPct),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.home_amoled_clamp_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            stringResource(R.string.home_amoled_clamp_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = prefs.amoledBlackClamp,
+                        onCheckedChange = vm::setAmoledBlackClamp
+                    )
+                }
             }
         }
 

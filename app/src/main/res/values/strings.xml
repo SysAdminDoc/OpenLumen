@@ -14,6 +14,9 @@
     <string name="home_intensity">Intensity</string>
     <string name="home_dim">Dim below minimum</string>
     <string name="home_contrast">Contrast</string>
+    <string name="home_blue_suppression">Blue channel reduced by %1$d%%</string>
+    <string name="home_amoled_clamp_title">AMOLED true-black</string>
+    <string name="home_amoled_clamp_subtitle">Snap very dim subpixels to fully off. No effect on LCD panels.</string>
     <string name="home_kelvin_title">Color temperature</string>
     <string name="home_kelvin_hint">Warmer (lower K) deepens reds; cooler (higher K) lifts blues. 6500 K is neutral white.</string>
 

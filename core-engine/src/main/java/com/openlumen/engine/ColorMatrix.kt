@@ -18,7 +18,16 @@ data class LumenMatrix(
     val dim: Float = 0f,
     val gammaR: Float = 1f,
     val gammaG: Float = 1f,
-    val gammaB: Float = 1f
+    val gammaB: Float = 1f,
+    /**
+     * AMOLED black clamp (roadmap **C66**). When set, any channel scalar
+     * computed by [scaledRgb] below [AMOLED_CLAMP_THRESHOLD] snaps to 0.
+     * On OLED panels this turns the relevant subpixels fully off, which
+     * is a measurable power saving in the warm/dim end of the tinting
+     * range. On LCD panels this is a no-op (the backlight stays lit
+     * regardless of pixel value).
+     */
+    val amoledClamp: Boolean = false
 ) {
     /** Scale factor [0,1] for a final brightness reduction beyond panel minimum. */
     val effectiveDim: Float get() = dim.finiteIn(0f, 0.95f, default = 0f)
@@ -40,11 +49,17 @@ data class LumenMatrix(
         val rd = (r.finiteIn(0f, 1f, default = 1f).toDouble() * dimFactor).coerceAtLeast(0.0)
         val gd = (g.finiteIn(0f, 1f, default = 1f).toDouble() * dimFactor).coerceAtLeast(0.0)
         val bd = (b.finiteIn(0f, 1f, default = 1f).toDouble() * dimFactor).coerceAtLeast(0.0)
-        return floatArrayOf(
+        val scaled = floatArrayOf(
             Math.pow(rd, 1.0 / gammaR.finiteIn(0.05f, 5f, default = 1f)).toFloat(),
             Math.pow(gd, 1.0 / gammaG.finiteIn(0.05f, 5f, default = 1f)).toFloat(),
             Math.pow(bd, 1.0 / gammaB.finiteIn(0.05f, 5f, default = 1f)).toFloat()
         )
+        if (amoledClamp) {
+            for (i in scaled.indices) {
+                if (scaled[i] < AMOLED_CLAMP_THRESHOLD) scaled[i] = 0f
+            }
+        }
+        return scaled
     }
 
     /** 4x4 row-major matrix for SurfaceFlinger. */
@@ -108,5 +123,14 @@ data class LumenMatrix(
 
     companion object {
         val IDENTITY = LumenMatrix()
+
+        /**
+         * Channel scalar below this value snaps to 0 when `amoledClamp` is
+         * set. 0.02 is below the noise floor of typical 8-bit panels (which
+         * map roughly 1/255 = 0.004 per LSB), so the clamp only affects
+         * values the panel would otherwise display as very dim — exactly the
+         * range where OLED true-black savings are useful.
+         */
+        const val AMOLED_CLAMP_THRESHOLD: Float = 0.02f
     }
 }

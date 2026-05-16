@@ -152,6 +152,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- AMOLED true-black clamp (C66). New opt-in
+  `Preferences.amoledBlackClamp` flag plus a matching
+  `LumenMatrix.amoledClamp` field. When enabled, `scaledRgb()` snaps
+  any channel scalar below `AMOLED_CLAMP_THRESHOLD = 0.02` to zero,
+  which on OLED panels turns the matching subpixels fully off in the
+  warm/dim end of the tinting range. No-op on LCD. Surfaced as a
+  switch on the Home tab. Unit-tested for off-passthrough, on-snap,
+  above-threshold preservation, and dim-driven snap.
+- Blue-channel reduction indicator on the Home tab (C61). New
+  `MatrixPreview.blueSuppression(prefs)` computes `1 - effective_blue`
+  from the same matrix path the engine receives, so the indicator
+  honors intensity, dim, contrast, gamma, and AMOLED clamp. Phrased
+  as a physical measurement ("Blue channel reduced by N%"), not a
+  health metric — see `docs/health-evidence.md` for what we will and
+  will not claim.
+- New `MatrixPreview` utility extracts the
+  preference-to-matrix transform out of `LumenService.matrixFor()`
+  so the service and UI compute identical effective matrices. The
+  service now delegates to `MatrixPreview.matrixFor(prefs)`; future
+  preview surfaces (color swatches, melanopic estimates) call the
+  same function.
 - New schedule mode "Until my next alarm" (C25). On from the
   configured start time until the user's next system alarm clock
   fires. `LumenService.mapMode()` reads `AlarmManager.getNextAlarmClock()`

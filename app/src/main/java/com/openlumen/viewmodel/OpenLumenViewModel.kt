@@ -112,6 +112,11 @@ class OpenLumenViewModel @Inject constructor(
         prefs.update { it.copy(dim = value.coerceIn(0f, 0.95f)) }
     }
 
+    /** AMOLED true-black clamp (C66). Off by default; safe no-op on LCD. */
+    fun setAmoledBlackClamp(enabled: Boolean) = viewModelScope.launch {
+        prefs.update { it.copy(amoledBlackClamp = enabled) }
+    }
+
     /** Contrast multiplier (C64). 1.0 = identity. */
     fun setContrast(value: Float) = viewModelScope.launch {
         prefs.update {

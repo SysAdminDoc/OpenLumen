@@ -126,7 +126,9 @@ view). Each entry lists where the work landed.
 - **C03** — SurfaceFlinger code registry → `SurfaceFlingerEngine.candidatesFor(api)` per-API ladder, `activeTransactionCode` diagnostic, captured in driver report
 - **C25** — Alarm-based schedule mode → new `ScheduleMode.UntilNextAlarm(start, nextAlarmAt)` + `ScheduleModeDto.UntilNextAlarm`; `LumenService.mapMode()` queries `AlarmManager.getNextAlarmClock()`; 12h fallback when no alarm is set
 - **C64** — Contrast control → `Preferences.contrast` (0.5..2.0 default 1.0); `LumenService.applyContrast()` applies per-channel scale + center bias on top of the intensity-lerped matrix; Home-tab slider
+- **C61** — Blue-channel reduction indicator → `MatrixPreview.blueSuppression(prefs)` + Home-tab "Blue channel reduced by N%" label. Physical measurement of the output (not a melanopic/circadian/sleep claim — see `docs/health-evidence.md`).
 - **C65** — Kelvin temperature UI → `core-engine/Kelvin.kt` (Tanner Helland approximation, 1000–10 000 K), new Home-tab slider that writes through `setCustomKelvin`
+- **C66** — AMOLED true-black clamp (scalar form) → `Preferences.amoledBlackClamp` + `LumenMatrix.amoledClamp` + threshold-snap in `scaledRgb()`. Opt-in toggle on Home tab. Per-pixel framebuffer transform remains out of scope.
 - **C52** — Local diagnostics bundle → `DiagnosticsLog` ring-buffered event log; tail appended to every driver report
 - **C53** — Structured log viewer → About → "View diagnostics log" dialog over the bounded event log
 - **C04** — KCAL variant probing → `KcalEngine.CANDIDATE_BASES` with three known sysfs roots, `activeBasePath` diagnostic, captured in driver report
