@@ -23,6 +23,10 @@ private val Context.dataStore by preferencesDataStore(name = "openlumen-prefs")
 class PreferencesStore(private val context: Context) {
     private val json = Json {
         ignoreUnknownKeys = true
+        // Backward tolerance for early builds that used NaN as the "location unset"
+        // sentinel. New writes use null for unset coordinates so exported profiles
+        // remain normal JSON.
+        allowSpecialFloatingPointValues = true
         encodeDefaults = true
         prettyPrint = true
     }
@@ -31,6 +35,7 @@ class PreferencesStore(private val context: Context) {
     val flow: Flow<Preferences> = context.dataStore.data.map { prefs ->
         val raw = prefs[key] ?: return@map Preferences()
         runCatching { json.decodeFromString(Preferences.serializer(), raw) }
+            .map { sanitize(it) }
             .getOrElse { Preferences() }
     }
 
@@ -38,8 +43,8 @@ class PreferencesStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             val current = prefs[key]?.let {
                 runCatching { json.decodeFromString(Preferences.serializer(), it) }.getOrNull()
-            } ?: Preferences()
-            val next = transform(current)
+            }?.let { sanitize(it) } ?: Preferences()
+            val next = sanitize(transform(current))
             prefs[key] = json.encodeToString(Preferences.serializer(), next)
         }
     }
@@ -85,38 +90,49 @@ class PreferencesStore(private val context: Context) {
                 }
             }
             val raw = json.decodeFromString(Preferences.serializer(), text)
-            update { current -> sanitize(raw, preserveEnabled = current.enabled) }
+            update { current -> sanitize(raw, enabled = current.enabled) }
         }
     }
 
-    private fun sanitize(p: Preferences, preserveEnabled: Boolean): Preferences = p.copy(
-        enabled = preserveEnabled,
-        presetIntensity = p.presetIntensity.coerceIn(0f, 1f),
-        dim = p.dim.coerceIn(0f, 0.95f),
+    private fun sanitize(p: Preferences, enabled: Boolean = p.enabled): Preferences = p.copy(
+        enabled = enabled,
+        activePresetKey = sanitizePresetKey(p.activePresetKey),
+        presetIntensity = p.presetIntensity.finiteIn(0f, 1f, default = 1f),
+        dim = p.dim.finiteIn(0f, 0.95f, default = 0f),
         customMatrix = p.customMatrix.copy(
-            r = p.customMatrix.r.coerceIn(0f, 1f),
-            g = p.customMatrix.g.coerceIn(0f, 1f),
-            b = p.customMatrix.b.coerceIn(0f, 1f),
-            biasR = p.customMatrix.biasR.coerceIn(-1f, 1f),
-            biasG = p.customMatrix.biasG.coerceIn(-1f, 1f),
-            biasB = p.customMatrix.biasB.coerceIn(-1f, 1f),
-            dim = p.customMatrix.dim.coerceIn(0f, 0.95f),
-            gammaR = p.customMatrix.gammaR.coerceIn(0.1f, 5f),
-            gammaG = p.customMatrix.gammaG.coerceIn(0.1f, 5f),
-            gammaB = p.customMatrix.gammaB.coerceIn(0.1f, 5f)
+            r = p.customMatrix.r.finiteIn(0f, 1f, default = 1f),
+            g = p.customMatrix.g.finiteIn(0f, 1f, default = 0.78f),
+            b = p.customMatrix.b.finiteIn(0f, 1f, default = 0.55f),
+            biasR = p.customMatrix.biasR.finiteIn(-1f, 1f, default = 0f),
+            biasG = p.customMatrix.biasG.finiteIn(-1f, 1f, default = 0f),
+            biasB = p.customMatrix.biasB.finiteIn(-1f, 1f, default = 0f),
+            dim = p.customMatrix.dim.finiteIn(0f, 0.95f, default = 0f),
+            gammaR = p.customMatrix.gammaR.finiteIn(0.1f, 5f, default = 1f),
+            gammaG = p.customMatrix.gammaG.finiteIn(0.1f, 5f, default = 1f),
+            gammaB = p.customMatrix.gammaB.finiteIn(0.1f, 5f, default = 1f)
         ),
         schedule = p.schedule.copy(
             startHour = p.schedule.startHour.coerceIn(0, 23),
             startMinute = p.schedule.startMinute.coerceIn(0, 59),
             endHour = p.schedule.endHour.coerceIn(0, 23),
             endMinute = p.schedule.endMinute.coerceIn(0, 59),
-            latitude = if (p.schedule.latitude in -90.0..90.0) p.schedule.latitude else Double.NaN,
-            longitude = if (p.schedule.longitude in -180.0..180.0) p.schedule.longitude else Double.NaN,
+            latitude = p.schedule.latitude.finiteInOrNull(-90.0, 90.0),
+            longitude = p.schedule.longitude.finiteInOrNull(-180.0, 180.0),
             sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
             sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
         ),
-        lightSensorLuxThreshold = p.lightSensorLuxThreshold.coerceAtLeast(0f)
+        lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f)
     )
+
+    private fun sanitizePresetKey(key: String): String =
+        key.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
+            ?: "custom"
+
+    private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
+        if (isFinite()) coerceIn(min, max) else default
+
+    private fun Double?.finiteInOrNull(min: Double, max: Double): Double? =
+        this?.takeIf { it.isFinite() && it in min..max }
 
     private companion object {
         const val MAX_IMPORT_BYTES = 64 * 1024

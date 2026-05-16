@@ -3,6 +3,7 @@ package com.openlumen
 import android.content.Context
 import java.io.File
 import java.time.Instant
+import kotlin.system.exitProcess
 
 /**
  * Local-only uncaught-exception logger. Writes to `filesDir/crash.log` (kept under
@@ -20,7 +21,12 @@ object CrashLogger {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             runCatching { writeCrash(context, thread, throwable) }
-            previous?.uncaughtException(thread, throwable)
+            if (previous != null) {
+                previous.uncaughtException(thread, throwable)
+            } else {
+                android.os.Process.killProcess(android.os.Process.myPid())
+                exitProcess(10)
+            }
         }
     }
 

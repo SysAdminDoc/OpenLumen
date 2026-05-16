@@ -4,6 +4,31 @@ All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Default preferences now serialize with nullable solar coordinates instead of `NaN`,
+  so profile export/import and DataStore writes remain valid JSON.
+- Rootless overlay tinting now uses non-zero alpha for color-only presets; previously
+  overlay mode was effectively invisible unless the Dim slider was above zero.
+- Schedule alarms no longer reschedule into the past when a transition calculation
+  returns a stale boundary.
+- Driver availability on the Driver screen now maps DTO names to engine kinds
+  correctly instead of silently hiding availability status.
+
+### Changed
+- Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
+  `WRITE_SECURE_SETTINGS` declaration so the documented ADB grant can succeed.
+- The foreground service subscribes to the light sensor only while the filter and
+  ambient-light trigger are both enabled.
+- Preset and driver cards are whole-card clickable for consistency with schedule cards.
+- Backup rules now include DataStore preferences and exclude the local crash log.
+
+### Tests
+- Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only
+  presets, fixed schedules with identical start/end times, and default preference JSON
+  serialization.
+
 ## [0.4.0] — 2026-05-16
 
 Deep engineering audit pass. Every major file was reviewed for correctness,

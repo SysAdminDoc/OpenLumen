@@ -44,7 +44,7 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 The app falls back gracefully — if none of the root paths work, you still get the
 overlay driver. If you want to pin a specific driver, Settings → Driver lets you.
 
-## Features (v0.3.0)
+## Features (v0.4.0)
 
 - Named presets: Night · Amber · Red · Salmon · Sepia · Grayscale · Deep Sleep · Protan · Deutan · Tritan
 - Custom R/G/B picker on Home with live color preview
@@ -54,6 +54,7 @@ overlay driver. If you want to pin a specific driver, Settings → Driver lets y
 - Sunset / sunrise offset sliders (±180 minutes)
 - Fixed-time schedule with Material 3 24-hour time pickers
 - Manual location entry (decimal degrees, validated)
+- No runtime location permission; solar scheduling uses coordinates the user enters
 - Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
 - Live lux readout + "calibrate: use current reading" button
 - Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
@@ -110,13 +111,13 @@ OpenLumen/
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for v0.2.0 → v1.0.0 plans. Highlights:
+See [ROADMAP.md](ROADMAP.md) for the source-backed release plan. Near-term highlights:
 
-- Time-picker dialog for fixed-time schedule (currently text-only)
-- Location picker (manual coords + FusedLocation opt-in)
-- Custom RGB color picker on Home screen
-- Home-screen widget
-- Wear OS companion (deferred to post-v1.0)
+- Device validation matrix and shareable driver reports
+- F-Droid metadata, reproducible-build notes, and release checklist
+- Overlay-safe pause/emergency-off flows
+- Notification, Quick Settings, and widget command surfaces
+- Versioned profile migrations and import preview
 
 ## License
 

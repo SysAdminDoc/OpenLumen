@@ -43,6 +43,14 @@ class ScheduleTest {
         assertThat(nextTransition(ScheduleMode.AlwaysOff, at(12, 0), zone)).isNull()
     }
 
+    @Test fun `FixedTime with identical start and end is inactive and has no transition`() {
+        val mode = ScheduleMode.FixedTime(LocalTime.of(7, 0), LocalTime.of(7, 0))
+
+        assertThat(isActive(mode, at(7, 0), zone)).isFalse()
+        assertThat(isActive(mode, at(12, 0), zone)).isFalse()
+        assertThat(nextTransition(mode, at(12, 0), zone)).isNull()
+    }
+
     @Test fun `nextTransition for FixedTime picks the soonest future boundary`() {
         val mode = ScheduleMode.FixedTime(LocalTime.of(22, 0), LocalTime.of(7, 0))
         // At 10:00 next boundary is today 22:00.
@@ -60,18 +68,15 @@ class ScheduleTest {
         val now = at(22, 0)
         val next = nextTransition(mode, now, zone)
         assertThat(next).isNotNull()
-        assertThat(next!!.isAfter(now)).isTrue()
+        assertThat(checkNotNull(next).isAfter(now)).isTrue()
     }
 
-    @Test fun `Solar with NaN coords degrades to never active when mapped to AlwaysOff`() {
-        // Direct ScheduleMode.Solar with NaN is undefined, but the LumenService.mapMode()
-        // wrapper turns NaN into AlwaysOff before construction. We assert that the
-        // *Schedule* logic doesn't crash on a "lit" Solar mode either way — used
-        // elsewhere in the service for AlarmManager alarm placement.
+    @Test fun `Solar schedule computes a boolean for valid coordinates`() {
+        // LumenService maps missing/invalid persisted coordinates to AlwaysOff before
+        // constructing ScheduleMode.Solar. The pure schedule path should still be stable
+        // for normal coordinates used by the service and tests.
         val mode = ScheduleMode.Solar(latitude = 40.71, longitude = -74.0)
-        val result = isActive(mode, at(3, 0), zone)
-        // Just assert no throw and a boolean result.
-        assertThat(result is Boolean).isTrue()
+        assertThat(isActive(mode, at(3, 0), zone)).isTrue()
     }
 
     private fun at(hour: Int, minute: Int): ZonedDateTime =

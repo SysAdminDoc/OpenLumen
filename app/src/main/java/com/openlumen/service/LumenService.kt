@@ -83,11 +83,16 @@ class LumenService : LifecycleService() {
         super.onCreate()
         startInForeground()
         observePreferences()
-        observeLightSensor()
     }
 
-    private fun observeLightSensor() {
-        lightJob?.cancel()
+    private fun updateLightSensorSubscription(enabled: Boolean) {
+        if (!enabled) {
+            lightJob?.cancel()
+            lightJob = null
+            latestLux.set(-1f)
+            return
+        }
+        if (lightJob?.isActive == true) return
         lightJob = lifecycleScope.launch {
             lightSensor.lux().collect { lux ->
                 latestLux.set(lux)
@@ -141,6 +146,10 @@ class LumenService : LifecycleService() {
             // Android 12+ throws ForegroundServiceStartNotAllowedException if started from
             // the wrong context. Log and bail rather than crashing the process.
             Log.e(tag, "startForeground failed: ${t.message}", t)
+            lifecycleScope.launch {
+                runCatching { prefs.update { it.copy(enabled = false) } }
+                    .onFailure { Log.w(tag, "Failed to roll back enabled state: ${it.message}") }
+            }
             stopSelf()
         }
     }
@@ -154,6 +163,7 @@ class LumenService : LifecycleService() {
         lifecycleScope.launch {
             prefs.flow.conflate().collect { p ->
                 latestPrefs.set(p)
+                updateLightSensorSubscription(p.enabled && p.lightSensorEnabled)
                 if (!p.enabled) {
                     clearAndStop()
                     return@collect
@@ -243,10 +253,12 @@ class LumenService : LifecycleService() {
         am.cancel(pi)
 
         val next: ZonedDateTime = nextTransition(mode) ?: return // AlwaysOn/AlwaysOff
-        val triggerMs = next.toInstant().toEpochMilli()
-        if (triggerMs <= System.currentTimeMillis()) {
-            // Don't bother scheduling a past time — set it 1 minute out as a safety net.
+        val nowMs = System.currentTimeMillis()
+        var triggerMs = next.toInstant().toEpochMilli()
+        if (triggerMs <= nowMs) {
+            // Don't schedule a past time; use a short safety-net delay instead.
             Log.w(tag, "nextTransition() returned a past time, deferring by 60s")
+            triggerMs = nowMs + 60_000L
         }
 
         try {
@@ -308,7 +320,7 @@ class LumenService : LifecycleService() {
         com.openlumen.prefs.ScheduleModeDto.Solar -> {
             val lat = p.schedule.latitude
             val lng = p.schedule.longitude
-            if (lat.isNaN() || lng.isNaN() || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
+            if (lat == null || lng == null || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
                 ScheduleMode.AlwaysOff
             } else {
                 ScheduleMode.Solar(

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.openlumen.engine.DriverProbe
@@ -30,6 +31,8 @@ class OpenLumenViewModel @Inject constructor(
     private val lightSensor: LightSensorAdapter
 ) : AndroidViewModel(application) {
 
+    private val tag = "OpenLumen/ViewModel"
+
     val state: StateFlow<Preferences> = prefs.flow
         .stateIn(viewModelScope, SharingStarted.Eagerly, Preferences())
 
@@ -47,7 +50,14 @@ class OpenLumenViewModel @Inject constructor(
     fun setEnabled(enabled: Boolean) {
         viewModelScope.launch {
             prefs.update { it.copy(enabled = enabled) }
-            if (enabled) startService() else stopService()
+            if (enabled) {
+                if (!startService()) {
+                    prefs.update { it.copy(enabled = false) }
+                    _exportResult.value = "Could not start OpenLumen service"
+                }
+            } else {
+                stopService()
+            }
         }
     }
 
@@ -145,15 +155,20 @@ class OpenLumenViewModel @Inject constructor(
 
     fun consumeExportResult() { _exportResult.value = null }
 
-    private fun startService() {
+    private fun startService(): Boolean {
         val ctx = getApplication<Application>()
         val intent = Intent(ctx, LumenService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(intent)
-        else ctx.startService(intent)
+        return runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(intent)
+            else ctx.startService(intent)
+        }.onFailure {
+            Log.e(tag, "Failed to start LumenService: ${it.message}", it)
+        }.isSuccess
     }
 
     private fun stopService() {
         val ctx = getApplication<Application>()
-        ctx.stopService(Intent(ctx, LumenService::class.java))
+        runCatching { ctx.stopService(Intent(ctx, LumenService::class.java)) }
+            .onFailure { Log.w(tag, "Failed to stop LumenService: ${it.message}", it) }
     }
 }

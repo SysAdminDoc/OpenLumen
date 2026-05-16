@@ -1,5 +1,6 @@
 package com.openlumen.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
+import com.openlumen.engine.EngineKind
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -31,7 +35,10 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val probes by vm.probes.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(PaddingValues(16.dp)),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.driver_title), style = MaterialTheme.typography.titleMedium)
@@ -45,7 +52,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         )
 
         choices.forEach { (kind, label) ->
-            val availability = probes.firstOrNull { it.engine.kind.name == kind.name }?.available
+            val availability = kind.toEngineKind()
+                ?.let { engineKind -> probes.firstOrNull { it.engine.kind == engineKind }?.available }
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
@@ -53,7 +61,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().clickable { vm.setEngine(kind) }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -91,4 +99,12 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             style = MaterialTheme.typography.bodySmall
         )
     }
+}
+
+private fun EngineKindDto.toEngineKind(): EngineKind? = when (this) {
+    EngineKindDto.Auto -> null
+    EngineKindDto.ColorDisplayManager -> EngineKind.COLOR_DISPLAY_MANAGER
+    EngineKindDto.SurfaceFlinger -> EngineKind.SURFACE_FLINGER
+    EngineKindDto.Kcal -> EngineKind.KCAL
+    EngineKindDto.Overlay -> EngineKind.OVERLAY
 }

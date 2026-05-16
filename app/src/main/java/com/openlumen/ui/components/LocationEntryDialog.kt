@@ -9,7 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,16 +23,16 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun LocationEntryDialog(
-    initialLat: Double,
-    initialLng: Double,
+    initialLat: Double?,
+    initialLng: Double?,
     onDismiss: () -> Unit,
     onSave: (lat: Double, lng: Double) -> Unit
 ) {
-    var latText by remember {
-        mutableStateOf(if (initialLat.isNaN()) "" else "%.4f".format(initialLat))
+    var latText by rememberSaveable {
+        mutableStateOf(initialLat?.let { "%.4f".format(it) } ?: "")
     }
-    var lngText by remember {
-        mutableStateOf(if (initialLng.isNaN()) "" else "%.4f".format(initialLng))
+    var lngText by rememberSaveable {
+        mutableStateOf(initialLng?.let { "%.4f".format(it) } ?: "")
     }
 
     val latVal = latText.toDoubleOrNull()
@@ -74,7 +74,11 @@ fun LocationEntryDialog(
         },
         confirmButton = {
             LumenTextButton(
-                onClick = { if (canSave) onSave(latVal!!, lngVal!!) },
+                onClick = {
+                    val lat = latVal
+                    val lng = lngVal
+                    if (lat != null && lng != null && canSave) onSave(lat, lng)
+                },
                 enabled = canSave
             ) { Text("Save") }
         },

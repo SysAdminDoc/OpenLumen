@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
+        <include domain="file" path="datastore/" />
         <include domain="sharedpref" path="." />
         <include domain="database" path="." />
+        <exclude domain="file" path="crash.log" />
     </cloud-backup>
     <device-transfer>
+        <include domain="file" path="datastore/" />
         <include domain="sharedpref" path="." />
         <include domain="database" path="." />
+        <exclude domain="file" path="crash.log" />
     </device-transfer>
 </data-extraction-rules>

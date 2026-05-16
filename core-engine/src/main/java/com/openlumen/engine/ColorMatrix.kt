@@ -21,7 +21,7 @@ data class LumenMatrix(
     val gammaB: Float = 1f
 ) {
     /** Scale factor [0,1] for a final brightness reduction beyond panel minimum. */
-    val effectiveDim: Float get() = dim.coerceIn(0f, 0.95f)
+    val effectiveDim: Float get() = dim.finiteIn(0f, 0.95f, default = 0f)
 
     /**
      * Per-channel scalar after dim and per-channel gamma have been folded in.
@@ -37,13 +37,13 @@ data class LumenMatrix(
      */
     fun scaledRgb(): FloatArray {
         val dimFactor = (1f - effectiveDim).toDouble()
-        val rd = (r.toDouble() * dimFactor).coerceAtLeast(0.0)
-        val gd = (g.toDouble() * dimFactor).coerceAtLeast(0.0)
-        val bd = (b.toDouble() * dimFactor).coerceAtLeast(0.0)
+        val rd = (r.finiteIn(0f, 1f, default = 1f).toDouble() * dimFactor).coerceAtLeast(0.0)
+        val gd = (g.finiteIn(0f, 1f, default = 1f).toDouble() * dimFactor).coerceAtLeast(0.0)
+        val bd = (b.finiteIn(0f, 1f, default = 1f).toDouble() * dimFactor).coerceAtLeast(0.0)
         return floatArrayOf(
-            Math.pow(rd, 1.0 / gammaR.coerceAtLeast(0.05f)).toFloat(),
-            Math.pow(gd, 1.0 / gammaG.coerceAtLeast(0.05f)).toFloat(),
-            Math.pow(bd, 1.0 / gammaB.coerceAtLeast(0.05f)).toFloat()
+            Math.pow(rd, 1.0 / gammaR.finiteIn(0.05f, 5f, default = 1f)).toFloat(),
+            Math.pow(gd, 1.0 / gammaG.finiteIn(0.05f, 5f, default = 1f)).toFloat(),
+            Math.pow(bd, 1.0 / gammaB.finiteIn(0.05f, 5f, default = 1f)).toFloat()
         )
     }
 
@@ -54,19 +54,28 @@ data class LumenMatrix(
             s[0], 0f,   0f,   0f,
             0f,   s[1], 0f,   0f,
             0f,   0f,   s[2], 0f,
-            biasR, biasG, biasB, 1f
+            biasR.finiteIn(-1f, 1f, default = 0f),
+            biasG.finiteIn(-1f, 1f, default = 0f),
+            biasB.finiteIn(-1f, 1f, default = 0f),
+            1f
         )
     }
 
-    /** ARGB color for overlay multiply blend. */
+    /** ARGB color for the rootless overlay fallback. */
     fun toOverlayArgb(): Int {
         val s = scaledRgb()
-        val a = (effectiveDim * 0.80f * 255f).toInt().coerceIn(0, 204)
+        val tintStrength = maxOf(1f - s[0], 1f - s[1], 1f - s[2]).coerceIn(0f, 1f)
+        val overlayAlpha = maxOf(effectiveDim * 0.80f, tintStrength * 0.70f)
+            .coerceIn(0f, 0.80f)
+        val a = (overlayAlpha * 255f).toInt().coerceIn(0, 204)
         val rr = (s[0] * 255f).toInt().coerceIn(0, 255)
         val gg = (s[1] * 255f).toInt().coerceIn(0, 255)
         val bb = (s[2] * 255f).toInt().coerceIn(0, 255)
         return (a shl 24) or (rr shl 16) or (gg shl 8) or bb
     }
+
+    private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
+        if (isFinite()) coerceIn(min, max) else default
 
     companion object {
         val IDENTITY = LumenMatrix()

@@ -1,6 +1,7 @@
 package com.openlumen.engine.engines
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.openlumen.engine.ColorEngine
@@ -38,10 +39,18 @@ class ColorDisplayManagerEngine : ColorEngine {
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT < 28) return@withContext false
+        if (!hasSecureSettingsGrant(context)) {
+            Log.d(tag, "WRITE_SECURE_SETTINGS not granted; CDM driver unavailable")
+            return@withContext false
+        }
         load(context) != null
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
+        if (!hasSecureSettingsGrant(context)) {
+            Log.w(tag, "apply: WRITE_SECURE_SETTINGS not granted")
+            return@withContext
+        }
         val handles = load(context) ?: run {
             Log.w(tag, "apply: ColorDisplayManager not available")
             return@withContext
@@ -56,6 +65,7 @@ class ColorDisplayManagerEngine : ColorEngine {
     }
 
     override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
+        if (!hasSecureSettingsGrant(context)) return@withContext
         val handles = load(context) ?: return@withContext
         try {
             handles.setActivated.invoke(handles.cdm, false)
@@ -63,6 +73,10 @@ class ColorDisplayManagerEngine : ColorEngine {
             Log.w(tag, "CDM clear failed: ${t.message}")
         }
     }
+
+    private fun hasSecureSettingsGrant(context: Context): Boolean =
+        context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) ==
+            PackageManager.PERMISSION_GRANTED
 
     /**
      * Load + cache the reflected ColorDisplayManager instance. AOSP has shipped both

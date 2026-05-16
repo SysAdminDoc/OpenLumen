@@ -73,7 +73,7 @@ object Su {
             proc.waitFor()
         } ?: run {
             Log.w(TAG, "runShell timed out after ${CMD_TIMEOUT_MS}ms; destroying process")
-            proc.destroy()
+            proc.destroyForcibly()
             -1
         }
         exit
@@ -100,7 +100,7 @@ object Su {
             proc.waitFor()
         } ?: run {
             Log.w(TAG, "su command timed out after ${timeoutMs}ms: ${cmdline.take(120)}")
-            proc.destroy()
+            proc.destroyForcibly()
             -1
         }
         SuResult(exit, combined.toString().trim(), "")
@@ -110,10 +110,7 @@ object Su {
      * @param exitCode 0 on success, 127 if `su` isn't on PATH, -1 on timeout, otherwise
      *  whatever the subprocess returned.
      * @param stdout combined stdout+stderr (we use redirectErrorStream)
-     * @param stderr always empty since stderr is merged; kept for API compat.
+     * @param stderr always empty since stderr is merged.
      */
-    data class SuResult(val exitCode: Int, val stdout: String, val stderr: String) {
-        @Deprecated("Use exitCode", ReplaceWith("exitCode"))
-        val outExitCode: Int get() = exitCode
-    }
+    data class SuResult(val exitCode: Int, val stdout: String, val stderr: String)
 }

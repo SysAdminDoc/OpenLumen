@@ -52,6 +52,35 @@ class LumenMatrixTest {
         assertThat(rgb[0]).isAtLeast(0f)
     }
 
+    @Test fun `NaN and infinite inputs are coerced to safe finite output`() {
+        val matrix = LumenMatrix(
+            r = Float.NaN,
+            g = Float.POSITIVE_INFINITY,
+            b = -1f,
+            biasR = Float.NaN,
+            gammaR = Float.NaN,
+            dim = Float.NaN
+        )
+
+        val rgb = matrix.scaledRgb()
+        assertThat(rgb[0]).isWithin(EPS).of(1f)
+        assertThat(rgb[1]).isWithin(EPS).of(1f)
+        assertThat(rgb[2]).isWithin(EPS).of(0f)
+        assertThat(matrix.toSurfaceFlinger16()[12]).isWithin(EPS).of(0f)
+    }
+
+    @Test fun `overlay ARGB is transparent for identity`() {
+        val argb = LumenMatrix.IDENTITY.toOverlayArgb()
+        val alpha = (argb ushr 24) and 0xFF
+        assertThat(alpha).isEqualTo(0)
+    }
+
+    @Test fun `overlay ARGB has alpha for tint even when dim is zero`() {
+        val argb = LumenMatrix(r = 1f, g = 0.78f, b = 0.55f, dim = 0f).toOverlayArgb()
+        val alpha = (argb ushr 24) and 0xFF
+        assertThat(alpha).isGreaterThan(0)
+    }
+
     @Test fun `overlay ARGB packs dim into alpha at 80 percent ceiling`() {
         val argb = LumenMatrix(r = 1f, g = 0f, b = 0f, dim = 1f).toOverlayArgb()
         val alpha = (argb ushr 24) and 0xFF

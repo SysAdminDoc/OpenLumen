@@ -9,6 +9,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * Wraps the ambient light sensor as a Flow<Float> of lux readings. Caller decides what
@@ -34,7 +36,12 @@ class LightSensorAdapter(private val context: Context) {
             }
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
-        sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        if (!sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)) {
+            close()
+            return@callbackFlow
+        }
         awaitClose { sm.unregisterListener(listener) }
-    }.distinctUntilChanged { a, b -> Math.abs(a - b) < (a * 0.05f) }
+    }.distinctUntilChanged { a, b ->
+        abs(a - b) < max(abs(a) * 0.05f, 0.5f)
+    }
 }

@@ -24,8 +24,8 @@ data class ScheduleDto(
     val startMinute: Int = 0,
     val endHour: Int = 7,
     val endMinute: Int = 0,
-    val latitude: Double = Double.NaN,
-    val longitude: Double = Double.NaN,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val sunsetOffsetMin: Int = 0,
     val sunriseOffsetMin: Int = 0
 )

@@ -67,7 +67,7 @@ fun nextTransition(
     zoneId: ZoneId = now.zone
 ): ZonedDateTime? = when (mode) {
     is ScheduleMode.AlwaysOn, is ScheduleMode.AlwaysOff -> null
-    is ScheduleMode.FixedTime -> nextFixedTransition(now, mode.start, mode.end)
+    is ScheduleMode.FixedTime -> if (mode.start == mode.end) null else nextFixedTransition(now, mode.start, mode.end)
     is ScheduleMode.Solar -> nextSolarTransition(now, zoneId, mode)
 }
 

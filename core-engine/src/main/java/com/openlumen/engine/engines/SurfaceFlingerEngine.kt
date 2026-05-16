@@ -37,7 +37,7 @@ class SurfaceFlingerEngine : ColorEngine {
         }
         for (code in candidates) {
             val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
-            if (res.outExitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) {
+            if (res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) {
                 workingCode = code
                 return@withContext true
             }

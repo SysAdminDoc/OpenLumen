@@ -29,8 +29,8 @@ fun TimePickerDialog(
     onConfirm: (hour: Int, minute: Int) -> Unit
 ) {
     val state = rememberTimePickerState(
-        initialHour = initialHour,
-        initialMinute = initialMinute,
+        initialHour = initialHour.coerceIn(0, 23),
+        initialMinute = initialMinute.coerceIn(0, 59),
         is24Hour = true
     )
 

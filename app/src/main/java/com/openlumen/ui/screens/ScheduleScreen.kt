@@ -34,6 +34,7 @@ import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
+import kotlin.math.roundToInt
 
 @Composable
 fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
@@ -114,11 +115,13 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         onClick = { showLocationDialog = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        val lat = prefs.schedule.latitude
+                        val lng = prefs.schedule.longitude
                         Text(
-                            if (prefs.schedule.latitude.isNaN())
+                            if (lat == null || lng == null)
                                 "Set location"
                             else
-                                "%.3f, %.3f".format(prefs.schedule.latitude, prefs.schedule.longitude)
+                                "%.3f, %.3f".format(lat, lng)
                         )
                     }
 
@@ -129,10 +132,10 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     Slider(
                         value = prefs.schedule.sunsetOffsetMin.toFloat(),
                         onValueChange = { v ->
-                            vm.setScheduleOffsets(v.toInt(), prefs.schedule.sunriseOffsetMin)
+                            vm.setScheduleOffsets(v.roundToInt(), prefs.schedule.sunriseOffsetMin)
                         },
                         valueRange = -180f..180f,
-                        steps = 35
+                        steps = 71
                     )
 
                     Text(
@@ -142,10 +145,10 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     Slider(
                         value = prefs.schedule.sunriseOffsetMin.toFloat(),
                         onValueChange = { v ->
-                            vm.setScheduleOffsets(prefs.schedule.sunsetOffsetMin, v.toInt())
+                            vm.setScheduleOffsets(prefs.schedule.sunsetOffsetMin, v.roundToInt())
                         },
                         valueRange = -180f..180f,
-                        steps = 35
+                        steps = 71
                     )
                 }
             }
