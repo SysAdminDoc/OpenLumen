@@ -13,6 +13,8 @@
     <string name="home_toggle">Toggle filter</string>
     <string name="home_intensity">Intensity</string>
     <string name="home_dim">Dim below minimum</string>
+    <string name="home_kelvin_title">Color temperature</string>
+    <string name="home_kelvin_hint">Warmer (lower K) deepens reds; cooler (higher K) lifts blues. 6500 K is neutral white.</string>
 
     <string name="presets_title">Choose a preset</string>
     <string name="presets_custom">Custom RGB</string>

@@ -125,6 +125,22 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Kelvin-temperature input (C65). Converts to an RGB triplet via the
+     * Tanner Helland approximation and writes through `setCustomRgb`. Slider
+     * range is clamped at the [com.openlumen.engine.Kelvin] bounds before
+     * conversion.
+     */
+    fun setCustomKelvin(kelvin: Int) = viewModelScope.launch {
+        val rgb = com.openlumen.engine.Kelvin.toRgb(kelvin)
+        prefs.update {
+            it.copy(
+                activePresetKey = "custom",
+                customMatrix = it.customMatrix.copy(r = rgb.r, g = rgb.g, b = rgb.b)
+            )
+        }
+    }
+
     fun setGamma(r: Float, g: Float, b: Float) = viewModelScope.launch {
         prefs.update {
             it.copy(

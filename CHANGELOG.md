@@ -152,6 +152,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- Kelvin color-temperature slider on the Home tab. Internally maps
+  to RGB via the Tanner Helland approximation
+  (`core-engine/Kelvin.kt`) and writes through `setCustomKelvin` so the
+  canonical persisted state stays the RGB triplet on `customMatrix`.
+  Range 1000–10 000 K, default 3200 K. Unit-tested for neutral-white
+  near 6500 K, warm = red-saturated, cool = blue-saturated, and
+  bounds clamping.
 - LumenService now registers a runtime receiver for
   `ACTION_SCREEN_OFF` and invalidates the cached lux reading on each
   fire. Implicit-broadcast exempt from Android 8+ background limits;
