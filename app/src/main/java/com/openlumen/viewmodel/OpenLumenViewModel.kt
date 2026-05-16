@@ -68,6 +68,57 @@ class OpenLumenViewModel @Inject constructor(
         prefs.update { it.copy(engine = kind) }
     }
 
+    fun setIntensity(value: Float) = viewModelScope.launch {
+        prefs.update { it.copy(presetIntensity = value.coerceIn(0f, 1f)) }
+    }
+
+    fun setDim(value: Float) = viewModelScope.launch {
+        prefs.update { it.copy(dim = value.coerceIn(0f, 0.95f)) }
+    }
+
+    fun setCustomRgb(r: Float, g: Float, b: Float) = viewModelScope.launch {
+        prefs.update {
+            it.copy(
+                activePresetKey = "custom",
+                customMatrix = it.customMatrix.copy(
+                    r = r.coerceIn(0f, 1f),
+                    g = g.coerceIn(0f, 1f),
+                    b = b.coerceIn(0f, 1f)
+                )
+            )
+        }
+    }
+
+    fun setGamma(r: Float, g: Float, b: Float) = viewModelScope.launch {
+        prefs.update {
+            it.copy(
+                customMatrix = it.customMatrix.copy(
+                    gammaR = r.coerceIn(0.5f, 2.5f),
+                    gammaG = g.coerceIn(0.5f, 2.5f),
+                    gammaB = b.coerceIn(0.5f, 2.5f)
+                )
+            )
+        }
+    }
+
+    fun setScheduleOffsets(sunsetMin: Int, sunriseMin: Int) = viewModelScope.launch {
+        prefs.update {
+            it.copy(schedule = it.schedule.copy(
+                sunsetOffsetMin = sunsetMin.coerceIn(-180, 180),
+                sunriseOffsetMin = sunriseMin.coerceIn(-180, 180)
+            ))
+        }
+    }
+
+    fun setLightSensor(enabled: Boolean, threshold: Float) = viewModelScope.launch {
+        prefs.update {
+            it.copy(
+                lightSensorEnabled = enabled,
+                lightSensorLuxThreshold = threshold.coerceAtLeast(0f)
+            )
+        }
+    }
+
     fun refreshProbes() = viewModelScope.launch {
         _probes.value = probe.probeAll(getApplication())
     }

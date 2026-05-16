@@ -41,6 +41,10 @@ data class Preferences(
     val enabled: Boolean = false,
     val activePresetKey: String = "night",
     val customMatrix: MatrixDto = MatrixDto(r = 1f, g = 0.78f, b = 0.55f),
+    /** 0.0 = identity (no shift), 1.0 = full preset strength. Lerps RGB toward 1.0. */
+    val presetIntensity: Float = 1f,
+    /** 0.0 = no extra dim, 0.95 = max dim (Android 12+ overlay cap). */
+    val dim: Float = 0f,
     val schedule: ScheduleDto = ScheduleDto(),
     val engine: EngineKindDto = EngineKindDto.Auto,
     val lightSensorEnabled: Boolean = false,

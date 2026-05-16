@@ -28,6 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalTime
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 /**
@@ -47,6 +48,7 @@ class LumenService : LifecycleService() {
 
     private var engine: ColorEngine? = null
     private var tickerJob: Job? = null
+    private val latestPrefs = AtomicReference<Preferences?>(null)
     private var lastApplied: LumenMatrix? = null
     private var lastScheduleActive: Boolean = false
 
@@ -98,9 +100,14 @@ class LumenService : LifecycleService() {
         }
     }
 
+    /**
+     * Single long-lived collector on the prefs flow. Updates [latestPrefs] for the
+     * ticker, and reacts to changes immediately for engine/matrix application.
+     */
     private fun observePreferences() {
         lifecycleScope.launch {
             prefs.flow.collectLatest { p ->
+                latestPrefs.set(p)
                 if (!p.enabled) {
                     engine?.clear(this@LumenService)
                     stopSelf()
@@ -116,17 +123,10 @@ class LumenService : LifecycleService() {
         tickerJob?.cancel()
         tickerJob = lifecycleScope.launch {
             while (true) {
-                val p = currentPrefs() ?: run { delay(60_000); continue }
-                applyIfScheduleActive(p)
+                latestPrefs.get()?.let { applyIfScheduleActive(it) }
                 delay(60_000)
             }
         }
-    }
-
-    private suspend fun currentPrefs(): Preferences? {
-        var snap: Preferences? = null
-        prefs.flow.collectLatest { snap = it; return@collectLatest }
-        return snap
     }
 
     private suspend fun ensureEngine(p: Preferences) {
@@ -147,23 +147,31 @@ class LumenService : LifecycleService() {
     private suspend fun applyIfScheduleActive(p: Preferences) {
         val mode: ScheduleMode = mapMode(p)
         val active = isActive(mode)
-        if (active == lastScheduleActive && lastApplied == matrixFor(p)) return
-        lastScheduleActive = active
         val matrix = if (active) matrixFor(p) else LumenMatrix.IDENTITY
+        if (active == lastScheduleActive && matrix == lastApplied) return
+        lastScheduleActive = active
         engine?.apply(this, matrix)
         lastApplied = matrix
     }
 
     private fun matrixFor(p: Preferences): LumenMatrix {
         val preset = Presets.byKey(p.activePresetKey)?.matrix
-        return preset ?: LumenMatrix(
+        val raw = preset ?: LumenMatrix(
             r = p.customMatrix.r,
             g = p.customMatrix.g,
             b = p.customMatrix.b,
-            dim = p.customMatrix.dim,
             gammaR = p.customMatrix.gammaR,
             gammaG = p.customMatrix.gammaG,
             gammaB = p.customMatrix.gammaB
+        )
+        // Lerp toward identity by (1 - presetIntensity) so the user's intensity slider
+        // smoothly fades the filter strength in and out.
+        val t = p.presetIntensity.coerceIn(0f, 1f)
+        return raw.copy(
+            r = 1f + (raw.r - 1f) * t,
+            g = 1f + (raw.g - 1f) * t,
+            b = 1f + (raw.b - 1f) * t,
+            dim = p.dim
         )
     }
 
