@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
  * Material 3 TimePicker wrapped in an AlertDialog. Caller passes initial hour/minute
  * and gets a confirmed (h, m) callback on OK. Cancel dismisses without firing.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
     title: String,
