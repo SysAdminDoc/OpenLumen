@@ -70,7 +70,8 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             ScheduleModeDto.AlwaysOff to stringResource(R.string.schedule_off),
             ScheduleModeDto.AlwaysOn  to stringResource(R.string.schedule_always),
             ScheduleModeDto.FixedTime to stringResource(R.string.schedule_fixed),
-            ScheduleModeDto.Solar     to stringResource(R.string.schedule_solar)
+            ScheduleModeDto.Solar     to stringResource(R.string.schedule_solar),
+            ScheduleModeDto.UntilNextAlarm to stringResource(R.string.schedule_until_next_alarm)
         )
         modes.forEach { (mode, label) ->
             Card(
@@ -161,6 +162,27 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         },
                         valueRange = -180f..180f,
                         steps = 71
+                    )
+                }
+            }
+        }
+
+        if (prefs.schedule.mode == ScheduleModeDto.UntilNextAlarm) {
+            Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LumenOutlinedButton(
+                        onClick = { showStartPicker = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "${stringResource(R.string.schedule_start)}: " +
+                                "%02d:%02d".format(prefs.schedule.startHour, prefs.schedule.startMinute)
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.schedule_until_alarm_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

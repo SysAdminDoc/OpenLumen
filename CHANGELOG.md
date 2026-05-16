@@ -152,6 +152,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- New schedule mode "Until my next alarm" (C25). On from the
+  configured start time until the user's next system alarm clock
+  fires. `LumenService.mapMode()` reads `AlarmManager.getNextAlarmClock()`
+  at schedule-evaluation time; the pure schedule logic in
+  `core-schedule/Schedule.kt` receives the next-alarm time as a
+  parameter so it stays Android-framework-free. When no alarm clock
+  is set, the mode falls back to a 12-hour window from start so the
+  filter doesn't run indefinitely.
+- Contrast slider on the Home tab (C64). New `Preferences.contrast`
+  (range 0.5..2.0, default 1.0). Applied in
+  `LumenService.matrixFor()` as a per-channel scale plus a centering
+  bias on the matrix's bias fields — keeps mid-gray fixed while
+  expanding or compressing the response range. Bias only takes effect
+  on the SurfaceFlinger engine (which consumes the matrix's 4th row);
+  the other engines still get the contrast-scaled channel values, an
+  acceptable degradation.
 - Kelvin color-temperature slider on the Home tab. Internally maps
   to RGB via the Tanner Helland approximation
   (`core-engine/Kelvin.kt`) and writes through `setCustomKelvin` so the

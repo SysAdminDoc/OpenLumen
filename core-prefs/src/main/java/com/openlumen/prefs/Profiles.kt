@@ -25,7 +25,8 @@ object Profiles {
         lightSensorEnabled = current.lightSensorEnabled,
         lightSensorLuxThreshold = current.lightSensorLuxThreshold,
         favoritePresetKeys = current.favoritePresetKeys,
-        transitionDurationMs = current.transitionDurationMs
+        transitionDurationMs = current.transitionDurationMs,
+        contrast = current.contrast
     )
 
     /**
@@ -49,6 +50,7 @@ object Profiles {
             lightSensorLuxThreshold = snapshot.lightSensorLuxThreshold,
             favoritePresetKeys = snapshot.favoritePresetKeys,
             transitionDurationMs = snapshot.transitionDurationMs,
+            contrast = snapshot.contrast,
             previousPresetKey = current.activePresetKey
                 .takeIf { it != snapshot.activePresetKey }
                 ?: current.previousPresetKey

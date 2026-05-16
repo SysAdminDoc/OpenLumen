@@ -171,6 +171,7 @@ class PreferencesStore(private val context: Context) {
         lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
         favoritePresetKeys = sanitizeFavorites(p.favoritePresetKeys),
         transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
+        contrast = p.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f),
         savedProfiles = sanitizeProfiles(p.savedProfiles)
     )
 

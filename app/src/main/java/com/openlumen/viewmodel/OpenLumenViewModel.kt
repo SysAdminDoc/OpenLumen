@@ -112,6 +112,18 @@ class OpenLumenViewModel @Inject constructor(
         prefs.update { it.copy(dim = value.coerceIn(0f, 0.95f)) }
     }
 
+    /** Contrast multiplier (C64). 1.0 = identity. */
+    fun setContrast(value: Float) = viewModelScope.launch {
+        prefs.update {
+            it.copy(
+                contrast = value.coerceIn(
+                    com.openlumen.prefs.Preferences.CONTRAST_MIN,
+                    com.openlumen.prefs.Preferences.CONTRAST_MAX
+                )
+            )
+        }
+    }
+
     fun setCustomRgb(r: Float, g: Float, b: Float) = viewModelScope.launch {
         prefs.update {
             it.copy(

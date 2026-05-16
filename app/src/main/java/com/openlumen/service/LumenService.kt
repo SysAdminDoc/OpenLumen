@@ -24,6 +24,8 @@ import com.openlumen.engine.Presets
 import com.openlumen.engine.engines.OverlayEngine
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.Preferences.Companion.CONTRAST_MAX
+import com.openlumen.prefs.Preferences.Companion.CONTRAST_MIN
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
@@ -450,7 +452,7 @@ class LumenService : LifecycleService() {
         // smoothly fades the filter strength in and out. User's gamma settings always
         // apply on top of either preset or custom — they're a separate "tone" knob.
         val t = p.presetIntensity.coerceIn(0f, 1f)
-        return raw.copy(
+        val intensityScaled = raw.copy(
             r = 1f + (raw.r - 1f) * t,
             g = 1f + (raw.g - 1f) * t,
             b = 1f + (raw.b - 1f) * t,
@@ -458,6 +460,28 @@ class LumenService : LifecycleService() {
             gammaG = p.customMatrix.gammaG,
             gammaB = p.customMatrix.gammaB,
             dim = p.dim
+        )
+        // Contrast (C64). Apply per-channel as `c * scale` for the channel
+        // value and `(1 - c) * 0.5` for the bias, which keeps mid-gray fixed
+        // while expanding/compressing the range either side. At c = 1.0
+        // (default) this is a no-op. Bias only takes effect on SurfaceFlinger
+        // (it consumes the 4th matrix row); other engines ignore it, which
+        // is acceptable degradation — they still get the contrast-scaled
+        // channel values.
+        return applyContrast(intensityScaled, p.contrast)
+    }
+
+    private fun applyContrast(m: LumenMatrix, contrast: Float): LumenMatrix {
+        val c = contrast.coerceIn(CONTRAST_MIN, CONTRAST_MAX)
+        if (c == 1f) return m
+        val bias = (1f - c) * 0.5f
+        return m.copy(
+            r = (m.r * c).coerceIn(0f, 2f),
+            g = (m.g * c).coerceIn(0f, 2f),
+            b = (m.b * c).coerceIn(0f, 2f),
+            biasR = (m.biasR + bias).coerceIn(-1f, 1f),
+            biasG = (m.biasG + bias).coerceIn(-1f, 1f),
+            biasB = (m.biasB + bias).coerceIn(-1f, 1f)
         )
     }
 
@@ -486,6 +510,28 @@ class LumenService : LifecycleService() {
                 )
             }
         }
+        com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm -> ScheduleMode.UntilNextAlarm(
+            start = LocalTime.of(
+                p.schedule.startHour.coerceIn(0, 23),
+                p.schedule.startMinute.coerceIn(0, 59)
+            ),
+            nextAlarmAt = nextAlarmClockAt()
+        )
+    }
+
+    /**
+     * Reads `AlarmManager.getNextAlarmClock()` and converts the result to a
+     * `ZonedDateTime` in the device's zone. Null when no alarm is set, the
+     * system blocks the read, or the API isn't available. Tied to roadmap
+     * candidate C25.
+     */
+    private fun nextAlarmClockAt(): ZonedDateTime? {
+        val am = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return null
+        return runCatching {
+            am.nextAlarmClock?.triggerTime
+                ?.let { java.time.Instant.ofEpochMilli(it) }
+                ?.atZone(java.time.ZoneId.systemDefault())
+        }.getOrNull()
     }
 
     override fun onBind(intent: Intent): IBinder? {

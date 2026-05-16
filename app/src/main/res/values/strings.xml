@@ -13,6 +13,7 @@
     <string name="home_toggle">Toggle filter</string>
     <string name="home_intensity">Intensity</string>
     <string name="home_dim">Dim below minimum</string>
+    <string name="home_contrast">Contrast</string>
     <string name="home_kelvin_title">Color temperature</string>
     <string name="home_kelvin_hint">Warmer (lower K) deepens reds; cooler (higher K) lifts blues. 6500 K is neutral white.</string>
 
@@ -34,6 +35,8 @@
     <string name="schedule_always">Always</string>
     <string name="schedule_fixed">Fixed time</string>
     <string name="schedule_solar">Sunset → sunrise</string>
+    <string name="schedule_until_next_alarm">Until my next alarm</string>
+    <string name="schedule_until_alarm_hint">Engages at the start time and clears when your next alarm clock fires. If no alarm is set, falls back to 12 hours after start.</string>
     <string name="schedule_start">Start</string>
     <string name="schedule_end">End</string>
     <string name="schedule_timezone">Schedules fire against your device clock (%1$s).</string>

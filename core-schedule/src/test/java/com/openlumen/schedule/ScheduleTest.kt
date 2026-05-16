@@ -79,6 +79,38 @@ class ScheduleTest {
         assertThat(isActive(mode, at(3, 0), zone)).isTrue()
     }
 
+    @Test fun `UntilNextAlarm is active between start and the supplied alarm time`() {
+        val start = LocalTime.of(22, 0)
+        val alarmAt = at(7, 0).plusDays(1) // tomorrow 07:00
+        val mode = ScheduleMode.UntilNextAlarm(start, alarmAt)
+
+        assertThat(isActive(mode, at(20, 0), zone)).isFalse() // before today's 22:00
+        assertThat(isActive(mode, at(22, 30), zone)).isTrue()  // inside the evening window
+        assertThat(isActive(mode, at(6, 0).plusDays(1), zone)).isTrue()  // wraps midnight
+        assertThat(isActive(mode, at(7, 30).plusDays(1), zone)).isFalse() // after alarm
+    }
+
+    @Test fun `UntilNextAlarm with no alarm uses a 12 hour fallback window`() {
+        val start = LocalTime.of(22, 0)
+        val mode = ScheduleMode.UntilNextAlarm(start, nextAlarmAt = null)
+
+        assertThat(isActive(mode, at(22, 30), zone)).isTrue()
+        // 22:00 + 12h = 10:00 next day; 10:30 next day should be inactive.
+        assertThat(isActive(mode, at(10, 30).plusDays(1), zone)).isFalse()
+    }
+
+    @Test fun `UntilNextAlarm nextTransition picks the soonest of start, alarm, fallback`() {
+        val start = LocalTime.of(22, 0)
+        val alarmAt = at(7, 0).plusDays(1)
+        val mode = ScheduleMode.UntilNextAlarm(start, alarmAt)
+
+        // At 23:00 the next boundary should be the alarm at 07:00 tomorrow.
+        val now = at(23, 0)
+        val next = checkNotNull(nextTransition(mode, now, zone))
+        assertThat(next.hour).isEqualTo(7)
+        assertThat(next.dayOfMonth).isEqualTo(17)
+    }
+
     private fun at(hour: Int, minute: Int): ZonedDateTime =
         ZonedDateTime.of(LocalDate.of(2026, 5, 16), LocalTime.of(hour, minute), zone)
 }

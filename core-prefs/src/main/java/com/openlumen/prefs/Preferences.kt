@@ -22,7 +22,8 @@ data class ProfileSnapshot(
     val lightSensorEnabled: Boolean,
     val lightSensorLuxThreshold: Float,
     val favoritePresetKeys: List<String>,
-    val transitionDurationMs: Long
+    val transitionDurationMs: Long,
+    val contrast: Float = 1.0f
 )
 
 @Serializable
@@ -60,7 +61,7 @@ data class ScheduleDto(
 )
 
 @Serializable
-enum class ScheduleModeDto { AlwaysOn, AlwaysOff, FixedTime, Solar }
+enum class ScheduleModeDto { AlwaysOn, AlwaysOff, FixedTime, Solar, UntilNextAlarm }
 
 @Serializable
 enum class EngineKindDto { Auto, ColorDisplayManager, SurfaceFlinger, Kcal, Overlay }
@@ -108,6 +109,14 @@ data class Preferences(
      */
     val transitionDurationMs: Long = 0L,
     /**
+     * Per-channel contrast multiplier (roadmap C64). 1.0 = identity, <1.0
+     * compresses mid-tones, >1.0 expands them. Clamped to
+     * `CONTRAST_MIN..CONTRAST_MAX`. Applied as a final transform on top of
+     * the preset/custom RGB and intensity lerp — see
+     * `LumenService.matrixFor()`.
+     */
+    val contrast: Float = 1.0f,
+    /**
      * Previous preset key, tracked across user-driven preset changes so the
      * "Undo last preset change" notification action and the in-app
      * [PresetCycle.restorePrevious] can flip back to it. Tied to roadmap
@@ -149,6 +158,10 @@ data class Preferences(
          * interpolation loop.
          */
         const val TRANSITION_MAX_MS: Long = 30L * 60 * 1000
+
+        /** Contrast slider bounds (C64). 0.5 = compressed, 2.0 = expanded. */
+        const val CONTRAST_MIN: Float = 0.5f
+        const val CONTRAST_MAX: Float = 2.0f
 
         /**
          * Maximum number of [NamedProfile] entries persisted. Bounds the size

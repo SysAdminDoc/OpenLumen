@@ -22,6 +22,23 @@ sealed interface ScheduleMode {
         val sunriseOffsetMin: Int = 0
     ) : ScheduleMode
 
+    /**
+     * On from [start] each day until the user's next alarm clock fires.
+     * Tied to roadmap candidate **C25**. The [nextAlarmAt] is supplied by
+     * the caller (the foreground service queries
+     * `AlarmManager.getNextAlarmClock()`); core-schedule does not depend on
+     * `android.app.AlarmManager`.
+     *
+     * Semantics: the filter is on between today's [start] and the next
+     * alarm-clock fire. If no alarm clock is set ([nextAlarmAt] is null),
+     * the mode degrades to "on between [start] and a fallback end time
+     * 12 hours later" so the filter never runs indefinitely.
+     */
+    data class UntilNextAlarm(
+        val start: LocalTime,
+        val nextAlarmAt: ZonedDateTime? = null
+    ) : ScheduleMode
+
     data object AlwaysOff : ScheduleMode
 }
 
@@ -46,6 +63,20 @@ fun isActive(
         // "On from sunset to next-morning sunrise" — wrap midnight.
         if (now.isAfter(sunset) || now.isBefore(sunrise)) true else false
     }
+    is ScheduleMode.UntilNextAlarm -> isActiveUntilAlarm(now, mode)
+}
+
+/**
+ * Active when *now* is between today's `start` and the next alarm-clock
+ * time. If no alarm is set, the filter still ends at `start + 12h` as a
+ * safety net so a misconfigured "no alarm tomorrow" doesn't leave the
+ * filter on forever.
+ */
+private fun isActiveUntilAlarm(now: ZonedDateTime, mode: ScheduleMode.UntilNextAlarm): Boolean {
+    val todayStart = mode.start.atDate(now.toLocalDate()).atZone(now.zone)
+    val effectiveStart = if (now.isBefore(todayStart)) todayStart.minusDays(1) else todayStart
+    val end = mode.nextAlarmAt ?: effectiveStart.plusHours(12)
+    return now.isAfter(effectiveStart) && now.isBefore(end)
 }
 
 private fun inWrappedWindow(now: LocalTime, start: LocalTime, end: LocalTime): Boolean {
@@ -69,6 +100,26 @@ fun nextTransition(
     is ScheduleMode.AlwaysOn, is ScheduleMode.AlwaysOff -> null
     is ScheduleMode.FixedTime -> if (mode.start == mode.end) null else nextFixedTransition(now, mode.start, mode.end)
     is ScheduleMode.Solar -> nextSolarTransition(now, zoneId, mode)
+    is ScheduleMode.UntilNextAlarm -> nextAlarmModeTransition(now, mode)
+}
+
+private fun nextAlarmModeTransition(
+    now: ZonedDateTime,
+    mode: ScheduleMode.UntilNextAlarm
+): ZonedDateTime {
+    val todayStart = mode.start.atDate(now.toLocalDate()).atZone(now.zone)
+    val effectiveStart = if (now.isBefore(todayStart)) todayStart else todayStart.plusDays(1)
+    val candidates = listOfNotNull(
+        if (todayStart.isAfter(now)) todayStart else null,
+        mode.nextAlarmAt?.takeIf { it.isAfter(now) },
+        // Safety-net end if no alarm is set: 12 hours after today's start.
+        if (mode.nextAlarmAt == null) {
+            val safetyEnd = todayStart.plusHours(12)
+            if (safetyEnd.isAfter(now)) safetyEnd else effectiveStart
+        } else null,
+        effectiveStart // tomorrow's start, always a valid future boundary
+    )
+    return candidates.minByOrNull { it.toEpochSecond() } ?: effectiveStart
 }
 
 private fun nextFixedTransition(

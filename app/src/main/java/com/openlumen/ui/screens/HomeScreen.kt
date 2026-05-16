@@ -115,6 +115,20 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         stateDescription = "${(prefs.dim * 100).toInt()} percent"
                     }
                 )
+
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.home_contrast), style = MaterialTheme.typography.titleMedium)
+                Text("%.2f×".format(prefs.contrast),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Slider(
+                    value = prefs.contrast,
+                    onValueChange = vm::setContrast,
+                    valueRange = com.openlumen.prefs.Preferences.CONTRAST_MIN..com.openlumen.prefs.Preferences.CONTRAST_MAX,
+                    modifier = Modifier.semantics {
+                        stateDescription = "%.2f times".format(prefs.contrast)
+                    }
+                )
             }
         }
 

@@ -69,28 +69,14 @@ main app stays clean.
 **Why deferred**: niche audience, high test-matrix cost. Revisit when
 the phone-form is solid.
 
-## Alarm-based schedule presets — C25 (Next)
+## Alarm-based schedule presets — C25 (shipped in v0.5.0)
 
-**Status**: Next-tier; needs a UX decision.
-
-The roadmap description ("Use existing AlarmManager machinery.
-Twilight exposes alarm/custom modes.") suggests linking the schedule
-to the user's *alarm clock* — fire the filter off when the morning
-alarm fires.
-
-**Design sketch**:
-
-1. Listen to `AlarmManager.AlarmClockInfo` via
-   `AlarmManager.getNextAlarmClock()`. Returns the next scheduled
-   user-set alarm without requiring a permission.
-2. New schedule mode `ScheduleModeDto.AlarmClock` with start time =
-   user's set time and end time = next alarm clock.
-3. UI: a radio option "Until my next alarm" alongside Fixed-time and
-   Solar.
-
-**Why deferred**: small but adds a new schedule mode that needs
-testing across the existing per-mode logic in `Schedule.kt` (`isActive`,
-`nextTransition`). Fits as a small follow-up after v0.5.0 ships.
+Shipped. `ScheduleMode.UntilNextAlarm(start, nextAlarmAt)` + the
+matching `ScheduleModeDto.UntilNextAlarm` enum entry. `LumenService`
+reads `AlarmManager.getNextAlarmClock()` and passes the result into
+the pure schedule logic. A 12-hour fallback prevents the filter from
+running indefinitely when no alarm is set. Tested in
+`core-schedule/.../ScheduleTest.kt`.
 
 ## Final icon and adaptive launcher — C35 (Now → deferred to icon design pass)
 
@@ -230,18 +216,15 @@ slider drags). Needs a careful implementation pass. Existing
 CVD-remap presets in `Presets.kt` are a coarser channel-shuffle
 approximation that covers the same use case at lower fidelity.
 
-## Contrast control — C64 (Next, design-blocked)
+## Contrast control — C64 (shipped in v0.5.0)
 
-**Status**: Next-tier.
-
-**Plan**: a contrast slider that scales each channel by `c` and
-applies a centering bias `(1 - c) * 0.5`.
-
-**Why deferred**: in OpenLumen's matrix model, contrast scaling
-overlaps with the existing `presetIntensity` (lerp toward identity)
-and per-channel gamma sliders. Adding a third knob with overlapping
-semantics needs a UX pass to make the interactions clear, or a
-rethink that consolidates the three knobs into a smaller set.
+Shipped as a Home-tab slider. `Preferences.contrast` (range 0.5..2.0,
+default 1.0) feeds through to `LumenService.applyContrast()`. The
+overlap with presetIntensity and gamma is real but settled with a
+clear UX: contrast operates on top of intensity/gamma rather than
+replacing either. Bias takes effect on the SurfaceFlinger engine; the
+other engines get the contrast-scaled channel values without bias —
+acceptable degradation given they don't model bias at all.
 
 ## AMOLED black clamp — C66 (Later)
 
