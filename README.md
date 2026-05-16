@@ -126,6 +126,7 @@ OpenLumen/
 - [Play FGS evidence pack](docs/play-fgs-evidence.md) — Play `specialUse` justification
 - [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
 - [Translations and localization](docs/translations.md) — how to contribute a translation
+- [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md) — why per-app behavior is deferred until the trust posture is sorted
 - [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
 - [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
 - [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning

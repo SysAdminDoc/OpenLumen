@@ -152,6 +152,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/sys/class/misc/kcal/`) instead of hardcoding the most-common one.
   The winning base path is exposed as `activeBasePath` and recorded
   in the driver report.
+- LumenService now registers a runtime receiver for
+  `ACTION_SCREEN_OFF` and invalidates the cached lux reading on each
+  fire. Implicit-broadcast exempt from Android 8+ background limits;
+  manifest-registered receivers don't get screen-off on modern
+  Android, so the runtime registration is required. The OS already
+  pauses the sensor when the screen is off; this change makes sure
+  the next `applyIfShouldBeActive` doesn't act on a stale daytime
+  reading. (C99)
+- New `docs/overlay-and-per-app-design.md`: durable analysis of the
+  C10 / C11 / C12 / C28 / C69 / C90 / C95 / C96 design space. The
+  shared blocker for the per-app candidates (C11 / C12 / C69) is
+  foreground-app detection, which would require
+  `PACKAGE_USAGE_STATS`, an AccessibilityService, or a Shizuku
+  backend — all three of which change OpenLumen's trust posture. The
+  doc records the decision to defer pending the Shizuku spike (C06)
+  and captures the implementation plans for C28, C90, C95, and C96.
 - Named profile library. `Preferences.savedProfiles` holds up to 32
   `NamedProfile`s; each is a `(name, ProfileSnapshot)` pair where the
   snapshot covers preset, custom RGB matrix, intensity, dim,

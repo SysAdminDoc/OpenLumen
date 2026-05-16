@@ -142,7 +142,19 @@ view). Each entry lists where the work landed.
 - **C33** — CF.Lumen import notes → same doc; manual mapping table provided since the source is unavailable
 - **C58** — RTL layout support → manifest `supportsRtl=true` already set; layout audit conventions documented in `docs/translations.md`
 - **C59** — Weblate/translation workflow → [docs/translations.md](docs/translations.md) (PR-based today; platform deferred until string count grows)
+- **C99** — Event-driven ambient sampling → `LumenService` registers an `ACTION_SCREEN_OFF` receiver that invalidates the cached lux reading so stale daytime readings can't trigger the filter at dusk
 - **C82** — Android 16/API 36 readiness → [docs/api-36-readiness.md](docs/api-36-readiness.md) inventory of expected behavior changes + test plan + migration policy
+
+Design-doc deliverables (deferred implementations, durable analysis in tree):
+
+- **C10** — Overlay blocked-touch troubleshooting → [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md) + the existing user-facing entry in `docs/troubleshooting.md`
+- **C11** — Per-app pause/exclusions → permission/policy analysis in `docs/overlay-and-per-app-design.md` (deferred to v0.6+/Shizuku spike)
+- **C12** — Secure/install/su dialog auto-pause → same doc; shares the foreground-app-detection blocker with C11/C69
+- **C28** — Direct Boot restore → design path documented (device-protected DataStore subset + `LOCKED_BOOT_COMPLETED` receiver); ship in v0.7.0
+- **C69** — Per-app profiles → same blocker as C11; deferred behind the Shizuku spike
+- **C90** — Emergency unlock gesture → notification action + tile + ADB command are the shipped failsafes; touch-gesture option requires a second overlay surface (deferred)
+- **C95** — AGP 9 migration spike → spike branch process documented; waits for AGP 9 stable
+- **C96** — Hilt Compose artifact migration → rides with C95
 - **C94** — SBOM and advisory scan → [.github/workflows/sbom.yml](.github/workflows/sbom.yml) + [docs/sbom-and-advisories.md](docs/sbom-and-advisories.md)
 - **C98** — Dynamic ramp duration presets → Instant / 30s / 5m / 15m / 30m radio options (Next-tier candidate, landed alongside C23/C24)
 - **C51** — OWASP MASVS-lite threat model → [docs/threat-model.md](docs/threat-model.md)

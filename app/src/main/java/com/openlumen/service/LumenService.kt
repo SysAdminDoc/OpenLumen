@@ -3,8 +3,10 @@ package com.openlumen.service
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
@@ -80,6 +82,24 @@ class LumenService : LifecycleService() {
     @Volatile private var transitionJob: Job? = null
     private val applyMutex = Mutex()
 
+    /**
+     * Screen-state listener. Tied to roadmap candidate C99 (event-driven
+     * ambient sampling). On `ACTION_SCREEN_OFF` we invalidate the latest
+     * lux reading so a stale reading from the daylight half-hour can't
+     * accidentally trigger the filter when the user picks the device up
+     * an hour later in a dark room. The OS already pauses the actual
+     * sensor when the screen is off; this just makes sure we don't act on
+     * stale data the next time `applyIfShouldBeActive` runs.
+     */
+    private val screenStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Intent.ACTION_SCREEN_OFF) {
+                latestLux.set(-1f)
+            }
+        }
+    }
+    @Volatile private var screenStateReceiverRegistered = false
+
     private val latestPrefs = AtomicReference<Preferences?>(null)
     private val latestLux = AtomicReference(-1f)
     @Volatile private var lastApplied: LumenMatrix? = null
@@ -89,7 +109,30 @@ class LumenService : LifecycleService() {
         super.onCreate()
         DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onCreate")
         startInForeground()
+        registerScreenStateReceiver()
         observePreferences()
+    }
+
+    private fun registerScreenStateReceiver() {
+        if (screenStateReceiverRegistered) return
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        // Implicit broadcast for ACTION_SCREEN_OFF is exempt from Android 8+
+        // background-execution limits, so a runtime registration here is
+        // safe and the right approach (manifest-registered receivers don't
+        // get screen-off on modern Android).
+        try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(screenStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("UnspecifiedRegisterReceiverFlag")
+                registerReceiver(screenStateReceiver, filter)
+            }
+            screenStateReceiverRegistered = true
+        } catch (t: Throwable) {
+            Log.w(tag, "registerReceiver(SCREEN_OFF) failed: ${t.message}")
+        }
     }
 
     private fun updateLightSensorSubscription(enabled: Boolean) {
@@ -452,6 +495,11 @@ class LumenService : LifecycleService() {
 
     override fun onDestroy() {
         DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onDestroy")
+        if (screenStateReceiverRegistered) {
+            runCatching { unregisterReceiver(screenStateReceiver) }
+                .onFailure { Log.w(tag, "unregisterReceiver(SCREEN_OFF): ${it.message}") }
+            screenStateReceiverRegistered = false
+        }
         transitionJob?.cancel()
         lightJob?.cancel()
         runCatching {
