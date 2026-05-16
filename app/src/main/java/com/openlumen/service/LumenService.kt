@@ -1,7 +1,9 @@
 package com.openlumen.service
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -23,12 +25,13 @@ import com.openlumen.prefs.PreferencesStore
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
+import com.openlumen.schedule.nextTransition
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalTime
+import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -49,7 +52,6 @@ class LumenService : LifecycleService() {
     @Inject lateinit var lightSensor: LightSensorAdapter
 
     private var engine: ColorEngine? = null
-    private var tickerJob: Job? = null
     private var lightJob: Job? = null
     private val latestPrefs = AtomicReference<Preferences?>(null)
     private val latestLux = AtomicReference(-1f)
@@ -61,7 +63,6 @@ class LumenService : LifecycleService() {
         startInForeground()
         observePreferences()
         observeLightSensor()
-        startScheduleTicker()
     }
 
     private fun observeLightSensor() {
@@ -77,11 +78,12 @@ class LumenService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
-            ACTION_TURN_OFF -> {
-                lifecycleScope.launch {
-                    prefs.update { it.copy(enabled = false) }
-                    stopSelf()
-                }
+            ACTION_TURN_OFF -> lifecycleScope.launch {
+                prefs.update { it.copy(enabled = false) }
+                stopSelf()
+            }
+            ACTION_REEVALUATE -> lifecycleScope.launch {
+                latestPrefs.get()?.let { applyIfShouldBeActive(it) }
             }
         }
         return START_STICKY
@@ -168,18 +170,54 @@ class LumenService : LifecycleService() {
      * outside the user's schedule window, useful for dark-room sessions during the day.
      */
     private suspend fun applyIfShouldBeActive(p: Preferences) {
-        val scheduleActive = isActive(mapMode(p))
+        val mode = mapMode(p)
+        val scheduleActive = isActive(mode)
         val lightActive = p.lightSensorEnabled &&
             latestLux.get() >= 0f &&
             latestLux.get() < p.lightSensorLuxThreshold
         val shouldBeActive = scheduleActive || lightActive
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
-        if (shouldBeActive == lastShouldBeActive && matrix == lastApplied) return
-        lastShouldBeActive = shouldBeActive
-        engine?.apply(this, matrix)
-        lastApplied = matrix
+        if (shouldBeActive != lastShouldBeActive || matrix != lastApplied) {
+            lastShouldBeActive = shouldBeActive
+            engine?.apply(this, matrix)
+            lastApplied = matrix
+        }
+        // Always reschedule — the next transition time depends on the current mode.
+        rescheduleNextTransition(mode)
     }
+
+    /**
+     * Cancel any pending schedule alarm and set a new one for the next state flip.
+     * Uses setExactAndAllowWhileIdle to survive Doze; falls back to setAndAllowWhileIdle
+     * on devices that deny SCHEDULE_EXACT_ALARM.
+     */
+    private fun rescheduleNextTransition(mode: ScheduleMode) {
+        val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pi = schedulePendingIntent()
+        am.cancel(pi)
+
+        val next: ZonedDateTime = nextTransition(mode) ?: return // AlwaysOn/AlwaysOff
+        val triggerMs = next.toInstant().toEpochMilli()
+
+        try {
+            if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+            } else {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+            }
+        } catch (_: SecurityException) {
+            // Some OEMs reject exact alarms even with the permission declared. Fall back.
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+        }
+    }
+
+    private fun schedulePendingIntent(): PendingIntent = PendingIntent.getBroadcast(
+        this, 0,
+        Intent(this, ScheduleAlarmReceiver::class.java)
+            .setAction(ScheduleAlarmReceiver.ACTION_FIRE),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
 
     private fun matrixFor(p: Preferences): LumenMatrix {
         val preset = Presets.byKey(p.activePresetKey)?.matrix
@@ -230,8 +268,12 @@ class LumenService : LifecycleService() {
     }
 
     override fun onDestroy() {
-        tickerJob?.cancel()
         lightJob?.cancel()
+        // Cancel pending schedule alarm so it doesn't try to re-spawn us while disabled.
+        runCatching {
+            val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            am.cancel(schedulePendingIntent())
+        }
         lifecycleScope.launch { engine?.clear(this@LumenService) }
         super.onDestroy()
     }
@@ -239,5 +281,6 @@ class LumenService : LifecycleService() {
     companion object {
         private const val NOTIFICATION_ID = 4242
         const val ACTION_TURN_OFF = "com.openlumen.action.TURN_OFF"
+        const val ACTION_REEVALUATE = "com.openlumen.action.REEVALUATE"
     }
 }

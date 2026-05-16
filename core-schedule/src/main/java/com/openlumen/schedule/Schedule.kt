@@ -55,3 +55,49 @@ private fun inWrappedWindow(now: LocalTime, start: LocalTime, end: LocalTime): B
         now >= start || now < end
     }
 }
+
+/**
+ * Returns the next moment at which the active state would flip, or null for modes that
+ * never transition (AlwaysOn, AlwaysOff). Used by the AlarmManager-based scheduler to
+ * avoid polling the schedule every minute.
+ */
+fun nextTransition(
+    mode: ScheduleMode,
+    now: ZonedDateTime = ZonedDateTime.now(),
+    zoneId: ZoneId = now.zone
+): ZonedDateTime? = when (mode) {
+    is ScheduleMode.AlwaysOn, is ScheduleMode.AlwaysOff -> null
+    is ScheduleMode.FixedTime -> nextFixedTransition(now, mode.start, mode.end)
+    is ScheduleMode.Solar -> nextSolarTransition(now, zoneId, mode)
+}
+
+private fun nextFixedTransition(
+    now: ZonedDateTime,
+    start: LocalTime,
+    end: LocalTime
+): ZonedDateTime {
+    val today = now.toLocalDate()
+    val candidates = listOf(
+        start.atDate(today).atZone(now.zone),
+        end.atDate(today).atZone(now.zone),
+        start.atDate(today.plusDays(1)).atZone(now.zone),
+        end.atDate(today.plusDays(1)).atZone(now.zone)
+    )
+    return candidates.first { it.isAfter(now) }
+}
+
+private fun nextSolarTransition(
+    now: ZonedDateTime,
+    zoneId: ZoneId,
+    mode: ScheduleMode.Solar
+): ZonedDateTime {
+    val today = SolarCalculator.computeTimes(now.toLocalDate(), mode.latitude, mode.longitude, zoneId)
+    val tomorrow = SolarCalculator.computeTimes(now.toLocalDate().plusDays(1), mode.latitude, mode.longitude, zoneId)
+    val candidates = listOf(
+        today.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong()),
+        today.sunset.plusMinutes(mode.sunsetOffsetMin.toLong()),
+        tomorrow.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong()),
+        tomorrow.sunset.plusMinutes(mode.sunsetOffsetMin.toLong())
+    )
+    return candidates.first { it.isAfter(now) }
+}
