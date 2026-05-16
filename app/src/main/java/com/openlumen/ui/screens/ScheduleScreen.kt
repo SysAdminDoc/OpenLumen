@@ -1,5 +1,6 @@
 package com.openlumen.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,14 +8,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,14 +30,23 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.ui.components.LocationEntryDialog
+import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
 fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val prefs by vm.state.collectAsState()
 
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
+    var showLocationDialog by remember { mutableStateOf(false) }
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(PaddingValues(16.dp)),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.schedule_title), style = MaterialTheme.typography.titleMedium)
@@ -48,7 +65,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().clickable { vm.setScheduleMode(mode) }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -64,53 +81,108 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         }
 
         if (prefs.schedule.mode == ScheduleModeDto.FixedTime) {
-            FixedTimeBlock(
-                startH = prefs.schedule.startHour,
-                startM = prefs.schedule.startMinute,
-                endH = prefs.schedule.endHour,
-                endM = prefs.schedule.endMinute,
-                onChange = vm::setScheduleTimes
-            )
+            Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { showStartPicker = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "${stringResource(R.string.schedule_start)}: " +
+                                "%02d:%02d".format(prefs.schedule.startHour, prefs.schedule.startMinute)
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { showEndPicker = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "${stringResource(R.string.schedule_end)}: " +
+                                "%02d:%02d".format(prefs.schedule.endHour, prefs.schedule.endMinute)
+                        )
+                    }
+                }
+            }
         }
 
         if (prefs.schedule.mode == ScheduleModeDto.Solar) {
-            SolarBlock(
-                lat = prefs.schedule.latitude,
-                lng = prefs.schedule.longitude,
-                onChange = vm::setLocation
-            )
+            Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { showLocationDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (prefs.schedule.latitude.isNaN())
+                                "Set location"
+                            else
+                                "%.3f, %.3f".format(prefs.schedule.latitude, prefs.schedule.longitude)
+                        )
+                    }
+
+                    Text(
+                        "Sunset offset: ${prefs.schedule.sunsetOffsetMin}m",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Slider(
+                        value = prefs.schedule.sunsetOffsetMin.toFloat(),
+                        onValueChange = { v ->
+                            vm.setScheduleOffsets(v.toInt(), prefs.schedule.sunriseOffsetMin)
+                        },
+                        valueRange = -180f..180f,
+                        steps = 35
+                    )
+
+                    Text(
+                        "Sunrise offset: ${prefs.schedule.sunriseOffsetMin}m",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Slider(
+                        value = prefs.schedule.sunriseOffsetMin.toFloat(),
+                        onValueChange = { v ->
+                            vm.setScheduleOffsets(prefs.schedule.sunsetOffsetMin, v.toInt())
+                        },
+                        valueRange = -180f..180f,
+                        steps = 35
+                    )
+                }
+            }
         }
     }
-}
 
-@Composable
-private fun FixedTimeBlock(
-    startH: Int, startM: Int,
-    endH: Int, endM: Int,
-    onChange: (Int, Int, Int, Int) -> Unit
-) {
-    Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            Text("$startH:%02d → $endH:%02d".format(startM, endM))
-            Text(
-                "Time pickers in next iteration",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+    if (showStartPicker) {
+        TimePickerDialog(
+            title = stringResource(R.string.schedule_start),
+            initialHour = prefs.schedule.startHour,
+            initialMinute = prefs.schedule.startMinute,
+            onDismiss = { showStartPicker = false },
+            onConfirm = { h, m ->
+                vm.setScheduleTimes(h, m, prefs.schedule.endHour, prefs.schedule.endMinute)
+                showStartPicker = false
+            }
+        )
     }
-}
-
-@Composable
-private fun SolarBlock(lat: Double, lng: Double, onChange: (Double, Double) -> Unit) {
-    Card(shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            Text(if (lat.isNaN()) "No location set" else "%.3f, %.3f".format(lat, lng))
-            Text(
-                "Location picker in next iteration (manual coords + FusedLocation)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+    if (showEndPicker) {
+        TimePickerDialog(
+            title = stringResource(R.string.schedule_end),
+            initialHour = prefs.schedule.endHour,
+            initialMinute = prefs.schedule.endMinute,
+            onDismiss = { showEndPicker = false },
+            onConfirm = { h, m ->
+                vm.setScheduleTimes(prefs.schedule.startHour, prefs.schedule.startMinute, h, m)
+                showEndPicker = false
+            }
+        )
+    }
+    if (showLocationDialog) {
+        LocationEntryDialog(
+            initialLat = prefs.schedule.latitude,
+            initialLng = prefs.schedule.longitude,
+            onDismiss = { showLocationDialog = false },
+            onSave = { lat, lng ->
+                vm.setLocation(lat, lng)
+                showLocationDialog = false
+            }
+        )
     }
 }
