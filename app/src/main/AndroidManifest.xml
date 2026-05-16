@@ -83,5 +83,23 @@
             android:name=".service.ScheduleAlarmReceiver"
             android:exported="false" />
 
+        <!--
+            1x1 toggle widget (roadmap C19). Receives the standard system
+            APPWIDGET_UPDATE plus an internal ACTION_REFRESH broadcast that
+            LumenService fires on every prefs emission.
+        -->
+        <receiver
+            android:name=".widget.ToggleWidget"
+            android:exported="false"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.openlumen.widget.action.REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_toggle_info" />
+        </receiver>
+
     </application>
 </manifest>

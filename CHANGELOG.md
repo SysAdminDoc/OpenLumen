@@ -75,6 +75,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Full ADB / Tasker / Termux command reference at `docs/automation.md`.
   These action strings are part of the stable API; renaming requires a
   schema-version bump and a deprecation period.
+- 1x1 home-screen toggle widget. Tap to toggle (same `ACTION_TOGGLE` path
+  the QS tile uses); label below the icon reads On / Off. Stays in sync
+  with the in-app toggle via a `ToggleWidget.broadcastRefresh()` nudge
+  that the service fires on every prefs emission. The receiver is
+  no-op when no widgets are installed.
+- OWASP-MASVS-lite threat model at `docs/threat-model.md` covering storage,
+  crypto, auth, network, platform-interaction, and code-quality risks with
+  specific mitigations. Includes data and permission inventories and a
+  review-cadence policy.
+- Boot-panic reset: `BootReceiver` now suppresses auto-restore if the
+  crash log was touched within 5 minutes before boot. Lets users escape
+  a stuck-tint state by rebooting without OpenLumen putting them right
+  back in it. The crash log itself stays in place; clearing it from
+  About → View crash log restores normal auto-restore behavior.
 
 ### Tests
 - Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only

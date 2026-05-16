@@ -27,6 +27,7 @@ import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
 import com.openlumen.schedule.nextTransition
+import com.openlumen.widget.ToggleWidget
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -200,6 +201,10 @@ class LumenService : LifecycleService() {
             prefs.flow.conflate().collect { p ->
                 latestPrefs.set(p)
                 updateLightSensorSubscription(p.enabled && p.lightSensorEnabled)
+                // Nudge any installed 1x1 widget instances so their visible
+                // state stays in sync with the in-app toggle. Cheap when no
+                // widgets are installed (the receiver just no-ops).
+                ToggleWidget.broadcastRefresh(this@LumenService)
                 if (!p.enabled) {
                     clearAndStop()
                     return@collect

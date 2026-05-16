@@ -96,6 +96,21 @@ screens while an untrusted overlay is showing. Workarounds:
 3. On a fresh install, the tile may not appear until the app has been
    opened once.
 
+## "After a crash the filter doesn't come back on reboot"
+
+Working as intended. Tied to roadmap candidate **C85** (boot-panic reset).
+If OpenLumen's crash log was modified within five minutes before boot,
+`BootReceiver` treats the shutdown as a panic recovery and forces
+`enabled = false` instead of restoring the filter. The thinking: a user
+who just rebooted after a black-screen episode doesn't want the filter
+right back on at boot.
+
+To re-enable, open the app once. Manual re-enable always works.
+
+The crash log itself stays in place — About → "View crash log" shows
+what happened — and you can clear it from the same dialog if you don't
+want it to suppress auto-restore on the next boot.
+
 ## "Battery drain"
 
 OpenLumen does not poll. The service is a foreground service (which keeps

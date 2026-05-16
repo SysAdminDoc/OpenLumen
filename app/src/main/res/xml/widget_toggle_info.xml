@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AppWidgetProviderInfo for the 1x1 toggle widget. Tied to roadmap
+    candidate C19.
+
+    - updatePeriodMillis = 30 min (platform minimum). The service also
+      broadcasts ToggleWidget.ACTION_REFRESH on every prefs emission, so
+      this fallback period only matters when the service isn't running
+      (e.g. fresh boot before BootReceiver fires).
+    - resizeMode = none — this is intentionally a 1x1 widget; we ship
+      a separate 4x1 widget for preset selection (C20).
+    - widgetCategory = home_screen | keyguard so it appears in both
+      pickers on devices that allow lock-screen widgets.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="1"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_toggle"
+    android:previewImage="@drawable/ic_lumen_tile"
+    android:previewLayout="@layout/widget_toggle"
+    android:resizeMode="none"
+    android:widgetCategory="home_screen|keyguard"
+    android:configure="" />

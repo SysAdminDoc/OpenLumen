@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    1x1 toggle widget layout. Tied to roadmap candidate C19.
+
+    Kept text-only and theme-neutral so it reads on both light and dark
+    home-screen themes without bundling additional drawables. The icon
+    sits on top of a slightly-rounded square host (default AppWidget
+    background); the label below shows the current On / Off state.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="6dp"
+    android:background="@drawable/widget_background">
+
+    <ImageView
+        android:id="@+id/widget_button"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:contentDescription="@string/home_toggle"
+        android:src="@drawable/ic_lumen_tile" />
+
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="11sp"
+        android:singleLine="true"
+        android:text="@string/tile_off" />
+
+</LinearLayout>
