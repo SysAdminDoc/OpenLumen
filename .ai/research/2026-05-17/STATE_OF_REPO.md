@@ -457,3 +457,12 @@ C111 is now complete as a source audit:
   path.
 - Android 17 readiness docs now keep only the remaining smoke check for
   notification/widget/tile routing.
+
+## C116 implementation state
+
+C116 is now complete as documentation:
+
+- `docs/troubleshooting.md` explicitly tells users that turning the filter
+  off before reboot leaves it off after reboot.
+- The documented behavior matches `BootReceiver`: it reads persisted
+  preferences and starts `LumenService` only when `enabled = true`.

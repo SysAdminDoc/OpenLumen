@@ -386,6 +386,9 @@ watchpoints future sessions should not miss:
   no `IntentSender`, `ActivityOptions`, or `MODE_BACKGROUND_ACTIVITY_START_*`
   call sites today; existing `PendingIntent` usage is direct
   activity/service/broadcast routing.
+- **Paused reboot behavior (C116)**: shipped 2026-05-17. `BootReceiver`
+  restores only when persisted `enabled = true`; troubleshooting now
+  documents that a filter paused before reboot remains paused.
 - **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
   stable AndroidX floor refresh rather than mixing broad dependency churn
   into the toolchain migration.

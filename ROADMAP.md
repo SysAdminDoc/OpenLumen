@@ -44,6 +44,10 @@ major versions.
   A source audit found no `IntentSender`, `ActivityOptions`, or
   `MODE_BACKGROUND_ACTIVITY_START_*` call sites to migrate; existing
   `PendingIntent` usage is direct activity/service/broadcast routing.
+- [x] **C116 — don't resume after restart if paused** shipped on
+  2026-05-17. `BootReceiver` already gates restore on persisted
+  `enabled = true`; `docs/troubleshooting.md` now documents the paused
+  reboot behavior explicitly.
 
 ## What changed in rev 5
 
@@ -886,7 +890,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C113 | (n/a — same) | — | — | — | — | — | — | — |
 | C114 | Fine-grain dim precision for PWM users | UX | rare | Later | 3/2/2 | Sub-1% slider step in the low-dim region | Community signal (S80, S107) | S80, S103, S107 |
 | C115 | "Filter green light too" (Red Moon #353) | UX | rare | Under Consideration | 2/2/2 | Already partly satisfied by low-Kelvin slider; document explicitly | Adjacent to existing Kelvin path | S86 |
-| C116 | "Don't resume after restart if paused" docs | docs | rare | Now | 2/1/1 | We already implement this via boot-panic reset (C85); document the behavior | Red Moon users currently lack this | S86 |
+| C116 | "Don't resume after restart if paused" docs | docs | rare | Shipped 2026-05-17 | 2/1/1 | `BootReceiver` already restores only when persisted `enabled = true`; documented the paused reboot behavior in troubleshooting | Red Moon users currently lack this | S86, `BootReceiver.kt`, `docs/troubleshooting.md` |
 | C117 | Root-mode apply-on-first-emission verification | reliability | rare | Now | 3/1/1 | Verify SF/KCAL receive their first matrix without requiring a value change | Red Moon has a known bug here; we should not | S86 |
 | C118 | GrapheneOS / lockdown-ROM overlay coverage | platform/OS | rare | Next | 3/3/3 | Test overlay z-order against system shade on GrapheneOS | Red Moon issue #347 indicates real OEM-divergence risk | S86 |
 | C119 | (folded into C35) | — | — | — | — | — | — | — |

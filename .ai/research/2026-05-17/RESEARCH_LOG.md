@@ -406,3 +406,10 @@ local source audit against the Android 17 BAL migration surface:
 
 Docs now treat C111 as shipped, with runtime smoke still folded into the
 Android 17 device validation plan.
+
+## Implementation update (C116)
+
+C116 required no external research. The behavior already existed locally:
+`BootReceiver` reads persisted preferences after `BOOT_COMPLETED` and does
+not start `LumenService` when `enabled = false`. The pass added explicit
+troubleshooting documentation and marked the roadmap item shipped.

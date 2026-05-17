@@ -350,3 +350,6 @@ stable base for Direct Boot restore.
   `IntentSender` / `ActivityOptions` BAL call sites, so no
   `_ALLOW_IF_VISIBLE` migration is needed until a future feature adds
   one. Source: S00d.
+- **C116 shipped 2026-05-17**. Troubleshooting now documents that a
+  filter paused before reboot remains paused because `BootReceiver`
+  restores only when persisted `enabled = true`.

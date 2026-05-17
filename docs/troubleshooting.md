@@ -111,6 +111,17 @@ The crash log itself stays in place — About → "View crash log" shows
 what happened — and you can clear it from the same dialog if you don't
 want it to suppress auto-restore on the next boot.
 
+## "I paused the filter, rebooted, and it stayed paused"
+
+Working as intended. Tied to roadmap candidate **C116**. OpenLumen only
+restores the foreground service after reboot when the saved preference
+has `enabled = true`. If you turned the filter off before restarting,
+`BootReceiver` leaves it off and does not try to infer schedule state on
+its own.
+
+To resume after reboot, turn the filter back on from the app, Quick
+Settings tile, widget, or the documented ADB command.
+
 ## "Battery drain"
 
 OpenLumen does not poll. The service is a foreground service (which keeps

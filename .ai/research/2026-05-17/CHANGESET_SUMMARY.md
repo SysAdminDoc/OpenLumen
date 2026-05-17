@@ -453,3 +453,24 @@ This pass completed **C111 — BAL hardening readiness** as a source audit.
   `MODE_BACKGROUND_ACTIVITY_START_*` call sites in production Kotlin.
 - `rg` confirmed existing `PendingIntent` use is direct
   `getActivity`, `getService`, and `getBroadcast`.
+
+## Implementation pass 10 (C116, 2026-05-17)
+
+This pass completed **C116 — don't resume after restart if paused** as a
+documentation item.
+
+### Files modified (pass 10)
+
+| File | Why |
+|---|---|
+| `docs/troubleshooting.md` | Added the explicit paused-before-reboot behavior and how to resume manually. |
+| `ROADMAP.md` | Marked C116 shipped. |
+| `PROJECT_CONTEXT.md` | Added C116 to current durable watchpoints. |
+| `CHANGELOG.md` | Added the troubleshooting documentation change under `[Unreleased]`. |
+| `docs/v0.5.0-release-readiness.md` | Marked C116 shipped instead of a soft-gate doc item. |
+
+### Verification (pass 10)
+
+Docs-only change. Local source evidence: `BootReceiver` only starts the
+service after boot when `prefs.flow.first().enabled` is true; otherwise it
+logs that the filter was disabled and returns.

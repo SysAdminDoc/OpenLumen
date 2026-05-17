@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reproducibility rationale in `docs/reproducible-build.md`.
 - Android 17 readiness docs now record the C111 BAL audit result: there
   are no `IntentSender` / `ActivityOptions` call sites to migrate today.
+- Troubleshooting now documents that a filter paused before reboot remains
+  paused after reboot, matching `BootReceiver`'s persisted `enabled` gate.
 - Driver reports now include an Android 17 Advanced Protection section with
   `enabled`, `disabled`, `n/a`, or bounded `unknown` status, and the app now
   declares `QUERY_ADVANCED_PROTECTION_MODE` for that query path.
