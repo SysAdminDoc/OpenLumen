@@ -1,0 +1,431 @@
+# Source Register — 2026-05-17
+
+Every local and external source used in this research pass. Inherits the
+roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
+entries `S126`-`S202` collected during this session.
+
+## Local evidence (S00 / S00b — preserved from rev 3)
+
+- **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
+  `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
+  manifests, full Kotlin source tree (62 `.kt` files across 4 modules),
+  20 docs under `docs/`, `.github/workflows/*`,
+  `fastlane/metadata/android/`, `branding/logo-prompts.md`.
+- **S00b**: 2026-05-17 in-tree audit hardening pass — 16 files modified on
+  disk pre-commit; ROADMAP rev 3 enumerates the fixes.
+
+## Existing roadmap sources (S10 - S125 — preserved verbatim)
+
+See `ROADMAP.md` rev 3 lines 660-788 for the canonical list. Summary:
+
+- S10-S22 / S69-S71 / S81-S82 / S86 / S87 / S103: direct OSS / commercial
+  competitors and ancestors.
+- S23-S33 / S43-S44: commercial references and platform docs.
+- S25-S29 / S65-S68 / S73-S74: Android platform behavior and OWASP
+  references.
+- S34-S40 / S72 / S104-S106: desktop / Wayland adjacent projects.
+- S45-S47 / S99-S102: sleep / circadian-rhythm research base.
+- S48-S59 / S109-S111: distribution and dependency metadata.
+- S60-S64 / S77 / S108 / S110 / S114 / S122: security and supply-chain.
+- S75-S76 / S91-S98 / S118 / S123-S125: AGP / Hilt / Compose / Glance.
+- S83-S85 / S88-S90 / S96 / S121: Android 17 + AAPM behavior changes.
+- S107 / S80: PWM signals.
+- S112-S117 / S119-S120: F-Droid, emulator runner, Wear OS, CVD.
+
+## New sources (this session — 2026-05-17)
+
+Numbered S126 onward to extend `ROADMAP.md` rev 3 without breaking existing
+citations. Topic groupings:
+
+### Android 17 platform — release timing, behavior changes, FGS rules, AAPM, BAL
+
+- **S126**: Android 17 Beta 4 announcement (Android Developers Blog,
+  2026-04-16). Final beta; platform stability reached; API surface frozen.
+  — https://android-developers.googleblog.com/2026/04/the-fourth-beta-of-android-17.html
+- **S127**: Android 17 release notes. Canonical landing page for Android 17
+  changes, APIs, and version history.
+  — https://developer.android.com/about/versions/17/release-notes
+- **S128**: Behavior changes — apps targeting Android 17. Covers
+  `MessageQueue` rewrite, BAL hardening
+  (`MODE_BACKGROUND_ACTIVITY_START_ALLOWED` deprecated → `_ALLOW_IF_VISIBLE`
+  recommended), background audio hardening, Certificate Transparency by
+  default, `ACCESS_LOCAL_NETWORK`, OTP filtering, CP2 PII restrictions.
+  — https://developer.android.com/about/versions/17/behavior-changes-17
+- **S129**: Android 17 features and APIs. Lists `AdvancedProtectionManager`,
+  Handoff, semantic-color Live Updates, ProfilingManager triggers,
+  `JobDebugInfo`, ECH, contact picker.
+  — https://developer.android.com/about/versions/17/features
+- **S130**: Changes to foreground services. Canonical doc for FGS launch
+  rules: `BOOT_COMPLETED` cannot start `dataSync` / `mediaPlayback` /
+  `phoneCall` types; WIU permissions blocked from background; SAW apps must
+  have a visible overlay window.
+  — https://developer.android.com/develop/background-work/services/fgs/changes
+- **S131**: FGS background-start restrictions. Confirms `SYSTEM_ALERT_WINDOW`
+  exemption only applies when a `TYPE_APPLICATION_OVERLAY` is currently
+  visible — directly relevant to OpenLumen's tile/widget toggle-on flow
+  (C105 in the rev 3 roadmap).
+  — https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start
+- **S132**: Foreground service types. Documents `specialUse` and the
+  `<property>` manifest declaration with free-form use-case strings
+  reviewed in Play Console — confirms our manifest property text is the
+  required shape.
+  — https://developer.android.com/develop/background-work/services/fgs/service-types
+- **S133**: Background audio hardening (Android 17). New WIU requirement
+  for any background audio interaction — useful context for the broader
+  FGS hardening direction; OpenLumen doesn't touch audio so no direct
+  impact.
+  — https://developer.android.com/about/versions/17/changes/bg-audio
+- **S134**: `AdvancedProtectionManager` API reference. Primary API surface
+  for detecting AAPM state and registering callbacks. **Roadmap impact**:
+  consider exposing AAPM state in the driver report so users on AAPM-on
+  devices see *why* an a11y-using competitor's per-app feature isn't
+  available there (C104 / new candidate C130).
+  — https://developer.android.com/reference/android/security/advancedprotection/AdvancedProtectionManager
+- **S135**: AAPM landing page (developer.android.com/privacy-and-security).
+  Official user-facing description of AAPM (sideloading block, USB data
+  restriction, Play Protect mandatory, **accessibility-API auto-
+  revocation for non-`isAccessibilityTool` apps**).
+  — https://developer.android.com/privacy-and-security/advanced-protection-mode
+- **S136**: AndroidPolice — Android 17 Beta 2 AAPM accessibility auto-
+  revocation deep-dive (Feb 2026). Confirms automatic revocation of
+  previously-granted accessibility perms for non-accessibility apps when
+  AAPM is on.
+  — https://www.androidpolice.com/advanced-protection-mode-android-17-beta-accessibility/
+- **S137**: Background activity launch restrictions (developer.android.com).
+  Covers PendingIntent/IntentSender BAL inheritance, `ActivityOptions`
+  modes including `MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE` and
+  `_ALLOW_ALWAYS` introduced in Android 16.
+  — https://developer.android.com/guide/components/activities/background-starts
+- **S138**: AOSP Night Light implementation guide (source.android.com).
+  `ColorDisplayManager` / `ColorDisplayService` remain the core color-
+  tint surface; **no new Android 17 Night Light API**. Useful negative
+  confirmation that our CDM engine reflection ladder doesn't need an
+  Android 17-specific case.
+  — https://source.android.com/docs/core/display/night-light
+- **S139**: Android 17 Eye Dropper API overview (ProAndroidDev, Mar 2026).
+  New system-level color-pick intent (`android.intent.action.OPEN_EYE_DROPPER`)
+  that returns a pixel color without screen-capture permission. **Possible
+  feature**: OpenLumen's custom-RGB picker on Home could optionally call
+  this intent on Android 17 devices to let users sample a target color
+  from anything on screen. Tracked as new candidate C131.
+  — https://proandroiddev.com/exploring-the-eyedropper-api-android-17-9d7be86aaa16
+
+### AGP 9 / 10
+
+- **S140**: AGP 9.0.1 release notes (Jan 2026). Built-in Kotlin support,
+  new DSL/Variant API stable, removed wearApp embedding and density splits,
+  max compileSdk 36.1.
+  — https://developer.android.com/build/releases/agp-9-0-0-release-notes
+- **S141**: AGP 9.1.1 release notes (Apr 2026). Incremental fixes layered
+  on 9.0.
+  — https://developer.android.com/build/releases/agp-9-1-0-release-notes
+- **S142**: AGP 9.2.0 release notes (Apr 2026). Latest in the 9.x line.
+  — https://developer.android.com/build/releases/agp-9-2-0-release-notes
+- **S143**: AGP DSL/API migration timeline. Confirms AGP 10 (late 2026)
+  deletes legacy Variant/DSL APIs entirely; `android.enableLegacyVariantApi`
+  flag will no longer exist. **Reinforces rev 3's promotion of C95 to Now.**
+  — https://developer.android.com/build/releases/gradle-plugin-roadmap
+
+### AndroidX Hilt
+
+- **S144**: AndroidX Hilt releases page. Confirms `hiltViewModel()` moved to
+  `androidx.hilt:hilt-lifecycle-viewmodel-compose` (package
+  `androidx.hilt.lifecycle.viewmodel.compose`) in 1.3.0-alpha02 (2025-07-02);
+  stable 1.3.0 in 2025-09.
+  — https://developer.android.com/jetpack/androidx/releases/hilt
+- **S145**: `hilt-lifecycle-viewmodel-compose` on Maven Central. Direct
+  artifact coordinates for the new dependency.
+  — https://mvnrepository.com/artifact/androidx.hilt/hilt-lifecycle-viewmodel-compose/
+
+### AndroidX DataStore (Direct Boot)
+
+- **S146**: DataStore releases page. `createInDeviceProtectedStorage()` on
+  `DataStoreFactory` and `deviceProtectedDataStore()` delegate landed in
+  1.2.0-alpha01; min SDK 24. **Confirms rev 3's effort drop for C28 / C102.**
+  — https://developer.android.com/jetpack/androidx/releases/datastore
+- **S147**: DataStore architecture guide. General reference for citing
+  alongside the Direct Boot APIs.
+  — https://developer.android.com/topic/libraries/architecture/datastore
+
+### Compose screenshot testing
+
+- **S148**: Compose Preview Screenshot Testing guide. Current minimum
+  AGP 9.0 + plugin `0.0.1-alpha14` + Kotlin 2.2.10 + JDK 17 (as of
+  Apr 2026). **Note for C101**: this confirms the rev 3 "now-cheap" claim
+  but the plugin is still in alpha, so we should track stable readiness.
+  — https://developer.android.com/studio/preview/compose-screenshot-testing
+- **S149**: Compose Preview Screenshot Testing release notes. Records
+  AGP 9.0 compatibility and JDK 24 support; tool still alpha.
+  — https://developer.android.com/studio/preview/compose-screenshot-testing-release-notes
+- **S150**: Roborazzi GitHub (takahirom/roborazzi). JVM screenshot lib
+  built on Robolectric; AGP 9.0 compatibility added; used by Google's
+  Now in Android sample. (Maps to rev 3's S98 / S125 — reaffirmed.)
+  — https://github.com/takahirom/roborazzi
+- **S151**: Roborazzi releases.
+  — https://github.com/takahirom/roborazzi/releases
+- **S152**: Paparazzi GitHub (cashapp/paparazzi). Renders Android screens
+  on the JVM with no emulator; Java 17+ for recent versions. **Alternative
+  to Roborazzi for C122**, with different tradeoffs (more mature golden-
+  image tooling, less Robolectric coverage).
+  — https://github.com/cashapp/paparazzi
+- **S153**: Paparazzi changelog.
+  — https://cashapp.github.io/paparazzi/changelog/
+
+### F-Droid
+
+- **S154**: F-Droid Reproducible Builds docs. Primary RB configuration
+  guidance for `fdroiddata`.
+  — https://f-droid.org/docs/Reproducible_Builds/
+- **S155**: "Making reproducible builds visible" (F-Droid blog, 2025-05-21).
+  Introduces per-app reproducibility-status indicator on f-droid.org.
+  **New roadmap consideration**: track our per-app indicator after first
+  F-Droid build.
+  — https://f-droid.org/en/2025/05/21/making-reproducible-builds-visible.html
+- **S156**: F-Droid forum — removing `META-INF/version-control-info.textproto`.
+  Community thread documenting how AGP 8.3+ bundles VCS metadata that
+  breaks reproducibility, with disabling guidance. **Direct fix for C120
+  in rev 3.**
+  — https://forum.f-droid.org/t/how-can-i-prevent-version-control-info-textproto-from-being-included-in-my-apk/33196
+- **S157**: F-Droid Translation and Localization policy. Codifies the
+  "70% complete for final release, all translations for alpha" rule
+  (rev 3's S111).
+  — https://f-droid.org/docs/Translation_and_Localization/
+
+### Sleep / circadian-rhythm (2025-2026 evidence base)
+
+- **S158**: Frontiers in Neurology — "Efficacy of blue-light blocking
+  glasses on actigraphic sleep outcomes: systematic review and meta-
+  analysis" (2025). Trial evidence remains inconsistent; effect sizes
+  small and heterogeneous.
+  — https://www.frontiersin.org/journals/neurology/articles/10.3389/fneur.2025.1699303/full
+- **S159**: Nature Scientific Reports — "Home lighting, blue-light
+  filtering, and their effects on melatonin suppression" (2025). Lamp
+  colour temperature and melanopic content drive suppression; intensity
+  is a major lever. (Reinforces rev 3's S100.)
+  — https://www.nature.com/articles/s41598-025-29882-7
+- **S160**: medRxiv — "Effects of Melanopic Equivalent Daylight Illuminance
+  on Sleep Regulation and Chronotype-Specific Responses" (Oct 2025).
+  Argues melanopic EDI is the right metric (combines intensity and
+  spectrum) for predicting sleep regulation. **Roadmap impact**: validates
+  C127's "perceived luminance reduction" indicator direction.
+  — https://www.medrxiv.org/content/10.1101/2025.10.21.25338466v1.full
+- **S161**: Cochrane — Blue-light-filtering spectacles probably make no
+  difference to eye strain or sleep. Most-cited authoritative negative
+  finding for the popular "blue-blocker" claim; still in 2025 doc set.
+  — https://www.cochrane.org/about-us/news/blue-light-filtering-spectacles-probably-make-no-difference-eye-strain-eye-health-or-sleep
+- **S162**: SAGE Journals — "Blue-light-filtering spectacle lenses in
+  managing vision-related symptoms: an updated review" (2026). 2026
+  update confirms little/no clinical benefit on visual fatigue.
+  — https://journals.sagepub.com/doi/10.1177/25158414251412798
+
+### Shizuku ecosystem 2026
+
+- **S163**: Shizuku releases (RikkaApps/Shizuku). v13.6.0 (2025-05-25)
+  is the current line; adds Android 16 QPR1 support and auto-start over
+  trusted Wi-Fi on Android 13+. (Maps to rev 3's S115 — refreshed.)
+  — https://github.com/RikkaApps/Shizuku/releases
+- **S164**: awesome-shizuku (timschneeb). Curated index of Shizuku-using
+  apps. (Maps to rev 3's S116 — refreshed.)
+  — https://github.com/timschneeb/awesome-shizuku
+- **S165**: AndroidAuthority — "10 awesome Shizuku apps I use to level up
+  my Android experience" (2025-2026). Identifies `CurrentActivity` as a
+  Shizuku-backed foreground-task monitor — pattern OpenLumen would adopt
+  for C06 / C11 / C12 / C69.
+  — https://www.androidauthority.com/best-shizuku-apps-android-3659353/
+
+### Competitor sweep (S166-S184)
+
+- **S166**: EcoDimmer (cartman-156). 1★ / v1.0.0 May 2026 / MIT / Kotlin.
+  **Privacy-hardened AccessibilityService overlay** — explicitly disables
+  `canRetrieveWindowContent` and `flagRequestFilterKeyEvents`. Plus
+  accelerometer "Shake to Rescue" panic-disable; hidden launcher icon.
+  Borrowable: a11y-service config that draws above status bar without
+  claiming a11y read access.
+  — https://github.com/cartman-156/EcoDimmer
+- **S167**: Grayscaler (C10udburst). 143★ / v1.0 Feb 2025 / GPL-3.0. **Per-
+  app grayscale via Shizuku** with the minimal permission triple
+  `WRITE_SECURE_SETTINGS + PACKAGE_USAGE_STATS + QUERY_ALL_PACKAGES`
+  granted in one Shizuku flow plus an Accessibility Service watching
+  foreground transitions. Direct reference for C06/C11/C69.
+  — https://github.com/C10udburst/Grayscaler
+- **S168**: ColorBlendr (Mahmud0808). 2.1k★ / v2.1.1 Jan 2026 / GPL-3.0.
+  Three-tier privilege ladder (Root → Shizuku → Wireless ADB). Uses the
+  Android 12+ `FabricatedOverlay` API to mutate Material You tokens at
+  runtime without persistent files. **Tracks as new candidate C128** —
+  potential fifth engine.
+  — https://github.com/Mahmud0808/ColorBlendr
+- **S169**: Adaptive Theme (xLexip). 123★ / v2.0.0 Apr 2026 / GPL-3.0.
+  Event-driven ambient-light sensor read only on screen-on; offers 4 setup
+  paths for `WRITE_SECURE_SETTINGS` (web tool, Shizuku, root, manual ADB).
+  Reinforces C99 (screen-off invalidation, shipped) and gives a UX
+  template for Driver-tab onboarding.
+  — https://github.com/xLexip/Adaptive-Theme
+- **S170**: sunsetr (psi4j). 270★ / v0.11.1 Nov 2025 / MIT / Rust [Wayland].
+  Named-preset profiles (Reading / Gaming / Sleep) bound to tile/widget;
+  Unix-socket IPC; hot config reload; 10k-city interactive picker.
+  Borrowable: richer city DB than our ~95.
+  — https://github.com/psi4j/sunsetr
+- **S171**: hyprsunset (hyprwm). 437★ / v0.3.3 Oct 2025 / BSD-3 / C++
+  [Wayland/Hyprland]. Kelvin → 3x3 CTM matrix conversion the same way
+  AOSP `ColorDisplayManager` does it.
+  — https://github.com/hyprwm/hyprsunset
+- **S172**: wl-gammarelay-rs (MaxVerevkin). 176★ / v1.0.1 Mar 2025 /
+  GPL-3.0 / Rust [Wayland]. DBus-controlled daemon; analog to our intent
+  surface.
+  — https://github.com/MaxVerevkin/wl-gammarelay-rs
+- **S173**: nerdshade (sstark). 19★ / v1.3.0 Jun 2025 / MIT / Go [Wayland].
+  Transition *curve* across separate Kelvin and dim easing windows;
+  `acpi_listen` lid-open resume.
+  — https://github.com/sstark/nerdshade
+- **S174**: cosmos (ext0l on Codeberg). 2★ / v1.0.0 Jun 2024 / last commit
+  Feb 2026 / Rust. **OLED-aware brightness emulation** — gamma LUT keeps
+  `(0,0,0)` truly off. Tracks as new candidate C129.
+  — https://codeberg.org/ext0l/cosmos
+- **S175**: Solace (Theodore HQ, macOS). $4.99 one-time / closed-source /
+  zero-telemetry. Weather-aware tinting (overcast → warmer). Out-of-scope
+  for OpenLumen offline-first but logged.
+  — https://www.theodorehq.com/solace/
+- **S176**: Shifty (thompsonate, macOS). 1.3k★. **Per-website Night Shift
+  disable** via AppleScript browser bridges. Validates per-app/per-
+  context exclusion as industry-standard.
+  — https://github.com/thompsonate/Shifty
+- **S177**: LightBulb v2 (Tyrrrz, Windows). 2.7k★ / v2.7 Mar 2026 / MIT.
+  Minimum-API-calls engine throttling. Battery-life parallel.
+  — https://github.com/Tyrrrz/LightBulb
+- **S178**: Nocturnal (joshjon, macOS). 320★ / archived 2024-08. Below-
+  system-minimum dimming via gamma table — same as Red Moon overlay
+  engine technique. **Archived after macOS Sonoma broke private gamma
+  APIs** — cautionary tale for our `ColorDisplayManagerEngine` reflection
+  ladder.
+  — https://github.com/joshjon/nocturnal
+- **S179**: LSFG-Android (FrankBarretta). 521★ / v0.1.2 May 2026 / custom
+  non-commercial / Kotlin+C++. **Cleanest 2026 per-app overlay
+  architecture**: AccessibilityService for visible overlay layer,
+  `ITaskStackListener` via Shizuku-bound `IActivityManager` for
+  foreground detection, **Shizuku off the hot path**. Reference
+  architecture for C06.
+  — https://github.com/FrankBarretta/LSFG-Android
+- **S180**: DarQ (KieronQuinn). 1.6k★ / v2.2.1 Feb 2022. Per-app force-
+  dark via Shizuku-elevated `IActivityManager.ITaskStackListener` — "no
+  a11y needed" architecture. Last commit 2022 but architecturally sound.
+  — https://github.com/KieronQuinn/DarQ
+- **S181**: RootlessJamesDSP (timschneeb, audio). Active 2025. Reference
+  for Shizuku service-binding patterns / session survival.
+  — https://github.com/timschneeb/RootlessJamesDSP
+- **S182**: TvOverlay (gugutab). 318★ / v1.0.3 Oct 2023. Android TV overlay
+  with **REST API + MQTT + Home Assistant**. Integration story for our
+  C22 (TV flavor).
+  — https://github.com/gugutab/TvOverlay
+- **S183**: GitHub topic — `blue-light-filter`. Live index for ongoing
+  discovery.
+  — https://github.com/topics/blue-light-filter
+- **S184**: GitHub topic — `screen-dimmer`. Live index.
+  — https://github.com/topics/screen-dimmer
+
+### PWM signals (2025-2026 secondary)
+
+- **S185**: AndroidCentral — "My phone is making me sick and I'm not alone."
+  First-person AMOLED-PWM piece; widely-cited mainstream framing.
+  — https://www.androidcentral.com/phones/my-phone-is-making-me-sick-and-im-not-alone
+- **S186**: AndroidCentral — "Best phones for PWM/Flicker sensitive people"
+  (2026). Continually updated buyer's guide; primary evidence that the
+  community signal is live in 2026.
+  — https://www.androidcentral.com/phones/best-phones-for-pwm-flicker-sensitive
+- **S187**: AndroidCentral — "What is PWM dimming, and what are the
+  alternatives?" Reference explainer.
+  — https://www.androidcentral.com/phones/what-is-pwm-display-flicker-tips-and-tricks
+
+### OWASP MASVS / MASTG 2025-2026
+
+- **S188**: OWASP MASTG-KNOW-0022 — Overlay Attacks knowledge entry.
+  Canonical taxonomy (full vs partial occlusion). Direct reference for
+  `docs/threat-model.md` MASVS-PLATFORM section.
+  — https://mas.owasp.org/MASTG-KNOW-0022/
+- **S189**: OWASP MASTG-TEST-0035 — Testing for Overlay Attacks. Aligned
+  to MASVS-PLATFORM.
+  — https://mas.owasp.org/MASTG-TEST-0035/
+- **S190**: OWASP MASWE-0056 — Tapjacking weakness entry (newer MASWE
+  catalogue).
+  — https://mas.owasp.org/MASWE-0056/
+- **S191**: OWASP MASTG releases. Tracks MASTG v1.6.0 (CycloneDX
+  checklists, MASVS color-coding) and subsequent v2 work.
+  — https://github.com/OWASP/mastg/releases
+- **S192**: OWASP MASVS v2.1.0 release notes. Adds the MASVS-PRIVACY
+  category; current baseline. **Roadmap implication**: review
+  `docs/threat-model.md` for MASVS-PRIVACY coverage gaps.
+  — https://github.com/OWASP/masvs/releases/tag/v2.1.0
+
+### Glance widgets
+
+- **S193**: AndroidX Glance releases page. Glance went stable at 1.0.0;
+  1.1.0 stable shipped 2024-06-12 — **confirms current stability (no
+  longer alpha).** Lifts the rev 3 blocker on C123 (Glance widget
+  rewrite).
+  — https://developer.android.com/jetpack/androidx/releases/glance
+- **S194**: Jetpack Glance overview (developer.android.com). Canonical doc
+  for using Glance composables.
+  — https://developer.android.com/develop/ui/compose/glance
+
+### Red Moon / NightLight current activity (refreshed from rev 3)
+
+- **S195**: LibreShift/red-moon repository. Maintenance-mode framing.
+  (Refresh of S10.)
+  — https://github.com/LibreShift/red-moon
+- **S196**: Red Moon issue tracker 2026 sample. Issues observed: #354
+  Backup (2026-04-05), #353 Filter green light/melanopsin (2026-03-05),
+  #352 Monochromatic icon (2025-12-31), #351 One-handed dimming
+  (2025-12-31). (Refresh of S12 / S86.)
+  — https://github.com/LibreShift/red-moon/issues
+- **S197**: Red Moon issue #281 — maintainer commits to roughly yearly
+  releases for translation refreshes; no new features planned.
+  — https://github.com/LibreShift/red-moon/issues/281
+- **S198**: Twilight on APKPure — current public listing shows v14.21 line
+  (latest v14.25 reported 2026-02-09); changelog notes Philips HUE Pro
+  bridge support, expressive redesign, new translations, paper-matte
+  texture, bigger pause button, target-SDK bump.
+  — https://apkpure.com/twilight-blue-light-filter/com.urbandroid.lux
+- **S199**: corphish/NightLight — root-required KCAL-based filter
+  (Qualcomm display driver); maintenance-mode but actively distributed
+  on F-Droid.
+  — https://github.com/corphish/NightLight
+- **S200**: farmerbb/Night-Light — wrapper that toggles Android Nougat's
+  native night-mode flag (no overlay); reference for permission-minimal
+  designs.
+  — https://github.com/farmerbb/Night-Light
+- **S201**: cngu/shades — lightweight Kotlin screen-tint/dimmer; small
+  surface area; good reference architecture.
+  — https://github.com/cngu/shades
+
+### Eye Dropper (Android 17 system intent)
+
+- **S202**: Android 17 Eye Dropper API overview — refreshed pointer for
+  the system-level color-pick intent. (Listed under S139; included again
+  here for grouping.)
+  — https://proandroiddev.com/exploring-the-eyedropper-api-android-17-9d7be86aaa16
+
+## Source-class coverage check
+
+| Class | Sources | Counts |
+|---|---|---:|
+| Local evidence | S00, S00b | 2 |
+| Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
+| Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
+| Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
+| Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139 | 24 |
+| AAPM / a11y policy | S88-S90, S121, S134-S136 | 7 |
+| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194 | 27 |
+| DataStore | S66, S95, S146-S147 | 4 |
+| F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
+| Security (OWASP / GHSA / SBOM tooling) | S60-S64, S67-S68, S77, S108-S110, S114, S122, S188-S192 | 19 |
+| Sleep / circadian | S45-S47, S99-S102, S158-S162 | 12 |
+| PWM | S80, S107, S185-S187 | 5 |
+| Wear OS | S117, **(negative result for new entries)** | 1 |
+| TV | S16, S182 | 2 |
+| CVD | S119-S120 | 2 |
+| Color science (Wayland CTM parity) | S171 | 1 |
+
+Saturation: every Now/Next/Later/Under-Consideration item in `ROADMAP.md`
+rev 3 has ≥2 sources. New evidence introduces 3 new candidates
+(C128 FabricatedOverlay engine, C129 OLED gamma LUT, C130 AAPM driver-
+report surface, C131 Eye Dropper picker integration); each cites ≥2
+sources.
