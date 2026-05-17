@@ -58,6 +58,11 @@ accessibility is often rejected.
 We've documented this in `docs/threat-model.md` as
 *not* OpenLumen's path.
 
+Android 17's Advanced Protection Mode strengthens this decision:
+non-accessibility-tool apps can lose Accessibility API access under AAPM,
+so using AccessibilityService for per-app convenience would be both a
+privacy posture regression and a brittle platform dependency.
+
 ### Option C: A separate Shizuku-backed flavor
 
 Shizuku gives the app a privileged channel to the system without root

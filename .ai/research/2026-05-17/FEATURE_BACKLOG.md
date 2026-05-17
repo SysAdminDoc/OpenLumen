@@ -367,3 +367,7 @@ stable base for Direct Boot restore.
 - **C105 shipped 2026-05-17**. QS tile and widget starts now classify
   blocked foreground-service starts, roll back stale enabled state, and
   open the app for overlay-permission recovery. Source: S00g.
+- **C104/C126 marked shipped 2026-05-17**. C104's AAPM accessibility
+  revocation rationale now appears in the overlay/per-app design note;
+  C126's health-evidence source refresh was already present from the
+  rev 4.1 docs pass. Source: S00h.

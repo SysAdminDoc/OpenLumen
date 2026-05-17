@@ -883,7 +883,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C101 | Compose Preview Screenshot Testing CI wiring | testing | emerging | Now | 4/2/1 | AGP 8.5+ feature; wire into CI without emulator | Unblocks C83 efficiently | S97, S98 |
 | C102 | DataStore Direct Boot APIs adoption | reliability/migration | emerging | Next | 4/3/2 | `deviceProtectedDataStore()` + `LOCKED_BOOT_COMPLETED` receiver | Drops C28 effort and risk | S95 |
 | C103 | Android 17 stable validation | platform/OS | table-stakes | Now | 4/3/2 | Per-engine smoke on Pixel running Android 17 stable | Stable lands June 2026 | S83, S84, S96 |
-| C104 | Document AAPM accessibility revocation | docs/security | rare | Now | 3/1/1 | Note in `docs/threat-model.md` + `docs/overlay-and-per-app-design.md` | Reinforces C79 rejection and Shizuku as only path | S88, S89, S90 |
+| C104 | Document AAPM accessibility revocation | docs/security | rare | Shipped 2026-05-17 | 3/1/1 | `docs/threat-model.md`, `docs/android-17-readiness.md`, and `docs/overlay-and-per-app-design.md` now call out why AAPM reinforces rejecting AccessibilityService for foreground-app convenience | Reinforces C79 rejection and Shizuku as only path | S88, S89, S90, S00h |
 | C105 | SAW-app FGS-from-background fallback | reliability/UX | rare | Shipped 2026-05-17 | 4/2/2 | Added `LumenServiceStarter` classification for `ForegroundServiceStartNotAllowedException`; QS/widget user actions roll back stale enabled state and open the app when Android blocks a background FGS start | Android 15+ tightens the rules for SAW apps without a visible overlay window | S85, S131, S00g |
 | C106 | BOOT_COMPLETED FGS verification | reliability | rare | Shipped 2026-05-17 | 3/1/1 | Added Android 14/15/16/17 boot-restore rows to wake/vitals audit and boot-restore notes to the device-matrix flow; real pass/fail evidence remains C01 | Ensures boot restore still works as the API tightens | S85 |
 | C107 | FGS job runtime quota audit | performance | rare | Later | 2/2/2 | We don't use Jobs today; document policy if we ever add WorkManager | Forward guard | S85 |
@@ -905,7 +905,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C123 | Glance API widget rewrite | mobile | emerging | Under Consideration | 3/3/2 | Replace RemoteViews with Glance once 1.0 stable | Cleaner widget code, `@PreviewTest` support | S118 |
 | C124 | Hilt 2.56+ minimum | upgrade strategy | emerging | Now | 3/1/1 | Bump in `gradle/libs.versions.toml` with KSP support | Pairs with C96 | S94 |
 | C125 | Twilight 14.25 feature scan | research | emerging | Later | 2/1/1 | Periodic check of Twilight's per-app/Wear/Chromebook frontier | Trend signal, not parity goal | S87 |
-| C126 | Stronger sleep-evidence disclaimer | docs/licensing | rare | Now | 3/1/1 | One-paragraph "what changed in 2025/2026" note in `docs/health-evidence.md` | Consensus shift demands explicit acknowledgement | S99-S102 |
+| C126 | Stronger sleep-evidence disclaimer | docs/licensing | rare | Shipped 2026-05-17 | 3/1/1 | `docs/health-evidence.md` now has the 2025/2026 consensus-shift note plus S99-S102 and S158-S162 source refresh | Consensus shift demands explicit acknowledgement | S99-S102, S158-S162 |
 | C127 | Perceived-luminance reduction indicator | UX/data | rare | Next | 3/2/1 | Surface "Perceived brightness reduced by N%" alongside blue-suppression on Home | Aligns the UI metric with current sleep-evidence consensus | S99-S102 |
 
 ### Hardening (post-rev-2 audit) — landed on `main`

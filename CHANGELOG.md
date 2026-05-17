@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reproducibility rationale in `docs/reproducible-build.md`.
 - Android 17 readiness docs now record the C111 BAL audit result: there
   are no `IntentSender` / `ActivityOptions` call sites to migrate today.
+- Overlay/per-app design notes now explicitly call out Android 17 Advanced
+  Protection Mode as another reason not to use AccessibilityService for
+  foreground-app convenience features.
 - Troubleshooting now documents that a filter paused before reboot remains
   paused after reboot, matching `BootReceiver`'s persisted `enabled` gate.
 - Wake/vitals and device-matrix docs now include Android 14-17 boot-restore

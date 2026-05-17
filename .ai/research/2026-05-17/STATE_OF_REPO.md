@@ -511,3 +511,13 @@ C105 is now implemented locally:
 - Widget toggle / preset taps now route through `WidgetActionReceiver`,
   so blocked starts can be handled instead of failing as direct service
   PendingIntents.
+
+## C104/C126 documentation state
+
+C104 and C126 are now marked shipped:
+
+- C104: AAPM accessibility auto-revocation is documented in
+  `docs/threat-model.md`, `docs/android-17-readiness.md`, and
+  `docs/overlay-and-per-app-design.md`.
+- C126: `docs/health-evidence.md` contains the 2025/2026 consensus-shift
+  note and S99-S102 / S158-S162 source refresh.

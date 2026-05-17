@@ -495,3 +495,16 @@ Verification:
   targeted suppression for the pre-Android-14 TileService compatibility
   branch.
 - `git diff --check` passed with CRLF conversion warnings only.
+
+## Documentation status cleanup (C104/C126)
+
+C104 and C126 were already effectively implemented in earlier 2026-05-17
+documentation passes, but the candidate table still listed them as Now.
+This cleanup:
+
+- Added an explicit Android 17 AAPM note to
+  `docs/overlay-and-per-app-design.md` so C104's requested second
+  document is covered.
+- Marked C104 and C126 shipped in `ROADMAP.md`.
+- Recorded S00h as the local evidence tying the status update to current
+  docs.

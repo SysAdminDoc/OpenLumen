@@ -693,12 +693,16 @@ informed.
   and classifies `ForegroundServiceStartNotAllowedException`;
   `LumenTileService.kt` and `WidgetActionReceiver.kt` roll back blocked
   toggle-on state and open the app for user-visible recovery.
+- **S00h**: Local documentation evidence for C104/C126 status cleanup —
+  `docs/overlay-and-per-app-design.md` now names Android 17 AAPM in the
+  AccessibilityService rejection rationale, and `docs/health-evidence.md`
+  already contains the C126 2025/2026 consensus-shift source refresh.
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g | 7 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h | 8 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -741,3 +745,5 @@ unit test.
 S00f records the local C137 dependency-removal and vector-resource
 implementation evidence.
 S00g records the local C105 foreground-service-start fallback evidence.
+S00h records the local documentation/status cleanup evidence for C104
+and C126.

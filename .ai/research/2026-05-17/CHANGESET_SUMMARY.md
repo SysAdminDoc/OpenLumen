@@ -597,3 +597,26 @@ This pass implemented **C105 — SAW-app FGS-from-background fallback**.
   targeted suppression for the pre-Android-14 TileService compatibility
   branch.
 - `git diff --check` passed with CRLF conversion warnings only.
+
+## Documentation pass 15 (C104/C126 status cleanup, 2026-05-17)
+
+This pass reconciled two already-implemented documentation candidates
+whose ROADMAP candidate rows still said `Now`.
+
+### Files modified (pass 15)
+
+| File | Why |
+|---|---|
+| `docs/overlay-and-per-app-design.md` | Added an explicit Android 17 Advanced Protection Mode note to the AccessibilityService rejection rationale. |
+| `ROADMAP.md` | Marked C104 and C126 shipped. |
+| `CHANGELOG.md` | Recorded the AAPM design-note clarification. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00h for local documentation evidence. |
+| `.ai/research/2026-05-17/FEATURE_BACKLOG.md` | Recorded C104/C126 as shipped. |
+| `.ai/research/2026-05-17/PRIORITIZATION_MATRIX.md` | Added C104/C126 to the shipped execution table. |
+| `.ai/research/2026-05-17/RESEARCH_LOG.md` | Logged the status cleanup. |
+| `.ai/research/2026-05-17/STATE_OF_REPO.md` | Added the current C104/C126 documentation state. |
+
+### Verification (pass 15)
+
+Docs/status-only cleanup. Verification: `git diff --check` after final
+edits.

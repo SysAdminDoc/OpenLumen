@@ -186,6 +186,8 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C138 | Shipped 2026-05-17 | Profile import caps raw bytes before UTF-8 decoding and rejects max-plus-one payloads. |
 | C137 | Shipped 2026-05-17 | Deprecated `material-icons-extended` dependency removed; app uses local vector resources. |
 | C105 | Shipped 2026-05-17 | QS/widget user starts recover from Android foreground-service background-start blocks. |
+| C104 | Shipped 2026-05-17 | AAPM accessibility auto-revocation documented in threat / Android 17 / overlay design docs. |
+| C126 | Shipped 2026-05-17 | Health-evidence doc contains the 2025/2026 consensus-shift note and source refresh. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
