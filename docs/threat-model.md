@@ -143,6 +143,27 @@ service plus an overlay app plus a root-shell app.
 | Concurrent apply/clear races on the engine | Low | `LumenService.applyMutex` serializes every engine call; prefs flow is `.conflate()`d so slider drags don't queue multiple su calls |
 | Lint / Dependabot drift | Low | CI runs `./gradlew :app:lint`; Dependabot opens weekly Gradle PRs grouped by ecosystem |
 
+### MASVS-PRIVACY — Privacy posture (added in rev 4)
+
+MASVS v2.1.0 added MASVS-PRIVACY as a first-class category
+([S192](https://github.com/OWASP/masvs/releases/tag/v2.1.0)). The
+substance was already covered across the **Data inventory** and
+**Permission inventory** sections below; this section makes the
+categorical coverage explicit.
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| App identifies the user across installs | Low | OpenLumen does not collect any identifier stronger than `Build.MODEL`. No advertising ID, no Firebase ID, no Android ID, no IMEI, no MAC. Verified by the absence of `READ_PHONE_STATE` and Play Services on the release classpath. |
+| App identifies the user across devices | None | Zero network egress (no INTERNET); zero account, zero cloud sync. There is no cross-device identifier surface. |
+| Sensitive location data leaks | Low | Solar mode uses **user-entered** lat/lng only. No `LocationManager` / `FusedLocationProvider`. Coordinates redacted from driver report. Coordinates appear only in the user's own exported profile JSON, which the user controls via SAF. |
+| Per-app usage data leaks | None | OpenLumen does not query `PACKAGE_USAGE_STATS` (rev 3 explicitly rejected C80). Does not query `QUERY_ALL_PACKAGES`. Does not iterate installed apps. |
+| Foreground-app detection used as a tracking vector | None | C79 (Accessibility) and C80 (UsageStats) both rejected. The Shizuku path (C06) keeps task-state on-device with no network egress. |
+| Crash reporting exfiltration | None | `CrashLogger` writes only to `filesDir/crash.log` (app-private). The file is excluded from `fullBackupContent` rules. No network upload path exists. |
+| Display content / screen content extraction | None | `MediaProjection` is not used. AccessibilityService is not declared. The overlay engine sets `FLAG_NOT_TOUCHABLE` and `FLAG_NOT_FOCUSABLE` so it cannot read events. |
+| Sensors used as a side channel | Low | Light sensor is the only sensor we touch; reading lux is the documented use, and the listener is paused while the screen is off. |
+| Diagnostic / telemetry surfaces | Low | `DiagnosticsLog` is ring-buffered local text. Not auto-uploaded. User shares manually via SAF. |
+| AAPM transparency | Med (UX, not risk) | Rev 4 C130 surfaces `AdvancedProtectionManager` state in the driver report so users can see whether they're on a hardened profile and what it implies. |
+
 ### MASVS-RESILIENCE — Anti-tampering / anti-debugging
 
 Out of scope. OpenLumen is open-source GPL software; we don't try to

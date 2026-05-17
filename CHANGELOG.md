@@ -143,7 +143,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   surface taps, smooth-transition ramp). Includes `adb` commands for
   independent verification.
 - Android 16 / API 36 readiness inventory at
-  `docs/api-36-readiness.md`. Lists already-handled behavior changes
+  `docs/android-17-readiness.md` (renamed from `docs/api-36-readiness.md`
+  in rev 4 of the roadmap). Lists already-handled behavior changes
   and expected upcoming ones with OpenLumen exposure ratings and
   mitigations. Includes a smoke-test plan for the first preview build
   and a migration policy (target-SDK bumps get their own release).
@@ -265,6 +266,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added coverage for finite color-matrix coercion, visible overlay alpha for tint-only
   presets, fixed schedules with identical start/end times, and default preference JSON
   serialization.
+
+### Hardening (2026-05-17 in-tree audit pass)
+Correctness fixes from the 2026-05-17 audit pass (see ROADMAP.md rev 3 / rev 4
+"Hardening (post-rev-2 audit)"). On disk on `main`; ships in v0.5.0 or a v0.5.1
+hardening cut.
+- `Schedule.kt` Solar mode now honors the caller's `now` (was using
+  `LocalDate.now(zoneId)`, which made the schedule logic non-pure).
+- `SolarCalculator.kt` returns a `Polar` enum so polar-day and polar-night
+  are distinguishable. Sunrise/sunset `ZonedDateTime`s are snapped to the
+  requested local date so Western-hemisphere sunsets no longer land on
+  the previous day.
+- `LumenService` mid-ramp interruption now lerps from the actually-
+  displayed matrix rather than the previous target. `lastTarget` is now
+  separate from `lastApplied`; cancel-and-join replaces bare cancel;
+  engine switches reset both fields.
+- `PreferencesStore` sanitizes nested profile-snapshot matrices, schedule
+  fields, lux thresholds, intensity, dim, contrast, transition, favorites,
+  and preset keys. `previousPresetKey` is sanitized.
+- `LightSensorAdapter` buffers with `DROP_OLDEST` so sensor callbacks
+  cannot lose readings to backpressure; rejects non-finite / negative raw
+  samples.
+- `OverlayEngine` adds `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` (API 28+)
+  and posts `installView` to the main thread when called off-Main.
+- `KcalEngine` probes `kcal_min` separately and only writes to it when
+  present.
+- `Su.runShell` drains stdout on a daemon thread to avoid script-output
+  deadlocks.
+- `LumenService.observePreferences` wraps each emission in try/catch
+  (re-throws `CancellationException`) with diagnostic logging.
+- `LumenService.ACTION_SET_PRESET` validates the key against
+  `Presets.byKey(...)` (plus `"custom"`).
+- `LumenTileService.refreshTile` wraps `updateTile()` in try/catch.
+- `OpenLumenViewModel.refreshProbes` invalidates `Su.cachedAvailable`.
+- `AboutScreen.describeDiff` now surfaces changes to contrast,
+  AMOLED clamp, lux threshold, and sunset/sunrise offsets.
+- Regression tests added for Solar caller-`now`, polar-day vs polar-night,
+  NYC sunset date-stamping, and Tokyo timezone behavior.
 
 ## [0.4.0] — 2026-05-16
 

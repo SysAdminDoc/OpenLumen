@@ -97,7 +97,10 @@ suggest it improves sleep anywhere in the app.
 
 ## Sources
 
-Cited by roadmap candidate ID:
+Cited by roadmap candidate ID. Source IDs match `ROADMAP.md`'s Source
+Appendix.
+
+### Original sources (rev 2)
 
 - **S45** — Blue-light blocking glasses systematic review.
   PubMed Central, https://pmc.ncbi.nlm.nih.gov/articles/PMC12668929/
@@ -114,11 +117,63 @@ Cited by roadmap candidate ID:
   literature, no consensus that blue-light filters improve sleep onset or
   quality.
 
+### 2025/2026 consensus shift (rev 3, C126 in ROADMAP rev 3)
+
+The 2025/2026 evidence base has shifted further toward *"total luminance
+matters more than spectrum for sleep onset."* One prominent researcher
+publicly retracted earlier blue-light advocacy. We update this section
+rather than the body of the document because the framing OpenLumen has
+always used — "comfort, not treatment" — is *strengthened*, not
+contradicted, by the new evidence. Sources:
+
+- **S99** — Hacker News discussion thread synthesising the 2025/2026
+  "blue light filters don't work; total luminance is the lever" position.
+  https://news.ycombinator.com/item?id=47091606
+- **S100** — Nature Scientific Reports (2026) — "Home lighting, blue-light
+  filtering, and their effects on melatonin suppression."
+  https://www.nature.com/articles/s41598-025-29882-7
+  Takeaway: melanopic content (which combines intensity and spectrum)
+  predicts suppression; raw spectrum alone is a weaker predictor.
+- **S101** — PubMed (2025) — "Optimizing blue-blocking glasses for sleep
+  and circadian health."
+  https://pubmed.ncbi.nlm.nih.gov/40728371/
+- **S102** — Sleep (2024) — "Melanopic irradiance defines display-light
+  impact on sleep latency."
+  https://pubmed.ncbi.nlm.nih.gov/36854795/
+
+### 2026 evidence base expansion (rev 4)
+
+- **S158** — Frontiers in Neurology (2025) — Systematic review and meta-
+  analysis of blue-light-blocking glasses on actigraphic sleep outcomes.
+  https://www.frontiersin.org/journals/neurology/articles/10.3389/fneur.2025.1699303/full
+  Takeaway: trial evidence remains inconsistent; effect sizes small and
+  heterogeneous.
+- **S159** — Nature Scientific Reports (2025) — Home lighting, blue-light
+  filtering, melatonin suppression (companion to S100).
+  https://www.nature.com/articles/s41598-025-29882-7
+- **S160** — medRxiv (Oct 2025) — "Effects of Melanopic Equivalent Daylight
+  Illuminance on Sleep Regulation and Chronotype-Specific Responses."
+  https://www.medrxiv.org/content/10.1101/2025.10.21.25338466v1.full
+  Takeaway: melanopic EDI (which combines intensity and spectrum) is the
+  right metric for predicting sleep regulation — supports OpenLumen's
+  C127 "Perceived luminance reduction" indicator direction.
+- **S161** — Cochrane — Blue-light-filtering spectacles probably make no
+  difference to eye strain or sleep.
+  https://www.cochrane.org/about-us/news/blue-light-filtering-spectacles-probably-make-no-difference-eye-strain-eye-health-or-sleep
+  Takeaway: most-cited authoritative negative finding.
+- **S162** — SAGE Journals (2026) — Blue-light-filtering spectacle lenses
+  in managing vision-related symptoms: updated review.
+  https://journals.sagepub.com/doi/10.1177/25158414251412798
+  Takeaway: 2026 update confirms little/no clinical benefit on visual
+  fatigue from blue-blocking products.
+
 What this means for OpenLumen: tinting the display **may** reduce the
 melanopic stimulus of the screen, especially at night, but the leap from
 that to "this app makes you sleep better" is not supported by the
-literature we can cite. We let users make their own subjective judgment
-about whether they like the result.
+literature we can cite. The 2025/2026 consensus shift makes this gap
+*larger*, not smaller — the evidence base now actively points away from
+"spectrum-only" interventions. We let users make their own subjective
+judgment about whether they like the result.
 
 ## If a contributor or downstream packager wants to add health claims
 

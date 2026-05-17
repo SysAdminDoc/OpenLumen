@@ -357,7 +357,7 @@ window.
 | How does the SBOM workflow read? | [docs/sbom-and-advisories.md](docs/sbom-and-advisories.md) |
 | What deferred items have design sketches? | [docs/deferred-candidates.md](docs/deferred-candidates.md) |
 | What's the per-app design analysis? | [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md) |
-| What's queued for Android 17 / API 36? | [docs/api-36-readiness.md](docs/api-36-readiness.md) (note: title still says API 36, rev 3 expanded to Android 17 — see ROADMAP.md C82/C103) |
+| What's queued for Android 17? | [docs/android-17-readiness.md](docs/android-17-readiness.md) (renamed from `api-36-readiness.md` in rev 4) |
 | Which external sources do we monitor? | [docs/research-watchlist.md](docs/research-watchlist.md) |
 
 ## Session-research artifacts (this session)

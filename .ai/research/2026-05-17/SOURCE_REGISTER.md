@@ -403,6 +403,108 @@ citations. Topic groupings:
   here for grouping.)
   — https://proandroiddev.com/exploring-the-eyedropper-api-android-17-9d7be86aaa16
 
+## Second-pass additions (S203-S229)
+
+These were collected during the 2026-05-17 second pass by background
+research agents. See `SECOND_PASS_FINDINGS.md` for the analysis they
+informed.
+
+### F-Droid submission status / process
+
+- **S203**: F-Droid `fdroiddata` MR list — zero matches for "openlumen"
+  as of 2026-05-17. https://gitlab.com/fdroid/fdroiddata/-/merge_requests
+- **S204**: F-Droid RFP issue tracker — zero matches for "openlumen" or
+  `SysAdminDoc`. https://gitlab.com/fdroid/rfp/-/issues
+- **S205**: f-droid.org app search — "OpenLumen" not listed.
+  https://search.f-droid.org/?q=openlumen&lang=en
+- **S206**: F-Droid Quick Start Guide for submitting an app — canonical
+  workflow as of 2026-05.
+  https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/
+- **S207**: F-Droid Translation and Localization — 70%-complete-for-final-
+  release rule unchanged in 2026.
+  https://f-droid.org/docs/Translation_and_Localization/
+- **S208**: AGP 9.2.0 release notes (Apr 2026) — buildserver supports
+  JDK 17 minimum / JDK 21 recommended.
+  https://developer.android.com/build/releases/agp-9-2-0-release-notes
+- **S209**: Google Play target-SDK requirement page — `targetSdk 36`
+  effective Aug 2025; F-Droid does not enforce Play requirements but
+  the matching AGP 9 / JDK 17+ posture is required.
+  https://developer.android.com/google/play/requirements/target-sdk
+- **S210**: F-Droid Anti-Features list — `specialUse` FGS is NOT
+  flagged as an anti-feature.
+  https://f-droid.org/docs/Anti-Features/
+- **S211**: F-Droid TWIF April 2026 — most recent metadata-process
+  post; no breaking submission-format changes.
+  https://f-droid.org/en/2026/04/03/twif.html
+
+### Shizuku integration patterns 2026
+
+- **S212**: RikkaApps/Shizuku-API — canonical Kotlin code shapes for
+  permission, binding, and binder-survival listeners.
+  https://github.com/RikkaApps/Shizuku-API
+- **S213**: RikkaApps/Shizuku — v13.6.0 + companion docs.
+  https://github.com/RikkaApps/Shizuku
+- **S214**: ShizukuActivityManager — reference for resolving the right
+  transaction codes across API levels via `SystemServiceHelper`.
+  https://github.com/kzaemrio/ShizukuActivityManager
+- **S215**: Android-FPS-Watcher — reference impl for
+  `IActivityTaskManager.registerTaskStackListener` via Shizuku-bound
+  binder; the foreground-task-detection pattern that avoids
+  `UsageStats` and `AccessibilityService`.
+  https://github.com/WuDi-ZhanShen/Android-FPS-Watcher
+- **S216**: AOSP `ITaskStackListener.aidl` (canonical AIDL).
+  https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/ITaskStackListener.aidl
+- **S217**: AOSP `IActivityManager.aidl` (mirror, current main branch).
+  https://github.com/aosp-mirror/platform_frameworks_base/blob/main/core/java/android/app/IActivityManager.aidl
+- **S218**: Grayscaler (refresh of S167) — Shizuku for
+  `Settings.Secure` writes; AccessibilityService for fg detection
+  (counter-example to the Shizuku-only pattern).
+  https://github.com/C10udburst/Grayscaler
+- **S219**: ColorBlendr (refresh of S168) — production Shizuku →
+  `IOverlayManager` binder pattern for Material You overlays on
+  Android 12+.
+  https://github.com/Mahmud0808/ColorBlendr
+- **S220**: LSFG-Android (refresh of S179) — `UserService` AIDL
+  pattern for long-lived privileged code; Shizuku used for a UID-
+  filtered timing side channel, off the hot path.
+  https://github.com/FrankBarretta/LSFG-Android
+- **S221**: awesome-shizuku index 2025-2026.
+  https://github.com/timschneeb/awesome-shizuku
+
+### FabricatedOverlay 12L+ constraint
+
+- **S222**: AOSP `FabricatedOverlay` API reference.
+  https://developer.android.com/reference/android/content/om/FabricatedOverlay
+- **S223**: zacharee/FabricateOverlay Kotlin library — README documents
+  the Android 12L change that **blocks Shizuku-in-ADB-mode from creating
+  FabricatedOverlays**; only Shizuku-on-root or Sui can. **Critical
+  finding**: changes the tier calculus on C128.
+  https://github.com/zacharee/FabricateOverlay
+
+### Security advisory negative result
+
+- **S224**: GitHub Advisory Database — zero entries for "shizuku" as
+  of 2026-05-17.
+  https://github.com/advisories?query=shizuku
+
+### Compose BOM / Material 3 / AGP 9 migration targets
+
+- **S225**: Compose BOM mapping — `2026.05.00` → compose 1.11.1 /
+  material3 1.4.0.
+  https://developer.android.com/develop/ui/compose/bom/bom-mapping
+- **S226**: Compose core release notes — 1.11.1 stable.
+  https://developer.android.com/jetpack/androidx/releases/compose
+- **S227**: Compose Material3 release notes — 1.4.0 stable (May 2026);
+  `material3-expressive` still alpha (`1.5.0-alpha19`).
+  https://developer.android.com/jetpack/androidx/releases/compose-material3
+- **S228**: Android Developers Blog — Jetpack Compose April 2026
+  updates.
+  https://android-developers.googleblog.com/2026/04/jetpack-compose-april-2026-updates.html
+- **S229**: Compose Material Icons package summary — `material-icons-
+  extended` deprecated; migrate to Material Symbols / `Icons.AutoMirrored`.
+  **New roadmap candidate C137**.
+  https://developer.android.com/reference/kotlin/androidx/compose/material/icons/package-summary
+
 ## Source-class coverage check
 
 | Class | Sources | Counts |

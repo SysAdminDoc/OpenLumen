@@ -178,7 +178,7 @@ OpenLumen/
 - [Roadmap](ROADMAP.md) — source-backed release plan with the candidate inventory
 - [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md) — why per-app behavior is deferred until the trust posture is sorted
 - [Deferred roadmap candidates](docs/deferred-candidates.md) — design sketches for Wear OS / Android TV / etc.
-- [API 36 readiness](docs/api-36-readiness.md) — forward-looking Android-version migration notes
+- [Android 17 readiness](docs/android-17-readiness.md) — forward-looking Android-version migration notes (renamed from `api-36-readiness.md` in rev 4)
 - [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning
 
 ## Emergency off

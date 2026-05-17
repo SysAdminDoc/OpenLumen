@@ -1,5 +1,81 @@
 # OpenLumen Roadmap
 
+Research version: 2026-05-17 **rev 4.1**. Rev 4.1 is the second walk-away
+pass on the same day. It preserves rev 4 verbatim (which itself
+supplements rev 3) and adds nine more candidates (C132-C140) drawn from
+a focused **code-quality review** plus a deeper **F-Droid / Shizuku /
+Compose-BOM** research pass. Rev 4.1 also folds in 27 new sources
+(S203-S229) and one tier shift (C128 → Later because Shizuku-in-ADB
+cannot create FabricatedOverlays on Android 12L+).
+
+Rev 4.1 history pointers:
+
+- The first walk-away pass produced rev 4 (this section + the rev 4
+  candidate inventory and source appendix below).
+- The second walk-away pass produced this rev 4.1 supplement and the
+  research notebook entry
+  [.ai/research/2026-05-17/SECOND_PASS_FINDINGS.md](.ai/research/2026-05-17/SECOND_PASS_FINDINGS.md).
+- The doc/process follow-ups rev 4 itemised are all **done** as of rev
+  4.1 — see [.ai/research/2026-05-17/CHANGESET_SUMMARY.md](.ai/research/2026-05-17/CHANGESET_SUMMARY.md).
+
+## What changed in rev 4.1
+
+- **Seven doc/process follow-ups from rev 4 are now done**: the
+  `docs/api-36-readiness.md → docs/android-17-readiness.md` rename
+  with body retitle; the `docs/research-watchlist.md` "Last review"
+  date bump; the `docs/health-evidence.md` Sources refresh
+  (S99-S102 + S158-S162); a new MASVS-PRIVACY section in
+  `docs/threat-model.md`; the protobuf-java CVE-2024-7254 entry in
+  `docs/sbom-and-advisories.md`'s "Accepted exposures"; the
+  permissions-audit grep expanded in both `ci.yml` and `release.yml`
+  to also block `ACCESS_*_LOCATION`, `READ_PHONE_STATE`,
+  `QUERY_ALL_PACKAGES`, `PACKAGE_USAGE_STATS`, and
+  `BIND_ACCESSIBILITY_SERVICE`; the 2026-05-17 audit hardening folded
+  into `CHANGELOG.md [Unreleased]`.
+- **Nine new candidates from second-pass research**:
+  - **C132** — `LumenService.applyMatrix` ramp-scheduling atomicity
+    fix (HIGH severity; Now).
+  - **C133** — `LumenService.clearAndStop` cancel-and-join
+    `transitionJob` (HIGH severity; Now).
+  - **C134** — `ColorDisplayManagerEngine.load` cache invalidation on
+    partial-failure path (HIGH severity; Now).
+  - **C135** — `OverlayEngine.installView` thread-safety with
+    `apply`/`clear` (HIGH severity; Now).
+  - **C136** — Engine apply exit-code checking + cache invalidation on
+    SF/KCAL regressions (Med severity; Now).
+  - **C137** — `material-icons-extended` deprecation migration to
+    Material Symbols / `Icons.AutoMirrored` (Next; new evidence S229).
+  - **C138** — `PreferencesStore` import-size cap byte-correctness
+    (Med; Next).
+  - **C139** — `PreferencesStore` import duplicate-name UI feedback
+    via `ImportSummary.droppedDuplicateNames` (Later; UX).
+  - **C140** — F-Droid initial submission (Now; new evidence S203-S211
+    confirms OpenLumen has *never* been submitted — no MR, no RFP, no
+    listing).
+- **One tier shift**: C128 (FabricatedOverlay engine spike) moves
+  Under Consideration → Later. New evidence S223 confirms Shizuku-in-
+  ADB-mode cannot create new FabricatedOverlays on Android 12L+; only
+  Shizuku-on-root or Sui can. This invalidates rev 4's framing of
+  C128 as a "Shizuku-not-root" 5th engine. C128 either becomes a
+  root-tier option or merges into the C06 root-tier spike scope.
+- **Concrete AGP 9 + Compose BOM targets identified** (S225-S229) for
+  the C95 migration PR: Compose BOM `2024.12.01 → 2026.05.00`,
+  Material 3 `1.3.1 → 1.4.0`, do NOT adopt `material3-expressive` yet
+  (still alpha). `material-icons-extended` is deprecated — track as
+  C137. The Compose migration is one PR, low risk.
+- **Concrete Shizuku integration code shapes harvested** (S212-S221)
+  for the C06 spike: `Shizuku.OnBinderReceivedListenerSticky` +
+  `Shizuku.OnBinderDeadListener` for service-restart survival;
+  `ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity"))`
+  for `IActivityManager` binding;
+  `IActivityTaskManager.registerTaskStackListener` for foreground-
+  task detection without `UsageStats` / a11y. Zero CVEs against
+  Shizuku as of 2026-05-17 (S224).
+- **F-Droid submission status confirmed unsubmitted** — no prior
+  fdroiddata MR, no RFP issue, no listing. Submission is a clean
+  first-time MR using the F-Droid Quick Start Guide (S206). Captured
+  as C140.
+
 Research version: 2026-05-17 rev 4. Supplements rev 3 (also 2026-05-17,
 earlier the same day) while preserving its shipped history, candidate IDs
 (C01-C127), source IDs (S00-S125), and tier placements. Rev 4 adds four
@@ -54,7 +130,7 @@ overlay fallback.
   is now sourced — feeds into the C06 design notes.
 - **Doc / process follow-ups** (not candidates per se, captured here
   rather than buried):
-  - Rename `docs/api-36-readiness.md` → `docs/android-17-readiness.md`
+  - Rename `docs/android-17-readiness.md` → `docs/android-17-readiness.md`
     and re-title the body to match rev 3's C82 → C103 expansion.
   - Bump `docs/research-watchlist.md` "Last review" header to
     2026-05-17.
@@ -329,7 +405,7 @@ Shipped on `main` (full list preserved from rev 2):
 - **C66** AMOLED true-black clamp (scalar form)
 - **C70** Tasker intents — full automation surface documented
 - **C71** Shell/ADB command docs ([docs/automation.md](docs/automation.md))
-- **C82** Android 16/API 36 readiness inventory ([docs/api-36-readiness.md](docs/api-36-readiness.md))
+- **C82** Android 16/API 36 readiness inventory ([docs/android-17-readiness.md](docs/android-17-readiness.md))
 - **C85** Local panic reset on boot — 5-minute crash-log window
 - **C93** Play FGS evidence pack ([docs/play-fgs-evidence.md](docs/play-fgs-evidence.md))
 - **C94** SBOM and advisory scan ([.github/workflows/sbom.yml](.github/workflows/sbom.yml))
@@ -435,7 +511,7 @@ Partial (per rev 2, still partial in rev 3):
      exact-alarm fallback, `specialUse` FGS subtype declaration, and
      the new BAL hardening (C111). Add an Android 17 row to
      `docs/device-matrix.md`. Bump `targetSdk` in its own release per
-     `docs/api-36-readiness.md` policy.
+     `docs/android-17-readiness.md` policy.
    - Impact 4, effort 3, risk 3. Sources: S83, S84, S96.
 
 6. **SYSTEM_ALERT_WINDOW + FGS-from-background restriction (C105, new)**
@@ -682,10 +758,24 @@ or "→" indicate a tier shift). New candidates start at C101.
 
 | ID | Candidate | Category | Prev | Tier | I/E/R | Deps / effort sketch | Placement reason | Sources |
 |---|---|---|---|---|---|---|---|---|
-| C128 | FabricatedOverlay engine spike | engine/platform | emerging | Under Consideration | 4/4/3 | Android 12+ `FabricatedOverlay` API via Shizuku-bound `IOverlayManager`; spike must verify framebuffer impact vs theme-only effect | Potential 5th engine for the Shizuku-not-root tier; gate on C06 outcome | S168, S163, S164 |
+| C128 | FabricatedOverlay engine spike | engine/platform | emerging | ~~Under Consideration~~ → Later (rev 4.1) | 4/4/3 | Android 12+ `FabricatedOverlay` API via Shizuku-bound `IOverlayManager`; spike must verify framebuffer impact vs theme-only effect | **Rev 4.1**: tier downgraded — Shizuku-in-ADB cannot create FabricatedOverlays on Android 12L+ (S223). Becomes a root-tier candidate, not Shizuku-not-root. Merge into C06 root-tier scope. | S168, S163, S164, S222, S223 |
 | C129 | OLED-aware gamma LUT clamp | engine/image quality | emerging | Later | 3/4/3 | Successor to C66 scalar clamp; per-channel 256-entry LUT to keep `(0,0,0)` truly off across the bottom of the dim range | Same bundled-LUT-vs-runtime-compute tradeoff as C63 | S174, S100, S160 |
 | C130 | AAPM driver-report surface | docs/transparency/security | rare | Now | 3/1/1 | Reflection-gated `AdvancedProtectionManager` query in `DriverReport.kt`; info card on Driver tab explains AAPM has no effect on OpenLumen | Pairs with rev 3's C79 / C80 rejection rationale; cheap transparency win | S134, S135, S136 |
 | C131 | Eye Dropper integration on Android 17+ | UX/feature | emerging | Later | 2/2/1 | Custom-RGB picker on Home gains an optional "sample color" button that fires `OPEN_EYE_DROPPER` and consumes the returned color; hidden on pre-17 devices | Optional UX affordance; Android 17 device base is tiny in year one | S129, S139 |
+
+### New candidates (rev 4.1 — second-pass code review + F-Droid + Compose)
+
+| ID | Candidate | Category | Prev | Tier | I/E/R | Deps / effort sketch | Placement reason | Sources |
+|---|---|---|---|---|---|---|---|---|
+| C132 | `LumenService.applyMatrix` ramp-scheduling atomicity fix | correctness/concurrency | new | Now | 4/2/2 | Wrap `transitionJob?.cancel(); join(); transitionJob = launch{}` block in a dedicated `rampMutex.withLock { … }` (separate from `applyMutex` to avoid blocking apply during cancel-and-join) | HIGH severity race condition; two concurrent callers (prefs collector + sensor flow) can interleave the read-modify-write and produce zombie ramps. `@Volatile` gives visibility but not atomicity. Surfaced by code-review agent | S00 (code review), `LumenService.kt:411-432` |
+| C133 | `LumenService.clearAndStop` cancel-and-join `transitionJob` | correctness | new | Now | 4/1/1 | Before `engine?.clear()`, do `transitionJob?.let { it.cancel(); try { it.join() } catch (_: Throwable) {} }; transitionJob = null` | HIGH severity user-visible flicker: when toggling off mid-ramp, the still-running ramp keeps applying steps on top of the cleared engine until `lifecycleScope` tears down | S00, `LumenService.kt:312-318` |
+| C134 | `ColorDisplayManagerEngine.load` cache invalidation on partial-failure path | correctness/reliability | new | Now | 4/1/1 | When cache-hit check returns `null` because `setActivated` reflection failed, also reset `cdm = null` so we re-probe on next call instead of caching a stale instance | HIGH severity: a transient class-load failure on first call dooms the CDM engine for the lifetime of the process | S00, `ColorDisplayManagerEngine.kt:86-107` |
+| C135 | `OverlayEngine.installView` thread-safety with `apply`/`clear` | correctness/concurrency | new | Now | 3/2/2 | Route public `installView()` through `applyMutex` (the service holds it during `ensureEngine`) OR add a private internal `installMutex` to the engine | HIGH severity: `installView()` (public, non-suspend) and `apply()`/`clear()` (under `applyMutex`) can race during engine swap with rapid toggling between Auto-CDM and Auto-Overlay | S00, `OverlayEngine.kt:108-130` |
+| C136 | Engine `apply` exit-code checking + cache invalidation on driver regression | reliability | new | Now | 4/2/1 | `SurfaceFlingerEngine.apply` and `KcalEngine.apply` should check `Su.runCommand`/`runShell` exit codes and invalidate the cached `workingCode`/`activeBasePath` on non-zero or "not found" stdout, forcing re-probe on next call | Med severity silent-failure surface: after an OTA renumbers the SF code or removes the KCAL sysfs node, UI says "filter on" but the screen doesn't change. The probe was correct at boot; the next apply silently no-ops | S00, `SurfaceFlingerEngine.kt:62-65`, `KcalEngine.kt:80-86` |
+| C137 | `material-icons-extended` deprecation migration | UX/upgrade strategy | new | Next | 2/2/1 | Survey the dozen icon call sites; replace with `Icons.AutoMirrored.Filled.*` or self-hosted vector drawables. Pair with C95 AGP 9 PR or land in a follow-up | The artifact is deprecated as of late-2025/2026 (S229); compiles inside BOM `2026.05.00` but emits deprecation warnings | S229 |
+| C138 | `PreferencesStore` import-size cap byte-correctness | input validation | new | Next | 3/1/1 | Read at most `MAX_IMPORT_BYTES + 1` bytes at the `InputStream` level; reject if length exceeds the cap before decoding to chars. Renames `MAX_IMPORT_BYTES` to actually mean bytes | Med severity: `sb.length > MAX_IMPORT_BYTES` compares UTF-16 char count to a byte budget; an attacker can pad with high-BMP chars and submit ~128 KB of actual bytes | S00, `PreferencesStore.kt:113` |
+| C139 | `PreferencesStore` import duplicate-name UI feedback | UX | new | Later | 2/2/1 | Change `importFrom` / `previewImport` to return `Result<ImportSummary>` where `ImportSummary` includes `droppedDuplicateNames: List<String>`; surface in the import dialog | Med (UX) severity: silent profile-name dedupe on import surprises users who imported a backup containing two profiles with the same name | S00, `PreferencesStore.kt:221-234` |
+| C140 | F-Droid initial submission (fdroiddata MR) | distribution | new | Now | 5/2/2 | Fork `gitlab.com/fdroid/fdroiddata`, create `metadata/com.openlumen.yml`, run `fdroid lint`, open MR labelled "New App". Allow 24-48h post-merge | OpenLumen has never been submitted (S203-S205 negative results across MR / RFP / app-search). Direct MR using the F-Droid Quick Start Guide (S206). Gated on C01 (real-device validation rows) and C35 (final adaptive icon) / C36 (screenshots) | S203, S204, S205, S206, S207, S210, S211 |
 
 ### New candidates (rev 3)
 
@@ -1002,6 +1092,57 @@ Red Moon / NightLight current activity (refreshed):
 - **S201**: cngu/shades — https://github.com/cngu/shades
 - **S202**: Android 17 Eye Dropper API (refreshed pointer) — https://proandroiddev.com/exploring-the-eyedropper-api-android-17-9d7be86aaa16
 
+### External URLs (rev 4.1 — second-pass research)
+
+Twenty-seven new sources from the F-Droid submission status agent, the
+Shizuku integration patterns agent, and the Compose / Material 3 /
+AGP 9 migration target agent. Full triage in
+[.ai/research/2026-05-17/SOURCE_REGISTER.md](.ai/research/2026-05-17/SOURCE_REGISTER.md)
+and analysis in
+[.ai/research/2026-05-17/SECOND_PASS_FINDINGS.md](.ai/research/2026-05-17/SECOND_PASS_FINDINGS.md).
+
+F-Droid submission status / process:
+
+- **S203**: F-Droid `fdroiddata` MRs (zero matches for "openlumen") — https://gitlab.com/fdroid/fdroiddata/-/merge_requests
+- **S204**: F-Droid RFP issues (zero matches) — https://gitlab.com/fdroid/rfp/-/issues
+- **S205**: f-droid.org app search — https://search.f-droid.org/?q=openlumen&lang=en
+- **S206**: F-Droid Quick Start Guide for new apps — https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/
+- **S207**: F-Droid Translation and Localization (70% rule) — https://f-droid.org/docs/Translation_and_Localization/
+- **S208**: AGP 9.2.0 release notes (April 2026) — https://developer.android.com/build/releases/agp-9-2-0-release-notes
+- **S209**: Google Play target-SDK requirements — https://developer.android.com/google/play/requirements/target-sdk
+- **S210**: F-Droid Anti-Features list — https://f-droid.org/docs/Anti-Features/
+- **S211**: F-Droid TWIF April 2026 — https://f-droid.org/en/2026/04/03/twif.html
+
+Shizuku integration patterns 2026:
+
+- **S212**: RikkaApps/Shizuku-API — https://github.com/RikkaApps/Shizuku-API
+- **S213**: RikkaApps/Shizuku — https://github.com/RikkaApps/Shizuku
+- **S214**: ShizukuActivityManager (transaction-code lookup pattern) — https://github.com/kzaemrio/ShizukuActivityManager
+- **S215**: Android-FPS-Watcher (ITaskStackListener pattern) — https://github.com/WuDi-ZhanShen/Android-FPS-Watcher
+- **S216**: AOSP `ITaskStackListener.aidl` — https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/app/ITaskStackListener.aidl
+- **S217**: AOSP `IActivityManager.aidl` (mirror) — https://github.com/aosp-mirror/platform_frameworks_base/blob/main/core/java/android/app/IActivityManager.aidl
+- **S218**: Grayscaler (refresh of S167) — https://github.com/C10udburst/Grayscaler
+- **S219**: ColorBlendr (refresh of S168) — https://github.com/Mahmud0808/ColorBlendr
+- **S220**: LSFG-Android (refresh of S179) — https://github.com/FrankBarretta/LSFG-Android
+- **S221**: awesome-shizuku — https://github.com/timschneeb/awesome-shizuku
+
+FabricatedOverlay 12L+ constraint:
+
+- **S222**: AOSP `FabricatedOverlay` API reference — https://developer.android.com/reference/android/content/om/FabricatedOverlay
+- **S223**: zacharee/FabricateOverlay (documents the 12L+ shell-user block) — https://github.com/zacharee/FabricateOverlay
+
+Shizuku security advisories (negative result):
+
+- **S224**: GitHub Advisory Database — zero entries for "shizuku" as of 2026-05-17 — https://github.com/advisories?query=shizuku
+
+Compose BOM / Material 3 / AGP 9 migration targets:
+
+- **S225**: Compose BOM mapping (`2026.05.00`) — https://developer.android.com/develop/ui/compose/bom/bom-mapping
+- **S226**: Compose core releases (1.11.1) — https://developer.android.com/jetpack/androidx/releases/compose
+- **S227**: Compose Material3 releases (1.4.0; `material3-expressive` alpha-only) — https://developer.android.com/jetpack/androidx/releases/compose-material3
+- **S228**: Jetpack Compose April 2026 updates blog — https://android-developers.googleblog.com/2026/04/jetpack-compose-april-2026-updates.html
+- **S229**: Compose Material Icons package summary (`material-icons-extended` deprecated) — https://developer.android.com/reference/kotlin/androidx/compose/material/icons/package-summary
+
 ## Phase 5 Self-Audit
 
 - **Traceability**: every Now/Next/Later/Under-Consideration/Rejected item
@@ -1066,7 +1207,7 @@ Red Moon / NightLight current activity (refreshed):
   - Tier shifts in rev 4 (C123 UC → Next; C101 risk 1 → 2) each cite
     a primary source.
   - Two doc-rename / process follow-ups in "What changed in rev 4"
-    track explicit text artefacts (`docs/api-36-readiness.md` rename,
+    track explicit text artefacts (`docs/android-17-readiness.md` rename,
     `docs/research-watchlist.md` header bump). Both are non-code,
     reversible, and explicitly listed so a future review can audit
     completion.

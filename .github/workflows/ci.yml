@@ -58,7 +58,7 @@ jobs:
           APK=$(ls app/build/outputs/apk/debug/app-debug.apk)
           echo "apk=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Assert no INTERNET / ACCESS_NETWORK_STATE permission
+      - name: Assert no banned permissions in merged manifest
         env:
           APK: ${{ steps.find_apk.outputs.apk }}
         run: |
@@ -72,11 +72,19 @@ jobs:
           echo "Using AAPT at: $AAPT"
           PERMS=$("$AAPT" dump permissions "$APK" || true)
           echo "$PERMS"
-          if echo "$PERMS" | grep -E "android\.permission\.(INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE)" > /dev/null; then
-            echo "::error::Network permission detected in merged manifest. OpenLumen must never request these." >&2
+          # The banned-permission list mirrors the project's hard constraints:
+          #   no network (INTERNET / ACCESS_NETWORK_STATE / ACCESS_WIFI_STATE)
+          #   no location (ACCESS_*_LOCATION)
+          #   no phone state (READ_PHONE_STATE)
+          #   no installed-app enumeration (QUERY_ALL_PACKAGES)
+          #   no per-app usage history (PACKAGE_USAGE_STATS)
+          #   no accessibility service binding (BIND_ACCESSIBILITY_SERVICE)
+          # See ROADMAP.md rev 4 and PROJECT_CONTEXT.md "Hard constraints".
+          if echo "$PERMS" | grep -E "android\.permission\.(INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION|ACCESS_BACKGROUND_LOCATION|READ_PHONE_STATE|QUERY_ALL_PACKAGES|PACKAGE_USAGE_STATS|BIND_ACCESSIBILITY_SERVICE)" > /dev/null; then
+            echo "::error::Banned permission detected in merged manifest. OpenLumen must never request these — see ROADMAP.md rev 4 / PROJECT_CONTEXT.md 'Hard constraints'." >&2
             exit 1
           fi
-          echo "OK: no network permissions in merged manifest."
+          echo "OK: no banned permissions in merged manifest."
 
       - name: Assert no Play Services / Firebase dependency
         run: |

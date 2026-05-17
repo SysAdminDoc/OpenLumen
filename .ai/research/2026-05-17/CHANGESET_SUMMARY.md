@@ -1,6 +1,17 @@
 # Changeset Summary — 2026-05-17 walk-away research session
 
-Every file this session created or modified, plus why.
+Every file this session created or modified, plus why. The session ran in
+two passes (both 2026-05-17):
+
+- **Pass 1** produced the rev 4 ROADMAP supplement, `PROJECT_CONTEXT.md`,
+  and 10 research notebook files (commit `e71ee12`).
+- **Pass 2** completed the rev 4 follow-ups, ran a focused code-review
+  + F-Droid/Shizuku/Compose research pass, produced 9 new ROADMAP
+  candidates (C132-C140) + 27 new sources (S203-S229), and updated
+  the ROADMAP to rev 4.1.
+
+See [SECOND_PASS_FINDINGS.md](SECOND_PASS_FINDINGS.md) for the
+pass-2 analysis. The pass-1 narrative below is preserved unchanged.
 
 ## Files created
 
@@ -112,3 +123,81 @@ Quick sanity checks before commit:
    redirects to `ROADMAP.md`).
 6. Every `.ai/research/2026-05-17/*.md` file backlinks to its peers
    and to repo-root files using relative `../../../foo` paths.
+
+---
+
+## Pass 2 changeset (2026-05-17 afternoon)
+
+The user re-invoked the walk-away brief; pass 2 closed every doc/process
+follow-up rev 4 itemised AND added a focused code-review +
+F-Droid/Shizuku/Compose research pass.
+
+### Files created (pass 2)
+
+| Path | Purpose |
+|---|---|
+| [.ai/research/2026-05-17/SECOND_PASS_FINDINGS.md](SECOND_PASS_FINDINGS.md) | Full second-pass narrative: 3 HIGH-severity code-review bugs the 2026-05-17 audit didn't catch, F-Droid never-submitted finding, concrete Compose BOM / Material 3 / AGP 9 targets, Shizuku code shapes, FabricatedOverlay 12L+ constraint that downgrades C128. |
+
+### Files modified (pass 2)
+
+| Path | Why |
+|---|---|
+| `ROADMAP.md` | Rev 4 → rev 4.1 supplement. Added 9 new candidates (C132-C140), tier shift for C128 → Later, 27 new sources (S203-S229), and a "What changed in rev 4.1" section. |
+| `README.md` | Updated link target for the renamed `docs/api-36-readiness.md` → `docs/android-17-readiness.md`. |
+| `CHANGELOG.md` | Folded the 2026-05-17 audit hardening into `[Unreleased]` as a "Hardening" subsection; fixed reference to the renamed doc. |
+| `PROJECT_CONTEXT.md` | Fixed reference to the renamed doc. |
+| `CLAUDE.md` (git-ignored) | No further changes; pass 1 added the pointer. |
+| `docs/research-watchlist.md` | "Last review" date bumped 2026-05-16 → 2026-05-17 with reference to rev 3/4 review effort. |
+| `docs/health-evidence.md` | Sources section expanded with S99-S102 (rev 3) and S158-S162 (rev 4) plus a "what changed in 2025/2026 consensus" subsection. |
+| `docs/threat-model.md` | Added a MASVS-PRIVACY section to match MASVS v2.1.0. The substance was already covered across Data inventory + Permission inventory; the categorical header was missing. |
+| `docs/sbom-and-advisories.md` | "Accepted exposures" table entry added for protobuf-java CVE-2024-7254 with the no-INTERNET rationale. |
+| `.github/workflows/ci.yml` | Expanded the `permissions-audit` grep to also block `ACCESS_*_LOCATION`, `READ_PHONE_STATE`, `QUERY_ALL_PACKAGES`, `PACKAGE_USAGE_STATS`, `BIND_ACCESSIBILITY_SERVICE`. Renamed the step accordingly. |
+| `.github/workflows/release.yml` | Matching grep expansion on the release-APK assertion. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Appended a "Second-pass additions (S203-S229)" section with 27 new sources. |
+| `.ai/research/2026-05-17/CHANGESET_SUMMARY.md` | This file. |
+
+### Files renamed (pass 2)
+
+| From | To | Method |
+|---|---|---|
+| `docs/api-36-readiness.md` | `docs/android-17-readiness.md` | `git mv`, then body rewrite to align with rev 3's C82 → C103 Android-17 expansion. |
+
+### Counts (pass 2)
+
+| Type | Count |
+|---|---:|
+| Files created at repo root | 0 |
+| Files created under `.ai/research/2026-05-17/` | 1 (`SECOND_PASS_FINDINGS.md`) |
+| Files modified | 11 |
+| Files renamed | 1 (`api-36-readiness.md` → `android-17-readiness.md`) |
+| New source IDs added | 27 (S203-S229) |
+| New candidate IDs introduced | 9 (C132-C140) |
+| Existing-candidate tier shifts | 1 (C128 UC → Later) |
+| Doc/process follow-ups completed (out of rev 4's 7) | 7 of 7 |
+| Kotlin source files modified | 0 (code-review findings deferred to next maintainer commit; the bugs are documented in `SECOND_PASS_FINDINGS.md` + ROADMAP rev 4.1 candidates C132-C136) |
+
+### What pass 2 did NOT modify
+
+- Kotlin source. C132-C136 are documented but the actual fixes are
+  deferred. The pre-existing 2026-05-17 in-tree audit (15 Kotlin/test/
+  strings files) stays unstaged for the maintainer.
+- `gradle/libs.versions.toml`. AGP 9 / Compose BOM / Material 3 targets
+  are documented as concrete numbers but deferred to C95 / C137.
+- `app/build.gradle.kts`. No build-config changes.
+- `branding/`, `fastlane/`. No design changes.
+- Tests (the JUnit / Truth unit tests in core-engine / core-prefs /
+  core-schedule / app). Recommended new tests are documented in
+  `SECOND_PASS_FINDINGS.md` but not added.
+
+### Reversibility (pass 2)
+
+All pass-2 changes are reversible:
+
+- The `git mv` rename can be reverted by `git mv docs/android-17-readiness.md
+  docs/api-36-readiness.md` (history is preserved).
+- Doc edits are localised to single sections of single files.
+- CI workflow edits are additive (more strings in a regex); revert by
+  removing the new alternation members.
+- `ROADMAP.md` rev 4.1 prepends a "What changed in rev 4.1" section and
+  appends new candidate rows + new source URLs; rev 4 content is
+  preserved.

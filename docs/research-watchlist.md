@@ -7,7 +7,8 @@ Reviewed before each release planning pass. Not a hard dependency for any
 release — it exists so we notice ecosystem-level shifts before they show up
 as user pain.
 
-Last review: **2026-05-16**.
+Last review: **2026-05-17** (rev 3 + rev 4 of `ROADMAP.md` walked every
+entry in this watchlist; see `.ai/research/2026-05-17/RESEARCH_LOG.md`).
 
 ## Quick rules
 

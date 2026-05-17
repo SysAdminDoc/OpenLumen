@@ -42,7 +42,9 @@ doesn't re-triage from scratch.
 
 ## Accepted exposures
 
-*(none currently)*
+| CVE / GHSA | Affected dependency | Why we accept | Recorded |
+|---|---|---|---|
+| CVE-2024-7254 (GHSA-735f-pc8j-v9w8) | `com.google.protobuf:protobuf-java:3.21.x` (transitive) | OpenLumen has no INTERNET permission and does not deserialize attacker-controlled protobuf input. The CVE describes a stack-overflow path triggered when deserializing maliciously-nested messages; the code path is not reachable from any OpenLumen call site. Tracked at https://github.com/advisories/GHSA-735f-pc8j-v9w8 (S77 in ROADMAP). Re-evaluate if the artifact is replaced or if a new transitive surfaces a different protobuf path. | 2026-05-17 (rev 4 of ROADMAP) |
 
 ## How to read an advisory report
 
