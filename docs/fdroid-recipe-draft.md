@@ -170,8 +170,8 @@ Pulled from the F-Droid Quick Start Guide:
   present.
 - ✅ `fastlane/metadata/android/en-US/changelogs/5.txt` — added in
   this pass (444 bytes ≤ 500-byte target).
-- ⚠️ `fastlane/metadata/android/en-US/images/icon.png` — **missing**.
-  Blocked on C35 (final adaptive icon). 512×512 PNG.
+- ✅ `fastlane/metadata/android/en-US/images/icon.png` — present.
+  C35 shipped the 512×512 final icon on 2026-05-17.
 - ⚠️ `fastlane/metadata/android/en-US/images/phoneScreenshots/{1..5}.png`
   — **missing**. Blocked on C36 (capture pass). Minimum 2 PNGs.
 - ⏸ `fastlane/metadata/android/en-US/images/featureGraphic.png` —

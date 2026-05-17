@@ -82,14 +82,17 @@ vector curves.
 
 ## Integration checklist
 
+Selected direction: **2. App — adaptive-icon ready**, implemented on
+2026-05-17 as the minimal warm crescent on the Catppuccin dark launcher
+background.
+
 After picking a winner:
 
-- [ ] Crop the foreground variant (#2) to 432x432 PNG (adaptive icon foreground at xxxhdpi).
-- [ ] Place at `app/src/main/res/drawable/ic_launcher_foreground.png` (or keep the
-      current vector at the same path; verify the adaptive-icon XML still
-      references `@drawable/ic_launcher_foreground`).
-- [ ] Generate 48 / 72 / 96 / 144 / 192 mipmaps via Android Studio's Image Asset
+- [x] Use a vector adaptive-icon foreground instead of a 432x432 PNG; the
+      adaptive-icon XML references `@drawable/ic_launcher_foreground`.
+- [x] Generate 48 / 72 / 96 / 144 / 192 mipmaps via Android Studio's Image Asset
       Studio (or ImageMagick) if not relying purely on the adaptive icon.
-- [ ] Export a 512x512 store icon PNG for F-Droid / Play.
+      Not applicable while `minSdk` is 26 and the app relies on adaptive-icon XML.
+- [x] Export a 512x512 store icon PNG for F-Droid / Play.
 - [ ] Drop a banner.png and logo.png at repo root for the README badge / hero image.
-- [ ] Bump CHANGELOG with the logo-finalized version (likely v0.5.0 or v1.0.0).
+- [x] Bump CHANGELOG with the logo-finalized version (likely v0.5.0 or v1.0.0).

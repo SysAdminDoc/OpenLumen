@@ -711,6 +711,12 @@ informed.
   screenshot CI train. Local full validation passed from
   `C:\Users\Xray\OpenLumen-agp9-verify` because AGP 9 D8 hit a Windows
   shared-folder path limitation under `Z:\repos\OpenLumen`.
+- **S00k**: Local implementation evidence for C35 —
+  `app/src/main/res/drawable/ic_launcher_background.xml`,
+  `app/src/main/res/drawable/ic_launcher_foreground.xml`,
+  `branding/openlumen-icon.svg`, and
+  `fastlane/metadata/android/en-US/images/icon.png` now contain the final
+  minimal crescent adaptive/store icon assets.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -740,7 +746,7 @@ informed.
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j | 10 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k | 11 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -789,3 +795,4 @@ S00i records the local C117 first-emission dispatch implementation and
 JVM regression coverage. S00j records the local C95/C96/C101/C124 AGP 9
 / Hilt / screenshot implementation evidence. S269-S274 refresh the
 current external toolchain sources that informed that implementation.
+S00k records the local C35 final icon assets.

@@ -195,7 +195,8 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C96 | Shipped 2026-05-17 | Compose `hiltViewModel()` imports moved to `androidx.hilt.lifecycle.viewmodel.compose`. |
 | C101 | Shipped 2026-05-17 | Compose screenshot plugin 0.0.1-alpha14, initial theme-token references, and CI validation job landed. |
 | C124 | Shipped 2026-05-17 | Dagger/Hilt bumped to 2.59.2 as part of the AGP 9 train. |
+| C35 | Shipped 2026-05-17 | Final adaptive/store icon assets landed with source SVG and fastlane 512x512 PNG. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
-action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
+action (C141), release/distribution gates (C01, C36/C37/C140), and
 remaining Android 17 device validation (C103).

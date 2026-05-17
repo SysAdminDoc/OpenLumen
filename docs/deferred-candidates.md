@@ -78,22 +78,18 @@ the pure schedule logic. A 12-hour fallback prevents the filter from
 running indefinitely when no alarm is set. Tested in
 `core-schedule/.../ScheduleTest.kt`.
 
-## Final icon and adaptive launcher — C35 (Now → deferred to icon design pass)
+## Final icon and adaptive launcher — C35 (shipped)
 
-**Status**: blocks F-Droid metadata completion (C36), but the underlying
-work is graphic design, not code.
+**Status**: shipped 2026-05-17. The final minimal crescent direction from
+`branding/logo-prompts.md` is now represented by:
 
-**Plan**:
+- `app/src/main/res/drawable/ic_launcher_background.xml`
+- `app/src/main/res/drawable/ic_launcher_foreground.xml`
+- `branding/openlumen-icon.svg`
+- `fastlane/metadata/android/en-US/images/icon.png`
 
-1. Pick one of the five prompts in `branding/logo-prompts.md`.
-2. Generate adaptive-icon foreground + background SVG/PNG.
-3. Replace `app/src/main/res/mipmap-anydpi-v26/ic_launcher*.xml` and
-   the legacy `mipmap-*` densities.
-4. Drop the final files into
-   `fastlane/metadata/android/en-US/images/icon.png` (512×512).
-
-**Why deferred**: hand-drawn or design-tool work, not code. A
-contributor with design skill can pick this up independently.
+The app relies on adaptive-icon XML/vector resources because `minSdk` is
+26. The remaining release-artwork blocker is C36 store screenshots.
 
 ## Store screenshots — C36 (hardware-blocked)
 

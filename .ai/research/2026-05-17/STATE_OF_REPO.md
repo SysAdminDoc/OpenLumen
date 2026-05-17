@@ -243,8 +243,8 @@ source:
 1. **No real-device validation rows** in `docs/device-matrix.md`. Every row
    says "smoke pending" with `?` in every engine column. This is the single
    biggest gate to a v0.5.0 → F-Droid cut.
-2. **Final adaptive icon + store screenshots** are placeholder. Tracked as
-   C35 / C36; design work, not code.
+2. **Store screenshots** are still placeholder. C35 final adaptive/store
+   icon is shipped; C36 screenshot capture remains.
 3. **Android 17 validation row** is missing from `docs/device-matrix.md` and
    `docs/api-36-readiness.md` is still titled and framed for "Android 16 /
    API 36" — out of date with rev 3 which expanded C82 to Android 17.
@@ -499,6 +499,18 @@ This batch is now implemented locally:
   because no such rule file existed and AGP 9 validates that input.
 
 Verification is tracked in `CHANGESET_SUMMARY.md` pass 17.
+
+## C35 implementation state
+
+C35 is now implemented locally:
+
+- `ic_launcher_background.xml` and `ic_launcher_foreground.xml` use the
+  final minimal crescent mark.
+- `branding/openlumen-icon.svg` captures the source geometry and colors.
+- `fastlane/metadata/android/en-US/images/icon.png` is present as the
+  512x512 store icon.
+
+Verification is tracked in `CHANGESET_SUMMARY.md` pass 18.
 
 ## C138 implementation state
 

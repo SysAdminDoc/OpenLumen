@@ -573,3 +573,25 @@ Verification:
   failed in D8 with a Windows shared-folder path/filename error under
   generated global-synthetics output; the shorter local mirror isolated the
   issue as environmental rather than source-level.
+
+## Implementation update (C35)
+
+C35 targeted the missing final icon assets. The repo already had a simple
+adaptive-icon vector, so this pass finalized the existing minimal crescent
+direction rather than introducing a new brand system.
+
+Implementation:
+
+- Updated launcher background/foreground vectors to the final Catppuccin
+  dark + warm crescent mark.
+- Added `branding/openlumen-icon.svg` as the source geometry.
+- Generated `fastlane/metadata/android/en-US/images/icon.png` as the
+  512x512 store metadata icon.
+- Updated release/F-Droid docs so C36 screenshots, not C35, remain the
+  artwork blocker.
+
+Verification:
+
+- Visually inspected the generated PNG.
+- `:app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.

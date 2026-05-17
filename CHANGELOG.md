@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test compilation on this toolchain.
 
 ### Changed
+- Launcher and store artwork now use the final minimal OpenLumen crescent
+  mark, with a source SVG under `branding/` and the F-Droid 512x512 icon
+  under `fastlane/metadata/android/en-US/images/`.
 - Build tooling now uses AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21, and
   KSP 2.3.8 with AGP 9's built-in Kotlin support instead of applying the
   separate `org.jetbrains.kotlin.android` plugin.

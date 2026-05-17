@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title>OpenLumen icon</title>
+  <desc>Warm crescent on a dark Catppuccin-style background.</desc>
+  <rect width="512" height="512" fill="#11111B"/>
+  <path d="M276 102.1a160 160 0 1 0 0 307.8a160 160 0 0 1 0-307.8z" fill="#F38BA8"/>
+</svg>

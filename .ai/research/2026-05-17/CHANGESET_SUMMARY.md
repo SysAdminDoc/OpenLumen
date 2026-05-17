@@ -686,3 +686,24 @@ train:
   Windows shared-folder path/filename error under generated global
   synthetics output; the shorter local mirror was used for source-level
   validation.
+
+## Implementation pass 18 (C35, 2026-05-17)
+
+This pass implemented **C35 — Final adaptive icon**.
+
+### Files modified (pass 18)
+
+| File | Why |
+|---|---|
+| `app/src/main/res/drawable/ic_launcher_background.xml` | Set the final Catppuccin dark icon background. |
+| `app/src/main/res/drawable/ic_launcher_foreground.xml` | Updated the launcher foreground to the final warm crescent mark. |
+| `branding/openlumen-icon.svg` | Added the source SVG for the final icon geometry and colors. |
+| `fastlane/metadata/android/en-US/images/icon.png` | Added the 512x512 store metadata icon. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `docs/**` | Marked C35 shipped and left C36 screenshots as the remaining artwork gate. |
+| `.ai/research/2026-05-17/*.md` | Added S00k and recorded the C35 implementation state. |
+
+### Verification (pass 18)
+
+- Generated PNG was visually inspected.
+- `:app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.

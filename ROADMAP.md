@@ -10,6 +10,11 @@ major versions.
 
 ## Implementation progress after rev 5
 
+- [x] **C35 — Final adaptive icon** shipped on 2026-05-17. The launcher
+  background/foreground vectors now use the final minimal crescent mark,
+  `branding/openlumen-icon.svg` records the source geometry, and
+  `fastlane/metadata/android/en-US/images/icon.png` provides the 512x512
+  store icon for F-Droid / Play metadata.
 - [x] **C95 / C96 / C101 / C124 — AGP 9, Hilt Compose, screenshot CI
   train** shipped on 2026-05-17. The build now uses AGP 9.2.1,
   Gradle 9.4.1, Kotlin 2.3.21, KSP 2.3.8, Dagger/Hilt 2.59.2,
@@ -342,7 +347,8 @@ What is incomplete:
 - No real-device validation rows in `docs/device-matrix.md` for Pixel,
   Samsung, Snapdragon+KCAL, non-root overlay, Android TV, or Android 17
   preview behavior.
-- Final adaptive icon and store screenshots are still placeholder.
+- Store screenshots are still placeholder; the final adaptive/store icon
+  is now present.
 - Per-app rules, Shizuku backend, Wear OS companion, Direct Boot restore,
   Android TV flavor, accessibility-scanner pass, and Compose screenshot
   tests are not implemented.
@@ -574,7 +580,7 @@ Partial (per rev 2, still partial in rev 3):
 - **C01** Real-device validation rows — per-engine smoke flow documented;
   rows pending real hardware.
 - **C36** Store screenshot matrix — layout in place; captures pending
-  finalized icon (C35).
+  real device/emulator screenshots.
 - **C55/C56/C57** Accessibility scanner / dynamic font scale / CVD
   contrast audit — still need a real device pass.
 
@@ -591,9 +597,9 @@ Partial (per rev 2, still partial in rev 3):
      path. Sources: S00, S10, S11, S25, S26, S48, S86.
 
 2. **F-Droid release packaging (C34, C35, C36, C37, C45)**
-   - Finalize the adaptive icon (C35), capture phone screenshots into
-     `fastlane/metadata/android/en-US/images/phoneScreenshots/` (C36),
-     confirm reproducibility on F-Droid's build server (C37), and walk
+   - C35 is shipped. Capture phone screenshots into
+      `fastlane/metadata/android/en-US/images/phoneScreenshots/` (C36),
+      confirm reproducibility on F-Droid's build server (C37), and walk
      the pre-release checklist (C45). The 70% translation floor (S111)
      applies for translated releases but the en-US baseline is enough
      to ship.
@@ -884,7 +890,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C137 | `material-icons-extended` deprecation migration | UX/upgrade strategy | new | Shipped 2026-05-17 | 2/2/1 | Replaced the seven Compose Material icon call sites with local vector resources and removed `compose-material-icons-extended` from the version catalog / app dependencies | The artifact is deprecated as of late-2025/2026 (S229); self-hosting the tiny icon set avoids deprecation churn without waiting for the C95/C110 Compose train | S229, S00f |
 | C138 | `PreferencesStore` import-size cap byte-correctness | input validation | new | Shipped 2026-05-17 | 3/1/1 | Added `readImportBytes()` to read at most `MAX_IMPORT_FILE_BYTES + 1` bytes at the `InputStream` level; reject if length exceeds the cap before decoding to chars | Med severity: `sb.length > MAX_IMPORT_BYTES` compared UTF-16 char count to a byte budget; high-BMP payloads could exceed the intended raw-byte cap | S00, S00e, `PreferencesStore.kt` |
 | C139 | `PreferencesStore` import duplicate-name UI feedback | UX | new | Later | 2/2/1 | Change `importFrom` / `previewImport` to return `Result<ImportSummary>` where `ImportSummary` includes `droppedDuplicateNames: List<String>`; surface in the import dialog | Med (UX) severity: silent profile-name dedupe on import surprises users who imported a backup containing two profiles with the same name | S00, `PreferencesStore.kt:221-234` |
-| C140 | F-Droid initial submission (fdroiddata MR) | distribution | new | Now | 5/2/2 | Fork `gitlab.com/fdroid/fdroiddata`, create `metadata/com.openlumen.yml`, run `fdroid lint`, open MR labelled "New App". Allow 24-48h post-merge | OpenLumen has never been submitted (S203-S205 negative results across MR / RFP / app-search). Direct MR using the F-Droid Quick Start Guide (S206). Gated on C01 (real-device validation rows) and C35 (final adaptive icon) / C36 (screenshots) | S203, S204, S205, S206, S207, S210, S211 |
+| C140 | F-Droid initial submission (fdroiddata MR) | distribution | new | Now | 5/2/2 | Fork `gitlab.com/fdroid/fdroiddata`, create `metadata/com.openlumen.yml`, run `fdroid lint`, open MR labelled "New App". Allow 24-48h post-merge | OpenLumen has never been submitted (S203-S205 negative results across MR / RFP / app-search). Direct MR using the F-Droid Quick Start Guide (S206). Gated on C01 (real-device validation rows) and C36 (screenshots); C35 is now shipped. | S203, S204, S205, S206, S207, S210, S211, S00k |
 
 ### New candidates (rev 3)
 

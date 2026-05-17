@@ -47,8 +47,9 @@ The submission workflow as of 2026-05-17 is:
 5. Wait 24-48h post-merge for the repo to surface.
 
 The `fastlane/metadata/android/en-US/` skeleton already exists in the
-repo. Missing pieces: final `icon.png` (C35), `phoneScreenshots/*.png`
-(C36), `featureGraphic.png` (optional), and a versioned
+repo. **Post-pass update**: C35 is now shipped, so `icon.png` exists.
+Remaining missing pieces are `phoneScreenshots/*.png` (C36),
+`featureGraphic.png` (optional), and the release-bump
 `changelogs/<versionCode>.txt`.
 
 ### 2. Three HIGH-severity correctness bugs the 2026-05-17 audit didn't catch
@@ -219,7 +220,7 @@ All seven follow-ups from rev 4's "What changed in rev 4" list are done.
    actual Kotlin edits are the next maintainer commit. The fixes are
    small (each is ~5-30 lines of Kotlin).
 2. **C140 — file the F-Droid MR.** Blocked on C01 (real-device
-   validation rows), C35 (final adaptive icon), C36 (screenshots).
+   validation rows) and C36 (screenshots). C35 is now shipped.
 3. **C137 — `material-icons-extended` migration.** Single PR; survey
    the dozen call sites and replace.
 4. **Re-run code review after the C132-C136 fixes land**, to make sure

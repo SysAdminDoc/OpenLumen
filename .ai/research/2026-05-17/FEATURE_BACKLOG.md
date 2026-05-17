@@ -381,3 +381,6 @@ stable base for Direct Boot restore.
   screenshot plugin 0.0.1-alpha14. C83 remains broader tab/screen
   screenshot coverage; C144 is now unblocked as a separate AndroidX
   stable refresh. Source: S00j.
+- **C35 shipped 2026-05-17**. The adaptive launcher and 512x512
+  fastlane/store icon now use the final minimal crescent mark. C36 store
+  screenshots remain the artwork/distribution blocker. Source: S00k.

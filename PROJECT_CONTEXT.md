@@ -405,6 +405,10 @@ watchpoints future sessions should not miss:
   screenshot fixture. Because AGP 9 on the `Z:` shared folder hit a
   Windows path issue in D8, full local verification was run from the
   shorter mirror `C:\Users\Xray\OpenLumen-agp9-verify`.
+- **Final adaptive/store icon (C35)**: shipped 2026-05-17. Launcher
+  vectors use the final crescent mark, `branding/openlumen-icon.svg` is
+  the source artifact, and `fastlane/metadata/android/en-US/images/icon.png`
+  is the 512x512 metadata icon.
 - **AAPM driver-report surface (C130)**: shipped 2026-05-17. The report
   has a reflection-gated Android 17 Advanced Protection section and a
   declared `QUERY_ADVANCED_PROTECTION_MODE` permission; older devices show
