@@ -464,3 +464,34 @@ Verification:
 - `:app:dependencies --configuration debugRuntimeClasspath --no-daemon`
   confirmed no `material-icons-extended` artifact remains.
 - `git diff --check` passed with CRLF conversion warnings only.
+
+## Implementation update (C105)
+
+C105 used the existing Android foreground-service sources S85/S130/S131:
+Android 15 narrows the `SYSTEM_ALERT_WINDOW` background-start exemption so
+the app must also have a visible overlay window. The local failure mode was
+the QS/widget toggle path writing `enabled = true` and then merely logging
+if the service start was rejected.
+
+Implementation:
+
+- Added `LumenServiceStarter` to centralize service starts and classify
+  `ForegroundServiceStartNotAllowedException`.
+- Updated QS tile toggle-on to roll back `enabled=false` and open the app
+  through `startActivityAndCollapse()` when Android blocks the start.
+- Added `WidgetActionReceiver` so widget taps are recoverable broadcast
+  actions instead of direct service PendingIntents.
+- Updated boot and schedule receivers to use the same start helper for
+  consistent diagnostics without trying to open the app from system
+  broadcasts.
+
+Verification:
+
+- `:app:assembleDebug --no-daemon --stacktrace` passed after one
+  timeout/stale-daemon reset and one clean rerun.
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --stacktrace`
+  passed.
+- `:app:lintDebug --no-daemon --stacktrace` passed after adding a
+  targeted suppression for the pre-Android-14 TileService compatibility
+  branch.
+- `git diff --check` passed with CRLF conversion warnings only.

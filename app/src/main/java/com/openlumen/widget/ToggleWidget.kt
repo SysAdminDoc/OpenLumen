@@ -10,7 +10,6 @@ import android.widget.RemoteViews
 import com.openlumen.MainActivity
 import com.openlumen.R
 import com.openlumen.prefs.PreferencesStore
-import com.openlumen.service.LumenService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -21,8 +20,8 @@ import javax.inject.Inject
  * 1x1 home-screen widget — single button that toggles the filter on/off.
  *
  * Tied to roadmap candidate **C19**. The widget reuses the existing
- * `LumenService.ACTION_TOGGLE` intent, so its behavior matches the Quick
- * Settings tile exactly.
+ * [WidgetActionReceiver.ACTION_TOGGLE] intent, so it can recover cleanly
+ * when Android rejects a background foreground-service start.
  *
  * Refresh model:
  * - System fires [onUpdate] when the widget is added, when the host
@@ -80,12 +79,12 @@ class ToggleWidget : AppWidgetProvider() {
             context.getString(if (enabled) R.string.tile_on else R.string.tile_off)
         )
 
-        // The button click routes through LumenService.ACTION_TOGGLE — same
-        // path the QS tile uses. We don't open the app on tap because that
-        // defeats the purpose of a 1x1 toggle.
-        val toggleIntent = Intent(context, LumenService::class.java)
-            .setAction(LumenService.ACTION_TOGGLE)
-        val togglePending = PendingIntent.getService(
+        // The button click routes through a receiver first so Android 15+
+        // foreground-service start rejections can be handled instead of
+        // leaving prefs stuck in an enabled-but-not-running state.
+        val toggleIntent = Intent(context, WidgetActionReceiver::class.java)
+            .setAction(WidgetActionReceiver.ACTION_TOGGLE)
+        val togglePending = PendingIntent.getBroadcast(
             context,
             REQUEST_TOGGLE,
             toggleIntent,

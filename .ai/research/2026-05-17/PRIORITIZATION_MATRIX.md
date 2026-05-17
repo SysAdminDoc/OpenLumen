@@ -185,7 +185,8 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C106 | Shipped 2026-05-17 | Wake/vitals and device-matrix now have Android 14-17 boot-restore evidence slots; real results remain C01. |
 | C138 | Shipped 2026-05-17 | Profile import caps raw bytes before UTF-8 decoding and rejects max-plus-one payloads. |
 | C137 | Shipped 2026-05-17 | Deprecated `material-icons-extended` dependency removed; app uses local vector resources. |
+| C105 | Shipped 2026-05-17 | QS/widget user starts recover from Android foreground-service background-start blocks. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
-remaining Android 17 / toolchain tasks (C95/C96/C103/C105).
+remaining Android 17 / toolchain tasks (C95/C96/C103).

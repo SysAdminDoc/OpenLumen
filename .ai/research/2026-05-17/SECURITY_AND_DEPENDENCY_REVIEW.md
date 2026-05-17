@@ -300,3 +300,13 @@ C137 is now shipped. The app no longer declares
 favorite icons are local vector resources loaded with `painterResource`.
 This removes a deprecated Compose artifact from the app dependency graph
 without mixing broader Compose BOM / Material 3 churn into the C95 train.
+
+### C105 foreground-service start fallback
+
+C105 is now shipped. The app centralizes foreground-service starts in
+`LumenServiceStarter`, classifies Android's
+`ForegroundServiceStartNotAllowedException`, and recovers user-initiated
+QS/widget toggle-on attempts by rolling back stale state and opening the
+app. Boot and schedule broadcasts still only log failures; they are not
+user-visible entry points and should not try to launch UI from the
+background.

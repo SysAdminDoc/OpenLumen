@@ -1,5 +1,7 @@
 package com.openlumen.service
 
+import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.Tile
@@ -62,15 +64,12 @@ class LumenTileService : TileService() {
                     current.copy(enabled = toggledTo)
                 }
                 if (toggledTo) {
-                    val intent = Intent(this@LumenTileService, LumenService::class.java)
-                    try {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            startForegroundService(intent)
-                        } else {
-                            startService(intent)
+                    val result = LumenServiceStarter.start(this@LumenTileService, logTag = tag)
+                    if (!result.started) {
+                        prefs.update { it.copy(enabled = false) }
+                        if (result.foregroundStartNotAllowed) {
+                            openAppAfterBlockedStart()
                         }
-                    } catch (t: Throwable) {
-                        Log.e(tag, "startForegroundService failed: ${t.message}", t)
                     }
                 }
                 refreshTile()
@@ -113,8 +112,33 @@ class LumenTileService : TileService() {
         return getString(R.string.tile_subtitle_on, presetName)
     }
 
+    @SuppressLint("StartActivityAndCollapseDeprecated")
+    private fun openAppAfterBlockedStart() {
+        val intent = LumenServiceStarter.blockedStartIntent(this, "tile")
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                val pending = PendingIntent.getActivity(
+                    this,
+                    REQUEST_BLOCKED_START,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                startActivityAndCollapse(pending)
+            } else {
+                @Suppress("DEPRECATION")
+                startActivityAndCollapse(intent)
+            }
+        }.onFailure {
+            Log.w(tag, "Could not open app after blocked tile start: ${it.message}", it)
+        }
+    }
+
     override fun onDestroy() {
         (scope.coroutineContext[Job])?.cancel()
         super.onDestroy()
+    }
+
+    private companion object {
+        const val REQUEST_BLOCKED_START = 2101
     }
 }

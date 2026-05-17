@@ -42,7 +42,7 @@ behavior changes), S236 (large-screen resizability / orientation).
 
 | Behavior | OpenLumen exposure | Mitigation we'd ship | Source |
 |---|---|---|---|
-| **SAW apps must have a visible overlay window to start an FGS from background** | High — tile/widget toggle-on path | C105: detect rejected `startForegroundService` after Android 15+, open app to grant overlay if needed, re-attempt | S85, S131 |
+| **SAW apps must have a visible overlay window to start an FGS from background** | High — tile/widget toggle-on path | C105 shipped 2026-05-17: `LumenServiceStarter` detects `ForegroundServiceStartNotAllowedException`; QS/widget starts roll back stale state and open the app so the overlay-permission card is visible | S85, S131, S00g |
 | **`BOOT_COMPLETED` cannot launch certain FGS types** | Medium — `specialUse` not on the affected list per S130 but needs verification | C106: explicit Android 14/15/16/17 rows in `docs/wake-and-vitals.md` and `docs/device-matrix.md` confirming boot restore still works | S85, S130 |
 | **`MODE_BACKGROUND_ACTIVITY_START_ALLOWED` deprecated for IntentSender (use `_ALLOW_IF_VISIBLE`)** | Low today — no `IntentSender` / `ActivityOptions` BAL call sites exist | C111 shipped: source audit found only direct `PendingIntent.getActivity/getService/getBroadcast` usage; no `_ALLOW_IF_VISIBLE` migration needed until an `IntentSender` path is introduced | S84, S128, S137, S00d |
 | **Advanced Protection Mode auto-revokes accessibility API for non-`isAccessibilityTool` apps** | Closes C79 / C80 permanently | C104 / C130: document in `docs/threat-model.md` and `docs/overlay-and-per-app-design.md`; surface AAPM state in driver report | S88, S89, S90, S121, S134, S135, S136 |
@@ -71,8 +71,9 @@ When the first stable Android 17 image lands (June 2026):
    [docs/device-matrix.md](device-matrix.md) on a Pixel device running
    stable Android 17. Add the row.
 2. Check that the QS tile subtitle still renders (API 29+ `Tile.subtitle`).
-3. Verify the SAW-app FGS-from-background fallback (C105) handles the
-   tile/widget toggle-on path correctly when no overlay is visible.
+3. Verify the SAW-app FGS-from-background fallback (C105) opens the app /
+   overlay-permission card from QS tile and widget toggle-on paths when
+   no overlay is visible.
 4. Verify `BOOT_COMPLETED` still restores the filter and fill the C106
    row in [wake-and-vitals.md](wake-and-vitals.md).
 5. Verify notification-tap and widget/tile pending intents still route
@@ -120,7 +121,8 @@ We will:
   `androidx.hilt:hilt-lifecycle-viewmodel-compose` (S144-S145).
 - **C104** — Document AAPM accessibility revocation. Shipped as part of
   the rev 3 / rev 4 docs pass.
-- **C105** — SAW-app FGS-from-background fallback.
+- **C105** — SAW-app FGS-from-background fallback. Shipped
+  2026-05-17 for QS tile and widget user actions.
 - **C106** — `BOOT_COMPLETED` FGS verification. Shipped 2026-05-17 as
   explicit wake/vitals + device-matrix evidence slots; real pass/fail
   results still live under C01.

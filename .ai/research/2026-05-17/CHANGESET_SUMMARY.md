@@ -559,3 +559,41 @@ migration**.
 - `:app:dependencies --configuration debugRuntimeClasspath --no-daemon`
   showed no `material-icons-extended` artifact.
 - `git diff --check` passed with CRLF conversion warnings only.
+
+## Implementation pass 14 (C105, 2026-05-17)
+
+This pass implemented **C105 — SAW-app FGS-from-background fallback**.
+
+### Files modified (pass 14)
+
+| File | Why |
+|---|---|
+| `app/src/main/java/com/openlumen/service/LumenServiceStarter.kt` | Added a shared foreground-service start helper that classifies `ForegroundServiceStartNotAllowedException`. |
+| `app/src/main/java/com/openlumen/service/LumenTileService.kt` | QS tile toggle-on now rolls back `enabled=false` and opens the app when Android blocks the FGS start. |
+| `app/src/main/java/com/openlumen/widget/WidgetActionReceiver.kt` | Added recoverable widget action handling for toggle and preset taps. |
+| `app/src/main/java/com/openlumen/widget/ToggleWidget.kt` | Routed widget toggle PendingIntent through the new receiver. |
+| `app/src/main/java/com/openlumen/widget/PresetWidget.kt` | Routed preset-chip PendingIntents through the new receiver. |
+| `app/src/main/java/com/openlumen/viewmodel/OpenLumenViewModel.kt` | Reused the shared starter helper for in-app starts. |
+| `app/src/main/java/com/openlumen/service/BootReceiver.kt` | Reused the shared starter helper for consistent diagnostics. |
+| `app/src/main/java/com/openlumen/service/ScheduleAlarmReceiver.kt` | Reused the shared starter helper for schedule reevaluation. |
+| `app/src/main/AndroidManifest.xml` | Registered `WidgetActionReceiver`. |
+| `ROADMAP.md` | Marked C105 shipped. |
+| `PROJECT_CONTEXT.md` | Documented the foreground-start helper in runtime flow context. |
+| `CHANGELOG.md` | Added the C105 reliability fix under `[Unreleased]`. |
+| `docs/android-17-readiness.md` | Updated the C105 behavior table and smoke plan. |
+| `docs/v0.5.0-release-readiness.md` | Marked C105 shipped. |
+| `docs/troubleshooting.md` | Updated the blocked-start symptom guidance. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00g for local implementation evidence. |
+
+### Verification (pass 14)
+
+- `:app:assembleDebug --no-daemon --rerun-tasks --stacktrace` passed
+  after stopping a stale Gradle daemon from an interrupted first run.
+- `:app:assembleDebug --no-daemon --stacktrace` passed again after the
+  final tile compatibility guard.
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --stacktrace`
+  passed.
+- `:app:lintDebug --no-daemon --stacktrace` passed after adding a
+  targeted suppression for the pre-Android-14 TileService compatibility
+  branch.
+- `git diff --check` passed with CRLF conversion warnings only.

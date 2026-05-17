@@ -92,13 +92,13 @@ class PresetWidget : AppWidgetProvider() {
                 rgbToColor(entry.matrix.r, entry.matrix.g, entry.matrix.b)
             )
 
-            val selectIntent = Intent(context, LumenService::class.java)
-                .setAction(LumenService.ACTION_SET_PRESET)
+            val selectIntent = Intent(context, WidgetActionReceiver::class.java)
+                .setAction(WidgetActionReceiver.ACTION_SET_PRESET)
                 .putExtra(LumenService.EXTRA_PRESET_KEY, entry.key)
                 // Distinct data URI per slot so PendingIntent.FLAG_UPDATE_CURRENT
                 // doesn't collapse the four slots into one shared intent.
                 .setData(android.net.Uri.parse("openlumen-preset://${entry.key}"))
-            val pending = PendingIntent.getService(
+            val pending = PendingIntent.getBroadcast(
                 context,
                 BASE_REQUEST + slotIndex,
                 selectIntent,

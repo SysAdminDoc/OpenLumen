@@ -364,3 +364,6 @@ stable base for Direct Boot restore.
 - **C137 shipped 2026-05-17**. The deprecated
   `material-icons-extended` artifact is gone; the seven icon call sites
   now use local vector resources. Source: S00f.
+- **C105 shipped 2026-05-17**. QS tile and widget starts now classify
+  blocked foreground-service starts, roll back stale enabled state, and
+  open the app for overlay-permission recovery. Source: S00g.

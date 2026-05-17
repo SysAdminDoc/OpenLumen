@@ -3,7 +3,6 @@ package com.openlumen.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 
 /**
@@ -18,14 +17,9 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
         if (intent.action != ACTION_FIRE) return
         val svc = Intent(context, LumenService::class.java)
             .setAction(LumenService.ACTION_REEVALUATE)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(svc)
-            } else {
-                context.startService(svc)
-            }
-        } catch (t: Throwable) {
-            Log.e(tag, "Failed to start LumenService for schedule fire: ${t.message}", t)
+        val result = LumenServiceStarter.start(context, svc, tag)
+        if (!result.started) {
+            Log.w(tag, "Schedule fire could not start LumenService")
         }
     }
 

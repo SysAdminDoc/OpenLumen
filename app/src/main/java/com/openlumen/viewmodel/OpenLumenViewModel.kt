@@ -3,7 +3,6 @@ package com.openlumen.viewmodel
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,6 +14,7 @@ import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.service.LumenService
+import com.openlumen.service.LumenServiceStarter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -282,13 +282,7 @@ class OpenLumenViewModel @Inject constructor(
 
     private fun startService(): Boolean {
         val ctx = getApplication<Application>()
-        val intent = Intent(ctx, LumenService::class.java)
-        return runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(intent)
-            else ctx.startService(intent)
-        }.onFailure {
-            Log.e(tag, "Failed to start LumenService: ${it.message}", it)
-        }.isSuccess
+        return LumenServiceStarter.start(ctx, Intent(ctx, LumenService::class.java), tag).started
     }
 
     private fun stopService() {

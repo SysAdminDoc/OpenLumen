@@ -86,6 +86,10 @@
             android:name=".service.ScheduleAlarmReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".widget.WidgetActionReceiver"
+            android:exported="false" />
+
         <!--
             1x1 toggle widget (roadmap C19). Receives the standard system
             APPWIDGET_UPDATE plus an internal ACTION_REFRESH broadcast that

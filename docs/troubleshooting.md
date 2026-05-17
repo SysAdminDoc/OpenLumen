@@ -10,7 +10,7 @@ If your issue isn't here, file one with the in-app driver report from
 | Symptom | Likely cause | Try |
 |---|---|---|
 | Toggle moves to On, no tint, notification appears | Active engine is `Overlay` but `SYSTEM_ALERT_WINDOW` not granted | Home → "Open settings" on the permission card; toggle the slider in system settings |
-| Toggle moves to On briefly, then back to Off | `startForeground()` rejected by the OS (Android 12+) | Open the app to foreground first, then toggle |
+| Toggle moves to On briefly, then back to Off | `startForeground()` rejected by the OS (Android 12+) | The QS tile/widget path now opens the app automatically when Android blocks the background start; use the Home permission card if overlay permission is missing |
 | Toggle stays On, notification missing | Notification channel disabled by user | Long-press the app icon → App info → Notifications → enable "Filter status" |
 | Tint applies but is invisible | You picked a tint-only preset (Amber/Red/etc) with overlay engine + `dim=0` on Android 12+ | This was a bug fixed in v0.4.0+. Update; the overlay alpha now derives from tint strength too |
 

@@ -3,7 +3,6 @@ package com.openlumen.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import com.openlumen.prefs.PreferencesStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -62,15 +61,9 @@ class BootReceiver : BroadcastReceiver() {
                     return@launch
                 }
                 val svc = Intent(context, LumenService::class.java)
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        context.startForegroundService(svc)
-                    } else {
-                        context.startService(svc)
-                    }
+                val result = LumenServiceStarter.start(context, svc, tag)
+                if (result.started) {
                     Log.d(tag, "LumenService start scheduled")
-                } catch (t: Throwable) {
-                    Log.e(tag, "startForegroundService failed: ${t.message}", t)
                 }
             } catch (t: Throwable) {
                 Log.e(tag, "BootReceiver crashed: ${t.message}", t)

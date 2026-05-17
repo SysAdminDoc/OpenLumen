@@ -499,3 +499,15 @@ C137 is now implemented locally:
   `painterResource()`.
 - `:app:dependencies --configuration debugRuntimeClasspath` shows no
   `material-icons-extended` artifact.
+
+## C105 implementation state
+
+C105 is now implemented locally:
+
+- `LumenServiceStarter` wraps `startForegroundService` / `startService`
+  and identifies Android foreground-start restriction failures.
+- QS tile toggle-on rolls back `enabled=false` and opens the app when the
+  service start is blocked.
+- Widget toggle / preset taps now route through `WidgetActionReceiver`,
+  so blocked starts can be handled instead of failing as direct service
+  PendingIntents.

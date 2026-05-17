@@ -155,6 +155,14 @@ walks pre-`schemaVersion` blobs forward.
 5. Tile / boot receiver / widget receivers also write to DataStore — single
    source of truth.
 
+Foreground-service starts go through
+[LumenServiceStarter](app/src/main/java/com/openlumen/service/LumenServiceStarter.kt).
+It classifies Android 12+ `ForegroundServiceStartNotAllowedException`
+failures. QS tile and widget user actions use that result to roll back an
+enabled state that could not actually start and, for Android 15+ SAW
+background-start blocks, open the app so the Home overlay-permission card is
+visible.
+
 No background polling. The old 60-second ticker was removed in v0.3.0.
 
 ## Permissions
