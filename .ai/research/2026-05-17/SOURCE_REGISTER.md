@@ -665,17 +665,22 @@ informed.
   manager dump surface is `dumpsys activity exit-info`, used in the C143
   device-matrix MemoryLimiter smoke flow.
   https://android.googlesource.com/platform/frameworks/base/+/master/services/core/java/com/android/server/am/AppExitInfoTracker.java
+- **S267**: Android `Context` API reference — confirms
+  `ADVANCED_PROTECTION_SERVICE` is the system-service entry point for
+  retrieving `AdvancedProtectionManager`, used by the C130 reflection
+  implementation while the project remains on compile SDK 35.
+  https://developer.android.com/reference/android/content/Context
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b | 2 |
+| Local evidence | S00, S00b, S00c | 3 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
-| Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139 | 24 |
-| AAPM / a11y policy | S88-S90, S121, S134-S136 | 7 |
+| Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
+| AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
 | AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194 | 27 |
 | DataStore | S66, S95, S146-S147 | 4 |
 | F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
@@ -693,7 +698,7 @@ rev 3 has ≥2 sources. New evidence introduces 3 new candidates
 report surface, C131 Eye Dropper picker integration); each cites ≥2
 sources.
 
-Rev 5 coverage update: pass 3 added 37 more sources (S230-S266). The
+Rev 5 coverage update: pass 3 added 38 more sources (S230-S267). The
 newest coverage gap closed is **off-Play Android developer verification**,
 which was absent from rev 4.1 and now maps to C141. CI/action supply-chain
 coverage now includes the Node 24 deadline plus current action majors
@@ -704,4 +709,5 @@ that sharpens C95, C96, C124, and C144. S257 records the official SDK
 bootstrap source used to complete local verification after `JAVA_HOME` and
 `ANDROID_HOME` were initially missing. S258-S265 record the direct
 upstream tag / metadata checks used when implementing C142. S266 records
-the AOSP dump surface used for the C143 MemoryLimiter smoke flow.
+the AOSP dump surface used for the C143 MemoryLimiter smoke flow. S267
+records the Android `Context` service constant used by C130.

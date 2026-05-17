@@ -363,3 +363,18 @@ correctness set:
 No new external research was needed for this pass; the evidence source is
 local code review (S00/S00c). Verification covered unit tests with
 `--rerun-tasks`, debug assemble, lint, and `git diff --check`.
+
+## Implementation update (C130)
+
+C130 needed one primary-source refresh because the project still compiles
+against SDK 35 while the API is Android 17 / API 36. The Android API
+reference confirms:
+
+- `AdvancedProtectionManager.isAdvancedProtectionEnabled()` exists in API
+  36 and requires `QUERY_ADVANCED_PROTECTION_MODE` (S134).
+- `Context.ADVANCED_PROTECTION_SERVICE` is the system-service lookup key
+  for `AdvancedProtectionManager` (S267).
+
+Implementation uses reflection for both the service-name lookup and method
+call so the repo can expose the report field before the C95/C103 toolchain
+and target-SDK migration lands.

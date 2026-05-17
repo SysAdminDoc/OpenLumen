@@ -339,3 +339,6 @@ stable base for Direct Boot restore.
   account / identity work outside Git.
 - **C137/C138 are the next code-level candidates** once maintainer-only
   C141 and release-packaging gates are accounted for.
+- **C130 shipped 2026-05-17**. Driver reports now include a reflection-
+  gated Android 17 Advanced Protection section and declare
+  `QUERY_ADVANCED_PROTECTION_MODE`. Sources: S134, S267.

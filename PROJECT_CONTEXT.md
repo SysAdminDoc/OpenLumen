@@ -163,6 +163,9 @@ Requested (manifest at [app/src/main/AndroidManifest.xml](app/src/main/AndroidMa
 - `RECEIVE_BOOT_COMPLETED` — restore filter after reboot.
 - `POST_NOTIFICATIONS` (API 33+) — FGS notification visibility.
 - `WRITE_SECURE_SETTINGS` — CDM engine (granted only via ADB).
+- `QUERY_ADVANCED_PROTECTION_MODE` — Android 17+ driver-report AAPM state
+  query; reported as `n/a` on older APIs and `unknown` if the platform
+  denies the query.
 - `SCHEDULE_EXACT_ALARM` — precise schedule transitions.
 
 The manifest also declares
@@ -372,6 +375,10 @@ watchpoints future sessions should not miss:
   pass-2 race/stale-cache findings: ramp atomicity, cancel-before-clear,
   CDM partial-cache invalidation, overlay install/apply/clear locking, and
   SF/KCAL failed-write cache invalidation.
+- **AAPM driver-report surface (C130)**: shipped 2026-05-17. The report
+  has a reflection-gated Android 17 Advanced Protection section and a
+  declared `QUERY_ADVANCED_PROTECTION_MODE` permission; older devices show
+  `n/a`.
 - **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
   stable AndroidX floor refresh rather than mixing broad dependency churn
   into the toolchain migration.

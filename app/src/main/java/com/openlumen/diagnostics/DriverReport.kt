@@ -11,6 +11,7 @@ import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.engines.KcalEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
 import com.openlumen.prefs.Preferences
+import java.lang.reflect.InvocationTargetException
 import java.time.Instant
 
 /**
@@ -29,7 +30,9 @@ import java.time.Instant
 object DriverReport {
 
     /** Bump when the layout changes so we can spot stale-format reports. */
-    private const val REPORT_VERSION = 1
+    private const val REPORT_VERSION = 2
+    private const val QUERY_ADVANCED_PROTECTION_MODE =
+        "android.permission.QUERY_ADVANCED_PROTECTION_MODE"
 
     fun build(
         context: Context,
@@ -40,6 +43,7 @@ object DriverReport {
         appendApp(context)
         appendDevice()
         appendPermissions(context)
+        appendAdvancedProtection(context)
         appendProbes(probes)
         appendConfig(prefs)
         appendDiagnostics(context)
@@ -114,6 +118,11 @@ object DriverReport {
         val overlay = if (Settings.canDrawOverlays(context)) "granted" else "not granted"
         appendLine("SYSTEM_ALERT_WINDOW: $overlay")
         appendLine("WRITE_SECURE_SETTINGS: ${grantStatus(context, Manifest.permission.WRITE_SECURE_SETTINGS)}")
+        if (Build.VERSION.SDK_INT >= 36) {
+            appendLine("QUERY_ADVANCED_PROTECTION_MODE: ${grantStatus(context, QUERY_ADVANCED_PROTECTION_MODE)}")
+        } else {
+            appendLine("QUERY_ADVANCED_PROTECTION_MODE: n/a (API <36)")
+        }
         if (Build.VERSION.SDK_INT >= 33) {
             appendLine("POST_NOTIFICATIONS: ${grantStatus(context, Manifest.permission.POST_NOTIFICATIONS)}")
         } else {
@@ -126,6 +135,14 @@ object DriverReport {
             "implicit (API <31)"
         }
         appendLine("Exact alarms: $exactAlarm")
+        appendLine()
+    }
+
+    private fun StringBuilder.appendAdvancedProtection(context: Context) {
+        appendLine("Advanced Protection")
+        appendLine("---")
+        appendLine("State: ${advancedProtectionStatus(context)}")
+        appendLine("OpenLumen impact: none; no AccessibilityService or UsageStats backend is used.")
         appendLine()
     }
 
@@ -187,4 +204,26 @@ object DriverReport {
             PackageManager.PERMISSION_GRANTED -> "granted"
             else -> "not granted"
         }
+
+    private fun advancedProtectionStatus(context: Context): String {
+        if (Build.VERSION.SDK_INT < 36) return "n/a (API <36)"
+        return try {
+            val serviceName = runCatching {
+                Context::class.java.getField("ADVANCED_PROTECTION_SERVICE").get(null) as? String
+            }.getOrNull() ?: "advanced_protection"
+            val service = context.getSystemService(serviceName)
+                ?: return "unknown (system service unavailable)"
+            val enabled = service.javaClass
+                .getMethod("isAdvancedProtectionEnabled")
+                .invoke(service) as? Boolean
+                ?: return "unknown (unexpected API return)"
+            if (enabled) "enabled" else "disabled"
+        } catch (t: Throwable) {
+            val cause = (t as? InvocationTargetException)?.targetException ?: t
+            when (cause) {
+                is SecurityException -> "unknown (QUERY_ADVANCED_PROTECTION_MODE not granted)"
+                else -> "unknown (${cause.javaClass.simpleName})"
+            }
+        }
+    }
 }

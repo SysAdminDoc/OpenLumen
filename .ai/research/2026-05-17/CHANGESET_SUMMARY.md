@@ -375,3 +375,33 @@ outside Git, so the next implementable roadmap work was C132-C136.
 - `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142
   actionable tasks).
 - `git diff --check` passed with only the repo's CRLF conversion warnings.
+
+## Implementation pass 7 (C130, 2026-05-17)
+
+This pass implemented **C130 — AAPM driver-report surface** after the
+C132-C136 correctness batch. It remained locally implementable while C141
+and C140 require maintainer/account or release-asset work.
+
+### Files modified (pass 7)
+
+| File | Why |
+|---|---|
+| `app/src/main/AndroidManifest.xml` | Declared `android.permission.QUERY_ADVANCED_PROTECTION_MODE` for the Android 17 AAPM status query. |
+| `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt` | Bumped report format to v2 and added a reflection-gated Advanced Protection section returning `enabled`, `disabled`, `n/a`, or bounded `unknown` status. |
+| `ROADMAP.md` | Marked C130 shipped and added the implementation-progress note. |
+| `PROJECT_CONTEXT.md` | Added the AAPM permission/report behavior to durable context. |
+| `CHANGELOG.md` | Added the driver-report AAPM status change under `[Unreleased]`. |
+| `docs/android-17-readiness.md` | Updated the C130 test-plan wording to match the implemented report statuses. |
+| `docs/threat-model.md` | Recorded the AAPM permission query in the platform/privacy posture. |
+| `docs/v0.5.0-release-readiness.md` | Marked C130 shipped instead of a soft gate. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S267 for the `Context.ADVANCED_PROTECTION_SERVICE` reference. |
+
+### Verification (pass 7)
+
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --stacktrace`
+  passed (`BUILD SUCCESSFUL`, 133 actionable tasks).
+- `:app:assembleDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 98
+  actionable tasks).
+- `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142
+  actionable tasks). This specifically covered the API-36 permission
+  declaration while the repo still compiles against SDK 35.

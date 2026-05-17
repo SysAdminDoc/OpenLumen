@@ -32,6 +32,10 @@ major versions.
   partial reflection cache failures. `OverlayEngine` serializes view /
   `WindowManager` mutations. SurfaceFlinger and KCAL now invalidate their
   cached driver path/code after failed apply/clear writes.
+- [x] **C130 — AAPM driver-report surface** shipped on 2026-05-17.
+  The driver report now includes a reflection-gated Android 17 Advanced
+  Protection section, declares `QUERY_ADVANCED_PROTECTION_MODE`, and
+  reports `enabled`, `disabled`, `n/a`, or a bounded `unknown` reason.
 
 ## What changed in rev 5
 
@@ -838,7 +842,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 |---|---|---|---|---|---|---|---|---|
 | C128 | FabricatedOverlay engine spike | engine/platform | emerging | ~~Under Consideration~~ → Later (rev 4.1) | 4/4/3 | Android 12+ `FabricatedOverlay` API via Shizuku-bound `IOverlayManager`; spike must verify framebuffer impact vs theme-only effect | **Rev 4.1**: tier downgraded — Shizuku-in-ADB cannot create FabricatedOverlays on Android 12L+ (S223). Becomes a root-tier candidate, not Shizuku-not-root. Merge into C06 root-tier scope. | S168, S163, S164, S222, S223 |
 | C129 | OLED-aware gamma LUT clamp | engine/image quality | emerging | Later | 3/4/3 | Successor to C66 scalar clamp; per-channel 256-entry LUT to keep `(0,0,0)` truly off across the bottom of the dim range | Same bundled-LUT-vs-runtime-compute tradeoff as C63 | S174, S100, S160 |
-| C130 | AAPM driver-report surface | docs/transparency/security | rare | Now | 3/1/1 | Reflection-gated `AdvancedProtectionManager` query in `DriverReport.kt`; info card on Driver tab explains AAPM has no effect on OpenLumen | Pairs with rev 3's C79 / C80 rejection rationale; cheap transparency win | S134, S135, S136 |
+| C130 | AAPM driver-report surface | docs/transparency/security | rare | Shipped 2026-05-17 | 3/1/1 | Reflection-gated `AdvancedProtectionManager` query in `DriverReport.kt`; driver report explains AAPM has no effect on OpenLumen | Pairs with rev 3's C79 / C80 rejection rationale; cheap transparency win. Shipped after rev 5. | S134, S135, S136, S267 |
 | C131 | Eye Dropper integration on Android 17+ | UX/feature | emerging | Later | 2/2/1 | Custom-RGB picker on Home gains an optional "sample color" button that fires `OPEN_EYE_DROPPER` and consumes the returned color; hidden on pre-17 devices | Optional UX affordance; Android 17 device base is tiny in year one | S129, S139 |
 
 ### New candidates (rev 4.1 — second-pass code review + F-Droid + Compose)

@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test compilation on this toolchain.
 
 ### Changed
+- Driver reports now include an Android 17 Advanced Protection section with
+  `enabled`, `disabled`, `n/a`, or bounded `unknown` status, and the app now
+  declares `QUERY_ADVANCED_PROTECTION_MODE` for that query path.
 - GitHub Actions workflows now use current Node-24-capable major tags:
   `checkout@v6`, `setup-java@v5`, `setup-gradle@v6`,
   `upload-artifact@v7`, `actions/attest@v4`, and

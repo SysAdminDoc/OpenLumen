@@ -413,3 +413,20 @@ Verification:
 - `:app:assembleDebug` passed.
 - `:app:lintDebug` passed.
 - `git diff --check` passed with CRLF warnings only.
+
+## C130 implementation state
+
+C130 is now implemented locally:
+
+- Manifest declares `android.permission.QUERY_ADVANCED_PROTECTION_MODE`
+  with an `UnknownPermission` lint suppression so compile SDK 35 can keep
+  building until the Android 17 toolchain migration.
+- `DriverReport` format is now v2 and includes an "Advanced Protection"
+  section.
+- The report uses reflection to retrieve `Context.ADVANCED_PROTECTION_SERVICE`
+  and call `isAdvancedProtectionEnabled()` only on API 36+; older APIs
+  report `n/a (API <36)`.
+- Security failures or OEM/API drift report a bounded `unknown` reason
+  instead of throwing while generating a report.
+
+Verification is tracked in `CHANGESET_SUMMARY.md` pass 7.

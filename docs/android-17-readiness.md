@@ -80,8 +80,8 @@ When the first stable Android 17 image lands (June 2026):
    build tools (no merged-manifest changes from AGP 9.x).
 7. Confirm `actions/attest@v4` still attests against the
    new artifact format.
-8. Re-run the in-app driver report. The new AAPM block (C130) should
-   appear when AAPM is on; otherwise the block reports "off" or "unknown."
+8. Re-run the in-app driver report. The AAPM block (C130) should report
+   `enabled`, `disabled`, `n/a (API <36)`, or a bounded `unknown` reason.
 9. Compare driver-report fingerprint against the most recent stored
    sample. The fingerprint captures the build identifier so version
    comparisons are straightforward.
@@ -122,7 +122,8 @@ We will:
 - **C106** — `BOOT_COMPLETED` FGS verification.
 - **C111** — BAL hardening readiness (PendingIntent/IntentSender ->
   `_ALLOW_IF_VISIBLE`).
-- **C130** — AAPM driver-report surface (rev 4 new).
+- **C130** — AAPM driver-report surface (rev 4 new). Shipped
+  2026-05-17.
 - **C131** — Eye Dropper integration on Android 17+ (rev 4 new).
 - **C143** — Android 17 memory/resizability smoke expansion (rev 5 new).
 

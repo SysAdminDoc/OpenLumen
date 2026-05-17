@@ -178,7 +178,8 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C134 | Shipped 2026-05-17 | CDM partial reflection cache failures clear cached handles. |
 | C135 | Shipped 2026-05-17 | Overlay install/apply/clear view mutation serialized with internal lock. |
 | C136 | Shipped 2026-05-17 | SF/KCAL failed apply/clear writes invalidate cached driver path/code. |
+| C130 | Shipped 2026-05-17 | Driver reports include API-36 reflection-gated Advanced Protection status. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
-remaining Android 17 / toolchain tasks (C95/C96/C103/C105/C106/C111/C130).
+remaining Android 17 / toolchain tasks (C95/C96/C103/C105/C106/C111).

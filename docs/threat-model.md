@@ -103,7 +103,9 @@ OpenLumen has no accounts and no authentication surfaces. The only
 3. The OS-level grant from Magisk / KernelSU for `su` (root manager UI).
 
 Each is the platform's responsibility. We surface the relevant grant
-states in the Driver tab and the driver report.
+states in the Driver tab and the driver report. On Android 17+, the
+driver report also declares and queries `QUERY_ADVANCED_PROTECTION_MODE`
+only to report Advanced Protection state.
 
 ### MASVS-NETWORK — Network communication
 
@@ -162,7 +164,7 @@ categorical coverage explicit.
 | Display content / screen content extraction | None | `MediaProjection` is not used. AccessibilityService is not declared. The overlay engine sets `FLAG_NOT_TOUCHABLE` and `FLAG_NOT_FOCUSABLE` so it cannot read events. |
 | Sensors used as a side channel | Low | Light sensor is the only sensor we touch; reading lux is the documented use, and the listener is paused while the screen is off. |
 | Diagnostic / telemetry surfaces | Low | `DiagnosticsLog` is ring-buffered local text. Not auto-uploaded. User shares manually via SAF. |
-| AAPM transparency | Med (UX, not risk) | Rev 4 C130 surfaces `AdvancedProtectionManager` state in the driver report so users can see whether they're on a hardened profile and what it implies. |
+| AAPM transparency | Med (UX, not risk) | C130 surfaces `AdvancedProtectionManager` state in the driver report so users can see whether they're on a hardened profile and what it implies. |
 
 ### MASVS-RESILIENCE — Anti-tampering / anti-debugging
 
