@@ -198,6 +198,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C144 | Shipped 2026-05-17 | Stable AndroidX floors refreshed; compileSdk is 36, targetSdk remains 35, and Direct Boot now has DataStore 1.2.1 available. |
 | C28/C102 | Shipped 2026-05-17 | Device-protected Direct Boot mirror, `LOCKED_BOOT_COMPLETED` receiver, and pre-unlock service restore path landed; device-matrix proof remains C01. |
 | C127 | Shipped 2026-05-17 | Home-tab perceived brightness reduction landed next to blue suppression, backed by sRGB-weighted transformed-white luminance. |
+| C48 | Shipped 2026-05-17 | Gradle dependency verification metadata is checked in and strict verification passes across assemble, lint, screenshot validation, and unit tests. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

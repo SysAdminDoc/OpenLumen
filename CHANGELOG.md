@@ -81,6 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation 2.9.8,
   DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0; `compileSdk`
   is now 36 while `targetSdk` stays 35 until Android 17 validation.
+- Gradle dependency verification is now enforced with checked-in
+  `gradle/verification-metadata.xml` generated after the AGP 9 and
+  AndroidX refreshes.
 - The foreground service is direct-boot aware and falls root-only driver
   choices back to the Overlay engine until the user unlocks.
 - Home now shows perceived brightness reduction next to blue-channel

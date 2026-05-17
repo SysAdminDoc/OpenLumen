@@ -2,94 +2,99 @@
 
 > Tied to roadmap candidate **C48** (Gradle dependency verification).
 >
-> This document is the **procedure**, not the artifact. The
-> `gradle/verification-metadata.xml` file is intentionally not checked
-> in yet — see "Why opt-in, not enforced today" below.
+> Status: **enforced**. `gradle/verification-metadata.xml` is checked in
+> after the AGP 9 migration and AndroidX baseline refresh, and the
+> current Gradle suite passes with `--dependency-verification=strict`.
 
 Gradle dependency verification ensures every downloaded artifact
 (transitive deps, plugins, the wrapper itself) matches a checksum
-recorded in `gradle/verification-metadata.xml`. Once enabled, a
+recorded in `gradle/verification-metadata.xml`. A
 tampered or unexpected dependency fails the build before any Kotlin
 compiles.
 
-## Why opt-in, not enforced today
+## Current policy
 
-OpenLumen has 200+ transitive dependencies across Compose, Hilt,
-DataStore, kotlinx-serialization, and the Android Gradle Plugin
-itself. Generating a clean lockfile that survives the next routine
-Dependabot update is non-trivial:
+- `gradle/verification-metadata.xml` is source-controlled and should be
+  reviewed like source code.
+- The file records SHA-256 checksums and PGP signature metadata where
+  Gradle could retrieve it.
+- The initial enforced metadata was generated after C95 (AGP 9) and
+  C144 (AndroidX stable baseline refresh) so routine toolchain churn did
+  not immediately invalidate the lockfile.
+- The metadata currently includes ignored PGP keys whose public keys
+  could not be downloaded from any key server during generation. Keep
+  those entries only when the artifact checksum is expected and the
+  dependency/source is otherwise known.
+- CI and release maintainers should keep verification in strict mode.
 
-- Every AGP or Compose BOM bump invalidates dozens of hashes.
-- Gradle's metadata generation includes signature checks that fail
-  loudly on plugins published without signatures.
-- Locking down `androidx.*` artifacts requires regenerating after
-  every Compose BOM rev.
+## Refreshing the verification metadata
 
-Enabling verification globally today would mean every Dependabot PR
-fails until a maintainer regenerates the lockfile, which would push
-maintainers toward auto-merging the regenerated lockfile alongside
-the upgrade. That defeats the point.
-
-The plan is:
-
-1. **Document the procedure** (this file).
-2. **Generate dependency verification metadata** now that the AGP 9
-   migration (C95) and AndroidX baseline refresh (C144) have landed.
-3. **Check in the verified metadata** alongside the
-   first stable post-AGP-9 release.
-4. **Add a CI job** that regenerates and diffs the lockfile to catch
-   surprise additions before they ship.
-
-## Generating the verification metadata locally
-
-When you're ready (per step 3 above):
+Use a clean checkout and review the XML diff before committing:
 
 ```bash
-# 1. Clean checkout. Don't run this against a dirty Gradle cache —
-#    cached artifacts may have stale signatures.
+# 1. Clean checkout. Don't run this against a dirty Gradle cache.
 git stash
 ./gradlew --stop
 rm -rf ~/.gradle/caches
 
-# 2. Generate the metadata. The 'sha256,pgp' line below records both
-#    a SHA-256 hash and the PGP signature where available.
+# 2. Generate metadata for the release and validation surfaces.
 ./gradlew --write-verification-metadata sha256,pgp \
+    :app:assembleDebug \
     :app:assembleRelease \
-    :app:lint \
+    :app:lintDebug \
+    :app:validateDebugScreenshotTest \
+    :app:testDebugUnitTest \
     :core-engine:test \
     :core-schedule:test \
     :core-prefs:test
 
-# 3. Inspect gradle/verification-metadata.xml. Look for:
-#    - components without a sha256 — should be rare; investigate each
-#    - components with only-trusted-keys entries — preserve
-#    - components flagged as "unverified" — must be triaged before commit
-
-# 4. Run a sanity assemble against the new metadata.
-./gradlew :app:assembleDebug
+# 3. Prove the refreshed metadata is usable in strict mode.
+./gradlew --dependency-verification=strict \
+    :app:assembleDebug \
+    :app:lintDebug \
+    :app:validateDebugScreenshotTest \
+    :app:testDebugUnitTest \
+    :core-engine:test \
+    :core-schedule:test \
+    :core-prefs:test
 ```
 
 The first generation produces ~1000 lines of XML. Subsequent
 regenerations should produce diff-shaped output — only the changed
 artifacts.
 
+Review `gradle/verification-metadata.xml` for:
+
+- components without a SHA-256 checksum — investigate each one;
+- new ignored PGP keys — verify why Gradle could not fetch the key;
+- unexpected new groups or artifacts — compare to the dependency PR;
+- any entry marked unverified — triage before commit.
+
 ## Updating after a Dependabot PR
 
-Once verification is enabled, every Dependabot PR will fail CI on the
-verification check. The fix:
+Dependency PRs that add or upgrade artifacts will usually need a metadata
+refresh:
 
 ```bash
 git fetch origin
 git checkout dependabot/<branch>
 ./gradlew --write-verification-metadata sha256,pgp \
-    :app:assembleDebug --refresh-keys
+    :app:assembleDebug \
+    :app:lintDebug \
+    :app:testDebugUnitTest \
+    --refresh-keys
+./gradlew --dependency-verification=strict \
+    :app:assembleDebug \
+    :app:lintDebug \
+    :app:testDebugUnitTest
 git add gradle/verification-metadata.xml
 git commit -m "ci: refresh dependency verification metadata"
 git push
 ```
 
-Then re-request CI. The Dependabot PR auto-merges its branch into
-ours when it sees the verification update.
+Then re-request CI. Do not auto-merge a dependency bump just because the
+metadata can be regenerated; still read the release notes and inspect the
+new artifacts.
 
 ## Failure modes and what they mean
 
@@ -115,9 +120,10 @@ ours when it sees the verification update.
   SPDX-format dependency manifest on every release and weekly schedule,
   and runs an advisory scan against it.
 
-## Until this lands
+## Manual review still required
 
 The release procedure already documents a "dependency review" step
 that asks maintainers to check Dependabot's open PRs and read
 release notes before cutting a tag (see
-`docs/release-checklist.md`). Manual review is the interim control.
+`docs/release-checklist.md`). Dependency verification proves artifact
+identity; it does not prove that a legitimate new version is safe.

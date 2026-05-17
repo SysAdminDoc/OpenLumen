@@ -398,3 +398,7 @@ stable base for Direct Boot restore.
 - **C127 shipped 2026-05-17**. Home now shows perceived brightness
   reduction next to blue suppression, backed by transformed-white relative
   luminance in `MatrixPreview`. Source: S00n.
+- **C48 shipped 2026-05-17**. Gradle dependency verification metadata is
+  checked in after the AGP 9 / AndroidX refreshes, and strict verification
+  passes across assemble, lint, screenshot validation, and unit tests from
+  the local mirror. Source: S00o.

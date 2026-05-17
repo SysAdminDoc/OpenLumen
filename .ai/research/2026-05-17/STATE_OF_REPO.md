@@ -107,9 +107,9 @@ Three workflows under [.github/workflows/](../../../.github/workflows/):
 - **[release.yml](../../../.github/workflows/release.yml)** — keystore decode
   from `secrets.KEYSTORE_BASE64`, `assembleRelease`, no-INTERNET assertion on
   the release APK, SHA-256 sums, and
-  `actions/attest-build-provenance@v2` for SLSA provenance.
+  `actions/attest@v4` for release artifact provenance.
 - **[sbom.yml](../../../.github/workflows/sbom.yml)** — SPDX-JSON SBOM via
-  `anchore/sbom-action@v0` and an advisory scan via `anchore/scan-action@v6`.
+  `anchore/sbom-action@v0` and an advisory scan via `anchore/scan-action@v7`.
   Runs weekly Monday 06:00 UTC plus every release. `fail-build: false`
   intentionally (triage-then-fix posture documented in
   [docs/sbom-and-advisories.md](../../../docs/sbom-and-advisories.md)).
@@ -117,6 +117,9 @@ Three workflows under [.github/workflows/](../../../.github/workflows/):
 Dependabot is configured for Gradle and GitHub Actions
 ([.github/dependabot.yml](../../../.github/dependabot.yml)). All Actions
 pinned to major-version tags with a documented rotation policy.
+Gradle dependency verification metadata is now checked in at
+`gradle/verification-metadata.xml` and validated in strict mode after
+the AGP 9 / AndroidX refreshes.
 
 Issue templates: bug, driver_report, overlay_bug, feature_request.
 
@@ -462,6 +465,23 @@ C120 is now implemented locally:
   `actions/attest`.
 
 Verification is tracked in `CHANGESET_SUMMARY.md` pass 8.
+
+## C48 implementation state
+
+C48 is now implemented locally:
+
+- `gradle/verification-metadata.xml` is checked in with metadata and
+  signature verification enabled.
+- `docs/dependency-verification.md` now documents the enforced refresh
+  workflow instead of a deferred opt-in procedure.
+- Strict dependency verification passed from
+  `C:\Users\Xray\OpenLumen-agp9-verify` across app assemble, lint,
+  screenshot validation, and app/module unit tests.
+- The metadata includes ignored PGP keys for key-server download
+  failures; new ignored-key entries remain a manual review item on
+  future dependency refreshes.
+
+Verification is tracked in `CHANGESET_SUMMARY.md` pass 22.
 
 ## C111 implementation state
 

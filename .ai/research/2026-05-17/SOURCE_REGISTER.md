@@ -5,7 +5,7 @@ roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
 entries through `S281` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00n)
+## Local evidence (S00 / S00b-S00o)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -739,6 +739,14 @@ informed.
   `MatrixPreviewTest.kt` covers identity, dimming, and weighted-channel
   behavior. Focused verification passed with `:app:testDebugUnitTest` and
   `:app:assembleDebug` from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- **S00o**: Local implementation evidence for C48 —
+  `gradle/verification-metadata.xml` is checked in after C95/C144, with
+  `verify-metadata` and `verify-signatures` enabled. Strict validation
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify` using
+  `--dependency-verification=strict` across `:app:assembleDebug`,
+  `:app:lintDebug`, `:app:validateDebugScreenshotTest`,
+  `:app:testDebugUnitTest`, `:core-engine:test`, `:core-schedule:test`,
+  and `:core-prefs:test`.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -786,7 +794,7 @@ informed.
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n | 14 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o | 15 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -839,5 +847,6 @@ S00k records the local C35 final icon assets. S00l records the C144
 stable AndroidX baseline refresh and full local-mirror validation. S00m
 records the C28/C102 Direct Boot implementation evidence and focused
 verification. S00n records the C127 perceived-luminance implementation
-and focused verification. S275-S281 capture the AndroidX / Compose
-release evidence used for that batch.
+and focused verification. S00o records the C48 checked-in dependency
+verification metadata and strict Gradle validation. S275-S281 capture the
+AndroidX / Compose release evidence used for that batch.

@@ -72,6 +72,11 @@ major versions.
   1.13.0, Lifecycle 2.10.0, Navigation 2.9.8, DataStore 1.2.1, Material
   3 1.4.0, and core-ktx 1.18.0 with `compileSdk = 36` and `targetSdk =
   35`.
+- [x] **C48 — Gradle dependency verification** shipped on 2026-05-17.
+  `gradle/verification-metadata.xml` is now checked in after the AGP 9
+  and AndroidX refreshes, and the mirror build passes assemble, lint,
+  screenshot validation, and unit tests with
+  `--dependency-verification=strict`.
 - [x] **C28 / C102 — Direct Boot restore** shipped on 2026-05-17. The
   unlocked service mirrors the last active tint matrix and selected engine
   to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
@@ -519,7 +524,10 @@ Shipped on `main` (full list preserved from rev 2):
 - **C45** Release checklist ([docs/release-checklist.md](docs/release-checklist.md))
 - **C46** Dependency update cadence — Dependabot weekly
 - **C47** Dependabot/Renovate ([.github/dependabot.yml](.github/dependabot.yml))
-- **C48** Gradle dependency verification — procedure documented ([docs/dependency-verification.md](docs/dependency-verification.md)); enforcement deferred to post-AGP 9 to avoid trampling Dependabot PRs
+- **C48** Gradle dependency verification — `gradle/verification-metadata.xml`
+  is checked in and enforced after the AGP 9 / AndroidX baseline refresh;
+  [docs/dependency-verification.md](docs/dependency-verification.md)
+  documents strict verification and refresh review. Source: S00o.
 - **C49** Pin GitHub Actions
 - **C50** No-INTERNET CI assertion — `permissions-audit` job
 - **C51** OWASP MASVS-lite threat model ([docs/threat-model.md](docs/threat-model.md))
@@ -978,6 +986,12 @@ above; the others continue with their rev 2 placement.
   Kotlin source tree, tests, `docs/**`, last 30 commits.
 - **S00b**: 2026-05-17 in-tree audit hardening pass — see "Hardening"
   section above.
+- **S00o**: 2026-05-17 C48 dependency-verification implementation —
+  `gradle/verification-metadata.xml` was generated after C95/C144 and
+  strict verification passed from `C:\Users\Xray\OpenLumen-agp9-verify`
+  across `:app:assembleDebug`, `:app:lintDebug`,
+  `:app:validateDebugScreenshotTest`, `:app:testDebugUnitTest`,
+  `:core-engine:test`, `:core-schedule:test`, and `:core-prefs:test`.
 
 ### External URLs (rev 2 — preserved)
 

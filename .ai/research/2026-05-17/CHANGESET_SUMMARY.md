@@ -775,3 +775,24 @@ This pass implemented **C127 — Perceived-luminance reduction indicator**.
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 - `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
   passed from the same local mirror.
+
+## Implementation pass 22 (C48, 2026-05-17)
+
+This pass implemented **C48 — Gradle dependency verification**.
+
+### Files modified (pass 22)
+
+| File | Why |
+|---|---|
+| `gradle/verification-metadata.xml` | Added checked-in Gradle dependency verification metadata after the AGP 9 and AndroidX refreshes. |
+| `docs/dependency-verification.md` | Rewrote the procedure from deferred/opt-in to enforced strict verification and refresh review. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md` | Marked C48 shipped and documented the supply-chain control. |
+| `.ai/research/2026-05-17/*.md` | Added S00o and recorded the implementation / verification state. |
+
+### Verification (pass 22)
+
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- The generated metadata contains ignored PGP keys for keys that could
+  not be downloaded from key servers; future dependency refreshes must
+  review new ignored-key entries rather than treating them as automatic.

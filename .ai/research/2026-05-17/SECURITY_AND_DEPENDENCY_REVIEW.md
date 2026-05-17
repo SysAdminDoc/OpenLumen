@@ -275,9 +275,12 @@ Kotlin 2.3.21, KSP 2.3.8, Dagger/Hilt 2.59.2, and AndroidX Hilt
 Compose 1.3.0. Dagger/Hilt 2.59.2 is still the right pairing because it
 fixes AGP-9-era Hilt transform / incremental-build issues (S274).
 
-Follow-up: C144 is now complete. Generate Gradle dependency verification
-metadata next once release-surface review is ready, because the largest
-planned dependency churn has landed.
+Follow-up complete: C48 now checks in Gradle dependency verification
+metadata generated after this train and the AndroidX baseline refresh.
+Strict verification passed across assemble, lint, screenshot validation,
+and unit-test tasks from the local mirror. The metadata includes ignored
+PGP keys where public keys could not be downloaded from key servers; new
+ignored-key entries should be reviewed during future dependency refreshes.
 
 ### AndroidX stable baseline refresh
 

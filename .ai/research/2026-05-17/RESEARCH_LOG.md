@@ -668,3 +668,26 @@ Verification:
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 - `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
   passed from the same local mirror.
+
+## Implementation update (C48)
+
+C48 became executable after the AGP 9 train (C95/C96/C101/C124) and
+AndroidX baseline refresh (C144) landed. The earlier procedure-only
+state is now replaced by checked-in verification metadata.
+
+Implementation:
+
+- Generated `gradle/verification-metadata.xml` with `sha256,pgp`
+  metadata after the dependency churn settled.
+- Checked in the metadata with `verify-metadata` and `verify-signatures`
+  enabled.
+- Updated `docs/dependency-verification.md` from an opt-in procedure to
+  the enforced refresh/review workflow.
+- Noted that generation added ignored PGP keys where public keys could
+  not be downloaded from key servers; those entries require review on
+  future dependency refreshes.
+
+Verification:
+
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
