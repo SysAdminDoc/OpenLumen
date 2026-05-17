@@ -850,3 +850,23 @@ This pass implemented **C122 — Roborazzi gold-image CI**.
   passed against the baselines.
 - `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:verifyRoborazziDebug :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
   passed after refreshing `gradle/verification-metadata.xml`.
+
+## Implementation pass 25 (C139, 2026-05-17)
+
+This pass implemented **C139 — import duplicate-name UI feedback**.
+
+### Files modified (pass 25)
+
+| File | Why |
+|---|---|
+| `core-prefs/src/main/java/com/openlumen/prefs/PreferencesStore.kt` | Added `ImportSummary`, duplicate-profile-name detection, and `Result<ImportSummary>` returns for `importFrom()` / `previewImport()`. |
+| `core-prefs/src/test/java/com/openlumen/prefs/ProfilesTest.kt` | Added JVM coverage for duplicate-name summary behavior. |
+| `app/src/main/java/com/openlumen/viewmodel/OpenLumenViewModel.kt` | Carried `ImportSummary` through preview/apply and surfaced duplicate-name results after import. |
+| `app/src/main/java/com/openlumen/ui/screens/AboutScreen.kt`, `app/src/main/res/values/strings.xml` | Displayed duplicate profile names in the import preview dialog. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `docs/profile-import-formats.md` | Marked C139 shipped and documented the import-summary contract. |
+| `.ai/research/2026-05-17/*.md` | Added S00r and recorded the implementation state. |
+
+### Verification (pass 25)
+
+- `:core-prefs:test :app:compileDebugKotlin :app:testDebugUnitTest --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.

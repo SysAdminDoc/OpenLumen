@@ -178,7 +178,7 @@ as new candidate C137.
 | C136 | `SurfaceFlingerEngine`/`KcalEngine` exit-code checking + cache invalidation on regression | Now | 4/2/1 | Med-severity silent-failure surface; user sees "filter on" but no tint after an OTA. |
 | C137 | `material-icons-extended` deprecation migration | Next | 2/2/1 | New evidence (S229) — migrate to Material Symbols / vector drawables. |
 | C138 | `PreferencesStore` import-size cap byte-correctness | Next | 3/1/1 | Med-severity input-validation bug; trivial to fix at InputStream level. |
-| C139 | `PreferencesStore` import duplicate-name UI feedback (`droppedDuplicateNames` in `ImportSummary`) | Later | 2/2/1 | Med (UX) — silent dedupe surprises users. |
+| C139 | `PreferencesStore` import duplicate-name UI feedback (`droppedDuplicateNames` in `ImportSummary`) | Shipped 2026-05-17 | 2/2/1 | Med (UX) — silent dedupe surprised users; S00r records implementation. |
 | C140 | F-Droid initial submission (RFP optional, direct MR to fdroiddata) | Now | 5/2/2 | First-time submission, no prior MR; gates the entire F-Droid distribution. Sources: S203-S211. |
 
 ## Tier shifts for existing candidates (second pass)

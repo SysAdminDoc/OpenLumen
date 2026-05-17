@@ -449,6 +449,10 @@ watchpoints future sessions should not miss:
 - **Perceived luminance indicator (C127)**: shipped 2026-05-17. Home
   shows transformed-white perceived brightness reduction next to the
   existing blue-channel reduction metric.
+- **Import duplicate-name feedback (C139)**: shipped 2026-05-17.
+  `PreferencesStore.importFrom()` / `previewImport()` return
+  `ImportSummary`; the import preview and result message name duplicate
+  saved profiles skipped by the last-write-wins sanitizer.
 - **AndroidX stable refresh (C144)**: shipped 2026-05-17. The Android 17
   `targetSdk` bump remains separate C103 work.
 

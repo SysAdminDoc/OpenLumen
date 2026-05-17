@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.prefs.ImportSummary
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
@@ -231,20 +232,34 @@ class OpenLumenViewModel @Inject constructor(
 
     fun importFrom(uri: Uri) = viewModelScope.launch {
         val result = prefs.importFrom(uri)
-        _exportResult.value = if (result.isSuccess) "Imported" else "Import failed: ${result.exceptionOrNull()?.message}"
+        _exportResult.value = if (result.isSuccess) {
+            importMessage(result.getOrThrow())
+        } else {
+            "Import failed: ${result.exceptionOrNull()?.message}"
+        }
     }
+
+    private fun importMessage(summary: ImportSummary): String =
+        if (summary.droppedDuplicateNames.isEmpty()) {
+            "Imported"
+        } else {
+            "Imported; skipped duplicate profiles: ${summary.droppedDuplicateNames.joinToString(", ")}"
+        }
 
     fun consumeExportResult() { _exportResult.value = null }
 
     /**
      * Import preview (C30). Decodes + migrates + sanitizes the incoming
-     * profile without writing it. UI uses the [Preferences] for a diff view;
-     * if the user confirms, the same URI goes through [importFrom] to apply.
+     * profile without writing it. UI uses the [ImportSummary] for a diff
+     * view and duplicate-profile warning; if the user confirms, the same URI
+     * goes through [importFrom] to apply.
      */
     private val _pendingImport = MutableStateFlow<PendingImport?>(null)
     val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
 
-    data class PendingImport(val uri: Uri, val decoded: Preferences)
+    data class PendingImport(val uri: Uri, val summary: ImportSummary) {
+        val decoded: Preferences get() = summary.preferences
+    }
 
     fun beginImportPreview(uri: Uri) = viewModelScope.launch {
         val result = prefs.previewImport(uri)

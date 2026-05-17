@@ -5,7 +5,7 @@ roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
 entries through `S284` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00q)
+## Local evidence (S00 / S00b-S00r)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -766,6 +766,12 @@ informed.
   Strict validation passed from `C:\Users\Xray\OpenLumen-agp9-verify`
   across assemble, lint, Compose screenshot validation, Roborazzi
   verification, and unit tests.
+- **S00r**: Local implementation evidence for C139 —
+  `PreferencesStore.importFrom()` and `previewImport()` now return
+  `ImportSummary`; duplicate saved-profile names skipped by
+  `sanitizeProfiles()` are surfaced in `AboutScreen` and in the
+  post-import result message. `ProfilesTest` covers duplicate-name
+  detection.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -825,7 +831,7 @@ informed.
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p, S00q | 17 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p, S00q, S00r | 18 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -882,7 +888,8 @@ and focused verification. S00o records the C48 checked-in dependency
 verification metadata and strict Gradle validation. S00p records the C123
 Glance widget rewrite and local emulator hardware-acceleration blocker.
 S00q records the C122 Roborazzi golden-image implementation and strict
-validation. S275-S281 capture the AndroidX / Compose release evidence
+validation. S00r records the C139 import duplicate-name feedback
+implementation. S275-S281 capture the AndroidX / Compose release evidence
 used for that batch. S282 records the official Glance AppWidget
 update/state guidance used for the C123 rewrite. S283-S284 record the
 Maven Central metadata used to pin Roborazzi/Robolectric for C122.

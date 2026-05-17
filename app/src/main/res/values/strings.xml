@@ -64,6 +64,7 @@
     <string name="import_preview_apply">Apply</string>
     <string name="import_preview_cancel">Cancel</string>
     <string name="import_preview_unchanged">No changes</string>
+    <string name="import_preview_duplicate_profiles">Duplicate profile names skipped: %1$s</string>
     <string name="diff_line">%1$s: %2$s -> %3$s</string>
     <string name="diff_active_preset">Active preset</string>
     <string name="diff_engine">Engine</string>

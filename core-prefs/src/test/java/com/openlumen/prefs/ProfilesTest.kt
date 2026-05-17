@@ -122,4 +122,14 @@ class ProfilesTest {
 
         assertThat(after.savedProfiles.map { it.name }).containsExactly("b")
     }
+
+    @Test fun `import duplicate summary reports profile names dropped by last-write-wins`() {
+        val first = NamedProfile("evening", Profiles.snapshot(Preferences(activePresetKey = "night")))
+        val second = NamedProfile("  evening  ", Profiles.snapshot(Preferences(activePresetKey = "amber")))
+        val third = NamedProfile("morning", Profiles.snapshot(Preferences(activePresetKey = "red")))
+
+        val dropped = droppedDuplicateProfileNames(listOf(first, second, third))
+
+        assertThat(dropped).containsExactly("evening")
+    }
 }

@@ -637,3 +637,14 @@ C122 is now implemented locally:
 - CI runs `:app:verifyRoborazziDebug` alongside
   `:app:validateDebugScreenshotTest`.
 - Strict dependency verification now includes the Roborazzi lane.
+
+## C139 implementation state
+
+C139 is now implemented locally:
+
+- `PreferencesStore.importFrom()` and `previewImport()` return
+  `ImportSummary`.
+- Duplicate saved-profile names dropped by the sanitizer are listed in
+  the import preview dialog and the post-import result message.
+- `ProfilesTest` covers duplicate-name detection for the last-write-wins
+  import behavior.

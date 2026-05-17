@@ -748,3 +748,27 @@ Verification:
   passed against the checked-in baselines.
 - `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:verifyRoborazziDebug :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
   passed after refreshing `gradle/verification-metadata.xml`.
+
+## Implementation update (C139)
+
+C139 was the next contained UX correctness item after C122. C63 was
+checked first, but the current engine abstraction cannot consume a true
+LUT/cross-channel correction path yet; shipping a table that no engine
+uses would be misleading.
+
+Implementation:
+
+- Added `ImportSummary` with `preferences` and
+  `droppedDuplicateNames`.
+- Changed `PreferencesStore.importFrom()` and `previewImport()` to
+  return `Result<ImportSummary>`.
+- Added duplicate-profile-name detection that mirrors the sanitizer's
+  existing last-write-wins behavior.
+- Surfaced duplicate names in the import preview dialog and in the
+  post-import result message.
+- Added focused JVM coverage in `ProfilesTest`.
+
+Verification:
+
+- `:core-prefs:test :app:compileDebugKotlin :app:testDebugUnitTest --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.

@@ -204,6 +204,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C48 | Shipped 2026-05-17 | Gradle dependency verification metadata is checked in and strict verification passes across assemble, lint, screenshot validation, and unit tests. |
 | C123 | Shipped 2026-05-17 | Toggle and preset home-screen widgets now render through Glance 1.1.1 while preserving the existing widget broadcast action path. |
 | C122 | Shipped 2026-05-17 | Roborazzi 1.60.0 / Robolectric 4.16.1 validates two checked-in theme-token PNG baselines in CI. |
+| C139 | Shipped 2026-05-17 | Profile import preview/result surfaces duplicate saved-profile names skipped by the sanitizer. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

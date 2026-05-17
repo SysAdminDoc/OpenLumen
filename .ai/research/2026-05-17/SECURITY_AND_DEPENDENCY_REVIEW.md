@@ -319,6 +319,13 @@ local input-validation bug where multi-byte text could exceed the
 intended byte budget while still passing a decoded-character count.
 Focused unit coverage lives in `PreferencesImportReadTest`.
 
+### C139 import duplicate-name transparency
+
+C139 is now shipped. This is UX transparency rather than a new security
+boundary: the sanitizer already dropped earlier duplicate saved-profile
+names with last-write-wins semantics, and the import preview/result now
+reports those dropped names through `ImportSummary` (S00r).
+
 ### C137 material icon dependency removal
 
 C137 is now shipped. The app no longer declares

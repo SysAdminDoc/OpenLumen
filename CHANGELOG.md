@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quick Settings and widget toggle-on paths now classify Android background
   foreground-service start rejections, roll back stale enabled state, and open
   the app when Android 15+ requires a visible overlay before starting.
+- Profile imports now report duplicate saved-profile names that were skipped
+  by the existing last-write-wins sanitizer.
 - Engine switches now reset the service target cache so SurfaceFlinger, KCAL,
   and other engines receive the first matrix emission even when the user did not
   change preset, intensity, or dim values.

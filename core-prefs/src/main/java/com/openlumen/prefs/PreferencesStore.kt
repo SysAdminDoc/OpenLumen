@@ -39,6 +39,11 @@ internal fun readImportBytes(input: InputStream, maxBytes: Int = MAX_IMPORT_FILE
     return out.toByteArray()
 }
 
+data class ImportSummary(
+    val preferences: Preferences,
+    val droppedDuplicateNames: List<String>
+)
+
 /**
  * Single-blob preferences store. We keep the whole [Preferences] object as a JSON string
  * to avoid N separate DataStore keys; bumping the schema only requires adding a new
@@ -98,11 +103,17 @@ class PreferencesStore(private val context: Context) {
      *  - Always preserve the user's current `enabled` state — importing should not
      *    silently flip the filter on/off behind the user's back.
      */
-    suspend fun importFrom(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun importFrom(uri: Uri): Result<ImportSummary> = withContext(Dispatchers.IO) {
         runCatching {
             val text = readAllFromUri(uri)
             val imported = decodeWithMigration(text)
-            update { current -> sanitize(imported, enabled = current.enabled) }
+            var appliedSummary: ImportSummary? = null
+            update { current ->
+                sanitizeImport(imported, enabled = current.enabled).also { summary ->
+                    appliedSummary = summary
+                }.preferences
+            }
+            checkNotNull(appliedSummary) { "Import summary was not produced" }
         }
     }
 
@@ -115,10 +126,10 @@ class PreferencesStore(private val context: Context) {
      * sanitization. The caller is responsible for handing the returned object
      * to [update] (or discarding it) based on user confirmation.
      */
-    suspend fun previewImport(uri: Uri): Result<Preferences> = withContext(Dispatchers.IO) {
+    suspend fun previewImport(uri: Uri): Result<ImportSummary> = withContext(Dispatchers.IO) {
         runCatching {
             val text = readAllFromUri(uri)
-            sanitize(decodeWithMigration(text))
+            sanitizeImport(decodeWithMigration(text))
         }
     }
 
@@ -165,6 +176,12 @@ class PreferencesStore(private val context: Context) {
         contrast = p.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f),
         savedProfiles = sanitizeProfiles(p.savedProfiles)
     )
+
+    private fun sanitizeImport(p: Preferences, enabled: Boolean = p.enabled): ImportSummary =
+        ImportSummary(
+            preferences = sanitize(p, enabled = enabled),
+            droppedDuplicateNames = droppedDuplicateProfileNames(p.savedProfiles)
+        )
 
     /**
      * Clamp every field of [m] into its valid range, replacing
@@ -234,8 +251,8 @@ class PreferencesStore(private val context: Context) {
         return list.asReversed()
             .asSequence()
             .mapNotNull { p ->
-                val name = p.name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
-                if (name.isBlank() || !seen.add(name)) null
+                val name = sanitizedProfileNameOrNull(p.name)
+                if (name == null || !seen.add(name)) null
                 else p.copy(name = name, snapshot = sanitizeSnapshot(p.snapshot))
             }
             .take(Preferences.MAX_PROFILES)
@@ -265,3 +282,23 @@ class PreferencesStore(private val context: Context) {
         const val MAX_FAVORITES = 8
     }
 }
+
+internal fun droppedDuplicateProfileNames(list: List<NamedProfile>): List<String> {
+    if (list.size < 2) return emptyList()
+    val keptFromEnd = mutableSetOf<String>()
+    val droppedEarlier = mutableListOf<String>()
+    list.asReversed()
+        .asSequence()
+        .mapNotNull { sanitizedProfileNameOrNull(it.name) }
+        .forEach { name ->
+            if (!keptFromEnd.add(name)) {
+                droppedEarlier += name
+            }
+        }
+    return droppedEarlier.asReversed().distinct()
+}
+
+private fun sanitizedProfileNameOrNull(raw: String): String? =
+    raw.trim()
+        .take(Preferences.MAX_PROFILE_NAME_LENGTH)
+        .takeIf { it.isNotBlank() }

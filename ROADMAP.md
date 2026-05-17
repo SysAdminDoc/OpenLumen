@@ -90,6 +90,11 @@ major versions.
   JVM/Robolectric theme-token golden lane. CI runs
   `:app:verifyRoborazziDebug`, and two textless PNG baselines live under
   `app/src/test/roborazzi/`.
+- [x] **C139 — import duplicate-name UI feedback** shipped on
+  2026-05-17. `PreferencesStore.importFrom()` and `previewImport()` now
+  return `ImportSummary`, and the import preview / result path lists
+  duplicate profile names that were skipped by the existing
+  last-write-wins sanitizer.
 - [x] **C28 / C102 — Direct Boot restore** shipped on 2026-05-17. The
   unlocked service mirrors the last active tint matrix and selected engine
   to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
@@ -919,7 +924,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C136 | Engine `apply` exit-code checking + cache invalidation on driver regression | reliability | new | Shipped 2026-05-17 | 4/2/1 | SurfaceFlinger invalidates `workingCode` on nonzero / "not found" apply-clear results; KCAL shell writes now `set -e` and invalidate `resolvedPaths` on nonzero exit | Med severity silent-failure surface after OTA / driver removal. Shipped after rev 5. | S00, `SurfaceFlingerEngine.kt`, `KcalEngine.kt` |
 | C137 | `material-icons-extended` deprecation migration | UX/upgrade strategy | new | Shipped 2026-05-17 | 2/2/1 | Replaced the seven Compose Material icon call sites with local vector resources and removed `compose-material-icons-extended` from the version catalog / app dependencies | The artifact is deprecated as of late-2025/2026 (S229); self-hosting the tiny icon set avoids deprecation churn without waiting for the C95/C110 Compose train | S229, S00f |
 | C138 | `PreferencesStore` import-size cap byte-correctness | input validation | new | Shipped 2026-05-17 | 3/1/1 | Added `readImportBytes()` to read at most `MAX_IMPORT_FILE_BYTES + 1` bytes at the `InputStream` level; reject if length exceeds the cap before decoding to chars | Med severity: `sb.length > MAX_IMPORT_BYTES` compared UTF-16 char count to a byte budget; high-BMP payloads could exceed the intended raw-byte cap | S00, S00e, `PreferencesStore.kt` |
-| C139 | `PreferencesStore` import duplicate-name UI feedback | UX | new | Later | 2/2/1 | Change `importFrom` / `previewImport` to return `Result<ImportSummary>` where `ImportSummary` includes `droppedDuplicateNames: List<String>`; surface in the import dialog | Med (UX) severity: silent profile-name dedupe on import surprises users who imported a backup containing two profiles with the same name | S00, `PreferencesStore.kt:221-234` |
+| C139 | `PreferencesStore` import duplicate-name UI feedback | UX | new | Shipped 2026-05-17 | 2/2/1 | `importFrom` / `previewImport` now return `Result<ImportSummary>` with `droppedDuplicateNames`; the import dialog and result message surface duplicate profile names skipped by the last-write-wins sanitizer | Med (UX) severity: silent profile-name dedupe on import surprised users who imported a backup containing two profiles with the same name | S00, S00r |
 | C140 | F-Droid initial submission (fdroiddata MR) | distribution | new | Now | 5/2/2 | Fork `gitlab.com/fdroid/fdroiddata`, create `metadata/com.openlumen.yml`, run `fdroid lint`, open MR labelled "New App". Allow 24-48h post-merge | OpenLumen has never been submitted (S203-S205 negative results across MR / RFP / app-search). Direct MR using the F-Droid Quick Start Guide (S206). Gated on C01 (real-device validation rows) and C36 (screenshots); C35 is now shipped. | S203, S204, S205, S206, S207, S210, S211, S00k |
 
 ### New candidates (rev 3)
@@ -1012,6 +1017,11 @@ above; the others continue with their rev 2 placement.
   `:app:verifyRoborazziDebug`; `gradle/verification-metadata.xml` was
   refreshed for Roborazzi/Robolectric dependencies; strict verification
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- **S00r**: 2026-05-17 C139 import duplicate-name feedback —
+  `PreferencesStore.importFrom()` and `previewImport()` return
+  `ImportSummary`; duplicate profile names dropped by the sanitizer are
+  reported in `AboutScreen`'s import preview and in the post-import result
+  message; `ProfilesTest` covers duplicate-name detection.
 
 ### External URLs (rev 2 — preserved)
 

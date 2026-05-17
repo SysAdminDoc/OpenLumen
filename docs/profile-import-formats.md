@@ -11,7 +11,8 @@ foreign blob, mapping fields onto OpenLumen's
 [`Preferences`](../core-prefs/src/main/java/com/openlumen/prefs/Preferences.kt)
 DTOs, and routing the result through the same
 `PreferencesStore.previewImport(uri)` → preview-dialog → confirm path the
-native importer uses.
+native importer uses. The preview path returns `ImportSummary` so callers
+can surface duplicate saved-profile names skipped by the sanitizer.
 
 ## Native format reminder
 

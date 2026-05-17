@@ -314,6 +314,17 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             title = { Text(stringResource(R.string.import_preview_title)) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    if (pending.summary.droppedDuplicateNames.isNotEmpty()) {
+                        Text(
+                            text = stringResource(
+                                R.string.import_preview_duplicate_profiles,
+                                pending.summary.droppedDuplicateNames.joinToString(", ")
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
                     val lines = describeDiff(ctx, currentPrefs, pending.decoded)
                     if (lines.isEmpty()) {
                         Text(stringResource(R.string.import_preview_unchanged))
