@@ -12,14 +12,15 @@ From [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) on
 
 | Dep | Current | Notes |
 |---|---|---|
-| AGP | 8.7.3 | C95 (Now): migrate to AGP 9.2.0 / Gradle 9.4.1; AGP 10 mid-2026 removes the AGP 8 opt-out paths (S140-S143, S237-S238). |
-| Kotlin | 2.1.0 | Pair the Kotlin/KSP bump with C95; AGP 9.x and newer Hilt lines assume a newer toolchain. |
-| KSP | 2.1.0-1.0.29 | Tracks Kotlin today; rev 5 notes KSP's newer lines decouple from old Kotlin-tied versioning, but do this with C95. |
+| AGP | 9.2.1 | C95 shipped 2026-05-17; Gradle wrapper is 9.4.1. AGP 10 remains a future watch item (S270). |
+| Kotlin | 2.3.21 | AGP 9 built-in Kotlin compiles Android modules; Compose and serialization plugins remain explicit where needed. |
+| KSP | 2.3.8 | Matches the post-C95 Kotlin/Hilt train and resolves from Maven Central (S273). |
 | Compose BOM | 2024.12.01 | Concrete rev 4.1 target: 2026.05.00; rev 5 AndroidX table confirms compose 1.11.1 / material3 1.4.0 stable (S225, S239, S253). |
-| Compose compiler | 1.5.15 | Compose Compiler plugin from Kotlin Compose plugin (`kotlin.plugin.compose`); compose compiler version is implied by the plugin. |
+| Compose compiler | Kotlin Compose plugin 2.3.21 | The stale standalone catalog version was removed; compose compiler is implied by the Kotlin Compose plugin. |
 | Material 3 | 1.3.1 | C110 surveys Material 3 Expressive components when timing fits; C137 removed the deprecated `material-icons-extended` dependency. |
-| Hilt | 2.53.1 | C124 target is now Hilt 2.59.2, but it is AGP-9-coupled; do not land independently before C95 (S240-S241). |
-| Hilt navigation-compose | 1.2.0 | C96: move `hiltViewModel()` to `androidx.hilt:hilt-lifecycle-viewmodel-compose` (1.3.0-stable Sep 2025; S144-S145). |
+| Hilt | 2.59.2 | C124 shipped with the AGP 9 train (S274). |
+| Hilt lifecycle-viewmodel-compose | 1.3.0 | C96 shipped; `hiltViewModel()` imports now use `androidx.hilt.lifecycle.viewmodel.compose` (S269). |
+| Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped an initial `@PreviewTest` fixture and CI validation. |
 | DataStore | 1.1.1 | C28 / C102: use stable 1.2.1 / Direct Boot APIs (`deviceProtectedDataStore()`, S252). |
 | kotlinx.serialization | 1.7.3 | No upgrade pressure. |
 | kotlinx.coroutines | 1.9.0 | No upgrade pressure. |
@@ -265,23 +266,21 @@ hardening, weak maintenance signals, or suspicious tag/release behavior.
 
 ### AGP / Gradle / Hilt dependency train
 
-AGP 9.2.0 requires Gradle 9.4.1 and Build Tools 36.0.0 (S237). Dagger /
-Hilt 2.59.2 is current, but the Hilt Gradle plugin line now assumes AGP
-9, and 2.59.2 specifically fixes AGP-9-era Hilt transform / incremental
-build issues (S240-S241). That changes the rev 4 guidance:
+This train is now shipped. The repo uses AGP 9.2.1, Gradle 9.4.1,
+Kotlin 2.3.21, KSP 2.3.8, Dagger/Hilt 2.59.2, and AndroidX Hilt
+Compose 1.3.0. Dagger/Hilt 2.59.2 is still the right pairing because it
+fixes AGP-9-era Hilt transform / incremental-build issues (S274).
 
-- Do **not** treat Hilt 2.56+ as a standalone low-risk pre-AGP-9 bump.
-- Land C95 first or in the same branch: AGP 9.2.0, Gradle 9.4.1,
-  SDK/build-tools update, CI validation.
-- Then land C96/C124: AndroidX Hilt artifact rename and Hilt 2.59.2.
+Follow-up: keep C144 as a separate AndroidX stable refresh so dependency
+churn remains attributable.
 
 ### AndroidX stable baseline drift
 
 AndroidX current stable versions as of the rev 5 pass are materially
 newer than OpenLumen's floor: activity 1.13.0, core 1.18.0, lifecycle
 2.10.0, navigation 2.9.8, compose 1.11.1, material3 1.4.0, and
-DataStore 1.2.1 (S239, S252-S253). Track as **C144 (Next)** after the
-toolchain migration; this is not a security fire, but it reduces
+DataStore 1.2.1 (S239, S252-S253). Track as **C144 (Next)** now that the
+toolchain migration has landed; this is not a security fire, but it reduces
 future forced-upgrade pressure and unlocks Direct Boot restore work on
 stable DataStore APIs.
 

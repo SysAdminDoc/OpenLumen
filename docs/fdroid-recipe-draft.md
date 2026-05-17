@@ -185,7 +185,7 @@ Pulled from the F-Droid Quick Start Guide:
 | Risk | Likelihood | Mitigation |
 |---|---|---|
 | `commit: v0.4.0` tag missing on GitHub | low | Verify before opening the MR; release workflow creates the tag on `workflow_dispatch` |
-| F-Droid buildserver doesn't have JDK 17 by default | low | S208 confirms JDK 17 is the baseline; AGP 9.x will want JDK 21 — match the recipe to AGP version |
+| F-Droid buildserver doesn't have JDK 17 by default | low | AGP 9.2.1 builds with JDK 17 in the local validation path; keep the recipe's JDK floor aligned with the Gradle/AGP version actually committed |
 | `version-control-info.textproto` breaks reproducibility | high | Apply S156 fix as part of C120 |
 | `specialUse` FGS gets pushback from F-Droid reviewer | low | Anti-Features list (S210) does not flag it; the `<property>` element provides the use-case justification |
 | Description copy contains "Deep Sleep" preset name | low | The preset name is legacy from CF.Lumen; not a health claim. `docs/health-evidence.md` documents this explicitly |

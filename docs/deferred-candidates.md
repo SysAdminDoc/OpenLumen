@@ -120,23 +120,28 @@ maintainer who wants to ship to Play can recreate the evidence pack
 from primary sources; we have not committed maintenance bandwidth to
 the dual-channel release process.
 
-## Compose screenshot tests — C83 (hardware-blocked)
+## Compose screenshot tests — C83 (partially unblocked)
 
-**Status**: scaffold-only would be possible without hardware; running
-them needs a JVM + Compose test runtime.
+**Status**: C101 shipped the CI/runtime foundation on 2026-05-17:
+Compose Preview Screenshot Testing `0.0.1-alpha14`, an initial textless
+theme-token `@PreviewTest`, checked-in debug references, and
+`:app:validateDebugScreenshotTest` in CI. C83 is now the broader screen-
+coverage expansion, not the framework bootstrap.
 
 **Plan**:
 
-1. Add `androidx.compose.ui:ui-test-junit4` and `compose-bom`'s
-   `ui-test-manifest` to the app `androidTestImplementation` block.
-2. Add a screenshot test that exercises each tab with a fixed
-   `Preferences` snapshot via Hilt test rules.
-3. Use Roborazzi or Paparazzi for JVM-host screenshot capture (the
-   latter has more mature golden-image tooling).
+1. Add preview fixtures for each tab (Home / Schedule / Presets /
+   Driver / About) with fixed, representative `Preferences` snapshots.
+2. Keep fixtures text-light or locale-stable unless the test is
+   explicitly validating copy/layout.
+3. Add dark/light variants for the public app chrome and tablet-ish
+   widths once the first tab fixtures are stable.
+4. Consider Roborazzi only if Compose Preview Screenshot Testing cannot
+   express a needed device/font/layout dimension.
 
-**Why deferred**: the value comes from running the tests, not from
-having them. Without a CI runner that can render Compose layouts,
-the tests would never gate anything.
+**Why deferred**: the CI gate now exists, but full tab coverage needs a
+deliberate fixture design so goldens do not churn on localization,
+fonts, or unrelated content changes.
 
 ## Connected permission flow tests — C84 (hardware-blocked)
 

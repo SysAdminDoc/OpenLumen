@@ -33,8 +33,9 @@ the upgrade. That defeats the point.
 The plan is:
 
 1. **Document the procedure** (this file).
-2. **Wait for the dependency surface to stabilize** (after the AGP 9
-   migration spike, C95).
+2. **Wait for the dependency surface to stabilize** after the remaining
+   AndroidX baseline refresh (C144). The AGP 9 migration (C95) has
+   landed, but C144 is expected to churn many `androidx.*` hashes.
 3. **Generate a verified metadata** and check it in alongside the
    first stable post-AGP-9 release.
 4. **Add a CI job** that regenerates and diffs the lockfile to catch

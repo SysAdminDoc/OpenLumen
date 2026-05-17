@@ -138,7 +138,7 @@ deadline.
 | C141 | Android Developer Console package registration | Now | 5 | 2 | 2 | +1 | Distribution-blocking for certified devices in first enforcement regions if OpenLumen remains off-Play. |
 | C142 | CI action major rotation and SHA-pinning policy | Shipped 2026-05-17 | 4 | 2 | 2 | 0 | Implemented after rev 5: current major tags, `actions/attest@v4`, and documented major-tag policy with full-SHA exception path. |
 | C143 | Android 17 memory/resizability smoke expansion | Shipped 2026-05-17 | 3 | 1 | 1 | +1 | Implemented after rev 5: Android 17 readiness plus device-matrix MemoryLimiter and sw600dp smoke steps. |
-| C144 | AndroidX stable baseline refresh batch | Next | 3 | 2 | 2 | -1 | Useful, but should wait until AGP 9 / Hilt train lands. |
+| C144 | AndroidX stable baseline refresh batch | Next | 3 | 2 | 2 | -1 | Useful and now unblocked by the AGP 9 / Hilt train, but should remain separate from that migration for attribution. |
 
 ### Rev 5 Now-tier additions
 
@@ -152,15 +152,17 @@ were implemented after rev 5 and no longer block the Now queue.
 
 ### Rev 5 Next-tier addition
 
-- **C144 — AndroidX stable baseline refresh batch** after C95/C96/C124.
+- **C144 — AndroidX stable baseline refresh batch** after the shipped
+  C95/C96/C124 train.
 
 Rationale: dependency drift is real, but mixing AndroidX churn into the
 AGP 9 migration would make failures hard to isolate.
 
 ### Existing candidate refinements
 
-- **C95 / C96 / C124**: treat Hilt 2.59.2 as AGP-9-coupled. Do not land
-  the Hilt 2.59.x bump independently while the repo remains on AGP 8.7.3.
+- **C95 / C96 / C124**: shipped 2026-05-17 as one coupled AGP 9 / Hilt
+  train; do not re-open them in a broad AndroidX refresh unless a
+  regression is found.
 - **C103**: expand acceptance criteria to include Android 17
   `ApplicationExitInfo` memory-limiter review and sw600dp resizability /
   orientation checks.
@@ -189,7 +191,11 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C104 | Shipped 2026-05-17 | AAPM accessibility auto-revocation documented in threat / Android 17 / overlay design docs. |
 | C126 | Shipped 2026-05-17 | Health-evidence doc contains the 2025/2026 consensus-shift note and source refresh. |
 | C117 | Shipped 2026-05-17 | Engine target cache reset is isolated in `ApplyDecisionGate` with JVM coverage for same-matrix first emission after reset. |
+| C95 | Shipped 2026-05-17 | AGP 9.2.1 / Gradle 9.4.1 / Kotlin 2.3.21 / KSP 2.3.8 migration landed with built-in Kotlin support. |
+| C96 | Shipped 2026-05-17 | Compose `hiltViewModel()` imports moved to `androidx.hilt.lifecycle.viewmodel.compose`. |
+| C101 | Shipped 2026-05-17 | Compose screenshot plugin 0.0.1-alpha14, initial theme-token references, and CI validation job landed. |
+| C124 | Shipped 2026-05-17 | Dagger/Hilt bumped to 2.59.2 as part of the AGP 9 train. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
-remaining Android 17 / toolchain tasks (C95/C96/C103).
+remaining Android 17 device validation (C103).

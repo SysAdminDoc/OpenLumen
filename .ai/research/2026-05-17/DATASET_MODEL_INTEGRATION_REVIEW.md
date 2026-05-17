@@ -202,3 +202,11 @@ dependency bump. Tracked as **C142**.
 No new ML/data/model workstream was found. The rev 5 additions reinforce
 the conclusion that OpenLumen's "integration" surface is mostly platform
 and distribution infrastructure, not web APIs or external datasets.
+
+## Post-rev-5 implementation update
+
+C101 added a host-side Android tooling integration rather than a data/model
+integration: Compose Preview Screenshot Testing now runs in Gradle/CI with
+checked-in reference images. This is still aligned with the repository's
+offline philosophy because it adds no runtime SDK, telemetry, network API,
+or external service dependency to the app.

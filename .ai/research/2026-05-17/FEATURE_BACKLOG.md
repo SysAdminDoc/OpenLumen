@@ -319,12 +319,11 @@ stable base for Direct Boot restore.
 
 **Implementation sketch**:
 
-1. Land C95 first: AGP 9.2.0 + Gradle 9.4.1 + compile SDK/toolchain
-   validation.
-2. Land C96/C124 with the Hilt artifact rename and Hilt 2.59.2.
-3. Batch stable AndroidX updates; keep alpha tracks out unless a
+1. C95/C96/C124 are now landed: AGP 9.2.1 + Gradle 9.4.1 + Kotlin
+   2.3.21 + KSP 2.3.8 + Hilt 2.59.2.
+2. Batch stable AndroidX updates; keep alpha tracks out unless a
    candidate explicitly needs them.
-4. Re-run unit tests, lint, permission audit, profile export/import, and
+3. Re-run unit tests, lint, permission audit, profile export/import, and
    service smoke.
 
 ## Roadmap execution update after rev 5
@@ -376,3 +375,9 @@ stable base for Direct Boot restore.
   same active matrix dispatches again after reset, and the device matrix
   asks rooted SF/KCAL smoke testers to record first-emission pass/fail.
   Source: S00i.
+- **C95/C96/C101/C124 shipped 2026-05-17**. The AGP 9 / Hilt /
+  screenshot train is landed: AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21,
+  KSP 2.3.8, Hilt 2.59.2, AndroidX Hilt Compose 1.3.0, and Compose
+  screenshot plugin 0.0.1-alpha14. C83 remains broader tab/screen
+  screenshot coverage; C144 is now unblocked as a separate AndroidX
+  stable refresh. Source: S00j.

@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test compilation on this toolchain.
 
 ### Changed
+- Build tooling now uses AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21, and
+  KSP 2.3.8 with AGP 9's built-in Kotlin support instead of applying the
+  separate `org.jetbrains.kotlin.android` plugin.
+- Hilt now uses Dagger/Hilt 2.59.2, and Compose `hiltViewModel()` imports
+  now come from `androidx.hilt:hilt-lifecycle-viewmodel-compose` rather
+  than `hilt-navigation-compose`.
 - Release builds now disable AGP's packaged VCS-info metadata
   (`META-INF/version-control-info.textproto`) and document the F-Droid
   reproducibility rationale in `docs/reproducible-build.md`.
@@ -73,6 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   outside the included backup paths.
 
 ### Added
+- Compose Preview Screenshot Testing is wired into Gradle and CI with an
+  initial textless theme-token fixture plus checked-in debug reference
+  images.
 - `CONTRIBUTING.md`, `docs/ARCHITECTURE.md`, `docs/troubleshooting.md`,
   `docs/device-matrix.md`, `docs/release-checklist.md`,
   `docs/reproducible-build.md`, `docs/root-safety.md`,

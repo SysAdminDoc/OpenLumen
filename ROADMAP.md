@@ -10,6 +10,15 @@ major versions.
 
 ## Implementation progress after rev 5
 
+- [x] **C95 / C96 / C101 / C124 — AGP 9, Hilt Compose, screenshot CI
+  train** shipped on 2026-05-17. The build now uses AGP 9.2.1,
+  Gradle 9.4.1, Kotlin 2.3.21, KSP 2.3.8, Dagger/Hilt 2.59.2,
+  `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`, and
+  Compose Preview Screenshot Testing `0.0.1-alpha14`. CI now runs
+  `:app:validateDebugScreenshotTest` with an initial textless
+  theme-token fixture and checked-in references. Local full validation
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify` because the `Z:`
+  shared-folder path hit a Windows D8 path limitation under AGP 9.
 - [x] **C142 — CI action major rotation and SHA-pinning policy** shipped
   on 2026-05-17. Workflows now use `actions/checkout@v6`,
   `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`,
@@ -78,12 +87,11 @@ major versions.
   large-screen orientation/resizability behavior. These become
   **C143 - Android 17 memory/resizability smoke expansion** under the
   existing Android 17 readiness umbrella. Sources: S233-S236.
-- **Dependency targets are now more concrete**. AGP 9.2.0 requires
-  Gradle 9.4.1 and supports API 36.1; DataStore 1.2.1 is the stable
-  Direct Boot floor; AndroidX current stable versions have moved well
-  beyond the repo's current floor; Dagger/Hilt 2.59.2 is current but
-  its Hilt Gradle plugin now requires AGP 9. This sharpens C95/C96/C124
-  rather than adding a separate feature. Sources: S237-S241, S252-S253.
+- **Dependency targets are now partially landed**. C95/C96/C124 shipped
+  the AGP 9.2.1 / Gradle 9.4.1 / Kotlin 2.3.21 / Hilt 2.59.2 train.
+  DataStore 1.2.1 and the broader AndroidX stable refresh remain C144
+  so the dependency surface changes in attributable batches. Sources:
+  S237-S241, S252-S253, S269-S274.
 - **Competitor sweep saturation retested**. No new direct OpenLumen-grade
   framebuffer/root competitor surfaced. DimTV has a fresher Android TV /
   overlay signal than rev 4 recorded, and general Android help content
@@ -97,7 +105,7 @@ major versions.
 | C141 | Android Developer Console package registration | distribution / trust | Now | 5/2/2 | Decide Play Console vs Android Developer Console path; verify identity; register `com.openlumen` and release signing certificate before the September 2026 regional enforcement window. Document the account owner and package-registration evidence outside Git. | F-Droid / direct APK users in the first enforcement regions can otherwise hit install blocks even though OpenLumen stays outside Play. | S230, S231, S232 |
 | C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Shipped 2026-05-17 | 4/2/2 | Rotated workflow actions to current Node-24-capable majors; documented major-tag policy with a full-SHA exception path; local validation covered YAML parsing plus debug build/lint/unit tests. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251, S258-S265 |
 | C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Shipped 2026-05-17 | 3/1/1 | Extended `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236, S266 |
-| C144 | AndroidX stable baseline refresh batch | upgrade strategy | Next | 3/2/2 | After C95 lands, refresh core/activity/lifecycle/navigation/DataStore as one AndroidX batch and run unit tests, lint, Compose UI smoke, and profile import/export. Keep alpha trains out unless a candidate explicitly needs them. | Current stable AndroidX releases are far ahead of the repo floor; batching avoids mixing dependency churn with AGP 9 toolchain risk. | S237, S238, S239, S252, S253 |
+| C144 | AndroidX stable baseline refresh batch | upgrade strategy | Next | 3/2/2 | Now that C95/C96/C124 landed, refresh core/activity/lifecycle/navigation/DataStore as one AndroidX batch and run unit tests, lint, screenshot validation, profile import/export, and service smoke. Keep alpha trains out unless a candidate explicitly needs them. | Current stable AndroidX releases are far ahead of the repo floor; batching avoids mixing dependency churn with AGP 9 toolchain risk. | S237, S238, S239, S252, S253 |
 
 Research version: 2026-05-17 **rev 4.1**. Rev 4.1 is the second walk-away
 pass on the same day. It preserves rev 4 verbatim (which itself
@@ -299,8 +307,10 @@ overlay fallback.
 ## State of the Repo
 
 OpenLumen currently ships v0.4.0; v0.5.0 is feature-complete on `main` and
-awaits the device-validation gate. Stack: Kotlin 2.1.0, AGP 8.7.3, JDK 17,
-Jetpack Compose, Material 3, Hilt, DataStore, kotlinx.serialization.
+awaits the device-validation gate. Stack: Kotlin 2.3.21, AGP 9.2.1,
+Gradle 9.4.1, JDK 17, Jetpack Compose, Material 3, Hilt 2.59.2,
+DataStore, kotlinx.serialization, and host-side Compose Preview
+Screenshot Testing.
 minSdk 26, targetSdk 35. Four modules: `app`, `core-engine`, `core-schedule`,
 `core-prefs`.
 
@@ -521,8 +531,8 @@ Design-doc deliverables (deferred implementations with durable analysis):
 - **C28** Direct Boot restore — design documented; now simpler with the new DataStore APIs (S95)
 - **C69** Per-app profiles — same Shizuku blocker
 - **C90** Emergency unlock gesture — notification/tile/ADB shipped; touch gesture deferred
-- **C95** AGP 9 migration spike — **promoted to Now** in rev 3
-- **C96** Hilt Compose artifact migration — **promoted to Now** in rev 3
+- **C95** AGP 9 migration spike — **promoted to Now** in rev 3; shipped 2026-05-17
+- **C96** Hilt Compose artifact migration — **promoted to Now** in rev 3; shipped 2026-05-17
 
 Hardening fixes on `main` (post-rev-2, 2026-05-17 audit pass; not yet
 in a released APK):
@@ -590,19 +600,19 @@ Partial (per rev 2, still partial in rev 3):
    - Impact 5, effort 3, risk 2. Sources: S00, S11, S29, S60, S61, S62,
      S74, S111, S112.
 
-3. **AGP 9 migration (C95, promoted from Next)**
-   - AGP 9.0/9.1/9.2 are stable. AGP 10 (mid-2026) removes the AGP 8
-     opt-out paths. Migrate now while the spike is small. Coordinated
-     with `gradle/libs.versions.toml`, the wrapper, and CI matrix.
-     Run the AGP 9 Upgrade Assistant; verify SBOM (C94) still attaches.
-   - Impact 4, effort 3, risk 3. Sources: S91, S92, S93.
+3. **AGP 9 migration (C95, promoted from Next) — shipped 2026-05-17**
+   - Migrated to AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21, KSP 2.3.8,
+     and AGP 9 built-in Kotlin support. The target SDK remains 35 until
+     C103 Android 17 device validation.
+   - Impact 4, effort 3, risk 3. Sources: S91, S92, S93, S269-S274.
 
-4. **Hilt Compose artifact rename (C96, promoted from Next)**
-   - Move `hiltViewModel()` imports to the new
-     `androidx.hilt:hilt-lifecycle-viewmodel-compose` artifact + package.
-     `hilt-navigation-compose` keeps the Navigation pieces. Pure
-     import + dependency rename; no runtime change.
-   - Impact 3, effort 2, risk 1. Sources: S94.
+4. **Hilt Compose artifact rename (C96, promoted from Next) — shipped
+   2026-05-17**
+   - `hiltViewModel()` imports now use
+     `androidx.hilt:hilt-lifecycle-viewmodel-compose` and package
+     `androidx.hilt.lifecycle.viewmodel.compose`; Dagger/Hilt is
+     2.59.2.
+   - Impact 3, effort 2, risk 1. Sources: S94, S240, S269.
 
 5. **Android 17 readiness (C82 extension, supersedes API-36-only scope)**
    - Validate on Android 17 Beta 4 (or stable when it lands in June
@@ -649,9 +659,9 @@ Partial (per rev 2, still partial in rev 3):
      S32, S42, S67, S68, S71, S73, S88, S89, S108.
 
 10. **Test and CI hardening (C83, C84, C91, C94)**
-    - Compose Preview Screenshot Testing landed as a first-class
-      IDE+Gradle feature (S97, S98) — wire it into CI without an
-      emulator (effort drops 3→2). Connected-device tests (C84) and
+    - C101 shipped the first Compose Preview Screenshot Testing fixture
+      and CI job. C83 remains the broader screen-coverage expansion.
+      Connected-device tests (C84) and
       SurfaceView regression (C91) still need emulator infrastructure;
       schedule once `reactivecircus/android-emulator-runner`
       [S113] is wired in. SBOM/advisory scan (C94) already runs weekly
@@ -880,7 +890,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 
 | ID | Candidate | Category | Prev | Tier | I/E/R | Deps / effort sketch | Placement reason | Sources |
 |---|---|---|---|---|---|---|---|---|
-| C101 | Compose Preview Screenshot Testing CI wiring | testing | emerging | Now | 4/2/1 | AGP 8.5+ feature; wire into CI without emulator | Unblocks C83 efficiently | S97, S98 |
+| C101 | Compose Preview Screenshot Testing CI wiring | testing | emerging | Shipped 2026-05-17 | 4/2/1 | Added `com.android.compose.screenshot` `0.0.1-alpha14`, an initial textless theme-token `@PreviewTest`, checked-in debug references, and a CI `validateDebugScreenshotTest` job | Unblocks C83 expansion efficiently | S97, S98, S148, S149, S269-S274 |
 | C102 | DataStore Direct Boot APIs adoption | reliability/migration | emerging | Next | 4/3/2 | `deviceProtectedDataStore()` + `LOCKED_BOOT_COMPLETED` receiver | Drops C28 effort and risk | S95 |
 | C103 | Android 17 stable validation | platform/OS | table-stakes | Now | 4/3/2 | Per-engine smoke on Pixel running Android 17 stable | Stable lands June 2026 | S83, S84, S96 |
 | C104 | Document AAPM accessibility revocation | docs/security | rare | Shipped 2026-05-17 | 3/1/1 | `docs/threat-model.md`, `docs/android-17-readiness.md`, and `docs/overlay-and-per-app-design.md` now call out why AAPM reinforces rejecting AccessibilityService for foreground-app convenience | Reinforces C79 rejection and Shizuku as only path | S88, S89, S90, S00h |
@@ -903,7 +913,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C121 | Tink + Proto DataStore replacement of EncryptedSharedPreferences (if we ever encrypt) | security | rare | Under Consideration | 2/3/2 | Document the modern path in `docs/threat-model.md`; not adopting now | EncryptedSharedPreferences deprecated; future-proof note | S122 |
 | C122 | Roborazzi gold-image CI | testing | rare | Next | 3/3/2 | Roborazzi gives JVM screenshot testing alongside Compose Preview Screenshot Testing | Belt-and-braces snapshot coverage | S97, S125 |
 | C123 | Glance API widget rewrite | mobile | emerging | Under Consideration | 3/3/2 | Replace RemoteViews with Glance once 1.0 stable | Cleaner widget code, `@PreviewTest` support | S118 |
-| C124 | Hilt 2.56+ minimum | upgrade strategy | emerging | Now | 3/1/1 | Bump in `gradle/libs.versions.toml` with KSP support | Pairs with C96 | S94 |
+| C124 | Hilt 2.56+ minimum | upgrade strategy | emerging | Shipped 2026-05-17 | 3/1/1 | Bumped Dagger/Hilt to 2.59.2 with KSP 2.3.8 as part of the AGP 9 train | Pairs with C96 | S94, S240, S241, S269 |
 | C125 | Twilight 14.25 feature scan | research | emerging | Later | 2/1/1 | Periodic check of Twilight's per-app/Wear/Chromebook frontier | Trend signal, not parity goal | S87 |
 | C126 | Stronger sleep-evidence disclaimer | docs/licensing | rare | Shipped 2026-05-17 | 3/1/1 | `docs/health-evidence.md` now has the 2025/2026 consensus-shift note plus S99-S102 and S158-S162 source refresh | Consensus shift demands explicit acknowledgement | S99-S102, S158-S162 |
 | C127 | Perceived-luminance reduction indicator | UX/data | rare | Next | 3/2/1 | Surface "Perceived brightness reduced by N%" alongside blue-suppression on Home | Aligns the UI metric with current sleep-evidence consensus | S99-S102 |
@@ -1241,6 +1251,31 @@ Compose BOM / Material 3 / AGP 9 migration targets:
 - **S227**: Compose Material3 releases (1.4.0; `material3-expressive` alpha-only) — https://developer.android.com/jetpack/androidx/releases/compose-material3
 - **S228**: Jetpack Compose April 2026 updates blog — https://android-developers.googleblog.com/2026/04/jetpack-compose-april-2026-updates.html
 - **S229**: Compose Material Icons package summary (`material-icons-extended` deprecated) — https://developer.android.com/reference/kotlin/androidx/compose/material/icons/package-summary
+
+### External URLs (post-rev-5 implementation refresh)
+
+- **S269**: AndroidX Hilt releases page — `hiltViewModel()` moved to
+  `androidx.hilt:hilt-lifecycle-viewmodel-compose` / package
+  `androidx.hilt.lifecycle.viewmodel.compose` in 1.3.0 —
+  https://developer.android.com/jetpack/androidx/releases/hilt
+- **S270**: AGP built-in Kotlin migration guide — AGP 9.0+ enables built-in
+  Kotlin by default and removes the need to apply
+  `org.jetbrains.kotlin.android` / `kotlin-android` —
+  https://developer.android.com/build/migrate-to-built-in-kotlin
+- **S271**: Compose Preview Screenshot Testing guide — full IDE integration
+  requires AGP 9.0+, screenshot plugin 0.0.1-alpha13+, Kotlin 2.2.10+,
+  and JDK 17; underlying Gradle tasks are also documented —
+  https://developer.android.com/studio/preview/compose-screenshot-testing
+- **S272**: Compose Preview Screenshot Testing release notes — alpha14 adds
+  AGP 9.0 compatibility and requires previews to be annotated
+  `@PreviewTest` —
+  https://developer.android.com/studio/preview/compose-screenshot-testing-release-notes
+- **S273**: KSP Maven Central metadata — confirms
+  `com.google.devtools.ksp` plugin `2.3.8` is available —
+  https://repo.maven.apache.org/maven2/com/google/devtools/ksp/com.google.devtools.ksp.gradle.plugin/maven-metadata.xml
+- **S274**: Dagger releases — Dagger/Hilt 2.59.2 fixes AGP-9-era Hilt
+  transform and incremental-build issues —
+  https://github.com/google/dagger/releases
 
 ## Phase 5 Self-Audit
 

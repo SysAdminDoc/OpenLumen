@@ -40,6 +40,8 @@ git checkout -b release/v$VERSION
 - [ ] `./gradlew assembleDebug` — must succeed.
 - [ ] `./gradlew test` — all module tests pass.
 - [ ] `./gradlew :app:lint` — no new lint errors at severity `error`.
+- [ ] `./gradlew :app:validateDebugScreenshotTest --no-configuration-cache`
+      — Compose preview screenshot references match.
 - [ ] Manual install on at least one device. App opens, the toggle works,
       the schedule fires within 2 minutes when set to a near-future time.
 

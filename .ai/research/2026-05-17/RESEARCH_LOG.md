@@ -534,3 +534,42 @@ Verification:
 
 - `:app:testDebugUnitTest --no-daemon --rerun-tasks --stacktrace`
   passed.
+
+## Implementation update (C95/C96/C101/C124)
+
+The next executable Now-tier batch was the AGP 9 / Hilt / screenshot CI
+train. C101 could not land cleanly as an isolated CI-only change because
+the current Compose screenshot plugin line is tied to newer Kotlin:
+`0.0.1-alpha14` depends on Kotlin stdlib 2.3.10, while the previous repo
+toolchain was Kotlin 2.1.0. The older alpha10 line could compile on
+Kotlin 2.1.0, but `validateDebugScreenshotTest` hit a Windows command-
+line-length failure on the shared `Z:` path. The implementation therefore
+batched C95, C96, C101, and C124.
+
+Implementation:
+
+- Migrated the wrapper to Gradle 9.4.1 and the Android Gradle Plugin to
+  9.2.1.
+- Removed the separate `org.jetbrains.kotlin.android` plugin from Android
+  modules, matching AGP 9's built-in Kotlin model.
+- Updated Kotlin to 2.3.21 and KSP to 2.3.8.
+- Updated Dagger/Hilt to 2.59.2 and moved Compose `hiltViewModel()`
+  imports to `androidx.hilt.lifecycle.viewmodel.compose`.
+- Added Compose Preview Screenshot Testing `0.0.1-alpha14`, an initial
+  textless theme-token `@PreviewTest`, checked-in debug references, and a
+  CI `validateDebugScreenshotTest` job.
+- Removed a stale `core-engine` `consumer-rules.pro` declaration that AGP
+  9 now validates as a missing input.
+
+Verification:
+
+- `:app:updateDebugScreenshotTest --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:validateDebugScreenshotTest --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the local mirror.
+- Running AGP 9 `:app:assembleDebug` directly from `Z:\repos\OpenLumen`
+  failed in D8 with a Windows shared-folder path/filename error under
+  generated global-synthetics output; the shorter local mirror isolated the
+  issue as environmental rather than source-level.

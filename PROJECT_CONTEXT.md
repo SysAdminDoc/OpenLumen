@@ -36,13 +36,14 @@ August 2022) on Android 14 / 15 / 17.
 
 | Component | Version | Notes |
 |---|---|---|
-| Kotlin | 2.1.0 | |
-| AGP | 8.7.3 | AGP 9 migration is on the Now list (C95) per rev 3 of ROADMAP. |
-| KSP | 2.1.0-1.0.29 | |
+| Kotlin | 2.3.21 | AGP 9 built-in Kotlin compiles Android modules; only Compose / serialization plugins are applied separately. |
+| AGP | 9.2.1 | C95 shipped on 2026-05-17; `targetSdk` still waits for C103 Android 17 validation. |
+| KSP | 2.3.8 | |
 | Compose BOM | 2024.12.01 | |
-| Compose compiler | 1.5.15 | |
+| Compose compiler | Kotlin Compose plugin 2.3.21 | The old standalone `compose-compiler` catalog version was removed. |
 | Material 3 | 1.3.1 | C137 removed `material-icons-extended`; nav/favorite icons are local vector resources under `app/src/main/res/drawable/`. |
-| Hilt | 2.53.1 | Hilt Compose artifact migration is on the Now list (C96 → `hilt-lifecycle-viewmodel-compose`). |
+| Hilt | 2.59.2 | C96/C124 shipped on 2026-05-17; Compose `hiltViewModel()` comes from `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`. |
+| Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped initial theme-token preview references and CI validation. |
 | DataStore | 1.1.1 | New `deviceProtectedDataStore()` API unlocks Direct Boot restore (C28). |
 | kotlinx.serialization | 1.7.3 | |
 | kotlinx.coroutines | 1.9.0 | |
@@ -200,7 +201,7 @@ Three workflows under [.github/workflows/](.github/workflows/):
 
 | Workflow | Trigger | Job |
 |---|---|---|
-| `ci.yml` | push / PR to `main` | `assembleDebug + lint`, module unit tests, **permissions-audit** (manifest grep for INTERNET; `releaseRuntimeClasspath` grep for play-services / firebase / GMS) |
+| `ci.yml` | push / PR to `main` | `assembleDebug + lint`, module unit tests, Compose screenshot validation, **permissions-audit** (manifest grep for INTERNET; `releaseRuntimeClasspath` grep for play-services / firebase / GMS) |
 | `release.yml` | `workflow_dispatch` with semver input | keystore decode, `assembleRelease`, release-APK no-INTERNET assertion, SHA-256, **`actions/attest@v4`** |
 | `sbom.yml` | weekly Monday 06:00 UTC + every release | SPDX-JSON SBOM via `anchore/sbom-action@v0`, advisory scan via `anchore/scan-action@v7` (severity-cutoff: medium, fail-build: false — triage-then-fix posture) |
 
@@ -246,6 +247,9 @@ SHA-256 sums, and `actions/attest`.
 
 # Module unit tests
 ./gradlew :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test
+
+# Host-side Compose Preview Screenshot Testing
+./gradlew :app:validateDebugScreenshotTest --no-configuration-cache
 ```
 
 Signed release builds require:
@@ -394,6 +398,13 @@ watchpoints future sessions should not miss:
   cache; JVM tests prove the same active matrix dispatches again after
   reset. Device validation still records SF/KCAL first-emission smoke
   results under C01.
+- **AGP 9 / Hilt / screenshot CI train (C95/C96/C101/C124)**: shipped
+  2026-05-17. The repo now uses AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21,
+  KSP 2.3.8, Hilt 2.59.2, AndroidX Hilt Compose 1.3.0, and Compose
+  screenshot plugin 0.0.1-alpha14. CI validates the initial theme-token
+  screenshot fixture. Because AGP 9 on the `Z:` shared folder hit a
+  Windows path issue in D8, full local verification was run from the
+  shorter mirror `C:\Users\Xray\OpenLumen-agp9-verify`.
 - **AAPM driver-report surface (C130)**: shipped 2026-05-17. The report
   has a reflection-gated Android 17 Advanced Protection section and a
   declared `QUERY_ADVANCED_PROTECTION_MODE` permission; older devices show
@@ -409,9 +420,9 @@ watchpoints future sessions should not miss:
   `docs/wake-and-vitals.md` has Android 14/15/16/17 pending rows and
   `docs/device-matrix.md` requires a `boot restore` note for Android 14+
   results. Real pass/fail data still belongs to C01 device validation.
-- **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
-  stable AndroidX floor refresh rather than mixing broad dependency churn
-  into the toolchain migration.
+- **AndroidX stable refresh (C144)**: now unblocked by the AGP/Hilt train;
+  batch the stable AndroidX floor refresh separately so failures remain
+  attributable.
 
 ## Where to look for what
 

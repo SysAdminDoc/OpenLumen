@@ -2,9 +2,10 @@
 
 Every local and external source used in this research pass. Inherits the
 roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
-entries `S126`-`S202` collected during this session.
+entries through `S274` collected during this session and implementation
+passes.
 
-## Local evidence (S00 / S00b — preserved from rev 3)
+## Local evidence (S00 / S00b-S00j)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -702,18 +703,50 @@ informed.
   service target cache and resets on engine switch via `LumenService`;
   `app/src/test/java/com/openlumen/service/ApplyDecisionGateTest.kt`
   proves same-matrix first emissions dispatch again after reset.
+- **S00j**: Local implementation evidence for C95/C96/C101/C124 —
+  `gradle/libs.versions.toml`, Gradle wrapper files, `app/build.gradle.kts`,
+  module build files, five Compose screen imports, `.github/workflows/ci.yml`,
+  `app/src/screenshotTest/kotlin/`, and
+  `app/src/screenshotTestDebug/reference/` implement the AGP 9 / Hilt /
+  screenshot CI train. Local full validation passed from
+  `C:\Users\Xray\OpenLumen-agp9-verify` because AGP 9 D8 hit a Windows
+  shared-folder path limitation under `Z:\repos\OpenLumen`.
+
+### Post-rev-5 build-tool implementation sources
+
+- **S269**: AndroidX Hilt releases page — `hiltViewModel()` moved to
+  `androidx.hilt:hilt-lifecycle-viewmodel-compose` / package
+  `androidx.hilt.lifecycle.viewmodel.compose` in 1.3.0.
+  https://developer.android.com/jetpack/androidx/releases/hilt
+- **S270**: AGP built-in Kotlin migration guide — AGP 9.0+ enables built-in
+  Kotlin by default and removes the need to apply
+  `org.jetbrains.kotlin.android` / `kotlin-android`.
+  https://developer.android.com/build/migrate-to-built-in-kotlin
+- **S271**: Compose Preview Screenshot Testing guide — full IDE integration
+  requires AGP 9.0+, screenshot plugin 0.0.1-alpha13+, Kotlin 2.2.10+,
+  and JDK 17; underlying Gradle tasks are documented separately.
+  https://developer.android.com/studio/preview/compose-screenshot-testing
+- **S272**: Compose Preview Screenshot Testing release notes — alpha14 adds
+  AGP 9.0 compatibility and requires `@PreviewTest`.
+  https://developer.android.com/studio/preview/compose-screenshot-testing-release-notes
+- **S273**: KSP Maven Central metadata — confirms
+  `com.google.devtools.ksp` plugin `2.3.8` is available.
+  https://repo.maven.apache.org/maven2/com/google/devtools/ksp/com.google.devtools.ksp.gradle.plugin/maven-metadata.xml
+- **S274**: Dagger releases — Dagger/Hilt 2.59.2 fixes AGP-9-era Hilt
+  transform and incremental-build issues.
+  https://github.com/google/dagger/releases
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i | 9 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j | 10 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
 | Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
 | AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
-| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268 | 28 |
+| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S274 | 34 |
 | DataStore | S66, S95, S146-S147 | 4 |
 | F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
 | Security (OWASP / GHSA / SBOM tooling) | S60-S64, S67-S68, S77, S108-S110, S114, S122, S188-S192 | 19 |
@@ -753,4 +786,6 @@ S00g records the local C105 foreground-service-start fallback evidence.
 S00h records the local documentation/status cleanup evidence for C104
 and C126.
 S00i records the local C117 first-emission dispatch implementation and
-JVM regression coverage.
+JVM regression coverage. S00j records the local C95/C96/C101/C124 AGP 9
+/ Hilt / screenshot implementation evidence. S269-S274 refresh the
+current external toolchain sources that informed that implementation.

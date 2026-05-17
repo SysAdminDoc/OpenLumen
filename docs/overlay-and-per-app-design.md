@@ -166,34 +166,26 @@ Build-tooling migrations, not user-visible features.
 
 ### C95: AGP 9 migration
 
-AGP 9 is currently alpha. The release notes flag two changes that affect
-OpenLumen:
+Status: shipped 2026-05-17.
 
-- Built-in Kotlin support (removes the need for the
-  `kotlin.android.gradle.plugin` separate-plugin pattern).
-- Configuration-cache hardening (some plugins that worked under cache
-  on AGP 8.x now require explicit task config).
+OpenLumen now uses AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21, KSP 2.3.8,
+and AGP 9 built-in Kotlin support. The Android modules no longer apply
+`org.jetbrains.kotlin.android`; Kotlin source compilation is provided by
+AGP, while the app still applies the Compose and serialization Kotlin
+plugins where needed.
 
-Plan:
-1. Create a `spike/agp-9` branch.
-2. Bump AGP version in `gradle/libs.versions.toml`.
-3. Run `./gradlew assembleDebug` against the branch.
-4. Catalog every breaking change found and decide whether to fix-now or
-   wait-for-stable.
-5. The spike branch never merges; we wait for the AGP 9 stable release
-   to do the real migration.
+The `targetSdk` remains 35 until the Android 17 validation gate (C103).
+That keeps platform-behavior changes separate from build-tooling churn.
 
 ### C96: Hilt Compose artifact migration
 
 AndroidX Hilt moved `hiltViewModel()` from `androidx.hilt:hilt-navigation-compose`
-to a new artifact. The compatibility shim still works as of the version
-we use; the migration is purely an import + dependency rename.
+to `androidx.hilt:hilt-lifecycle-viewmodel-compose` and package
+`androidx.hilt.lifecycle.viewmodel.compose`.
 
-Plan:
-1. Same `spike/agp-9` branch.
-2. Update Hilt version and imports.
-3. Verify Compose preview still works.
-4. Land the rename in the v0.7.0 milestone alongside AGP 9.
+Status: shipped 2026-05-17. The app now uses Dagger/Hilt 2.59.2 and
+`androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`; the five Compose
+screens that request `OpenLumenViewModel` import the new package.
 
 ## C28 — Direct Boot restore
 

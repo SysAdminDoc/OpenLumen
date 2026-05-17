@@ -46,9 +46,9 @@ behavior changes), S236 (large-screen resizability / orientation).
 | **`BOOT_COMPLETED` cannot launch certain FGS types** | Medium — `specialUse` not on the affected list per S130 but needs verification | C106: explicit Android 14/15/16/17 rows in `docs/wake-and-vitals.md` and `docs/device-matrix.md` confirming boot restore still works | S85, S130 |
 | **`MODE_BACKGROUND_ACTIVITY_START_ALLOWED` deprecated for IntentSender (use `_ALLOW_IF_VISIBLE`)** | Low today — no `IntentSender` / `ActivityOptions` BAL call sites exist | C111 shipped: source audit found only direct `PendingIntent.getActivity/getService/getBroadcast` usage; no `_ALLOW_IF_VISIBLE` migration needed until an `IntentSender` path is introduced | S84, S128, S137, S00d |
 | **Advanced Protection Mode auto-revokes accessibility API for non-`isAccessibilityTool` apps** | Closes C79 / C80 permanently | C104 / C130: document in `docs/threat-model.md` and `docs/overlay-and-per-app-design.md`; surface AAPM state in driver report | S88, S89, S90, S121, S134, S135, S136 |
-| **MessageQueue rewrite (apps targeting 17)** | Low — we don't post Messages between threads at scale | None required; sanity-check via Compose screenshot tests once they're CI-wired | S128 |
+| **MessageQueue rewrite (apps targeting 17)** | Low — we don't post Messages between threads at scale | None required; C101 now runs host-side Compose screenshot validation in CI, but target-37 behavior still needs device/emulator smoke | S128 |
 | **App memory limits / `MemoryLimiter` exit descriptions** | Low-to-medium — OpenLumen is small, but persistent service + overlay leaks would be user-visible | C143: add `ApplicationExitInfo` review to the Android 17 smoke flow; inspect crashes/ANRs for `MemoryLimiter:AnonSwap` after long-running service and overlay tests | S234, S235 |
-| **Orientation/resizability/aspect-ratio restrictions ignored on sw600dp+** | Medium — no explicit orientation lock today, but Compose state and bottom-nav layout need tablet/foldable/windowing verification | C143: add tablet/foldable/desktop-windowing rows to `docs/device-matrix.md`; pair with screenshot tests after C101 | S236 |
+| **Orientation/resizability/aspect-ratio restrictions ignored on sw600dp+** | Medium — no explicit orientation lock today, but Compose state and bottom-nav layout need tablet/foldable/windowing verification | C143 adds tablet/foldable/desktop-windowing rows to `docs/device-matrix.md`; C101 gives a seed screenshot fixture, while full tab coverage remains C83 | S236 |
 | **Background audio hardening** | None — OpenLumen doesn't touch audio | N/A | S133 |
 | **Certificate Transparency by default + ECH** | None — we have no INTERNET permission | N/A | S128, S129 |
 | **`ACCESS_LOCAL_NETWORK` runtime permission** | None — we don't open local network sockets | N/A | S128 |
@@ -105,20 +105,22 @@ We will:
    changes go on a branch.
 3. Update [docs/device-matrix.md](device-matrix.md) with at least one
    Android 17 row before the release that bumps `targetSdk` to 36.
-4. Pair the `targetSdk = 36` bump with AGP 9.x (C95) and the Hilt
-   Compose artifact rename (C96 / C124). All three are Now-tier in
-   `ROADMAP.md` rev 3/4 because deferring them past AGP 10 (mid-2026)
-   would force a panic-migration.
+4. Keep the `targetSdk = 36` bump separate from the already-landed
+   AGP/Hilt train. C95/C96/C124 shipped on 2026-05-17; the remaining
+   Android 17 gate is real-device or emulator validation before changing
+   `targetSdk`.
 
 ## Related roadmap candidates
 
 - **C82 / C103** — Android 17 readiness (this document).
-- **C95** — AGP 9 migration spike. AGP 9.0 / 9.1 / 9.2 stable per
-  S140-S143; AGP 10 (late 2026) removes the legacy DSL/Variant API
-  opt-out via S143.
+- **C95** — AGP 9 migration spike. Shipped 2026-05-17 on AGP 9.2.1 /
+  Gradle 9.4.1 / Kotlin 2.3.21.
 - **C96 / C124** — Hilt Compose artifact rename and Hilt 2.56+ bump.
+  Shipped 2026-05-17 on Hilt 2.59.2.
   `hiltViewModel()` moved to
   `androidx.hilt:hilt-lifecycle-viewmodel-compose` (S144-S145).
+- **C101** — Compose Preview Screenshot Testing CI. Shipped 2026-05-17
+  with a textless theme-token fixture; full tab coverage remains C83.
 - **C104** — Document AAPM accessibility revocation. Shipped as part of
   the rev 3 / rev 4 docs pass.
 - **C105** — SAW-app FGS-from-background fallback. Shipped

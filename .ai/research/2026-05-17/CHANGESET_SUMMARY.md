@@ -649,3 +649,40 @@ verification**.
 
 - `:app:testDebugUnitTest --no-daemon --rerun-tasks --stacktrace`
   passed.
+
+## Implementation pass 17 (C95/C96/C101/C124, 2026-05-17)
+
+This pass implemented the coupled AGP 9 / Hilt / Compose screenshot CI
+train:
+
+- **C95** — AGP 9 migration.
+- **C96** — Hilt Compose artifact migration.
+- **C101** — Compose Preview Screenshot Testing CI wiring.
+- **C124** — Hilt 2.56+ minimum, landed as Hilt 2.59.2.
+
+### Files modified (pass 17)
+
+| File | Why |
+|---|---|
+| `gradle/libs.versions.toml` | Pinned AGP 9.2.1, Kotlin 2.3.21, KSP 2.3.8, Hilt 2.59.2, AndroidX Hilt Compose 1.3.0, and Compose screenshot plugin 0.0.1-alpha14; removed stale standalone Compose compiler / Kotlin Android aliases. |
+| `gradle/wrapper/gradle-wrapper.properties`, `gradlew`, `gradlew.bat` | Updated wrapper to Gradle 9.4.1. |
+| `build.gradle.kts`, `app/build.gradle.kts`, `core-engine/build.gradle.kts`, `core-prefs/build.gradle.kts`, `core-schedule/build.gradle.kts` | Adopted AGP 9 built-in Kotlin, screenshot-test configuration, and removed a stale `consumer-rules.pro` declaration. |
+| `app/src/main/java/com/openlumen/ui/screens/*Screen.kt` | Moved `hiltViewModel()` imports to `androidx.hilt.lifecycle.viewmodel.compose`. |
+| `.github/workflows/ci.yml` | Added a Compose screenshot validation job. |
+| `app/src/screenshotTest/kotlin/com/openlumen/screenshot/ThemeTokenScreenshotTest.kt` | Added initial light/dark textless theme-token `@PreviewTest` fixtures. |
+| `app/src/screenshotTestDebug/reference/**.png` | Added generated debug reference images. |
+| `README.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `ROADMAP.md`, `docs/**` | Recorded the shipped toolchain/screenshot state and revised stale AGP/Hilt planning notes. |
+| `.ai/research/2026-05-17/*.md` | Added S00j and S269-S274; updated backlog, prioritization, dependency review, repo state, research log, and this changeset. |
+
+### Verification (pass 17)
+
+- `:app:updateDebugScreenshotTest --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:validateDebugScreenshotTest --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.
+- Direct AGP 9 assemble from `Z:\repos\OpenLumen` failed in D8 with a
+  Windows shared-folder path/filename error under generated global
+  synthetics output; the shorter local mirror was used for source-level
+  validation.

@@ -41,8 +41,8 @@ added developer verification and CI action-major watchpoints. See
 | `developer.android.com` foreground service types | `specialUse` rules can change between releases | Update the manifest property and `docs/release-checklist.md` |
 | Android Developers blog → Privacy / Trust labels | Play Store labeling impacts the optional Play track | Adjust `fastlane/metadata/` if we ever ship to Play |
 | Android developer verification docs | Off-Play package registration can affect F-Droid/direct APK installs on certified devices | C141 package-registration plan |
-| Android Gradle Plugin release notes | AGP 9 plugin behavior changes | C95 spike |
-| AndroidX Hilt release notes | Hilt Compose artifact moves | C96 spike |
+| Android Gradle Plugin release notes | AGP 10 / built-in Kotlin / DSL behavior changes | Post-C95 upgrade watch |
+| AndroidX Hilt release notes | Hilt Compose artifact and compiler/toolchain moves | Post-C96/C124 upgrade watch |
 
 ### Security / supply chain
 

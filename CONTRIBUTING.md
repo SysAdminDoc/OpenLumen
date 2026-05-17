@@ -67,8 +67,10 @@ These are non-negotiable for any PR that wants to merge:
   that's tracked in C83/C84 on the roadmap).
 - New driver code should add at minimum a "doesn't throw on unavailable
   hardware" test if it can't be exercised on the JVM.
-- Run `./gradlew test` before pushing. CI runs `:app:assembleDebug` and
-  `:app:lint`; please don't make CI the first place a test failure is seen.
+- Run `./gradlew test` before pushing. For UI or theme changes, also run
+  `./gradlew :app:validateDebugScreenshotTest --no-configuration-cache`.
+  CI runs `:app:assembleDebug`, `:app:lint`, module tests, and screenshot
+  validation; please don't make CI the first place a failure is seen.
 
 ## Commit messages
 

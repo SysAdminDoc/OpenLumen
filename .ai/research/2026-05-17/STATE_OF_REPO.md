@@ -23,17 +23,18 @@ Sourced from [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) and
 
 | Component | Version |
 |---|---|
-| Kotlin | 2.1.0 |
-| AGP | 8.7.3 |
-| KSP | 2.1.0-1.0.29 |
+| Kotlin | 2.3.21 |
+| AGP | 9.2.1 |
+| KSP | 2.3.8 |
 | Compose BOM | 2024.12.01 |
-| Compose compiler | 1.5.15 |
+| Compose compiler | Kotlin Compose plugin 2.3.21 |
 | Material 3 | 1.3.1 |
 | Activity Compose | 1.9.3 |
 | Lifecycle (runtime/viewmodel/service) | 2.8.7 |
 | Navigation Compose | 2.8.5 |
-| Hilt | 2.53.1 |
-| AndroidX Hilt navigation-compose | 1.2.0 |
+| Hilt | 2.59.2 |
+| AndroidX Hilt lifecycle-viewmodel-compose | 1.3.0 |
+| Compose screenshot plugin | 0.0.1-alpha14 |
 | DataStore (preferences) | 1.1.1 |
 | kotlinx.serialization JSON | 1.7.3 |
 | kotlinx.coroutines | 1.9.0 |
@@ -477,6 +478,27 @@ C106 is now complete as a documentation/test-plan item:
   device rows.
 - No real device rows were marked passed. Actual pass/fail evidence
   remains part of C01.
+
+## C95 / C96 / C101 / C124 implementation state
+
+This batch is now implemented locally:
+
+- `gradle/libs.versions.toml` now pins AGP 9.2.1, Kotlin 2.3.21,
+  KSP 2.3.8, Dagger/Hilt 2.59.2, AndroidX Hilt Compose 1.3.0, and
+  Compose screenshot plugin 0.0.1-alpha14.
+- Android modules use AGP 9 built-in Kotlin; the removed
+  `org.jetbrains.kotlin.android` plugin is the expected AGP 9 shape.
+- Compose `hiltViewModel()` imports moved to
+  `androidx.hilt.lifecycle.viewmodel.compose`.
+- `.github/workflows/ci.yml` now runs
+  `:app:validateDebugScreenshotTest`.
+- The initial screenshot fixture lives under
+  `app/src/screenshotTest/kotlin/` with references in
+  `app/src/screenshotTestDebug/reference/`.
+- A stale `core-engine` `consumer-rules.pro` declaration was removed
+  because no such rule file existed and AGP 9 validates that input.
+
+Verification is tracked in `CHANGESET_SUMMARY.md` pass 17.
 
 ## C138 implementation state
 
