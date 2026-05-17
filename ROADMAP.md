@@ -40,6 +40,10 @@ major versions.
   builds now set `vcsInfo.include = false` so AGP does not package
   `META-INF/version-control-info.textproto`; `docs/reproducible-build.md`
   explains the F-Droid comparison risk and the external provenance path.
+- [x] **C111 — BAL hardening readiness audit** shipped on 2026-05-17.
+  A source audit found no `IntentSender`, `ActivityOptions`, or
+  `MODE_BACKGROUND_ACTIVITY_START_*` call sites to migrate; existing
+  `PendingIntent` usage is direct activity/service/broadcast routing.
 
 ## What changed in rev 5
 
@@ -877,7 +881,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C108 | (folded into C96) | — | — | — | — | — | — | — |
 | C109 | (folded into C95) | — | — | — | — | — | — | — |
 | C110 | Material 3 1.5.0 / Expressive components review | UX | emerging | Later | 2/2/1 | Survey expressive components; pick high-value ones (FAB Menu, ToggleButtons) | Optional polish, not table-stakes | S123, S124 |
-| C111 | BAL hardening readiness | platform/OS | rare | Now | 3/1/1 | Update PendingIntent.IntentSender callers to `_ALLOW_IF_VISIBLE` | Android 17 deprecation | S84 |
+| C111 | BAL hardening readiness | platform/OS | rare | Shipped 2026-05-17 | 3/1/1 | Audited for `IntentSender`, `ActivityOptions`, and `MODE_BACKGROUND_ACTIVITY_START_*`; no migration call sites exist today | Android 17 deprecation | S84, S128, S137, S00d |
 | C112 | (n/a — no network, unaffected by CT/ECH) | — | — | — | — | — | — | — |
 | C113 | (n/a — same) | — | — | — | — | — | — | — |
 | C114 | Fine-grain dim precision for PWM users | UX | rare | Later | 3/2/2 | Sub-1% slider step in the low-dim region | Community signal (S80, S107) | S80, S103, S107 |

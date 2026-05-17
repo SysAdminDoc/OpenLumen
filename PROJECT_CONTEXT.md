@@ -382,6 +382,10 @@ watchpoints future sessions should not miss:
   has a reflection-gated Android 17 Advanced Protection section and a
   declared `QUERY_ADVANCED_PROTECTION_MODE` permission; older devices show
   `n/a`.
+- **BAL hardening audit (C111)**: shipped 2026-05-17. The codebase has
+  no `IntentSender`, `ActivityOptions`, or `MODE_BACKGROUND_ACTIVITY_START_*`
+  call sites today; existing `PendingIntent` usage is direct
+  activity/service/broadcast routing.
 - **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
   stable AndroidX floor refresh rather than mixing broad dependency churn
   into the toolchain migration.

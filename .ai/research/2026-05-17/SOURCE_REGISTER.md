@@ -18,6 +18,11 @@ entries `S126`-`S202` collected during this session.
   `SurfaceFlingerEngine.kt`, `KcalEngine.kt`, and `OverlayEngine.kt`
   were patched and verified with unit tests, debug assemble, lint, and
   `git diff --check`.
+- **S00d**: 2026-05-17 BAL hardening audit for C111: `rg` found no
+  `IntentSender`, `ActivityOptions`, `setPendingIntentBackgroundActivityStartMode`,
+  or `MODE_BACKGROUND_ACTIVITY_START_*` call sites; existing pending
+  intents are direct `getActivity`, `getService`, and `getBroadcast`
+  paths in `LumenService`, widgets, and schedule alarms.
 
 ## Existing roadmap sources (S10 - S125 — preserved verbatim)
 
@@ -679,7 +684,7 @@ informed.
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c | 3 |
+| Local evidence | S00, S00b, S00c, S00d | 4 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |

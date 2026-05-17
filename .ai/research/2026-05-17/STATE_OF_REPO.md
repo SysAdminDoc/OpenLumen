@@ -443,3 +443,17 @@ C120 is now implemented locally:
   `actions/attest`.
 
 Verification is tracked in `CHANGESET_SUMMARY.md` pass 8.
+
+## C111 implementation state
+
+C111 is now complete as a source audit:
+
+- No `IntentSender`, `ActivityOptions`,
+  `setPendingIntentBackgroundActivityStartMode`, or
+  `MODE_BACKGROUND_ACTIVITY_START_*` call sites exist in production
+  Kotlin.
+- Existing `PendingIntent` usage is direct `getActivity`, `getService`,
+  and `getBroadcast` routing in the service, widgets, and schedule alarm
+  path.
+- Android 17 readiness docs now keep only the remaining smoke check for
+  notification/widget/tile routing.

@@ -430,3 +430,26 @@ This pass implemented **C120 — VCS info determinism**.
   completes.
 - `jar tf app/build/outputs/apk/release/app-release-unsigned.apk` showed
   `version-control-info.textproto absent`.
+
+## Implementation pass 9 (C111, 2026-05-17)
+
+This pass completed **C111 — BAL hardening readiness** as a source audit.
+
+### Files modified (pass 9)
+
+| File | Why |
+|---|---|
+| `ROADMAP.md` | Marked C111 shipped and recorded that no `IntentSender` migration call sites exist. |
+| `PROJECT_CONTEXT.md` | Added the BAL audit result to current planning watchpoints. |
+| `CHANGELOG.md` | Added the Android 17 BAL audit result under `[Unreleased]`. |
+| `docs/android-17-readiness.md` | Replaced the pending C111 migration wording with the concrete audit result and remaining smoke check. |
+| `docs/v0.5.0-release-readiness.md` | Marked C111 shipped instead of a soft-gate migration. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00d for the local audit commands / evidence. |
+
+### Verification (pass 9)
+
+- `rg` found no `IntentSender`, `ActivityOptions`,
+  `setPendingIntentBackgroundActivityStartMode`, or
+  `MODE_BACKGROUND_ACTIVITY_START_*` call sites in production Kotlin.
+- `rg` confirmed existing `PendingIntent` use is direct
+  `getActivity`, `getService`, and `getBroadcast`.

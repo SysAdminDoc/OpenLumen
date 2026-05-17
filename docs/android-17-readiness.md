@@ -44,7 +44,7 @@ behavior changes), S236 (large-screen resizability / orientation).
 |---|---|---|---|
 | **SAW apps must have a visible overlay window to start an FGS from background** | High — tile/widget toggle-on path | C105: detect rejected `startForegroundService` after Android 15+, open app to grant overlay if needed, re-attempt | S85, S131 |
 | **`BOOT_COMPLETED` cannot launch certain FGS types** | Medium — `specialUse` not on the affected list per S130 but needs verification | C106: explicit Android 14/15/16/17 rows in `docs/wake-and-vitals.md` and `docs/device-matrix.md` confirming boot restore still works | S85, S130 |
-| **`MODE_BACKGROUND_ACTIVITY_START_ALLOWED` deprecated for IntentSender (use `_ALLOW_IF_VISIBLE`)** | Medium — PendingIntent / notification-tap / tile long-press paths | C111: audit IntentSender callers; switch to `_ALLOW_IF_VISIBLE` where appropriate | S84, S128, S137 |
+| **`MODE_BACKGROUND_ACTIVITY_START_ALLOWED` deprecated for IntentSender (use `_ALLOW_IF_VISIBLE`)** | Low today — no `IntentSender` / `ActivityOptions` BAL call sites exist | C111 shipped: source audit found only direct `PendingIntent.getActivity/getService/getBroadcast` usage; no `_ALLOW_IF_VISIBLE` migration needed until an `IntentSender` path is introduced | S84, S128, S137, S00d |
 | **Advanced Protection Mode auto-revokes accessibility API for non-`isAccessibilityTool` apps** | Closes C79 / C80 permanently | C104 / C130: document in `docs/threat-model.md` and `docs/overlay-and-per-app-design.md`; surface AAPM state in driver report | S88, S89, S90, S121, S134, S135, S136 |
 | **MessageQueue rewrite (apps targeting 17)** | Low — we don't post Messages between threads at scale | None required; sanity-check via Compose screenshot tests once they're CI-wired | S128 |
 | **App memory limits / `MemoryLimiter` exit descriptions** | Low-to-medium — OpenLumen is small, but persistent service + overlay leaks would be user-visible | C143: add `ApplicationExitInfo` review to the Android 17 smoke flow; inspect crashes/ANRs for `MemoryLimiter:AnonSwap` after long-running service and overlay tests | S234, S235 |
@@ -74,8 +74,9 @@ When the first stable Android 17 image lands (June 2026):
 3. Verify the SAW-app FGS-from-background fallback (C105) handles the
    tile/widget toggle-on path correctly when no overlay is visible.
 4. Verify `BOOT_COMPLETED` still restores the filter (C106).
-5. Verify PendingIntent/IntentSender paths still launch the tile long-
-   press destination and notification-tap activity (C111).
+5. Verify notification-tap and widget/tile pending intents still route
+   correctly. C111's source audit found no `IntentSender` BAL call sites,
+   so this is a smoke check rather than an API migration.
 6. Verify the `permissions-audit` CI job still works against the new
    build tools (no merged-manifest changes from AGP 9.x).
 7. Confirm `actions/attest@v4` still attests against the
@@ -120,8 +121,8 @@ We will:
   the rev 3 / rev 4 docs pass.
 - **C105** — SAW-app FGS-from-background fallback.
 - **C106** — `BOOT_COMPLETED` FGS verification.
-- **C111** — BAL hardening readiness (PendingIntent/IntentSender ->
-  `_ALLOW_IF_VISIBLE`).
+- **C111** — BAL hardening readiness. Shipped 2026-05-17 as a source
+  audit; no `IntentSender` / `ActivityOptions` call sites exist today.
 - **C130** — AAPM driver-report surface (rev 4 new). Shipped
   2026-05-17.
 - **C131** — Eye Dropper integration on Android 17+ (rev 4 new).

@@ -346,3 +346,7 @@ stable base for Direct Boot restore.
   VCS-info metadata and the reproducible-build doc now explains the
   F-Droid comparison risk plus the external provenance path. Sources:
   S112, S156, S268.
+- **C111 shipped 2026-05-17**. Source audit found no
+  `IntentSender` / `ActivityOptions` BAL call sites, so no
+  `_ALLOW_IF_VISIBLE` migration is needed until a future feature adds
+  one. Source: S00d.

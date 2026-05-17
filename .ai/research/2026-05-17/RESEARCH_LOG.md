@@ -392,3 +392,17 @@ AGP DSL reference:
 OpenLumen chooses to disable the packaged VCS-info file for release builds
 because its GitHub release workflow already publishes external provenance
 and because this removes a known F-Droid reference-APK comparison drift.
+
+## Implementation update (C111)
+
+C111 did not need new external research. The implementation step was a
+local source audit against the Android 17 BAL migration surface:
+
+- No `IntentSender`, `ActivityOptions`,
+  `setPendingIntentBackgroundActivityStartMode`, or
+  `MODE_BACKGROUND_ACTIVITY_START_*` calls exist.
+- Existing `PendingIntent` use is direct `getActivity`, `getService`, and
+  `getBroadcast`, so there is no `_ALLOW_IF_VISIBLE` API to migrate today.
+
+Docs now treat C111 as shipped, with runtime smoke still folded into the
+Android 17 device validation plan.
