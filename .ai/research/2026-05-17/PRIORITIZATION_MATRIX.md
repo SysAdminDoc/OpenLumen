@@ -166,3 +166,19 @@ AGP 9 migration would make failures hard to isolate.
   orientation checks.
 - **C140**: C141 does not replace the F-Droid MR. It is a parallel
   platform-distribution requirement for certified devices.
+
+## Execution update after rev 5
+
+The following rev 4.1 Now-tier code-review candidates are now shipped:
+
+| ID | Status | Landing note |
+|---|---|---|
+| C132 | Shipped 2026-05-17 | `LumenService` ramp cancel/join/launch protected by `rampMutex`. |
+| C133 | Shipped 2026-05-17 | Filter-off clear cancels and joins the active transition before `engine.clear()`. |
+| C134 | Shipped 2026-05-17 | CDM partial reflection cache failures clear cached handles. |
+| C135 | Shipped 2026-05-17 | Overlay install/apply/clear view mutation serialized with internal lock. |
+| C136 | Shipped 2026-05-17 | SF/KCAL failed apply/clear writes invalidate cached driver path/code. |
+
+Outstanding Now-tier work is therefore concentrated in maintainer-account
+action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
+remaining Android 17 / toolchain tasks (C95/C96/C103/C105/C106/C111/C130).

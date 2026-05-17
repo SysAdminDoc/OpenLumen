@@ -29,8 +29,8 @@ August 2022) on Android 14 / 15 / 17.
   wrapper to suppress Material 3's default CircleShape on `Button` /
   `OutlinedButton` / `TextButton`).
 - **Today's tagged release**: v0.4.0. **Today's `main`**: v0.5.0 feature-
-  complete, plus a 2026-05-17 audit hardening pass that ships in v0.5.0 /
-  v0.5.1.
+  complete, plus 2026-05-17 audit, CI, Android 17 smoke, and service /
+  engine correctness updates that ship in v0.5.0 / v0.5.1.
 
 ## Stack
 
@@ -102,14 +102,20 @@ adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS
 
 `SurfaceFlingerEngine` probes a per-API ladder of candidate transaction codes
 (`1015 → 1023 → 1030 → 1036`) and caches the working one as
-`activeTransactionCode`, exposed in the in-app driver report.
+`activeTransactionCode`, exposed in the in-app driver report. Failed
+apply/clear writes now invalidate the cached code so a later probe can
+recover after OTA transaction drift.
 
 `KcalEngine` probes known sysfs roots
 (`/sys/devices/platform/kcal_ctrl.0/`, `/sys/module/msm_drm/parameters/`,
 `/sys/class/misc/kcal/`) and stores the winner as `activeBasePath`.
+KCAL apply/clear shell scripts use `set -e` and clear the cached path on
+nonzero exit.
 
 `OverlayEngine` is capped at ~80% alpha by Android 12+ untrusted-touch rules
 when used with `FLAG_NOT_TOUCHABLE`. The Driver-tab info card surfaces this.
+Overlay view install/update/remove mutations are serialized with an internal
+main-thread lock.
 
 ## Persistence model
 
@@ -307,7 +313,8 @@ window.
   requires root drivers. The Driver-tab info card surfaces this.
 - **Reflection drift on `ColorDisplayManager`.** Future Android versions can
   rename methods; the `runCatching` ladder in `ColorDisplayManagerEngine` is
-  defensive on purpose. Cached method handles invalidated on probe refresh.
+  defensive on purpose. Partial cached reflection failures now clear all
+  cached handles so the next call can re-probe.
 - **Solar calculator polar / date corner cases (audited 2026-05-17).**
   `SolarCalculator` returns a `Polar` enum so polar-day and polar-night are
   distinguishable. Sunrise/sunset `ZonedDateTime`s are snapped to the
@@ -316,7 +323,9 @@ window.
   `LocalDate.now(zoneId)`).
 - **Mid-ramp interruptions.** `LumenService` lerps from the actually-
   displayed matrix rather than the previous target. `lastTarget` is now
-  separate from `lastApplied`; engine switches reset both.
+  separate from `lastApplied`; engine switches reset both. A dedicated
+  `rampMutex` serializes cancel/join/launch state, and filter-off clears
+  cancel+join any active ramp before clearing the engine.
 - **Boot receiver in user-protected storage.** DataStore today lives in
   user-protected storage, so `BootReceiver` does NOT register for
   `LOCKED_BOOT_COMPLETED` — that signal would deadlock `prefs.flow.first()`
@@ -358,6 +367,11 @@ watchpoints future sessions should not miss:
   memory-limiter (`ApplicationExitInfo` / `MemoryLimiter:AnonSwap`) and
   sw600dp resizability/orientation checks in addition to AAPM, FGS, and
   BAL.
+- **Service / engine correctness batch (C132-C136)**: shipped
+  2026-05-17. The active-filter service and engine layer now cover the
+  pass-2 race/stale-cache findings: ramp atomicity, cancel-before-clear,
+  CDM partial-cache invalidation, overlay install/apply/clear locking, and
+  SF/KCAL failed-write cache invalidation.
 - **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
   stable AndroidX floor refresh rather than mixing broad dependency churn
   into the toolchain migration.

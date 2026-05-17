@@ -33,6 +33,7 @@ import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.widget.PresetWidget
 import com.openlumen.widget.ToggleWidget
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -64,6 +65,9 @@ import javax.inject.Inject
  *   - All engine `apply()` and `clear()` calls are serialized through [applyMutex] so
  *     concurrent su subprocesses never trample each other on the SurfaceFlinger /
  *     KCAL paths.
+ *   - Ramp cancellation / launch is serialized through [rampMutex] so concurrent
+ *     reevaluations cannot leave a stale transition coroutine applying over the
+ *     latest target.
  *   - The prefs flow is `.conflate()`d before collection — if the user drags a slider
  *     and produces many emissions while a slow su apply is in flight, only the latest
  *     value is queued.
@@ -81,6 +85,7 @@ class LumenService : LifecycleService() {
     private var lightJob: Job? = null
     @Volatile private var transitionJob: Job? = null
     private val applyMutex = Mutex()
+    private val rampMutex = Mutex()
 
     /**
      * Screen-state listener. Tied to roadmap candidate C99 (event-driven
@@ -310,6 +315,7 @@ class LumenService : LifecycleService() {
     }
 
     private suspend fun clearAndStop() {
+        cancelTransition()
         applyMutex.withLock {
             runCatching { engine?.clear(this@LumenService) }
                 .onFailure { Log.w(tag, "engine.clear() failed: ${it.message}") }
@@ -332,11 +338,7 @@ class LumenService : LifecycleService() {
         // cleanly. Without this we'd race the ramp's mutex acquisition
         // against ours and the new engine could receive a stale lerp
         // step from the old engine's last target.
-        transitionJob?.let { prior ->
-            prior.cancel()
-            try { prior.join() } catch (_: Throwable) { /* expected */ }
-        }
-        transitionJob = null
+        cancelTransition()
         applyMutex.withLock {
             runCatching { current?.clear(this@LumenService) }
                 .onFailure { Log.w(tag, "engine.clear() during switch failed: ${it.message}") }
@@ -404,46 +406,56 @@ class LumenService : LifecycleService() {
      * Tied to roadmap candidates C23 (fixed-time ramps) and C24 (solar ramps).
      */
     private suspend fun applyMatrix(target: LumenMatrix, durationMs: Long) {
-        // Cancel the previous ramp *and join it* so its in-flight applyOnce
-        // (under applyMutex) finishes before we read `lastApplied`. Without
-        // the join, the displayed-vs-recorded state can lag by one step and
-        // produce a one-frame backwards jump when the new ramp launches.
-        transitionJob?.let { prior ->
-            prior.cancel()
-            try { prior.join() } catch (_: Throwable) { /* CancellationException expected */ }
-        }
-        transitionJob = null
+        rampMutex.withLock {
+            // Cancel the previous ramp *and join it* so its in-flight applyOnce
+            // (under applyMutex) finishes before we read `lastApplied`. Without
+            // the join, the displayed-vs-recorded state can lag by one step and
+            // produce a one-frame backwards jump when the new ramp launches.
+            cancelTransitionLocked()
 
-        // `previous` is the actually-displayed matrix from the last
-        // successful engine apply — distinct from `lastTarget` so a
-        // mid-ramp interrupt smoothly continues from the displayed value.
-        val previous = lastApplied
-        if (durationMs <= 0 || previous == null || previous == target) {
-            applyOnce(target)
-            return
-        }
+            // `previous` is the actually-displayed matrix from the last
+            // successful engine apply — distinct from `lastTarget` so a
+            // mid-ramp interrupt smoothly continues from the displayed value.
+            val previous = lastApplied
+            if (durationMs <= 0 || previous == null || previous == target) {
+                applyOnce(target)
+            } else {
+                // Step interval: 1 second floor, 60 frames over the duration, 200 ms
+                // floor for very short ramps. The engine apply already serializes
+                // through applyMutex so a slow apply can't race itself.
+                val totalSteps = (durationMs / 1_000L).coerceAtLeast(2L).coerceAtMost(MAX_RAMP_STEPS.toLong())
+                val stepMs = (durationMs / totalSteps).coerceAtLeast(MIN_RAMP_STEP_MS)
 
-        // Step interval: 1 second floor, 60 frames over the duration, 200 ms
-        // floor for very short ramps. The engine apply already serializes
-        // through applyMutex so a slow apply can't race itself.
-        val totalSteps = (durationMs / 1_000L).coerceAtLeast(2L).coerceAtMost(MAX_RAMP_STEPS.toLong())
-        val stepMs = (durationMs / totalSteps).coerceAtLeast(MIN_RAMP_STEP_MS)
-
-        transitionJob = lifecycleScope.launch {
-            try {
-                val startNs = System.nanoTime()
-                while (isActive) {
-                    val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
-                    val t = (elapsedMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
-                    val step = previous.lerp(target, t)
-                    applyOnce(step)
-                    if (t >= 1f) break
-                    delay(stepMs)
+                transitionJob = lifecycleScope.launch {
+                    try {
+                        val startNs = System.nanoTime()
+                        while (isActive) {
+                            val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
+                            val t = (elapsedMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                            val step = previous.lerp(target, t)
+                            applyOnce(step)
+                            if (t >= 1f) break
+                            delay(stepMs)
+                        }
+                    } catch (_: CancellationException) {
+                        // Expected when a newer target, engine switch, or manual off wins.
+                    } catch (t: Throwable) {
+                        Log.w(tag, "transition ramp aborted: ${t.message}")
+                    }
                 }
-            } catch (t: Throwable) {
-                Log.w(tag, "transition ramp aborted: ${t.message}")
             }
         }
+    }
+
+    private suspend fun cancelTransition() {
+        rampMutex.withLock { cancelTransitionLocked() }
+    }
+
+    private suspend fun cancelTransitionLocked() {
+        val prior = transitionJob ?: return
+        prior.cancel()
+        try { prior.join() } catch (_: Throwable) { /* CancellationException expected */ }
+        transitionJob = null
     }
 
     /**

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Service smooth-ramp scheduling now has a dedicated ramp mutex and cancels /
+  joins in-flight ramps before engine switch or filter-off clear, preventing
+  stale transition steps from applying over the latest target.
+- ColorDisplayManager, SurfaceFlinger, and KCAL driver caches now invalidate on
+  partial reflection failures or failed driver writes so the next probe can
+  recover after transient API / OTA / sysfs drift.
+- Overlay engine view installation, tint updates, and removal are now serialized
+  on the main thread to avoid rapid-toggle races during engine swaps.
 - Default preferences now serialize with nullable solar coordinates instead of `NaN`,
   so profile export/import and DataStore writes remain valid JSON.
 - Rootless overlay tinting now uses non-zero alpha for color-only presets; previously

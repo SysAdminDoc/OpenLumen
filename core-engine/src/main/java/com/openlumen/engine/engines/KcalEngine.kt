@@ -71,25 +71,34 @@ class KcalEngine : ColorEngine {
         // shell's `>` redirect will fail quietly on a missing path without
         // breaking the rest of the script.
         val script = buildString {
+            append("set -e\n")
             append("echo '1' > '").append(paths.enable).append("'\n")
             if (paths.min != null) {
                 append("echo '20' > '").append(paths.min).append("' 2>/dev/null || true\n")
             }
             append("echo '$r $g $b' > '").append(paths.rgb).append("'\n")
         }
-        Su.runShell(script)
+        invalidateOnFailure(Su.runShell(script), paths, "apply")
         Unit
     }
 
     override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
         val paths = resolvedPaths ?: return@withContext
-        Su.runShell(
+        val exit = Su.runShell(
             """
+            set -e
             echo '256 256 256' > '${paths.rgb}'
             echo '0' > '${paths.enable}'
             """.trimIndent()
         )
+        invalidateOnFailure(exit, paths, "clear")
         Unit
+    }
+
+    private fun invalidateOnFailure(exitCode: Int, paths: Paths, operation: String) {
+        if (exitCode == 0) return
+        Log.w(TAG, "$operation failed for KCAL at ${paths.base} (exit=$exitCode); invalidating probe cache")
+        resolvedPaths = null
     }
 
     private data class Paths(

@@ -326,3 +326,16 @@ stable base for Direct Boot restore.
    candidate explicitly needs them.
 4. Re-run unit tests, lint, permission audit, profile export/import, and
    service smoke.
+
+## Roadmap execution update after rev 5
+
+- **C132-C136 shipped 2026-05-17**. The high/medium-severity pass-2
+  service and engine correctness findings are no longer raw backlog:
+  ramp scheduling is atomic, filter-off clears cancel active ramps,
+  CDM partial reflection caches are invalidated, overlay view mutation is
+  locked, and SF/KCAL stale driver caches are invalidated on failed
+  writes. Source: S00c.
+- **C141 remains outstanding** because it requires maintainer developer
+  account / identity work outside Git.
+- **C137/C138 are the next code-level candidates** once maintainer-only
+  C141 and release-packaging gates are accounted for.

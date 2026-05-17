@@ -86,7 +86,11 @@ class ColorDisplayManagerEngine : ColorEngine {
     private fun load(context: Context): Handles? {
         cdm?.let { existing ->
             val setActive = setActivated
-            return if (setActive != null) Handles(existing, setActive, setTemperature) else null
+            if (setActive != null) {
+                return Handles(existing, setActive, setTemperature)
+            }
+            clearCache()
+            return null
         }
         if (Build.VERSION.SDK_INT < 28) return null
         return try {
@@ -101,9 +105,16 @@ class ColorDisplayManagerEngine : ColorEngine {
             setTemperature = setTemp
             Handles(instance, setActive, setTemp)
         } catch (t: Throwable) {
+            clearCache()
             Log.d(tag, "CDM reflection failed: ${t.message}")
             null
         }
+    }
+
+    private fun clearCache() {
+        cdm = null
+        setActivated = null
+        setTemperature = null
     }
 
     private fun tryConstructors(clazz: Class<*>, context: Context): Any? {

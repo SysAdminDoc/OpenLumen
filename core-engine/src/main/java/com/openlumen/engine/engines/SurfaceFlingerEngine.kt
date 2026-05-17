@@ -60,13 +60,15 @@ class SurfaceFlingerEngine : ColorEngine {
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
         val code = workingCode ?: return@withContext
-        Su.runCommand(buildServiceCall(code, matrix))
+        val res = Su.runCommand(buildServiceCall(code, matrix))
+        invalidateOnFailure(res, code, "apply")
         Unit
     }
 
     override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
         val code = workingCode ?: return@withContext
-        Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
+        val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
+        invalidateOnFailure(res, code, "clear")
         Unit
     }
 
@@ -101,6 +103,16 @@ class SurfaceFlingerEngine : ColorEngine {
         api >= 29 -> intArrayOf(1015, 1023, 1030)
         // Pre-10 reliably uses 1015.
         else -> intArrayOf(1015)
+    }
+
+    private fun invalidateOnFailure(res: Su.SuResult, code: Int, operation: String) {
+        if (res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) return
+        Log.w(
+            TAG,
+            "$operation failed for SurfaceFlinger code $code " +
+                "(exit=${res.exitCode}, stdout=${res.stdout.take(160)}); invalidating probe cache"
+        )
+        workingCode = null
     }
 
     private companion object {

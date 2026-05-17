@@ -340,3 +340,38 @@ smoke flow.
 
 Docs-only change. Verification should include `git diff --check`; no
 Kotlin/Gradle behavior changed in this pass.
+
+## Implementation pass 6 (C132-C136, 2026-05-17)
+
+This pass implemented the rev 4.1 code-review correctness batch after
+C142/C143. C141 remains blocked on maintainer identity/account action
+outside Git, so the next implementable roadmap work was C132-C136.
+
+### Files modified (pass 6)
+
+| File | Why |
+|---|---|
+| `app/src/main/java/com/openlumen/service/LumenService.kt` | Added `rampMutex`; serialized transition cancel/join/launch; cancel+join active ramp before clear or engine switch. |
+| `core-engine/src/main/java/com/openlumen/engine/engines/ColorDisplayManagerEngine.kt` | Added `clearCache()` and invalidated partial reflection cache failures. |
+| `core-engine/src/main/java/com/openlumen/engine/engines/SurfaceFlingerEngine.kt` | Checked apply/clear `Su.runCommand` results and invalidated cached transaction code on nonzero / `not found` output. |
+| `core-engine/src/main/java/com/openlumen/engine/engines/KcalEngine.kt` | Made KCAL scripts fail fast with `set -e` and invalidated cached sysfs paths on nonzero shell exit. |
+| `core-engine/src/main/java/com/openlumen/engine/engines/OverlayEngine.kt` | Serialized install/apply/clear `View` and `WindowManager` mutation with an internal `viewLock`. |
+| `ROADMAP.md` | Marked C132-C136 shipped and added the implementation-progress note. |
+| `PROJECT_CONTEXT.md` | Updated durable architecture/gotcha context for ramp, cache, and overlay locking behavior. |
+| `CHANGELOG.md` | Added the service/engine correctness fixes under `[Unreleased]`. |
+| `docs/ARCHITECTURE.md` | Documented `rampMutex` in the service concurrency model. |
+| `docs/v0.5.0-release-readiness.md` | Marked Gate 2 C132-C136 landed and replaced stale Gate 1 commit instructions. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00c for this local implementation evidence. |
+
+### Verification (pass 6)
+
+- First test run timed out at the shell-tool layer and left stale Gradle /
+  transformed-class output on the shared drive. After stopping Gradle and
+  forcing a clean rerun, the authoritative verification passed.
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --rerun-tasks --stacktrace`
+  passed (`BUILD SUCCESSFUL`, 133 actionable tasks).
+- `:app:assembleDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 98
+  actionable tasks).
+- `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142
+  actionable tasks).
+- `git diff --check` passed with only the repo's CRLF conversion warnings.

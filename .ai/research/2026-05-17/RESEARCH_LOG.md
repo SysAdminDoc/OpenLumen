@@ -348,3 +348,18 @@ Outcome:
   fabricating any device-result rows.
 - ROADMAP / PROJECT_CONTEXT / FEATURE_BACKLOG / PRIORITIZATION_MATRIX
   now mark C143 shipped.
+
+## Implementation update (C132-C136)
+
+C141 still requires maintainer account / identity action outside Git, so
+the next implementable roadmap batch after C143 was the rev 4.1 pass-2
+correctness set:
+
+- C132/C133: service ramp atomicity and cancel-before-clear.
+- C134: CDM partial reflection cache invalidation.
+- C135: overlay install/apply/clear mutation locking.
+- C136: SurfaceFlinger / KCAL failed-write cache invalidation.
+
+No new external research was needed for this pass; the evidence source is
+local code review (S00/S00c). Verification covered unit tests with
+`--rerun-tasks`, debug assemble, lint, and `git diff --check`.

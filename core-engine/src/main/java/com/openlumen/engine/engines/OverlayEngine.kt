@@ -38,6 +38,7 @@ class OverlayEngine : ColorEngine {
     // for the rare case `apply()` is called from a worker thread by accident.
     @Volatile private var hostView: View? = null
     @Volatile private var hostWm: WindowManager? = null
+    private val viewLock = Any()
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.Main) {
         if (Build.VERSION.SDK_INT >= 23) Settings.canDrawOverlays(context) else true
@@ -54,12 +55,12 @@ class OverlayEngine : ColorEngine {
      * non-Main coroutine still installs cleanly.
      */
     fun installView(serviceContext: Context, initial: LumenMatrix): Boolean {
-        if (hostView != null) return true
+        if (synchronized(viewLock) { hostView != null }) return true
         if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(serviceContext)) {
             Log.w(tag, "installView: SYSTEM_ALERT_WINDOW not granted; overlay engine disabled")
             return false
         }
-        return runOnMain { installViewLocked(serviceContext, initial) }
+        return runOnMain { synchronized(viewLock) { installViewLocked(serviceContext, initial) } }
     }
 
     private fun installViewLocked(serviceContext: Context, initial: LumenMatrix): Boolean {
@@ -106,27 +107,33 @@ class OverlayEngine : ColorEngine {
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.Main) {
-        val v = hostView
-        if (v != null) {
-            v.setBackgroundColor(matrix.toOverlayArgb())
-            return@withContext
+        val installed = synchronized(viewLock) {
+            val v = hostView
+            if (v != null) {
+                v.setBackgroundColor(matrix.toOverlayArgb())
+                true
+            } else {
+                // Already on Main, but go through installViewLocked to avoid a
+                // pointless re-post via runOnMain.
+                installViewLocked(context, matrix)
+            }
         }
-        // Already on Main, but go through installViewLocked to avoid a
-        // pointless re-post via runOnMain.
-        if (!installViewLocked(context, matrix)) {
+        if (!installed) {
             Log.w(tag, "apply: installView failed; tint will not be visible")
         }
     }
 
     override suspend fun clear(context: Context) = withContext(Dispatchers.Main) {
-        val v = hostView
-        val wm = hostWm
-        if (v != null && wm != null) {
-            runCatching { wm.removeViewImmediate(v) }
-                .onFailure { Log.w(tag, "removeViewImmediate failed: ${it.message}") }
+        synchronized(viewLock) {
+            val v = hostView
+            val wm = hostWm
+            if (v != null && wm != null) {
+                runCatching { wm.removeViewImmediate(v) }
+                    .onFailure { Log.w(tag, "removeViewImmediate failed: ${it.message}") }
+            }
+            hostView = null
+            hostWm = null
         }
-        hostView = null
-        hostWm = null
     }
 
     /**

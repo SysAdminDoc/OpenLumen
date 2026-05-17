@@ -388,3 +388,28 @@ validation:
 
 No device result rows were fabricated; the new content is a smoke-flow
 extension only.
+
+## C132-C136 implementation state
+
+The pass-2 correctness batch is now implemented locally after C143:
+
+- `LumenService` has a dedicated `rampMutex` for transition cancel/join/
+  launch state. `clearAndStop()` and engine switches cancel+join any
+  active ramp before clearing or swapping engines.
+- `ColorDisplayManagerEngine` clears all cached reflection handles on
+  partial cache-hit failure or reflection failure.
+- `SurfaceFlingerEngine` checks apply/clear `Su.runCommand` results and
+  invalidates the cached transaction code on nonzero or `not found`
+  output.
+- `KcalEngine` uses `set -e` in KCAL shell scripts and clears cached
+  sysfs paths on nonzero shell exit.
+- `OverlayEngine` serializes install/apply/clear view and window-manager
+  mutation with an internal lock on the main thread.
+
+Verification:
+
+- Unit test suite passed with `--rerun-tasks` after clearing stale
+  shared-drive build output from an interrupted first run.
+- `:app:assembleDebug` passed.
+- `:app:lintDebug` passed.
+- `git diff --check` passed with CRLF warnings only.

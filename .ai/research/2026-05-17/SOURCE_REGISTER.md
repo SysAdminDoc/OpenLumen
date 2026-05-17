@@ -13,6 +13,11 @@ entries `S126`-`S202` collected during this session.
   `fastlane/metadata/android/`, `branding/logo-prompts.md`.
 - **S00b**: 2026-05-17 in-tree audit hardening pass — 16 files modified on
   disk pre-commit; ROADMAP rev 3 enumerates the fixes.
+- **S00c**: 2026-05-17 roadmap execution pass for C132-C136:
+  `LumenService.kt`, `ColorDisplayManagerEngine.kt`,
+  `SurfaceFlingerEngine.kt`, `KcalEngine.kt`, and `OverlayEngine.kt`
+  were patched and verified with unit tests, debug assemble, lint, and
+  `git diff --check`.
 
 ## Existing roadmap sources (S10 - S125 — preserved verbatim)
 

@@ -71,6 +71,9 @@ Inside `LumenService`:
 - `applyMutex: Mutex` serializes every `engine.apply()` and `engine.clear()`
   call. Two concurrent `su` subprocesses would step on each other, especially
   for KCAL where each call writes multiple sysfs files.
+- `rampMutex: Mutex` serializes smooth-transition cancel/join/launch state
+  so prefs emissions, light-sensor emissions, engine swaps, and manual off
+  actions cannot leave an old ramp coroutine applying over the latest target.
 - `latestPrefs: AtomicReference<Preferences?>` and `latestLux: AtomicReference<Float>`
   hold the most recent snapshots. The alarm receiver and the sensor flow read
   these without coupling to the prefs-flow collector coroutine.
