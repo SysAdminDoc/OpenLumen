@@ -488,3 +488,14 @@ C138 is now implemented locally:
   boundary and reads only one probe byte beyond the cap before failing.
 - `PreferencesImportReadTest` covers exact-limit acceptance and
   max-plus-one rejection before decode.
+
+## C137 implementation state
+
+C137 is now implemented locally:
+
+- `material-icons-extended` is removed from `gradle/libs.versions.toml`
+  and `app/build.gradle.kts`.
+- `OpenLumenRoot` and `PresetsScreen` use local vector drawables through
+  `painterResource()`.
+- `:app:dependencies --configuration debugRuntimeClasspath` shows no
+  `material-icons-extended` artifact.

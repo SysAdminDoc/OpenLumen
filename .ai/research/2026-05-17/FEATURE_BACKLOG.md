@@ -337,9 +337,9 @@ stable base for Direct Boot restore.
   writes. Source: S00c.
 - **C141 remains outstanding** because it requires maintainer developer
   account / identity work outside Git.
-- **C137 is the next small code-level candidate** once maintainer-only
-  C141 and release-packaging gates are accounted for; C138 shipped after
-  this backlog note was first written.
+- **C137 and C138 are shipped**. The next small code-level candidates are
+  now below the maintainer/release-account gates and the heavier Android
+  17 / AGP train.
 - **C130 shipped 2026-05-17**. Driver reports now include a reflection-
   gated Android 17 Advanced Protection section and declare
   `QUERY_ADVANCED_PROTECTION_MODE`. Sources: S134, S267.
@@ -361,3 +361,6 @@ stable base for Direct Boot restore.
 - **C138 shipped 2026-05-17**. Profile imports are capped at raw
   `InputStream` bytes before UTF-8 decoding, with exact-limit and
   max-plus-one unit coverage. Source: S00e.
+- **C137 shipped 2026-05-17**. The deprecated
+  `material-icons-extended` artifact is gone; the seven icon call sites
+  now use local vector resources. Source: S00f.

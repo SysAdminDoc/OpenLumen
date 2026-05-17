@@ -17,7 +17,7 @@ From [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) on
 | KSP | 2.1.0-1.0.29 | Tracks Kotlin today; rev 5 notes KSP's newer lines decouple from old Kotlin-tied versioning, but do this with C95. |
 | Compose BOM | 2024.12.01 | Concrete rev 4.1 target: 2026.05.00; rev 5 AndroidX table confirms compose 1.11.1 / material3 1.4.0 stable (S225, S239, S253). |
 | Compose compiler | 1.5.15 | Compose Compiler plugin from Kotlin Compose plugin (`kotlin.plugin.compose`); compose compiler version is implied by the plugin. |
-| Material 3 | 1.3.1 | C110 surveys Material 3 Expressive components when timing fits. |
+| Material 3 | 1.3.1 | C110 surveys Material 3 Expressive components when timing fits; C137 removed the deprecated `material-icons-extended` dependency. |
 | Hilt | 2.53.1 | C124 target is now Hilt 2.59.2, but it is AGP-9-coupled; do not land independently before C95 (S240-S241). |
 | Hilt navigation-compose | 1.2.0 | C96: move `hiltViewModel()` to `androidx.hilt:hilt-lifecycle-viewmodel-compose` (1.3.0-stable Sep 2025; S144-S145). |
 | DataStore | 1.1.1 | C28 / C102: use stable 1.2.1 / Direct Boot APIs (`deviceProtectedDataStore()`, S252). |
@@ -292,3 +292,11 @@ import limit on raw stream bytes before UTF-8 decoding, closing the
 local input-validation bug where multi-byte text could exceed the
 intended byte budget while still passing a decoded-character count.
 Focused unit coverage lives in `PreferencesImportReadTest`.
+
+### C137 material icon dependency removal
+
+C137 is now shipped. The app no longer declares
+`androidx.compose.material:material-icons-extended`; its seven nav /
+favorite icons are local vector resources loaded with `painterResource`.
+This removes a deprecated Compose artifact from the app dependency graph
+without mixing broader Compose BOM / Material 3 churn into the C95 train.

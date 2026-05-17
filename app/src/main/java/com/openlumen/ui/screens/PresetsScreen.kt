@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -122,7 +120,10 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     // a useful list to walk.
                     IconButton(onClick = { vm.toggleFavorite(entry.key) }) {
                         Icon(
-                            imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                            painter = painterResource(
+                                if (isFavorite) R.drawable.ic_favorite_filled
+                                else R.drawable.ic_favorite_border
+                            ),
                             contentDescription = stringResource(
                                 if (isFavorite) R.string.preset_unfavorite
                                 else R.string.preset_favorite

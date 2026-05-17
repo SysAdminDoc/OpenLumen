@@ -684,12 +684,16 @@ informed.
   now caps imports with `readImportBytes()` at the raw `InputStream`
   byte layer before UTF-8 decoding; `PreferencesImportReadTest.kt`
   covers exact-limit and max-plus-one behavior.
+- **S00f**: Local implementation evidence for C137 —
+  `OpenLumenRoot.kt` and `PresetsScreen.kt` now load local vector
+  resources via `painterResource`; `gradle/libs.versions.toml` and
+  `app/build.gradle.kts` no longer declare `material-icons-extended`.
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e | 5 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f | 6 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -729,3 +733,5 @@ records the Android `Context` service constant used by C130.
 S268 records the AGP VCS-info DSL used by C120.
 S00e records the local C138 import-byte-limit implementation and focused
 unit test.
+S00f records the local C137 dependency-removal and vector-resource
+implementation evidence.

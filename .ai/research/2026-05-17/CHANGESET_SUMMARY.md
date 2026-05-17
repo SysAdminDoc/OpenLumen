@@ -523,3 +523,39 @@ byte-correctness**.
 
 - `:core-prefs:test --no-daemon --rerun-tasks --stacktrace` passed
   after stopping a stale Gradle daemon from an interrupted first run.
+
+## Implementation pass 13 (C137, 2026-05-17)
+
+This pass completed **C137 — `material-icons-extended` deprecation
+migration**.
+
+### Files modified (pass 13)
+
+| File | Why |
+|---|---|
+| `gradle/libs.versions.toml` | Removed the deprecated `compose-material-icons-extended` alias. |
+| `app/build.gradle.kts` | Removed the app dependency on `material-icons-extended`. |
+| `app/src/main/java/com/openlumen/ui/OpenLumenRoot.kt` | Switched bottom-navigation icons from `Icons.Outlined.*` to local vector resources loaded with `painterResource()`. |
+| `app/src/main/java/com/openlumen/ui/screens/PresetsScreen.kt` | Switched favorite / unfavorite icons from `Icons.*` to local vector resources. |
+| `app/src/main/res/drawable/ic_nav_*.xml`, `ic_favorite_*.xml` | Added the seven self-hosted vector resources needed by the app UI. |
+| `ROADMAP.md` | Marked C137 shipped. |
+| `PROJECT_CONTEXT.md` | Recorded the local-vector icon decision in durable stack context. |
+| `CHANGELOG.md` | Added the dependency removal under `[Unreleased]`. |
+| `docs/v0.5.0-release-readiness.md` | Marked C137 done instead of deferred. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00f for local implementation evidence. |
+| `.ai/research/2026-05-17/RESEARCH_LOG.md` | Logged the call-site inventory and dependency verification. |
+| `.ai/research/2026-05-17/STATE_OF_REPO.md` | Added current implementation state for C137. |
+| `.ai/research/2026-05-17/FEATURE_BACKLOG.md` | Marked C137 shipped in the execution update. |
+| `.ai/research/2026-05-17/PRIORITIZATION_MATRIX.md` | Added C137 to the shipped execution table. |
+| `.ai/research/2026-05-17/SECURITY_AND_DEPENDENCY_REVIEW.md` | Recorded the dependency hardening. |
+
+### Verification (pass 13)
+
+- `:app:assembleDebug --no-daemon --stacktrace` passed.
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --stacktrace`
+  passed.
+- `:app:lintDebug --no-daemon --stacktrace` passed on a clean rerun
+  after the first lint invocation exceeded the shell timeout.
+- `:app:dependencies --configuration debugRuntimeClasspath --no-daemon`
+  showed no `material-icons-extended` artifact.
+- `git diff --check` passed with CRLF conversion warnings only.

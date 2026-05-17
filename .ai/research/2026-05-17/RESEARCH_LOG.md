@@ -439,3 +439,28 @@ Verification:
   stopping a stale Gradle daemon from an earlier timed-out run.
 - `PreferencesImportReadTest` covers exactly-at-limit reads and one-byte
   over-limit rejection.
+
+## Implementation update (C137)
+
+C137 used the existing S229 evidence that `material-icons-extended` is
+deprecated. Local inventory found only seven app call sites: five
+bottom-navigation icons and the Presets favorite toggle.
+
+Implementation:
+
+- Added local vector resources under `app/src/main/res/drawable/`.
+- Switched Compose call sites from `Icons.*` `ImageVector`s to
+  `painterResource()`.
+- Removed `compose-material-icons-extended` from the version catalog and
+  app dependency list.
+
+Verification:
+
+- `:app:assembleDebug --no-daemon --stacktrace` passed.
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --stacktrace`
+  passed.
+- `:app:lintDebug --no-daemon --stacktrace` passed on a clean rerun
+  after the first lint invocation exceeded the shell timeout.
+- `:app:dependencies --configuration debugRuntimeClasspath --no-daemon`
+  confirmed no `material-icons-extended` artifact remains.
+- `git diff --check` passed with CRLF conversion warnings only.

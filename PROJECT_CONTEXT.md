@@ -41,7 +41,7 @@ August 2022) on Android 14 / 15 / 17.
 | KSP | 2.1.0-1.0.29 | |
 | Compose BOM | 2024.12.01 | |
 | Compose compiler | 1.5.15 | |
-| Material 3 | 1.3.1 | |
+| Material 3 | 1.3.1 | C137 removed `material-icons-extended`; nav/favorite icons are local vector resources under `app/src/main/res/drawable/`. |
 | Hilt | 2.53.1 | Hilt Compose artifact migration is on the Now list (C96 → `hilt-lifecycle-viewmodel-compose`). |
 | DataStore | 1.1.1 | New `deviceProtectedDataStore()` API unlocks Direct Boot restore (C28). |
 | kotlinx.serialization | 1.7.3 | |

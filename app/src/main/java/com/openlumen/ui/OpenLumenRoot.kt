@@ -2,12 +2,6 @@ package com.openlumen.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material.icons.outlined.WbSunny
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.SettingsInputComponent
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -16,9 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -32,12 +25,12 @@ import com.openlumen.ui.screens.PresetsScreen
 import com.openlumen.ui.screens.ScheduleScreen
 import com.openlumen.ui.theme.OpenLumenTheme
 
-private sealed class Dest(val route: String, val labelRes: Int, val icon: ImageVector) {
-    data object Home     : Dest("home",     R.string.nav_home,     Icons.Outlined.WbSunny)
-    data object Schedule : Dest("schedule", R.string.nav_schedule, Icons.Outlined.Schedule)
-    data object Presets  : Dest("presets",  R.string.nav_presets,  Icons.Outlined.Tune)
-    data object Driver   : Dest("driver",   R.string.nav_driver,   Icons.Outlined.SettingsInputComponent)
-    data object About    : Dest("about",    R.string.nav_about,    Icons.Outlined.Info)
+private sealed class Dest(val route: String, val labelRes: Int, val iconRes: Int) {
+    data object Home     : Dest("home",     R.string.nav_home,     R.drawable.ic_nav_home)
+    data object Schedule : Dest("schedule", R.string.nav_schedule, R.drawable.ic_nav_schedule)
+    data object Presets  : Dest("presets",  R.string.nav_presets,  R.drawable.ic_nav_presets)
+    data object Driver   : Dest("driver",   R.string.nav_driver,   R.drawable.ic_nav_driver)
+    data object About    : Dest("about",    R.string.nav_about,    R.drawable.ic_nav_about)
 
     companion object {
         val all = listOf(Home, Schedule, Presets, Driver, About)
@@ -64,7 +57,12 @@ fun OpenLumenRoot() {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(dest.icon, contentDescription = stringResource(dest.labelRes)) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(dest.iconRes),
+                                    contentDescription = stringResource(dest.labelRes)
+                                )
+                            },
                             label = { Text(stringResource(dest.labelRes)) }
                         )
                     }
