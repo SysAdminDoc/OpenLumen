@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     AppWidgetProviderInfo for the 1x1 toggle widget. Tied to roadmap
-    candidate C19.
+    candidates C19 and C123. Glance renders runtime content; the XML
+    layout remains the initial / picker preview surface.
 
     - updatePeriodMillis = 30 min (platform minimum). The service also
       broadcasts ToggleWidget.ACTION_REFRESH on every prefs emission, so

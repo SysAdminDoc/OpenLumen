@@ -691,3 +691,32 @@ Verification:
 
 - `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+
+## Implementation update (C123)
+
+C123 became the next implementable roadmap item after C48. Hardware-backed
+device work (C01/C36/C103/C140) was checked first, but the local x86_64
+emulator cannot start because hardware acceleration is unavailable on this
+host, so widget/device screenshots still require another machine or real
+hardware.
+
+Implementation:
+
+- Added `androidx.glance:glance-appwidget:1.1.1` and refreshed dependency
+  verification metadata for the new AndroidX artifacts.
+- Replaced the runtime `RemoteViews` implementations of `ToggleWidget`
+  and `PresetWidget` with `GlanceAppWidgetReceiver` /
+  `GlanceAppWidget`.
+- Preserved `WidgetActionReceiver` as the single toggle and preset action
+  path, including the foreground-service fallback behavior from C105.
+- Kept the existing AppWidget XML layouts as initial / launcher-preview
+  layouts only.
+
+Verification:
+
+- `:app:compileDebugKotlin --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify` after the Glance API
+  import fixes.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror after refreshing
+  `gradle/verification-metadata.xml`.

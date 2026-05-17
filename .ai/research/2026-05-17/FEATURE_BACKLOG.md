@@ -139,12 +139,16 @@ non-essential.
 
 ## Tier-shift implications from new evidence (proposed for rev 4)
 
-### C123 — Glance widget rewrite — UC → Next
+### C123 — Glance widget rewrite — UC → Next → shipped
 
 **Rev 3**: Under Consideration, reason "Glance is alpha."
 **New evidence**: S193 — Glance 1.0.0 went stable, 1.1.0 shipped 2024-06-12.
-**Proposed action**: move to Next; remove the stability blocker. Pair with
-C20 / C19 rewrite once C95 (AGP 9) lands.
+**Implemented 2026-05-17**: `ToggleWidget` and `PresetWidget` now render
+through `GlanceAppWidgetReceiver` / `GlanceAppWidget` on
+`androidx.glance:glance-appwidget:1.1.1`; the existing
+`WidgetActionReceiver` broadcast action path remains intact. XML widget
+layouts remain launcher initial / preview layouts only. Sources: S00p,
+S193, S194, S282.
 
 ### C101 — Compose Preview Screenshot Testing CI — risk 1 → 2
 

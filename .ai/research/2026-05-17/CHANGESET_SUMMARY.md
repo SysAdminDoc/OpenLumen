@@ -796,3 +796,30 @@ This pass implemented **C48 — Gradle dependency verification**.
 - The generated metadata contains ignored PGP keys for keys that could
   not be downloaded from key servers; future dependency refreshes must
   review new ignored-key entries rather than treating them as automatic.
+
+## Implementation pass 23 (C123, 2026-05-17)
+
+This pass implemented **C123 — Glance API widget rewrite**.
+
+### Files modified (pass 23)
+
+| File | Why |
+|---|---|
+| `gradle/libs.versions.toml`, `app/build.gradle.kts`, `gradle/verification-metadata.xml` | Added `androidx.glance:glance-appwidget:1.1.1` and refreshed dependency verification metadata. |
+| `app/src/main/java/com/openlumen/widget/ToggleWidget.kt` | Replaced the runtime `RemoteViews` AppWidgetProvider with a Glance receiver/widget while preserving the existing toggle broadcast action. |
+| `app/src/main/java/com/openlumen/widget/PresetWidget.kt` | Replaced the runtime `RemoteViews` preset widget with Glance slots that still route preset taps through `WidgetActionReceiver`. |
+| `app/src/main/AndroidManifest.xml`, `app/src/main/res/xml/widget_toggle_info.xml`, `app/src/main/res/xml/widget_preset_info.xml` | Clarified that XML layouts remain initial / launcher-preview layouts while Glance renders the runtime widgets. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md` | Marked C123 shipped and recorded the new Glance dependency / widget architecture. |
+| `.ai/research/2026-05-17/*.md` | Added S00p/S282 and recorded the implementation, prioritization, dependency, and emulator-blocker state. |
+
+### Verification (pass 23)
+
+- `:app:compileDebugKotlin --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify` after the Glance API
+  import fixes.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror after refreshing
+  `gradle/verification-metadata.xml`.
+- A local x86_64 emulator / AVD was provisioned for C01/C36/C103 follow-up
+  checks but could not launch because hardware acceleration is unavailable
+  on this host.

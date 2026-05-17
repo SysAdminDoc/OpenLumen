@@ -89,8 +89,10 @@ Components declared:
   long-press).
 - `service/BootReceiver` (BOOT_COMPLETED).
 - `service/ScheduleAlarmReceiver` (alarm callback).
-- `widget/ToggleWidget` (1×1) and `widget/PresetWidget` (4×1), each with a
-  namespaced `REFRESH` / `PRESET_REFRESH` broadcast action.
+- `widget/ToggleWidget` (1×1) and `widget/PresetWidget` (4×1), each now
+  rendered through Glance with a namespaced `REFRESH` / `PRESET_REFRESH`
+  broadcast action. XML widget layouts remain initial / launcher-preview
+  layouts.
 
 ## CI and supply chain
 
@@ -606,3 +608,17 @@ C117 is now implemented locally:
 - `docs/device-matrix.md` now asks rooted SurfaceFlinger and KCAL smoke
   testers to record first-emission pass/fail evidence during C01 device
   validation.
+
+## C123 implementation state
+
+C123 is now implemented locally:
+
+- `ToggleWidget` and `PresetWidget` use
+  `GlanceAppWidgetReceiver` / `GlanceAppWidget` runtime rendering.
+- `WidgetActionReceiver` remains the single action path for toggle and
+  preset taps, preserving C105 foreground-service fallback handling.
+- The project pins `androidx.glance:glance-appwidget:1.1.1` and refreshed
+  `gradle/verification-metadata.xml` for strict dependency verification.
+- Emulator-backed widget/device evidence remains blocked on this host:
+  the x86_64 Android emulator requires hardware acceleration that is not
+  available here.

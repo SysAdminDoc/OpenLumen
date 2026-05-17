@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    AppWidgetProviderInfo for the 4x1 preset widget. Tied to C20.
+    AppWidgetProviderInfo for the 4x1 preset widget. Tied to C20/C123.
+    Glance renders runtime content; the XML layout remains the initial /
+    picker preview surface.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="180dp"

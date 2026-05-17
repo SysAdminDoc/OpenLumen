@@ -44,6 +44,7 @@ August 2022) on Android 14 / 15 / 17.
 | Material 3 | 1.4.0 | C137 removed `material-icons-extended`; nav/favorite icons are local vector resources under `app/src/main/res/drawable/`. |
 | Hilt | 2.59.2 | C96/C124 shipped on 2026-05-17; Compose `hiltViewModel()` comes from `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`. |
 | Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped initial theme-token preview references and CI validation. |
+| Glance AppWidget | 1.1.1 | C123 shipped on 2026-05-17; home-screen widgets render through `GlanceAppWidgetReceiver` while keeping XML preview layouts for launchers. |
 | DataStore | 1.2.1 | C28/C102 shipped a device-protected Direct Boot mirror using the stable 1.2 line. |
 | kotlinx.serialization | 1.7.3 | |
 | kotlinx.coroutines | 1.9.0 | |
@@ -243,8 +244,8 @@ SHA-256 sums, and `actions/attest`.
 - [app/.../service/LumenTileService.kt](app/src/main/java/com/openlumen/service/LumenTileService.kt) — QS tile (subtitle, long-press → app).
 - [app/.../service/BootReceiver.kt](app/src/main/java/com/openlumen/service/BootReceiver.kt) — `BOOT_COMPLETED` with 5-minute crash-window panic-reset.
 - [app/.../service/ScheduleAlarmReceiver.kt](app/src/main/java/com/openlumen/service/ScheduleAlarmReceiver.kt) — alarm callback that fires `ACTION_REEVALUATE`.
-- [app/.../widget/ToggleWidget.kt](app/src/main/java/com/openlumen/widget/ToggleWidget.kt) — 1×1 toggle.
-- [app/.../widget/PresetWidget.kt](app/src/main/java/com/openlumen/widget/PresetWidget.kt) — 4×1 favorites.
+- [app/.../widget/ToggleWidget.kt](app/src/main/java/com/openlumen/widget/ToggleWidget.kt) — 1×1 Glance toggle.
+- [app/.../widget/PresetWidget.kt](app/src/main/java/com/openlumen/widget/PresetWidget.kt) — 4×1 Glance favorites.
 - [core-prefs/.../PreferencesStore.kt](core-prefs/src/main/java/com/openlumen/prefs/PreferencesStore.kt) — single-JSON-blob DataStore wrapper, sanitize on read/write, import preview.
 - [core-schedule/.../SolarCalculator.kt](core-schedule/src/main/java/com/openlumen/schedule/SolarCalculator.kt) — hand-rolled NOAA algorithm with explicit `Polar` enum (polar-day vs polar-night) and date-snapping.
 

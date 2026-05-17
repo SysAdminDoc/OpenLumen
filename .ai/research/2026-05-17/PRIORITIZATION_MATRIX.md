@@ -30,7 +30,7 @@ proposes.
 
 | ID | Candidate | Rev 3 Tier | Rev 4 Tier | Reason | Evidence |
 |---|---|---|---|---|---|
-| C123 | Glance widget rewrite | Under Consideration | Next | Glance is stable since 1.0.0; 1.1.0 shipped 2024-06-12. Removes the alpha-stability blocker rev 3 cited. | S193, S194 |
+| C123 | Glance widget rewrite | Under Consideration | Shipped 2026-05-17 | Glance is stable since 1.0.0; 1.1.0 shipped 2024-06-12. Runtime widgets now use Glance 1.1.1 while preserving the existing action receiver path. | S193, S194, S00p, S282 |
 | C101 | Compose Preview Screenshot Testing CI | Now (risk 1) | Now (risk 2) | Tool is still 0.0.1-alphaXX (Apr 2026). Bump risk and document version-pin policy. | S148, S149 |
 
 No other tier shifts proposed. Rev 3's placements are evidence-backed and
@@ -68,16 +68,16 @@ v0.5.0/v0.6.0:
 
 ## Next-tier composition for rev 4
 
-Rev 3's Next list plus C123. The Next-tier composition for v0.7.0 → v0.8.0:
+Rev 3's Next list minus C123 after implementation. The remaining Next-tier
+composition for v0.7.0 → v0.8.0:
 
 1. C06 — Shizuku-backed privileged backend (also unblocks C11, C12, C69)
 2. C21 — Wear OS companion
-3. **C123 — Glance API widget rewrite (promoted from Under Consideration)**
-4. C63 — CVD LUT correction
-5. Driver-compatibility learning (continued)
-6. Preset system v2 polish
-7. C84 / C91 — Connected permission / overlay tests
-8. Research-watchlist maintenance
+3. C63 — CVD LUT correction
+4. Driver-compatibility learning (continued)
+5. Preset system v2 polish
+6. C84 / C91 — Connected permission / overlay tests
+7. Research-watchlist maintenance
 
 ## Later-tier additions for rev 4
 
@@ -199,6 +199,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C28/C102 | Shipped 2026-05-17 | Device-protected Direct Boot mirror, `LOCKED_BOOT_COMPLETED` receiver, and pre-unlock service restore path landed; device-matrix proof remains C01. |
 | C127 | Shipped 2026-05-17 | Home-tab perceived brightness reduction landed next to blue suppression, backed by sRGB-weighted transformed-white luminance. |
 | C48 | Shipped 2026-05-17 | Gradle dependency verification metadata is checked in and strict verification passes across assemble, lint, screenshot validation, and unit tests. |
+| C123 | Shipped 2026-05-17 | Toggle and preset home-screen widgets now render through Glance 1.1.1 while preserving the existing widget broadcast action path. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

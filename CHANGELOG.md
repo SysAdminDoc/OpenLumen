@@ -84,6 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gradle dependency verification is now enforced with checked-in
   `gradle/verification-metadata.xml` generated after the AGP 9 and
   AndroidX refreshes.
+- Home-screen widgets now render through Jetpack Glance 1.1.1 while
+  preserving the existing toggle / preset broadcast receiver action paths.
 - The foreground service is direct-boot aware and falls root-only driver
   choices back to the Overlay engine until the user unlocks.
 - Home now shows perceived brightness reduction next to blue-channel

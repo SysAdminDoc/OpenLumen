@@ -1,127 +1,126 @@
 package com.openlumen.widget
 
-import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.widget.RemoteViews
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.action.actionSendBroadcast
+import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.updateAll
+import androidx.glance.background
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Column
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
+import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
+import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import com.openlumen.MainActivity
 import com.openlumen.R
 import com.openlumen.prefs.PreferencesStore
-import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import javax.inject.Inject
 
 /**
- * 1x1 home-screen widget — single button that toggles the filter on/off.
+ * 1x1 home-screen widget rendered with Glance.
  *
- * Tied to roadmap candidate **C19**. The widget reuses the existing
- * [WidgetActionReceiver.ACTION_TOGGLE] intent, so it can recover cleanly
- * when Android rejects a background foreground-service start.
- *
- * Refresh model:
- * - System fires [onUpdate] when the widget is added, when the host
- *   re-binds, and every [updatePeriodMillis] (set to 30 min in
- *   `widget_toggle_info.xml`, which is the platform minimum).
- * - [LumenService.observePreferences] broadcasts [ACTION_REFRESH] on every
- *   prefs emission, so the visible state stays in sync with the toggle in
- *   the app and the tile within tens of milliseconds.
- * - [onReceive] picks up [ACTION_REFRESH] and routes it back through
- *   [onUpdate] for the currently-installed widget instances.
+ * Tied to roadmap candidates C19 and C123. User actions still route through
+ * [WidgetActionReceiver] so Android 15+ foreground-service start rejections
+ * are handled by the existing recovery path.
  */
-@AndroidEntryPoint
-class ToggleWidget : AppWidgetProvider() {
-
-    @Inject lateinit var prefs: PreferencesStore
+class ToggleWidget : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = ToggleGlanceWidget()
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == ACTION_REFRESH) {
-            val mgr = AppWidgetManager.getInstance(context)
-            val ids = mgr.getAppWidgetIds(
-                ComponentName(context, ToggleWidget::class.java)
-            )
-            if (ids.isNotEmpty()) onUpdate(context, mgr, ids)
+            broadcastRefresh(context)
         }
-    }
-
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        // BroadcastReceivers have a 10-second budget. We do one cheap read,
-        // with a 1-second cap so a misbehaving DataStore never wedges the
-        // receiver. On timeout we render the "off" state, which is the
-        // conservative default.
-        val enabled = runCatching {
-            runBlocking {
-                withTimeoutOrNull(1_000) { prefs.flow.first().enabled } ?: false
-            }
-        }.getOrDefault(false)
-
-        appWidgetIds.forEach { id -> renderOne(context, appWidgetManager, id, enabled) }
-    }
-
-    private fun renderOne(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        widgetId: Int,
-        enabled: Boolean
-    ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_toggle)
-        views.setTextViewText(
-            R.id.widget_label,
-            context.getString(if (enabled) R.string.tile_on else R.string.tile_off)
-        )
-
-        // The button click routes through a receiver first so Android 15+
-        // foreground-service start rejections can be handled instead of
-        // leaving prefs stuck in an enabled-but-not-running state.
-        val toggleIntent = Intent(context, WidgetActionReceiver::class.java)
-            .setAction(WidgetActionReceiver.ACTION_TOGGLE)
-        val togglePending = PendingIntent.getBroadcast(
-            context,
-            REQUEST_TOGGLE,
-            toggleIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.widget_button, togglePending)
-
-        // Long-press hint: an explicit secondary action would be nicer, but
-        // RemoteViews has no long-press affordance prior to Compose for
-        // widgets. We make the label area open the app as a discoverability
-        // fallback.
-        val tapIntent = Intent(context, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val tapPending = PendingIntent.getActivity(
-            context,
-            REQUEST_OPEN,
-            tapIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.widget_label, tapPending)
-
-        appWidgetManager.updateAppWidget(widgetId, views)
     }
 
     companion object {
         const val ACTION_REFRESH = "com.openlumen.widget.action.REFRESH"
-        private const val REQUEST_TOGGLE = 1001
-        private const val REQUEST_OPEN = 1002
 
         /**
          * Helper for `LumenService` to nudge any installed widget instances
          * after a prefs emission. Cheap when no widgets are installed.
          */
         fun broadcastRefresh(context: Context) {
-            val intent = Intent(context, ToggleWidget::class.java)
-                .setAction(ACTION_REFRESH)
-            context.sendBroadcast(intent)
+            WidgetUpdateScope.launch {
+                ToggleGlanceWidget().updateAll(context.applicationContext)
+            }
         }
     }
 }
+
+private class ToggleGlanceWidget : GlanceAppWidget() {
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val enabled = runCatching {
+            withTimeoutOrNull(WIDGET_READ_TIMEOUT_MS) {
+                PreferencesStore(context.applicationContext).flow.first().enabled
+            } ?: false
+        }.getOrDefault(false)
+
+        val label = context.getString(if (enabled) R.string.tile_on else R.string.tile_off)
+        val contentDescription = context.getString(R.string.home_toggle)
+        val toggleAction = actionSendBroadcast(
+            Intent(context, WidgetActionReceiver::class.java)
+                .setAction(WidgetActionReceiver.ACTION_TOGGLE)
+        )
+        val openAppAction = actionStartActivity<MainActivity>()
+
+        provideContent {
+            Column(
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .background(WidgetColors.Surface)
+                    .padding(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_lumen_tile),
+                    contentDescription = contentDescription,
+                    modifier = GlanceModifier
+                        .size(32.dp)
+                        .clickable(toggleAction)
+                )
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                Text(
+                    text = label,
+                    modifier = GlanceModifier.clickable(openAppAction),
+                    style = TextStyle(
+                        color = WidgetColors.Text,
+                        textAlign = TextAlign.Center
+                    )
+                )
+            }
+        }
+    }
+}
+
+internal object WidgetColors {
+    val Surface = ColorProvider(Color(0xFF1E1E2E))
+    val Text = ColorProvider(Color(0xFFCDD6F4))
+    val MutedText = ColorProvider(Color(0xFFA6ADC8))
+}
+
+internal const val WIDGET_READ_TIMEOUT_MS = 1_000L
+
+private val WidgetUpdateScope = CoroutineScope(Dispatchers.Default + SupervisorJob())

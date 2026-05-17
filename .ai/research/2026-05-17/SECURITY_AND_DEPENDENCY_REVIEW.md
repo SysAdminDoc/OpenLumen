@@ -291,6 +291,17 @@ S275-S281, S00l). This was not a security fire, but it reduced future
 forced-upgrade pressure and unlocked the Direct Boot work now recorded in
 S00m.
 
+### C123 Glance widget dependency
+
+C123 is now shipped. OpenLumen adds
+`androidx.glance:glance-appwidget:1.1.1`, the current stable Glance line
+selected instead of the 1.2.0 release candidate (S193-S194). This does
+not change the app's no-INTERNET posture or introduce Play Services /
+Firebase dependencies. `gradle/verification-metadata.xml` was refreshed
+for the new artifacts, and strict verification passed across assemble,
+lint, screenshot validation, and unit tests from the local mirror (S00p,
+S282).
+
 ### C138 import-size hardening
 
 C138 is now shipped. `PreferencesStore` enforces its 64 KiB profile

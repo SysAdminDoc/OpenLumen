@@ -2,10 +2,10 @@
 
 Every local and external source used in this research pass. Inherits the
 roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
-entries through `S281` collected during this session and implementation
+entries through `S282` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00o)
+## Local evidence (S00 / S00b-S00p)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -747,6 +747,17 @@ informed.
   `:app:lintDebug`, `:app:validateDebugScreenshotTest`,
   `:app:testDebugUnitTest`, `:core-engine:test`, `:core-schedule:test`,
   and `:core-prefs:test`.
+- **S00p**: Local implementation evidence for C123 —
+  `ToggleWidget.kt` and `PresetWidget.kt` now use
+  `GlanceAppWidgetReceiver` / `GlanceAppWidget` runtime rendering with
+  `androidx.glance:glance-appwidget:1.1.1`; manifest and AppWidget XML
+  comments document that the XML layouts remain launcher initial /
+  preview layouts. `WidgetActionReceiver` remains the single toggle and
+  preset action path. Verification metadata was refreshed and strict
+  Gradle validation passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+  Local emulator provisioning was attempted for widget/device evidence
+  but blocked because the x86_64 emulator requires hardware acceleration
+  on this host.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -789,18 +800,23 @@ informed.
   2026.05.00 and Material 3 1.4.0 stable.
   https://developer.android.com/develop/ui/compose/bom/bom-mapping and
   https://developer.android.com/jetpack/androidx/releases/compose-material3
+- **S282**: Glance AppWidget management guide — documents stateless,
+  passive `GlanceAppWidget` instances and explicit app-triggered widget
+  updates via the Glance update APIs; used to validate the C123 update
+  pattern.
+  https://developer.android.com/develop/ui/compose/glance/glance-app-widget
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o | 15 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p | 16 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
 | Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
 | AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
-| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S281 | 41 |
+| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S282 | 42 |
 | DataStore | S66, S95, S146-S147, S252, S280 | 6 |
 | F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
 | Security (OWASP / GHSA / SBOM tooling) | S60-S64, S67-S68, S77, S108-S110, S114, S122, S188-S192 | 19 |
@@ -848,5 +864,8 @@ stable AndroidX baseline refresh and full local-mirror validation. S00m
 records the C28/C102 Direct Boot implementation evidence and focused
 verification. S00n records the C127 perceived-luminance implementation
 and focused verification. S00o records the C48 checked-in dependency
-verification metadata and strict Gradle validation. S275-S281 capture the
-AndroidX / Compose release evidence used for that batch.
+verification metadata and strict Gradle validation. S00p records the C123
+Glance widget rewrite and local emulator hardware-acceleration blocker.
+S275-S281 capture the AndroidX / Compose release evidence used for that
+batch. S282 records the official Glance AppWidget update/state guidance
+used for the C123 rewrite.

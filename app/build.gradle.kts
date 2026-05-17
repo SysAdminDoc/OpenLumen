@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.glance.appwidget)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

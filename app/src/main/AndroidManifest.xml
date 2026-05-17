@@ -101,9 +101,9 @@
             android:exported="false" />
 
         <!--
-            1x1 toggle widget (roadmap C19). Receives the standard system
-            APPWIDGET_UPDATE plus an internal ACTION_REFRESH broadcast that
-            LumenService fires on every prefs emission.
+            1x1 toggle widget (roadmap C19/C123). Glance renders the
+            widget; ACTION_REFRESH still lets LumenService nudge all
+            instances after each prefs emission.
         -->
         <receiver
             android:name=".widget.ToggleWidget"
@@ -119,10 +119,10 @@
         </receiver>
 
         <!--
-            4x1 preset widget (roadmap C20). Renders the first four
-            favorited presets as tappable chips. Uses an action-namespaced
-            refresh broadcast so it doesn't fight ToggleWidget's intent
-            filter.
+            4x1 preset widget (roadmap C20/C123). Glance renders the
+            first four favorited presets as tappable chips. Uses an
+            action-namespaced refresh broadcast so it doesn't fight
+            ToggleWidget's intent filter.
         -->
         <receiver
             android:name=".widget.PresetWidget"

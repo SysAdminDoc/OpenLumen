@@ -77,6 +77,14 @@ major versions.
   and AndroidX refreshes, and the mirror build passes assemble, lint,
   screenshot validation, and unit tests with
   `--dependency-verification=strict`.
+- [x] **C123 — Glance API widget rewrite** shipped on 2026-05-17.
+  `ToggleWidget` and `PresetWidget` now render through
+  `GlanceAppWidgetReceiver` / `GlanceAppWidget` on
+  `androidx.glance:glance-appwidget:1.1.1`, while keeping the existing
+  `WidgetActionReceiver` toggle and preset broadcast path. The XML
+  AppWidgetProviderInfo layouts remain as launcher picker / initial
+  previews only. Strict dependency verification passed from the local
+  mirror after refreshing metadata.
 - [x] **C28 / C102 — Direct Boot restore** shipped on 2026-05-17. The
   unlocked service mirrors the last active tint matrix and selected engine
   to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
@@ -756,14 +764,11 @@ Partial (per rev 2, still partial in rev 3):
    responsive tile rendering (S117). No display tinting on the watch
    itself.
 
-4. **Glance API widget rewrite (C123, promoted UC → Next in rev 4)** —
-   `ToggleWidget` and `PresetWidget` use raw `RemoteViews`. Glance gives
-   us Compose-style widget code with `@PreviewTest` support and built-in
-   responsive sizing. Rev 3 placed this Under Consideration because
-   Glance was alpha; rev 4 confirms Glance is stable since 1.0.0 (1.1.0
-   shipped 2024-06-12), so the stability blocker is gone. Pair the
-   rewrite with the AGP 9 / Kotlin bump (C95).
-   Impact 3 (cleanup), effort 3, risk 2. Sources: S118, S193, S194.
+4. **Glance API widget rewrite (C123, promoted UC → Next in rev 4) —
+   shipped 2026-05-17.** `ToggleWidget` and `PresetWidget` now use
+   Glance runtime rendering and keep the existing `WidgetActionReceiver`
+   action path. The old XML layouts remain as initial / picker previews,
+   not the active runtime UI. Sources: S118, S193, S194, S00p.
 
 5. **CVD LUT correction (C63)** — bundle precomputed 256-entry per-channel
    LUTs for deuteranomaly/protanomaly/tritanomaly. Reference DaltonLens
@@ -830,10 +835,6 @@ Partial (per rev 2, still partial in rev 3):
   is real (S80, S103, S107) but we should not make device-health
   claims. A documented "for PWM-sensitive users" preset bundle is
   feasible without medical wording.
-- **Glance API widget rewrite (C123)** — currently RemoteViews works.
-  Glance is cleaner but adds dependency surface. Decision after Glance
-  hits stable (currently 1.0 alpha).
-
 ## Rejected
 
 - Network telemetry, remote crash reporting, remote config, analytics
@@ -942,7 +943,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C120 | VCS info determinism in reproducibility doc | distribution/docs | rare | Shipped 2026-05-17 | 2/1/1 | Release builds disable `vcsInfo.include`; `docs/reproducible-build.md` documents the AGP `version-control-info.textproto` handling and external provenance path | Known F-Droid reproducibility friction | S112, S156, S268 |
 | C121 | Tink + Proto DataStore replacement of EncryptedSharedPreferences (if we ever encrypt) | security | rare | Under Consideration | 2/3/2 | Document the modern path in `docs/threat-model.md`; not adopting now | EncryptedSharedPreferences deprecated; future-proof note | S122 |
 | C122 | Roborazzi gold-image CI | testing | rare | Next | 3/3/2 | Roborazzi gives JVM screenshot testing alongside Compose Preview Screenshot Testing | Belt-and-braces snapshot coverage | S97, S125 |
-| C123 | Glance API widget rewrite | mobile | emerging | Under Consideration | 3/3/2 | Replace RemoteViews with Glance once 1.0 stable | Cleaner widget code, `@PreviewTest` support | S118 |
+| C123 | Glance API widget rewrite | mobile | emerging | Shipped 2026-05-17 | 3/3/2 | Replaced runtime RemoteViews providers with Glance receivers on `androidx.glance:glance-appwidget:1.1.1`; kept XML layouts as launcher previews and preserved the existing widget broadcast actions | Cleaner widget code on the stable Glance line; strict dependency verification refreshed and passed | S118, S193, S194, S00p |
 | C124 | Hilt 2.56+ minimum | upgrade strategy | emerging | Shipped 2026-05-17 | 3/1/1 | Bumped Dagger/Hilt to 2.59.2 with KSP 2.3.8 as part of the AGP 9 train | Pairs with C96 | S94, S240, S241, S269 |
 | C125 | Twilight 14.25 feature scan | research | emerging | Later | 2/1/1 | Periodic check of Twilight's per-app/Wear/Chromebook frontier | Trend signal, not parity goal | S87 |
 | C126 | Stronger sleep-evidence disclaimer | docs/licensing | rare | Shipped 2026-05-17 | 3/1/1 | `docs/health-evidence.md` now has the 2025/2026 consensus-shift note plus S99-S102 and S158-S162 source refresh | Consensus shift demands explicit acknowledgement | S99-S102, S158-S162 |
@@ -992,6 +993,14 @@ above; the others continue with their rev 2 placement.
   across `:app:assembleDebug`, `:app:lintDebug`,
   `:app:validateDebugScreenshotTest`, `:app:testDebugUnitTest`,
   `:core-engine:test`, `:core-schedule:test`, and `:core-prefs:test`.
+- **S00p**: 2026-05-17 C123 Glance widget rewrite — `ToggleWidget` and
+  `PresetWidget` now use `GlanceAppWidgetReceiver` / `GlanceAppWidget`
+  with `androidx.glance:glance-appwidget:1.1.1`; runtime widget actions
+  still route through `WidgetActionReceiver`, dependency metadata was
+  refreshed, and strict verification passed from the local mirror. Local
+  emulator provisioning for widget screenshots remained blocked because
+  x86_64 Android emulator images require hardware acceleration on this
+  host.
 
 ### External URLs (rev 2 — preserved)
 
