@@ -114,6 +114,35 @@ You should see:
 
 If you see anything different, it's a bug. File it.
 
+## Boot-restore validation rows (C106)
+
+Android 14+ blocks `BOOT_COMPLETED` receivers from launching some
+foreground-service types. OpenLumen uses `specialUse`, which is not in
+the blocked set, but every target-SDK / Android-version pass should
+explicitly re-check boot restore instead of assuming it works.
+
+Run this on a release build with a normal user-unlocked boot:
+
+1. Enable the filter and select a preset that is easy to see.
+2. Reboot the device.
+3. Unlock once, then confirm the foreground notification appears and the
+   expected engine/tint is active.
+4. Capture:
+   ```bash
+   adb shell dumpsys activity services com.openlumen
+   adb shell dumpsys activity broadcasts | grep -A 10 com.openlumen
+   ```
+5. Add or update the matching row below and link the device-matrix row or
+   issue that contains the driver report. Do not mark a row passed without
+   a real device or emulator run.
+
+| Android | Build / device | Boot restore | Evidence | Notes |
+|---|---|---|---|---|
+| 14 | pending | ? | pending | C106 row; verify `specialUse` FGS start after `BOOT_COMPLETED` |
+| 15 | pending | ? | pending | C106 row; verify alongside SAW/FGS background restrictions |
+| 16 | pending | ? | pending | C106 row; verify receiver timeout behavior remains bounded |
+| 17 | pending | ? | pending | C106 row; verify before any target-SDK 36/37 bump |
+
 ## Future work
 
 - The ramp coroutine currently runs at a 1-second cadence by default.

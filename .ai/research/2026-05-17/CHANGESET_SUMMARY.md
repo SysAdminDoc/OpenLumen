@@ -474,3 +474,25 @@ documentation item.
 Docs-only change. Local source evidence: `BootReceiver` only starts the
 service after boot when `prefs.flow.first().enabled` is true; otherwise it
 logs that the filter was disabled and returns.
+
+## Implementation pass 11 (C106, 2026-05-17)
+
+This pass completed **C106 — BOOT_COMPLETED FGS verification rows** as a
+documentation/test-plan item without fabricating device results.
+
+### Files modified (pass 11)
+
+| File | Why |
+|---|---|
+| `docs/wake-and-vitals.md` | Added Android 14/15/16/17 boot-restore validation rows and the exact `dumpsys` capture commands. |
+| `docs/device-matrix.md` | Added a boot-restore add-on requiring Android 14+ rows to note `boot restore ?`, `OK`, or `failed`. |
+| `docs/android-17-readiness.md` | Pointed Android 17 validation back to the C106 wake/vitals row. |
+| `docs/v0.5.0-release-readiness.md` | Marked C106 evidence slots shipped, with real results still under C01. |
+| `ROADMAP.md` | Marked C106 shipped as documentation / evidence-slot work. |
+| `PROJECT_CONTEXT.md` | Added the C106 evidence-slot state to durable context. |
+| `CHANGELOG.md` | Added the C106 documentation change under `[Unreleased]`. |
+
+### Verification (pass 11)
+
+Docs-only change. No device rows were marked passed; all new boot-restore
+rows remain pending until a real device or emulator run supplies evidence.

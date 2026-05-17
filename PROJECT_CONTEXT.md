@@ -389,6 +389,10 @@ watchpoints future sessions should not miss:
 - **Paused reboot behavior (C116)**: shipped 2026-05-17. `BootReceiver`
   restores only when persisted `enabled = true`; troubleshooting now
   documents that a filter paused before reboot remains paused.
+- **Boot-restore evidence slots (C106)**: shipped 2026-05-17 as docs.
+  `docs/wake-and-vitals.md` has Android 14/15/16/17 pending rows and
+  `docs/device-matrix.md` requires a `boot restore` note for Android 14+
+  results. Real pass/fail data still belongs to C01 device validation.
 - **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
   stable AndroidX floor refresh rather than mixing broad dependency churn
   into the toolchain migration.

@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are no `IntentSender` / `ActivityOptions` call sites to migrate today.
 - Troubleshooting now documents that a filter paused before reboot remains
   paused after reboot, matching `BootReceiver`'s persisted `enabled` gate.
+- Wake/vitals and device-matrix docs now include Android 14-17 boot-restore
+  evidence slots for C106 without fabricating pass/fail device rows.
 - Driver reports now include an Android 17 Advanced Protection section with
   `enabled`, `disabled`, `n/a`, or bounded `unknown` status, and the app now
   declares `QUERY_ADVANCED_PROTECTION_MODE` for that query path.

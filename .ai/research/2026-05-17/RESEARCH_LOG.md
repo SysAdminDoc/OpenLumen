@@ -413,3 +413,14 @@ C116 required no external research. The behavior already existed locally:
 `BootReceiver` reads persisted preferences after `BOOT_COMPLETED` and does
 not start `LumenService` when `enabled = false`. The pass added explicit
 troubleshooting documentation and marked the roadmap item shipped.
+
+## Implementation update (C106)
+
+C106 was implemented as evidence slots, not fabricated validation:
+
+- Added Android 14/15/16/17 pending boot-restore rows to
+  `docs/wake-and-vitals.md`.
+- Added a `boot restore ? / OK / failed` note convention to
+  `docs/device-matrix.md` for Android 14+ rows.
+- Kept actual pass/fail device results under C01, because no real boot
+  run was performed in this session.

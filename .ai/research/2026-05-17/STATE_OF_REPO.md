@@ -466,3 +466,14 @@ C116 is now complete as documentation:
   off before reboot leaves it off after reboot.
 - The documented behavior matches `BootReceiver`: it reads persisted
   preferences and starts `LumenService` only when `enabled = true`.
+
+## C106 implementation state
+
+C106 is now complete as a documentation/test-plan item:
+
+- `docs/wake-and-vitals.md` contains Android 14/15/16/17 boot-restore
+  validation rows with pending evidence.
+- `docs/device-matrix.md` requires a boot-restore note on Android 14+
+  device rows.
+- No real device rows were marked passed. Actual pass/fail evidence
+  remains part of C01.

@@ -48,6 +48,11 @@ major versions.
   2026-05-17. `BootReceiver` already gates restore on persisted
   `enabled = true`; `docs/troubleshooting.md` now documents the paused
   reboot behavior explicitly.
+- [x] **C106 — BOOT_COMPLETED FGS verification rows** shipped on
+  2026-05-17. `docs/wake-and-vitals.md` now has explicit Android
+  14/15/16/17 boot-restore rows, and `docs/device-matrix.md` now requires
+  a boot-restore note for every Android 14+ device result. Actual pass/fail
+  evidence remains under C01 until tested on hardware/emulators.
 
 ## What changed in rev 5
 
@@ -880,7 +885,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C103 | Android 17 stable validation | platform/OS | table-stakes | Now | 4/3/2 | Per-engine smoke on Pixel running Android 17 stable | Stable lands June 2026 | S83, S84, S96 |
 | C104 | Document AAPM accessibility revocation | docs/security | rare | Now | 3/1/1 | Note in `docs/threat-model.md` + `docs/overlay-and-per-app-design.md` | Reinforces C79 rejection and Shizuku as only path | S88, S89, S90 |
 | C105 | SAW-app FGS-from-background fallback | reliability/UX | rare | Now | 4/2/2 | Detect rejected `startForegroundService` after Android 15+; open app to grant overlay if needed | Android 15+ tightens the rules for our exact use case | S85 |
-| C106 | BOOT_COMPLETED FGS verification | reliability | rare | Now | 3/1/1 | Add Android 14/15/16/17 rows to wake/vitals audit | Ensures boot restore still works as the API tightens | S85 |
+| C106 | BOOT_COMPLETED FGS verification | reliability | rare | Shipped 2026-05-17 | 3/1/1 | Added Android 14/15/16/17 boot-restore rows to wake/vitals audit and boot-restore notes to the device-matrix flow; real pass/fail evidence remains C01 | Ensures boot restore still works as the API tightens | S85 |
 | C107 | FGS job runtime quota audit | performance | rare | Later | 2/2/2 | We don't use Jobs today; document policy if we ever add WorkManager | Forward guard | S85 |
 | C108 | (folded into C96) | — | — | — | — | — | — | — |
 | C109 | (folded into C95) | — | — | — | — | — | — | — |

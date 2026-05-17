@@ -353,3 +353,7 @@ stable base for Direct Boot restore.
 - **C116 shipped 2026-05-17**. Troubleshooting now documents that a
   filter paused before reboot remains paused because `BootReceiver`
   restores only when persisted `enabled = true`.
+- **C106 shipped 2026-05-17 as evidence slots**. Wake/vitals now has
+  Android 14/15/16/17 pending boot-restore rows and the device matrix has
+  a required boot-restore note convention. Real pass/fail data remains
+  C01.

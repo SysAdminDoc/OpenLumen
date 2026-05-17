@@ -59,6 +59,20 @@ Run all four engines through this minimum flow against a release build:
 8. Driver tab → "Share report" → paste the report into the device row above
    (or attach the file to the device's tracking issue).
 
+## Boot-restore add-on (Android 14+ / C106)
+
+For every Android 14, 15, 16, and 17 row, include a boot-restore note in
+the row's Notes field:
+
+- `boot restore ?` — not yet tested.
+- `boot restore OK` — enabled filter restored after reboot; foreground
+  notification and tint came back after first user unlock.
+- `boot restore failed` — filter did not restore; link the Driver report
+  and `dumpsys activity services com.openlumen` excerpt.
+
+This add-on is the device-matrix side of C106. It creates the evidence
+slot; it does not replace the actual real-device result required by C01.
+
 ## Android 17 memory / large-screen add-on
 
 Run this add-on for Android 17+ rows, and for any tablet, foldable, desktop

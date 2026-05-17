@@ -182,7 +182,8 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C120 | Shipped 2026-05-17 | Release builds disable packaged AGP VCS-info metadata and docs explain provenance. |
 | C111 | Shipped 2026-05-17 | BAL audit found no `IntentSender` / `ActivityOptions` migration call sites. |
 | C116 | Shipped 2026-05-17 | Troubleshooting documents persisted paused-state behavior after reboot. |
+| C106 | Shipped 2026-05-17 | Wake/vitals and device-matrix now have Android 14-17 boot-restore evidence slots; real results remain C01. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
-remaining Android 17 / toolchain tasks (C95/C96/C103/C105/C106).
+remaining Android 17 / toolchain tasks (C95/C96/C103/C105).

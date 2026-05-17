@@ -73,7 +73,8 @@ When the first stable Android 17 image lands (June 2026):
 2. Check that the QS tile subtitle still renders (API 29+ `Tile.subtitle`).
 3. Verify the SAW-app FGS-from-background fallback (C105) handles the
    tile/widget toggle-on path correctly when no overlay is visible.
-4. Verify `BOOT_COMPLETED` still restores the filter (C106).
+4. Verify `BOOT_COMPLETED` still restores the filter and fill the C106
+   row in [wake-and-vitals.md](wake-and-vitals.md).
 5. Verify notification-tap and widget/tile pending intents still route
    correctly. C111's source audit found no `IntentSender` BAL call sites,
    so this is a smoke check rather than an API migration.
@@ -120,7 +121,9 @@ We will:
 - **C104** — Document AAPM accessibility revocation. Shipped as part of
   the rev 3 / rev 4 docs pass.
 - **C105** — SAW-app FGS-from-background fallback.
-- **C106** — `BOOT_COMPLETED` FGS verification.
+- **C106** — `BOOT_COMPLETED` FGS verification. Shipped 2026-05-17 as
+  explicit wake/vitals + device-matrix evidence slots; real pass/fail
+  results still live under C01.
 - **C111** — BAL hardening readiness. Shipped 2026-05-17 as a source
   audit; no `IntentSender` / `ActivityOptions` call sites exist today.
 - **C130** — AAPM driver-report surface (rev 4 new). Shipped
