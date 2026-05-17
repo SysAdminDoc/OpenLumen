@@ -327,3 +327,24 @@ Outcome:
 - The documented policy keeps major-version tags by default and reserves
   full-SHA pins for incident response, high-risk release hardening, weak
   maintenance signals, or suspicious tag/release behavior.
+
+## Implementation update (C143)
+
+After C142, C141 remained blocked on maintainer identity/account action,
+so the next implementable roadmap item was **C143**. Rev 5 had already
+expanded `docs/android-17-readiness.md`; this implementation added the
+missing device-matrix smoke flow.
+
+Outcome:
+
+- Added an Android 17 memory / large-screen add-on to
+  `docs/device-matrix.md`.
+- The smoke flow now captures `dumpsys activity exit-info` for release
+  and debug package names and tells testers how to triage
+  `MemoryLimiter:AnonSwap`, `REASON_LOW_MEMORY`, ANR, and repeated
+  service exits.
+- The wide-form-factor flow now covers sw600dp emulator, tablet,
+  foldable, desktop-windowing, and Android TV candidates without
+  fabricating any device-result rows.
+- ROADMAP / PROJECT_CONTEXT / FEATURE_BACKLOG / PRIORITIZATION_MATRIX
+  now mark C143 shipped.

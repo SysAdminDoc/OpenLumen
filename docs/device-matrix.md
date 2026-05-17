@@ -59,6 +59,53 @@ Run all four engines through this minimum flow against a release build:
 8. Driver tab → "Share report" → paste the report into the device row above
    (or attach the file to the device's tracking issue).
 
+## Android 17 memory / large-screen add-on
+
+Run this add-on for Android 17+ rows, and for any tablet, foldable, desktop
+windowing, Android TV, or emulator profile with `sw600dp` or larger width.
+This is the device-matrix side of roadmap candidate **C143**.
+
+### MemoryLimiter / `ApplicationExitInfo`
+
+1. Start from a clean app install or clear recent exit history in the test
+   notes.
+2. Enable the filter with the overlay engine, then run a smooth transition
+   for at least 10 minutes while switching tabs and toggling the notification
+   preset action.
+3. Disable the filter, re-enable it, then background and foreground the app
+   three times.
+4. Capture recent process-exit history:
+   ```bash
+   adb shell dumpsys activity exit-info com.openlumen
+   adb shell dumpsys activity exit-info com.openlumen.debug
+   ```
+   Use the `.debug` package for debug builds and the release package for
+   release builds.
+5. Mark the row 🟡 and link the dump if any recent entry contains
+   `MemoryLimiter:AnonSwap`, `REASON_LOW_MEMORY`, an ANR trace, or repeated
+   service-process exits during the smoke. Mark ✅ only when no suspicious
+   recent OpenLumen exit is present after the long-running overlay test.
+
+### sw600dp / foldable / desktop-windowing
+
+1. Test at least one wide configuration before any Android 17 target-SDK
+   bump:
+   - Android Studio resizable emulator at `sw600dp` or wider.
+   - Pixel Tablet / tablet hardware.
+   - Foldable unfolded posture.
+   - Desktop-windowing mode.
+   - Android TV flavor when C22 resumes.
+2. Open every tab, rotate or resize the window, then confirm:
+   - The bottom navigation and every primary control remain reachable.
+   - Slider values and schedule/profile edits survive the configuration
+     change.
+   - Overlay tint still covers the full window/display after resize.
+   - Dialogs are centered and not clipped.
+   - The emergency-off command remains reachable from About.
+3. Add the wide-form-factor result as a normal row in the matrix. Put the
+   form factor in Notes, for example: `sw600dp emulator; resize/rotate OK`.
+   Do not replace phone rows with emulator-only large-screen coverage.
+
 ## CDM (`ColorDisplayManager`) specifics
 
 - API 28+ only. On a device with API 27 or below, this row is always `—`.

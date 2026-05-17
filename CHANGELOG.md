@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `checkout@v6`, `setup-java@v5`, `setup-gradle@v6`,
   `upload-artifact@v7`, `actions/attest@v4`, and
   `anchore/scan-action@v7`.
+- Android 17 release planning now includes concrete MemoryLimiter /
+  `ApplicationExitInfo` and sw600dp/foldable/windowing smoke steps in
+  the device validation matrix.
 - Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
   `WRITE_SECURE_SETTINGS` declaration so the documented ADB grant can succeed.
 - The foreground service subscribes to the light sensor only while the filter and

@@ -19,6 +19,12 @@ major versions.
   project keeps current major-version tags for Dependabot ergonomics,
   with full-SHA pins reserved for incident response, high-risk release
   hardening, or actions without trustworthy major-maintenance signals.
+- [x] **C143 — Android 17 memory/resizability smoke expansion** shipped
+  on 2026-05-17. `docs/android-17-readiness.md` covers the Android 17
+  behavior changes, and `docs/device-matrix.md` now has a concrete
+  add-on smoke flow for `ApplicationExitInfo` / `MemoryLimiter:AnonSwap`
+  review plus `sw600dp`, foldable, tablet, desktop-windowing, and TV
+  layout checks.
 
 ## What changed in rev 5
 
@@ -62,7 +68,7 @@ major versions.
 |---|---|---|---|---|---|---|---|
 | C141 | Android Developer Console package registration | distribution / trust | Now | 5/2/2 | Decide Play Console vs Android Developer Console path; verify identity; register `com.openlumen` and release signing certificate before the September 2026 regional enforcement window. Document the account owner and package-registration evidence outside Git. | F-Droid / direct APK users in the first enforcement regions can otherwise hit install blocks even though OpenLumen stays outside Play. | S230, S231, S232 |
 | C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Shipped 2026-05-17 | 4/2/2 | Rotated workflow actions to current Node-24-capable majors; documented major-tag policy with a full-SHA exception path; local validation covered YAML parsing plus debug build/lint/unit tests. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251, S258-S265 |
-| C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Now | 3/1/1 | Extend `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236 |
+| C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Shipped 2026-05-17 | 3/1/1 | Extended `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236, S266 |
 | C144 | AndroidX stable baseline refresh batch | upgrade strategy | Next | 3/2/2 | After C95 lands, refresh core/activity/lifecycle/navigation/DataStore as one AndroidX batch and run unit tests, lint, Compose UI smoke, and profile import/export. Keep alpha trains out unless a candidate explicitly needs them. | Current stable AndroidX releases are far ahead of the repo floor; batching avoids mixing dependency churn with AGP 9 toolchain risk. | S237, S238, S239, S252, S253 |
 
 Research version: 2026-05-17 **rev 4.1**. Rev 4.1 is the second walk-away

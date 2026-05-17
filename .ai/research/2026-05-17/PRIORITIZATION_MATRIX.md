@@ -137,7 +137,7 @@ deadline.
 |---|---|---|---:|---:|---:|---:|---|
 | C141 | Android Developer Console package registration | Now | 5 | 2 | 2 | +1 | Distribution-blocking for certified devices in first enforcement regions if OpenLumen remains off-Play. |
 | C142 | CI action major rotation and SHA-pinning policy | Shipped 2026-05-17 | 4 | 2 | 2 | 0 | Implemented after rev 5: current major tags, `actions/attest@v4`, and documented major-tag policy with full-SHA exception path. |
-| C143 | Android 17 memory/resizability smoke expansion | Now | 3 | 1 | 1 | +1 | Cheap addition to C103 test plan while Android 17 Beta 4 is current. |
+| C143 | Android 17 memory/resizability smoke expansion | Shipped 2026-05-17 | 3 | 1 | 1 | +1 | Implemented after rev 5: Android 17 readiness plus device-matrix MemoryLimiter and sw600dp smoke steps. |
 | C144 | AndroidX stable baseline refresh batch | Next | 3 | 2 | 2 | -1 | Useful, but should wait until AGP 9 / Hilt train lands. |
 
 ### Rev 5 Now-tier additions
@@ -145,11 +145,10 @@ deadline.
 Add these to the rev 4.1 Now list:
 
 1. **C141 — Android Developer Console package registration**
-2. **C143 — Android 17 memory/resizability smoke expansion**
 
-Rationale: C141 affects the project's distribution promise, and C143 is
-a low-effort gap in the already-Now Android 17 readiness work. C142 was
-implemented after rev 5 and no longer blocks the Now queue.
+Rationale: C141 affects the project's distribution promise, but it
+requires maintainer identity/account action outside Git. C142 and C143
+were implemented after rev 5 and no longer block the Now queue.
 
 ### Rev 5 Next-tier addition
 

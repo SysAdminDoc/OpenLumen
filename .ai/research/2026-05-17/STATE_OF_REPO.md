@@ -371,3 +371,20 @@ Verification after the C142 edit:
   `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test`.
 - `:app:assembleDebug` passed.
 - `:app:lintDebug` passed.
+
+## C143 implementation state
+
+C143 was implemented after C142. The repo now has a concrete
+`docs/device-matrix.md` add-on for Android 17+ and wide-form-factor
+validation:
+
+- `dumpsys activity exit-info com.openlumen` / `.debug` capture after
+  long-running overlay and transition smoke.
+- Explicit `MemoryLimiter:AnonSwap`, `REASON_LOW_MEMORY`, ANR, and
+  repeated service-exit triage instructions.
+- sw600dp, tablet, foldable, desktop-windowing, and Android TV layout
+  checks for navigation reachability, retained state, overlay coverage,
+  dialog clipping, and emergency-off reachability.
+
+No device result rows were fabricated; the new content is a smoke-flow
+extension only.

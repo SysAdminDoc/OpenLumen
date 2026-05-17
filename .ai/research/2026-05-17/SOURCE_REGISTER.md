@@ -656,6 +656,10 @@ informed.
 - **S265**: `anchore/sbom-action` tag check — confirmed the project
   remains on a v0 major line; no major rotation was available for C142.
   https://github.com/anchore/sbom-action
+- **S266**: AOSP `AppExitInfoTracker` source — confirms the activity
+  manager dump surface is `dumpsys activity exit-info`, used in the C143
+  device-matrix MemoryLimiter smoke flow.
+  https://android.googlesource.com/platform/frameworks/base/+/master/services/core/java/com/android/server/am/AppExitInfoTracker.java
 
 ## Source-class coverage check
 
@@ -684,7 +688,7 @@ rev 3 has ≥2 sources. New evidence introduces 3 new candidates
 report surface, C131 Eye Dropper picker integration); each cites ≥2
 sources.
 
-Rev 5 coverage update: pass 3 added 36 more sources (S230-S265). The
+Rev 5 coverage update: pass 3 added 37 more sources (S230-S266). The
 newest coverage gap closed is **off-Play Android developer verification**,
 which was absent from rev 4.1 and now maps to C141. CI/action supply-chain
 coverage now includes the Node 24 deadline plus current action majors
@@ -694,4 +698,5 @@ resizability behavior (C143). Dependency coverage now includes the AGP
 that sharpens C95, C96, C124, and C144. S257 records the official SDK
 bootstrap source used to complete local verification after `JAVA_HOME` and
 `ANDROID_HOME` were initially missing. S258-S265 record the direct
-upstream tag / metadata checks used when implementing C142.
+upstream tag / metadata checks used when implementing C142. S266 records
+the AOSP dump surface used for the C143 MemoryLimiter smoke flow.

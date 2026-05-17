@@ -280,9 +280,10 @@ and SBOM workflows.
 
 ### C143 — Android 17 memory/resizability smoke expansion
 
+**Status**: Shipped 2026-05-17 after rev 5.
 **Tier**: Now
 **Category**: mobile / compatibility
-**Sources**: S233-S236
+**Sources**: S233-S236, S266
 
 **Idea**: Extend C103's Android 17 readiness work to cover the Beta 4
 all-app memory limiter and target-37 large-screen resizability behavior.

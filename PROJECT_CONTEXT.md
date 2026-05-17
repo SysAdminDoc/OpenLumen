@@ -353,9 +353,11 @@ watchpoints future sessions should not miss:
   `setup-gradle@v6`, `upload-artifact@v7`, `actions/attest@v4`, and
   `scan-action@v7`; the project keeps major tags by default with a
   documented full-SHA exception path.
-- **Android 17 smoke expansion (C143)**: the Android 17 readiness plan
-  now needs memory-limiter (`ApplicationExitInfo`) and sw600dp
-  resizability/orientation checks in addition to AAPM, FGS, and BAL.
+- **Android 17 smoke expansion (C143)**: shipped 2026-05-17. The
+  Android 17 readiness plan and `docs/device-matrix.md` now include
+  memory-limiter (`ApplicationExitInfo` / `MemoryLimiter:AnonSwap`) and
+  sw600dp resizability/orientation checks in addition to AAPM, FGS, and
+  BAL.
 - **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
   stable AndroidX floor refresh rather than mixing broad dependency churn
   into the toolchain migration.

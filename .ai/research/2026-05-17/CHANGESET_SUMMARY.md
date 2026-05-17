@@ -314,3 +314,29 @@ implemented **C142 — CI action major rotation and SHA-pinning policy**.
   actionable tasks, configuration cache reused).
 - `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142
   actionable tasks, configuration cache reused).
+
+## Implementation pass 5 (C143, 2026-05-17)
+
+This pass implemented **C143 — Android 17 memory/resizability smoke
+expansion**. The Android 17 behavior inventory had already been added in
+rev 5, but `docs/device-matrix.md` still lacked the matching executable
+smoke flow.
+
+### Files modified (pass 5)
+
+| File | Why |
+|---|---|
+| `docs/device-matrix.md` | Added the Android 17 memory / large-screen add-on with `dumpsys activity exit-info`, `MemoryLimiter:AnonSwap`, sw600dp, foldable, tablet, desktop-windowing, and TV checks. |
+| `ROADMAP.md` | Marked C143 shipped and added the implementation-progress note. |
+| `PROJECT_CONTEXT.md` | Updated the watchpoint so future sessions see C143 as complete. |
+| `CHANGELOG.md` | Added the C143 documentation change under `[Unreleased]`. |
+| `docs/v0.5.0-release-readiness.md` | Marked C143 done instead of deferred. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S266 for the AOSP `dumpsys activity exit-info` dump surface. |
+| `.ai/research/2026-05-17/FEATURE_BACKLOG.md` | Marked C143 shipped and expanded sources. |
+| `.ai/research/2026-05-17/PRIORITIZATION_MATRIX.md` | Removed C143 from the outstanding Now list. |
+| `.ai/research/2026-05-17/CHANGESET_SUMMARY.md` | Logged this implementation pass. |
+
+### Verification (pass 5)
+
+Docs-only change. Verification should include `git diff --check`; no
+Kotlin/Gradle behavior changed in this pass.
