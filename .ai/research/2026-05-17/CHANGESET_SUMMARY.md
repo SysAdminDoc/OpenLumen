@@ -731,3 +731,26 @@ This pass implemented **C144 — AndroidX stable baseline refresh batch**.
 - C36 store screenshots were checked and remain blocked locally because
   the installed Android SDK has no emulator binary, no AVD, and no system
   image.
+
+## Implementation pass 20 (C28/C102, 2026-05-17)
+
+This pass implemented **C28/C102 — Direct Boot restore**.
+
+### Files modified (pass 20)
+
+| File | Why |
+|---|---|
+| `core-prefs/src/main/java/com/openlumen/prefs/DirectBootStateStore.kt` | Added typed device-protected DataStore state for the last active tint matrix, selected engine, and enabled/active flags. |
+| `core-prefs/src/test/java/com/openlumen/prefs/DirectBootStateSerializerTest.kt` | Covered serializer round-trip, blank default, and matrix clamping. |
+| `app/src/main/java/com/openlumen/service/LockedBootReceiver.kt` | Added `LOCKED_BOOT_COMPLETED` receiver that starts direct-boot restore only when a tint was active. |
+| `app/src/main/java/com/openlumen/service/LumenService.kt` | Added direct-boot-aware restore path, direct-boot mirror writes, and root-engine fallback to Overlay before unlock. |
+| `app/src/main/AndroidManifest.xml`, `app/src/main/java/com/openlumen/OpenLumenApp.kt`, `app/src/main/java/com/openlumen/CrashLogger.kt`, `app/src/main/java/com/openlumen/di/AppModule.kt` | Declared direct-boot-aware components, provided the state store, and avoided credential-protected crash-log access before unlock. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `README.md`, `CHANGELOG.md`, `docs/**` | Marked C28/C102 shipped and documented the device-protected mirror/security model. |
+| `.ai/research/2026-05-17/*.md` | Added S00m and updated backlog, prioritization, dependency review, repo state, research log, and this changeset. |
+
+### Verification (pass 20)
+
+- `:core-prefs:test :app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.

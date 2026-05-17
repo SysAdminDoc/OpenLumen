@@ -67,11 +67,17 @@ the row's Notes field:
 - `boot restore ?` — not yet tested.
 - `boot restore OK` — enabled filter restored after reboot; foreground
   notification and tint came back after first user unlock.
+- `locked boot restore OK` — Direct Boot restore applied the mirrored tint
+  before first user unlock.
+- `locked boot restore failed` — Direct Boot restore did not apply before
+  first unlock; link the Driver report plus
+  `dumpsys activity services com.openlumen` after unlock.
 - `boot restore failed` — filter did not restore; link the Driver report
   and `dumpsys activity services com.openlumen` excerpt.
 
-This add-on is the device-matrix side of C106. It creates the evidence
-slot; it does not replace the actual real-device result required by C01.
+This add-on is the device-matrix side of C106 and C28/C102. It creates
+the evidence slot; it does not replace the actual real-device result
+required by C01.
 
 ## Android 17 memory / large-screen add-on
 

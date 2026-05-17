@@ -149,6 +149,7 @@ Run this on a release build with a normal user-unlocked boot:
   For long ramps (15+ min) we could reduce to 5-second cadence
   without visible jerk. Tracked under C99 (event-driven ambient
   sampling) on the roadmap.
-- Direct Boot (C28) would add a `LOCKED_BOOT_COMPLETED` wake fire,
-  but only for users with the filter enabled — and even then, only
-  once per boot. Doesn't change the steady-state vitals story.
+- Direct Boot (C28/C102) adds a `LOCKED_BOOT_COMPLETED` wake fire, but
+  only when the device-protected mirror says a tint was active — and
+  even then, only once per boot. Doesn't change the steady-state vitals
+  story.

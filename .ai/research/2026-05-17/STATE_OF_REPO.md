@@ -261,9 +261,10 @@ source:
 3. **Android 17 validation row** is missing from `docs/device-matrix.md` and
    `docs/api-36-readiness.md` is still titled and framed for "Android 16 /
    API 36" — out of date with rev 3 which expanded C82 to Android 17.
-4. **Per-app rules, Shizuku backend, Wear OS companion, Direct Boot restore,
-   Android TV flavor, accessibility-scanner pass, Compose screenshot tests**
-   — all designed, none implemented.
+4. **Per-app rules, Shizuku backend, Wear OS companion, Android TV flavor,
+   accessibility-scanner pass, and broader Compose screenshot tests** — all
+   designed, none implemented. Direct Boot restore is now implemented but
+   still needs hardware/emulator pass/fail evidence under C01.
 5. **Audit hardening from 2026-05-17 ships in v0.5.0 / v0.5.1** but the
    CHANGELOG.md `[Unreleased]` section was last updated before the audit
    pass — it does not yet enumerate the audit fixes. (The rev 3 `ROADMAP.md`

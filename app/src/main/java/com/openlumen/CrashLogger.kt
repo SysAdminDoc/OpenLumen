@@ -16,8 +16,10 @@ object CrashLogger {
     private const val MAX_BYTES = 64 * 1024L
     private const val TRIM_TO_BYTES = 32 * 1024
     private const val FILENAME = "crash.log"
+    @Volatile private var installed = false
 
     fun install(context: Context) {
+        if (installed) return
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             runCatching { writeCrash(context, thread, throwable) }
@@ -28,6 +30,7 @@ object CrashLogger {
                 exitProcess(10)
             }
         }
+        installed = true
     }
 
     fun read(context: Context): String {

@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - About and Driver screen clipboard actions now read Compose string resources
   outside click handlers, satisfying the updated Compose lint configuration
   invalidation check.
+- Direct Boot restore now uses a device-protected mirror and
+  `LOCKED_BOOT_COMPLETED` receiver so the last active tint can be restored
+  before the first user unlock without reading credential-protected
+  preferences.
 - Default preferences now serialize with nullable solar coordinates instead of `NaN`,
   so profile export/import and DataStore writes remain valid JSON.
 - Rootless overlay tinting now uses non-zero alpha for color-only presets; previously
@@ -77,6 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation 2.9.8,
   DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0; `compileSdk`
   is now 36 while `targetSdk` stays 35 until Android 17 validation.
+- The foreground service is direct-boot aware and falls root-only driver
+  choices back to the Overlay engine until the user unlocks.
 - Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
   `WRITE_SECURE_SETTINGS` declaration so the documented ADB grant can succeed.
 - The foreground service subscribes to the light sensor only while the filter and

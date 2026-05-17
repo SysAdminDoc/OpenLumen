@@ -10,10 +10,12 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.UserManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.openlumen.CrashLogger
 import com.openlumen.MainActivity
 import com.openlumen.R
 import com.openlumen.engine.ColorEngine
@@ -22,7 +24,10 @@ import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
 import com.openlumen.engine.engines.OverlayEngine
+import com.openlumen.prefs.DirectBootState
+import com.openlumen.prefs.DirectBootStateStore
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.schedule.LightSensorAdapter
@@ -40,6 +45,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -78,10 +84,12 @@ class LumenService : LifecycleService() {
     private val tag = "OpenLumen/LumenSvc"
 
     @Inject lateinit var prefs: PreferencesStore
+    @Inject lateinit var directBootState: DirectBootStateStore
     @Inject lateinit var probe: DriverProbe
     @Inject lateinit var lightSensor: LightSensorAdapter
 
     @Volatile private var engine: ColorEngine? = null
+    @Volatile private var preferencesObserved: Boolean = false
     private var lightJob: Job? = null
     @Volatile private var transitionJob: Job? = null
     private val applyMutex = Mutex()
@@ -107,6 +115,7 @@ class LumenService : LifecycleService() {
 
     private val latestPrefs = AtomicReference<Preferences?>(null)
     private val latestLux = AtomicReference(-1f)
+    private val lastMirroredDirectBootState = AtomicReference<DirectBootState?>(null)
     /**
      * The matrix the active engine actually received on its last successful
      * [ColorEngine.apply]. Distinct from [applyGate]'s target cache so a
@@ -121,7 +130,7 @@ class LumenService : LifecycleService() {
         DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onCreate")
         startInForeground()
         registerScreenStateReceiver()
-        observePreferences()
+        ensurePreferencesObserved()
     }
 
     private fun registerScreenStateReceiver() {
@@ -164,24 +173,34 @@ class LumenService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        ensurePreferencesObserved()
         when (intent?.action) {
+            ACTION_DIRECT_BOOT_RESTORE -> lifecycleScope.launch {
+                restoreDirectBootState()
+            }
             ACTION_TURN_OFF -> lifecycleScope.launch {
-                prefs.update { it.copy(enabled = false) }
+                if (isUserUnlocked()) {
+                    prefs.update { it.copy(enabled = false) }
+                } else {
+                    directBootState.update { it.copy(enabled = false, active = false) }
+                    clearAndStop()
+                }
                 // observePreferences will see enabled=false next emit, clear + stopSelf.
             }
             ACTION_TURN_ON -> lifecycleScope.launch {
-                prefs.update { it.copy(enabled = true) }
+                if (isUserUnlocked()) prefs.update { it.copy(enabled = true) }
             }
             ACTION_TOGGLE -> lifecycleScope.launch {
-                prefs.update { it.copy(enabled = !it.enabled) }
+                if (isUserUnlocked()) prefs.update { it.copy(enabled = !it.enabled) }
             }
             ACTION_REEVALUATE -> lifecycleScope.launch {
-                latestPrefs.get()?.let { applyIfShouldBeActive(it) }
+                if (isUserUnlocked()) latestPrefs.get()?.let { applyIfShouldBeActive(it) }
             }
             ACTION_CYCLE_PRESET -> lifecycleScope.launch {
-                prefs.update { current -> com.openlumen.prefs.PresetCycle.next(current) }
+                if (isUserUnlocked()) prefs.update { current -> com.openlumen.prefs.PresetCycle.next(current) }
             }
             ACTION_SET_PRESET -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
                 val key = intent.getStringExtra(EXTRA_PRESET_KEY)
                     ?.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
                 // Reject keys that don't resolve to a known preset; a
@@ -197,15 +216,17 @@ class LumenService : LifecycleService() {
                 }
             }
             ACTION_RESTORE_PREVIOUS -> lifecycleScope.launch {
-                prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
+                if (isUserUnlocked()) prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
             }
             ACTION_SET_INTENSITY -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
                 val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
                 if (v.isFinite()) {
                     prefs.update { it.copy(presetIntensity = v.coerceIn(0f, 1f)) }
                 }
             }
             ACTION_SET_DIM -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
                 val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
                 if (v.isFinite()) {
                     prefs.update { it.copy(dim = v.coerceIn(0f, 0.95f)) }
@@ -274,6 +295,7 @@ class LumenService : LifecycleService() {
      * leave the service deaf to future prefs changes.
      */
     private fun observePreferences() {
+        preferencesObserved = true
         lifecycleScope.launch {
             prefs.flow.conflate().collect { p ->
                 try {
@@ -305,6 +327,7 @@ class LumenService : LifecycleService() {
         runCatching { PresetWidget.broadcastRefresh(this@LumenService) }
             .onFailure { Log.w(tag, "PresetWidget broadcast failed: ${it.message}") }
         if (!p.enabled) {
+            mirrorDirectBootState(p, active = false, matrix = LumenMatrix.IDENTITY)
             clearAndStop()
             return
         }
@@ -375,6 +398,7 @@ class LumenService : LifecycleService() {
         val shouldBeActive = scheduleActive || lightActive
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
+        mirrorDirectBootState(p, active = shouldBeActive, matrix = matrix)
         applyGate.next(shouldBeActive, matrix)?.let { decision ->
             // Ramp only the state-flip transitions (active <-> inactive). User-
             // driven slider drags shouldn't lerp — they should feel direct.
@@ -529,6 +553,116 @@ class LumenService : LifecycleService() {
     private fun matrixFor(p: Preferences): LumenMatrix =
         com.openlumen.diagnostics.MatrixPreview.matrixFor(p)
 
+    private fun ensurePreferencesObserved() {
+        if (preferencesObserved || !isUserUnlocked()) return
+        CrashLogger.install(this)
+        observePreferences()
+    }
+
+    private fun isUserUnlocked(): Boolean =
+        (getSystemService(Context.USER_SERVICE) as? UserManager)?.isUserUnlocked != false
+
+    private suspend fun restoreDirectBootState() {
+        if (isUserUnlocked()) return
+        val state = withTimeoutOrNull(8_000L) { directBootState.flow.first() } ?: DirectBootState()
+        if (!state.enabled || !state.active) {
+            Log.d(tag, "Direct-boot state inactive; stopping service")
+            clearAndStop()
+            return
+        }
+        val selected = directBootEngineFor(state.engine)
+        val matrix = state.toLumenMatrix()
+        applyMutex.withLock {
+            (selected as? OverlayEngine)?.installView(this@LumenService, Presets.OFF)
+            engine = selected
+            lastApplied = null
+            applyGate.reset()
+            runCatching { selected.apply(this@LumenService, matrix) }
+                .onSuccess {
+                    lastApplied = matrix
+                    DiagnosticsLog.log(
+                        this@LumenService,
+                        DiagnosticsLog.Level.INFO,
+                        DiagnosticsLog.Category.ENGINE,
+                        "direct-boot restore on ${selected.kind.name}"
+                    )
+                }
+                .onFailure { Log.w(tag, "direct-boot apply failed: ${it.message}") }
+        }
+    }
+
+    private suspend fun directBootEngineFor(engine: EngineKindDto): ColorEngine {
+        val overlay = probe.engineOf(EngineKind.OVERLAY) ?: OverlayEngine()
+        suspend fun colorDisplayIfAvailable(): ColorEngine? {
+            val cdm = probe.engineOf(EngineKind.COLOR_DISPLAY_MANAGER) ?: return null
+            return cdm.takeIf { runCatching { it.isAvailable(this@LumenService) }.getOrDefault(false) }
+        }
+        return when (engine) {
+            EngineKindDto.Auto ->
+                probe.probeAll(this)
+                    .firstOrNull { it.available && !it.engine.kind.requiresRoot }
+                    ?.engine ?: overlay
+            EngineKindDto.ColorDisplayManager -> colorDisplayIfAvailable() ?: overlay
+            EngineKindDto.Overlay -> overlay
+            EngineKindDto.SurfaceFlinger,
+            EngineKindDto.Kcal -> overlay
+        }
+    }
+
+    private suspend fun mirrorDirectBootState(
+        prefs: Preferences,
+        active: Boolean,
+        matrix: LumenMatrix
+    ) {
+        val next = DirectBootState(
+            enabled = prefs.enabled,
+            active = active,
+            engine = prefs.engine,
+            matrix = matrix.toMatrixDto(),
+            amoledBlackClamp = matrix.amoledClamp
+        )
+        if (lastMirroredDirectBootState.get() == next) return
+        runCatching {
+            directBootState.writeSnapshot(
+                enabled = next.enabled,
+                active = next.active,
+                engine = next.engine,
+                matrix = next.matrix,
+                amoledBlackClamp = next.amoledBlackClamp
+            )
+            lastMirroredDirectBootState.set(next)
+        }.onFailure {
+            Log.w(tag, "direct-boot mirror write failed: ${it.message}")
+        }
+    }
+
+    private fun LumenMatrix.toMatrixDto(): MatrixDto = MatrixDto(
+        r = r,
+        g = g,
+        b = b,
+        biasR = biasR,
+        biasG = biasG,
+        biasB = biasB,
+        dim = dim,
+        gammaR = gammaR,
+        gammaG = gammaG,
+        gammaB = gammaB
+    )
+
+    private fun DirectBootState.toLumenMatrix(): LumenMatrix = LumenMatrix(
+        r = matrix.r,
+        g = matrix.g,
+        b = matrix.b,
+        biasR = matrix.biasR,
+        biasG = matrix.biasG,
+        biasB = matrix.biasB,
+        dim = matrix.dim,
+        gammaR = matrix.gammaR,
+        gammaG = matrix.gammaG,
+        gammaB = matrix.gammaB,
+        amoledClamp = amoledBlackClamp
+    )
+
     /**
      * Defensive: corrupted import data could give us hour 25 or minute 70. We clamp into
      * the valid LocalTime range so we never throw inside the foreground service.
@@ -630,6 +764,7 @@ class LumenService : LifecycleService() {
         const val ACTION_RESTORE_PREVIOUS = "com.openlumen.action.RESTORE_PREVIOUS"
         const val ACTION_SET_INTENSITY = "com.openlumen.action.SET_INTENSITY"
         const val ACTION_SET_DIM = "com.openlumen.action.SET_DIM"
+        const val ACTION_DIRECT_BOOT_RESTORE = "com.openlumen.action.DIRECT_BOOT_RESTORE"
 
         const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
         const val EXTRA_VALUE = "com.openlumen.extra.VALUE"

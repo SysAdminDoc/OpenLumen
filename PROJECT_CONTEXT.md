@@ -44,7 +44,7 @@ August 2022) on Android 14 / 15 / 17.
 | Material 3 | 1.4.0 | C137 removed `material-icons-extended`; nav/favorite icons are local vector resources under `app/src/main/res/drawable/`. |
 | Hilt | 2.59.2 | C96/C124 shipped on 2026-05-17; Compose `hiltViewModel()` comes from `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`. |
 | Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped initial theme-token preview references and CI validation. |
-| DataStore | 1.2.1 | Stable Direct Boot helper APIs now unlock C28/C102 implementation work. |
+| DataStore | 1.2.1 | C28/C102 shipped a device-protected Direct Boot mirror using the stable 1.2 line. |
 | kotlinx.serialization | 1.7.3 | |
 | kotlinx.coroutines | 1.9.0 | |
 | `minSdk` / `targetSdk` / `compileSdk` | 26 / 35 / 36 | C144 raised compile SDK for current AndroidX; the target SDK bump remains C103 Android 17 validation work. |
@@ -120,7 +120,7 @@ main-thread lock.
 
 ## Persistence model
 
-State lives in **one** place: a single JSON blob in DataStore, managed by
+Normal unlocked state lives in **one** place: a single JSON blob in DataStore, managed by
 [PreferencesStore](core-prefs/src/main/java/com/openlumen/prefs/PreferencesStore.kt).
 
 - UI subscribes via `OpenLumenViewModel.state`.
@@ -130,6 +130,13 @@ State lives in **one** place: a single JSON blob in DataStore, managed by
 
 All writers go through `prefs.update { current -> next }` so concurrent
 toggles (UI + tile + boot + widget) never race on read-modify-write.
+
+C28/C102 adds a narrow exception for Direct Boot: while the user is unlocked,
+`LumenService` mirrors only the last active tint matrix, selected engine, and
+enabled/active flags to
+[DirectBootStateStore](core-prefs/src/main/java/com/openlumen/prefs/DirectBootStateStore.kt)
+in device-protected storage. It intentionally does not mirror schedule
+coordinates, profile names, or the full preferences blob.
 
 `sanitize()` runs on every read **and** every write — NaN, Inf, out-of-range
 imported values, oversized profile lists, invalid preset keys, all get
@@ -347,12 +354,11 @@ window.
   separate from `lastApplied`; engine switches reset both. A dedicated
   `rampMutex` serializes cancel/join/launch state, and filter-off clears
   cancel+join any active ramp before clearing the engine.
-- **Boot receiver in user-protected storage.** DataStore today lives in
-  user-protected storage, so `BootReceiver` does NOT register for
-  `LOCKED_BOOT_COMPLETED` — that signal would deadlock `prefs.flow.first()`
-  before the keystore is unlocked. C28 (Direct Boot restore) plans the
-  move to `deviceProtectedDataStore()` for an `enabled` + `engine`
-  minimum-viable restore path.
+- **Direct Boot restore.** `BootReceiver` still handles normal
+  `BOOT_COMPLETED` from credential-protected preferences after unlock.
+  `LockedBootReceiver` handles `LOCKED_BOOT_COMPLETED` from the
+  device-protected mirror and starts `LumenService.ACTION_DIRECT_BOOT_RESTORE`
+  without touching the full preferences blob before unlock.
 
 ## Hard constraints (non-negotiable)
 
@@ -424,8 +430,9 @@ watchpoints future sessions should not miss:
   `docs/wake-and-vitals.md` has Android 14/15/16/17 pending rows and
   `docs/device-matrix.md` requires a `boot restore` note for Android 14+
   results. Real pass/fail data still belongs to C01 device validation.
-- **AndroidX stable refresh (C144)**: shipped 2026-05-17. Direct Boot
-  restore now has the stable DataStore 1.2.1 floor; the Android 17
+- **Direct Boot restore (C28/C102)**: shipped 2026-05-17. Real
+  pass/fail evidence still belongs in C01 device-matrix rows.
+- **AndroidX stable refresh (C144)**: shipped 2026-05-17. The Android 17
   `targetSdk` bump remains separate C103 work.
 
 ## Where to look for what

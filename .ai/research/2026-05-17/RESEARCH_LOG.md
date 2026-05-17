@@ -620,3 +620,29 @@ Verification:
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 - `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
   passed from the same local mirror.
+
+## Implementation update (C28/C102)
+
+C28/C102 became implementable after C144 landed DataStore 1.2.1. The local
+implementation avoids reading credential-protected preferences before user
+unlock.
+
+Implementation:
+
+- Added `DirectBootStateStore`, a typed DataStore created in
+  device-protected storage.
+- Mirrored the unlocked service's last active tint matrix, selected engine,
+  and enabled/active flags into the direct-boot store.
+- Added `LockedBootReceiver` for `LOCKED_BOOT_COMPLETED`.
+- Made `LumenService` direct-boot aware, with
+  `ACTION_DIRECT_BOOT_RESTORE` applying the mirrored matrix directly and
+  degrading SurfaceFlinger/KCAL choices to Overlay before unlock.
+- Skipped crash-log installation while locked, then made installation
+  idempotent so the service can install it after unlock.
+
+Verification:
+
+- `:core-prefs:test :app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.

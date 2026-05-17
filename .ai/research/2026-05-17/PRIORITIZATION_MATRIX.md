@@ -41,7 +41,7 @@ remain valid.
 | ID | Field | Rev 3 | Rev 4 | Reason | Evidence |
 |---|---|---|---|---|---|
 | C111 | Risk | 1 | 1 | (unchanged) | S128, S137 confirm the deprecation; rev 3 was already correct. |
-| C28 / C102 | Effort | 3 | 3 | (unchanged from rev 3) | S146 reconfirmed but rev 3 already dropped effort 4 → 3. |
+| C28 / C102 | Effort | 3 | Shipped | Implemented after C144 | S146/S280 confirmed the stable API path; S00m records the implementation. |
 | C120 | Effort | 1 | 1 | (unchanged) | S156 provides a direct disabling recipe — link it in `docs/reproducible-build.md`. |
 
 ## Now-tier composition for rev 4
@@ -70,15 +70,14 @@ v0.5.0/v0.6.0:
 
 Rev 3's Next list plus C123. The Next-tier composition for v0.7.0 → v0.8.0:
 
-1. C28/C102 — Direct Boot restore
-2. C06 — Shizuku-backed privileged backend (also unblocks C11, C12, C69)
-3. C21 — Wear OS companion
-4. **C123 — Glance API widget rewrite (promoted from Under Consideration)**
-5. C63 — CVD LUT correction
-6. Driver-compatibility learning (continued)
-7. Preset system v2 polish
-8. C84 / C91 — Connected permission / overlay tests
-9. Research-watchlist maintenance
+1. C06 — Shizuku-backed privileged backend (also unblocks C11, C12, C69)
+2. C21 — Wear OS companion
+3. **C123 — Glance API widget rewrite (promoted from Under Consideration)**
+4. C63 — CVD LUT correction
+5. Driver-compatibility learning (continued)
+6. Preset system v2 polish
+7. C84 / C91 — Connected permission / overlay tests
+8. Research-watchlist maintenance
 
 ## Later-tier additions for rev 4
 
@@ -197,6 +196,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C124 | Shipped 2026-05-17 | Dagger/Hilt bumped to 2.59.2 as part of the AGP 9 train. |
 | C35 | Shipped 2026-05-17 | Final adaptive/store icon assets landed with source SVG and fastlane 512x512 PNG. |
 | C144 | Shipped 2026-05-17 | Stable AndroidX floors refreshed; compileSdk is 36, targetSdk remains 35, and Direct Boot now has DataStore 1.2.1 available. |
+| C28/C102 | Shipped 2026-05-17 | Device-protected Direct Boot mirror, `LOCKED_BOOT_COMPLETED` receiver, and pre-unlock service restore path landed; device-matrix proof remains C01. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

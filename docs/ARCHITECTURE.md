@@ -34,8 +34,9 @@ Why split it this way:
 
 ## Single source of truth
 
-State lives in **one** place: the `Preferences` JSON blob in DataStore,
-managed by `PreferencesStore` (`core-prefs/.../PreferencesStore.kt`).
+Unlocked app state lives in **one** place: the `Preferences` JSON blob in
+DataStore, managed by `PreferencesStore`
+(`core-prefs/.../PreferencesStore.kt`).
 
 Everything else is a view:
 
@@ -45,6 +46,12 @@ Everything else is a view:
 - The tile subscribes to `prefs.flow` on every `onStartListening()`.
 - The boot receiver writes `enabled=true` and lets the service flow do the
   rest.
+
+Direct Boot is the only intentional mirror. `LumenService` writes a small
+device-protected `DirectBootStateStore` snapshot containing the last active
+tint matrix, selected engine, and enabled/active flags. `LockedBootReceiver`
+uses that mirror before first unlock and does not read the full preferences
+blob until credential-protected storage is available.
 
 Writers all go through `prefs.update { current -> next }` so concurrent
 toggles (UI + tile + boot) never race on read-modify-write.
@@ -161,7 +168,9 @@ Two pure functions are the public surface:
 
 `PreferencesStore` is a thin wrapper around DataStore's `preferencesDataStore`,
 backed by a **single string key** holding a JSON-serialized `Preferences`
-object. Why single-key:
+object. `DirectBootStateStore` is a separate typed DataStore in device-
+protected storage and is not a second source of truth; it is a boot-time
+cache derived from service emissions. Why single-key:
 
 - One read, one decode per emission. No N+1 across dozens of typed keys.
 - Profile export/import is "dump the string, restore the string."

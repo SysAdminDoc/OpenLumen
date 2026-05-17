@@ -389,5 +389,9 @@ stable base for Direct Boot restore.
   screenshots remain the artwork/distribution blocker. Source: S00k.
 - **C144 shipped 2026-05-17**. Stable AndroidX floors were refreshed as
   a separate post-AGP-9 batch, `compileSdk` moved to 36, and updated
-  Compose lint findings were fixed. Direct Boot restore now has the
-  DataStore 1.2.1 floor it was waiting on. Source: S00l.
+  Compose lint findings were fixed. Source: S00l.
+- **C28/C102 shipped 2026-05-17**. The app now mirrors the last active
+  tint matrix and selected engine into device-protected DataStore, restores
+  from `LOCKED_BOOT_COMPLETED`, and avoids credential-protected
+  preferences before first unlock. Device pass/fail evidence remains C01.
+  Source: S00m.

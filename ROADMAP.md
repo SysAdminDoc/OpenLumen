@@ -67,6 +67,16 @@ major versions.
   14/15/16/17 boot-restore rows, and `docs/device-matrix.md` now requires
   a boot-restore note for every Android 14+ device result. Actual pass/fail
   evidence remains under C01 until tested on hardware/emulators.
+- [x] **C144 — AndroidX stable baseline refresh** shipped on
+  2026-05-17. OpenLumen now uses Compose BOM 2026.05.00, Activity Compose
+  1.13.0, Lifecycle 2.10.0, Navigation 2.9.8, DataStore 1.2.1, Material
+  3 1.4.0, and core-ktx 1.18.0 with `compileSdk = 36` and `targetSdk =
+  35`.
+- [x] **C28 / C102 — Direct Boot restore** shipped on 2026-05-17. The
+  unlocked service mirrors the last active tint matrix and selected engine
+  to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
+  direct-boot-aware service path, and root-only engines degrade to the
+  rootless Overlay path until the user unlocks.
 
 ## What changed in rev 5
 
@@ -536,7 +546,8 @@ Design-doc deliverables (deferred implementations with durable analysis):
 - **C10** Overlay blocked-touch troubleshooting — [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md) + `docs/troubleshooting.md`
 - **C11** Per-app pause/exclusions — deferred behind Shizuku spike (C06)
 - **C12** Secure/install/su dialog auto-pause — same blocker as C11
-- **C28** Direct Boot restore — design documented; now simpler with the new DataStore APIs (S95)
+- **C28** Direct Boot restore — shipped 2026-05-17 with a device-protected
+  mirror and `LOCKED_BOOT_COMPLETED` restore path.
 - **C69** Per-app profiles — same Shizuku blocker
 - **C90** Emergency unlock gesture — notification/tile/ADB shipped; touch gesture deferred
 - **C95** AGP 9 migration spike — **promoted to Now** in rev 3; shipped 2026-05-17
@@ -710,12 +721,10 @@ Partial (per rev 2, still partial in rev 3):
 
 ## Next: v0.7.0 → v0.8.0
 
-1. **Direct Boot restore (C28)** — minimal `enabled`/`engine` state in
-   `deviceProtectedDataStore()` + `LOCKED_BOOT_COMPLETED` receiver.
-   Engine availability: CDM + Overlay work pre-unlock; SF + KCAL require
-   `su` so degrade gracefully. Effort 3 (was 4) because the new DataStore
-   APIs (S95) remove the storage-migration risk. Sources: S00, S27, S66,
-   S95.
+1. **Direct Boot restore (C28 / C102) — shipped 2026-05-17**
+   Device-protected mirror plus `LOCKED_BOOT_COMPLETED` restore path now
+   exists. Remaining evidence is hardware/emulator validation under C01,
+   not implementation work. Sources: S00, S27, S66, S95, S280, S00m.
 
 2. **Shizuku-backed privileged backend (C06, also unblocks C11, C12, C69)**
    - Optional flavor (or first-class detection at runtime), wired
@@ -899,7 +908,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | ID | Candidate | Category | Prev | Tier | I/E/R | Deps / effort sketch | Placement reason | Sources |
 |---|---|---|---|---|---|---|---|---|
 | C101 | Compose Preview Screenshot Testing CI wiring | testing | emerging | Shipped 2026-05-17 | 4/2/1 | Added `com.android.compose.screenshot` `0.0.1-alpha14`, an initial textless theme-token `@PreviewTest`, checked-in debug references, and a CI `validateDebugScreenshotTest` job | Unblocks C83 expansion efficiently | S97, S98, S148, S149, S269-S274 |
-| C102 | DataStore Direct Boot APIs adoption | reliability/migration | emerging | Next | 4/3/2 | `deviceProtectedDataStore()` + `LOCKED_BOOT_COMPLETED` receiver | Drops C28 effort and risk | S95 |
+| C102 | DataStore Direct Boot APIs adoption | reliability/migration | emerging | Shipped 2026-05-17 | 4/3/2 | Added a typed device-protected DataStore mirror, `LOCKED_BOOT_COMPLETED` receiver, direct-boot-aware service path, and root-engine degradation to Overlay before unlock | Drops C28 effort and risk; remaining proof is device-matrix validation under C01 | S95, S280, S00m |
 | C103 | Android 17 stable validation | platform/OS | table-stakes | Now | 4/3/2 | Per-engine smoke on Pixel running Android 17 stable | Stable lands June 2026 | S83, S84, S96 |
 | C104 | Document AAPM accessibility revocation | docs/security | rare | Shipped 2026-05-17 | 3/1/1 | `docs/threat-model.md`, `docs/android-17-readiness.md`, and `docs/overlay-and-per-app-design.md` now call out why AAPM reinforces rejecting AccessibilityService for foreground-app convenience | Reinforces C79 rejection and Shizuku as only path | S88, S89, S90, S00h |
 | C105 | SAW-app FGS-from-background fallback | reliability/UX | rare | Shipped 2026-05-17 | 4/2/2 | Added `LumenServiceStarter` classification for `ForegroundServiceStartNotAllowedException`; QS/widget user actions roll back stale enabled state and open the app when Android blocks a background FGS start | Android 15+ tightens the rules for SAW apps without a visible overlay window | S85, S131, S00g |

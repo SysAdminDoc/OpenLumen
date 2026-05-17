@@ -21,7 +21,7 @@ From [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) on
 | Hilt | 2.59.2 | C124 shipped with the AGP 9 train (S274). |
 | Hilt lifecycle-viewmodel-compose | 1.3.0 | C96 shipped; `hiltViewModel()` imports now use `androidx.hilt.lifecycle.viewmodel.compose` (S269). |
 | Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped an initial `@PreviewTest` fixture and CI validation. |
-| DataStore | 1.2.1 | C144 shipped the stable floor needed before C28 / C102 Direct Boot restore work (S252, S280). |
+| DataStore | 1.2.1 | C144 shipped the stable floor; C28/C102 now uses it for the device-protected Direct Boot mirror (S252, S280, S00m). |
 | kotlinx.serialization | 1.7.3 | No upgrade pressure. |
 | kotlinx.coroutines | 1.9.0 | No upgrade pressure. |
 | AndroidX core-ktx | 1.18.0 | C144 shipped the stable AndroidX baseline refresh after C95 (S239, S276). |
@@ -168,15 +168,19 @@ ToggleButtons.
 
 ### PR 4 — DataStore 1.2 + Direct Boot restore (C28 / C102)
 
-- Use the already-landed `datastore = "1.2.1"` floor.
-- Build a `LockedBootCompletedReceiver` (separate from `BootReceiver`).
-- Mirror `enabled` + active `engine` minima into
-  `deviceProtectedDataStore()`.
+Status: shipped 2026-05-17.
+
+- Uses the already-landed `datastore = "1.2.1"` floor.
+- Adds `LockedBootReceiver` (separate from `BootReceiver`) for
+  `LOCKED_BOOT_COMPLETED`.
+- Mirrors enabled/active flags, selected engine, and last active tint
+  matrix into device-protected DataStore.
 - Engine availability degrades gracefully: CDM + Overlay work pre-unlock;
   SF + KCAL need `su` so degrade to Overlay until user unlock.
 
-Risk: medium. Documented in rev 3 as I/E/R 3/3/2 (effort dropped from 4
-since the DataStore API exists).
+Risk: medium. The privacy-sensitive mitigation is that the direct-boot
+mirror excludes schedule coordinates, profile names, saved profiles, and
+the full preferences blob. Device pass/fail proof remains C01.
 
 ## Reproducibility checklist (informed by S154-S156)
 
@@ -280,9 +284,9 @@ planned dependency churn has landed.
 C144 is now shipped. OpenLumen uses Activity Compose 1.13.0, core-ktx
 1.18.0, Lifecycle 2.10.0, Navigation Compose 2.9.8, Compose BOM
 2026.05.00, Material 3 1.4.0, and DataStore 1.2.1 (S239, S252-S253,
-S275-S281, S00l). This was not a security fire, but it reduces future
-forced-upgrade pressure and unlocks Direct Boot restore work on stable
-DataStore APIs.
+S275-S281, S00l). This was not a security fire, but it reduced future
+forced-upgrade pressure and unlocked the Direct Boot work now recorded in
+S00m.
 
 ### C138 import-size hardening
 

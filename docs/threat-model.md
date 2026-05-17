@@ -63,8 +63,12 @@ anything in the affected category.
               - Overlay: WindowManager.addView (TYPE_APPLICATION_OVERLAY)
 ```
 
-Inside the OpenLumen process there is one source of truth (the DataStore
-blob); all UI surfaces are read-views or write-throughs.
+Inside the OpenLumen process there is one source of truth while the user
+is unlocked (the credential-protected DataStore blob); all UI surfaces
+are read-views or write-throughs. Direct Boot adds a narrow
+device-protected mirror containing only the last active tint matrix,
+selected engine, and enabled/active flags so pre-unlock restore can run
+without opening the full preferences blob.
 
 The engine layer is the only place that touches anything privileged. Two
 of the four engines (`SF`, `KCAL`) shell out via `su`. The other two
@@ -79,7 +83,8 @@ Categorized loosely by MASVS verticals.
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| DataStore blob contains coordinates the user typed in | Low | Backed up only to device-protected backups; redacted from driver report; profile export warns the user it includes location |
+| DataStore blob contains coordinates the user typed in | Low | App-private credential-protected storage; redacted from driver report; profile export warns the user it includes location |
+| Direct Boot mirror is readable before first unlock | Low | Mirror excludes coordinates, profile names, saved profiles, and the full preference blob; it stores only enabled/active flags, selected engine, last active matrix, and AMOLED clamp state |
 | Imported profile causes out-of-range values | Med | All values clamped in `PreferencesStore.sanitize()`; out-of-range fields fall to defaults; corrupt blob falls back to empty `Preferences()` |
 | Crash log contains stack traces with class names | Low | Local-only file (`filesDir/crash.log`), never read or sent without user action; user can clear it from the About screen |
 | Migrations corrupt user data | Low | Pure-function migrations; tested; sanitize always runs after; downgrade leaves blob unchanged |
@@ -186,6 +191,7 @@ What we store and where:
 | Data | Where | Backed up? | Encrypted? | Notes |
 |---|---|---|---|---|
 | Preferences blob (JSON) | DataStore (app-private) | yes (cloud + device transfer) | OS-default app storage encryption | Includes coordinates the user entered |
+| Direct Boot mirror | Device-protected DataStore | not intentionally backed up | Device-protected storage | Last active tint matrix, selected engine, enabled/active flags only |
 | Crash log | `filesDir/crash.log` | excluded from backup rules | OS-default | Stack traces only; no PII |
 | Adaptive icon / drawable resources | APK | n/a | n/a | Static assets |
 | Compiled DEX | APK | n/a | n/a | Public code |

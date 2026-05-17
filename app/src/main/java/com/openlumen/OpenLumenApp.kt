@@ -5,13 +5,16 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.os.UserManager
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class OpenLumenApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        CrashLogger.install(this)
+        if (isUserUnlocked()) {
+            CrashLogger.install(this)
+        }
         registerNotificationChannel()
     }
 
@@ -28,4 +31,7 @@ class OpenLumenApp : Application() {
         }
         nm.createNotificationChannel(channel)
     }
+
+    private fun isUserUnlocked(): Boolean =
+        (getSystemService(Context.USER_SERVICE) as? UserManager)?.isUserUnlocked != false
 }

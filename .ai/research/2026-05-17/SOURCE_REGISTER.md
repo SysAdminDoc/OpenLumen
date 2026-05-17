@@ -5,7 +5,7 @@ roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
 entries through `S281` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00l)
+## Local evidence (S00 / S00b-S00m)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -725,6 +725,13 @@ informed.
   `AboutScreen.kt` and `DriverScreen.kt` were adjusted for the new
   Compose lint rule by reading string resources outside click handlers.
   Full validation passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- **S00m**: Local implementation evidence for C28/C102 —
+  `DirectBootStateStore.kt` adds a typed DataStore in device-protected
+  storage, `LockedBootReceiver.kt` handles `LOCKED_BOOT_COMPLETED`, and
+  `LumenService.kt` now has a direct-boot restore path that applies the
+  mirrored tint matrix without reading credential-protected preferences
+  before unlock. Focused verification passed with `:core-prefs:test` and
+  `:app:assembleDebug` from `C:\Users\Xray\OpenLumen-agp9-verify`.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -772,7 +779,7 @@ informed.
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l | 12 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m | 13 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -822,6 +829,7 @@ JVM regression coverage. S00j records the local C95/C96/C101/C124 AGP 9
 / Hilt / screenshot implementation evidence. S269-S274 refresh the
 current external toolchain sources that informed that implementation.
 S00k records the local C35 final icon assets. S00l records the C144
-stable AndroidX baseline refresh and full local-mirror validation.
-S275-S281 capture the AndroidX / Compose release evidence used for that
-batch.
+stable AndroidX baseline refresh and full local-mirror validation. S00m
+records the C28/C102 Direct Boot implementation evidence and focused
+verification. S275-S281 capture the AndroidX / Compose release evidence
+used for that batch.

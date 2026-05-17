@@ -190,23 +190,26 @@ screens that request `OpenLumenViewModel` import the new package.
 ## C28 — Direct Boot restore
 
 Direct Boot (Android 7+) lets apps run in a limited mode after a reboot
-but before the user unlocks the device. To support it:
+but before the user unlocks the device.
 
-1. Move a minimal subset of `Preferences` (just `enabled` and `engine`
-   choice) into device-protected storage via
-   `context.createDeviceProtectedStorageContext()`.
-2. Register a `LOCKED_BOOT_COMPLETED` receiver that reads the
-   device-protected subset.
-3. Decide which engines work in Direct Boot — CDM and Overlay should;
-   SF and KCAL rely on `su` which won't run until Magisk is unlocked.
+Status: shipped 2026-05-17.
 
-Effort: moderate. Risk: medium (storage migration is the most data-loss-
-adjacent operation we'd run). Practical user benefit: filter comes back
-on a fresh boot before unlock, which matters for users who unlock once
-per long stretch.
+Implementation:
 
-Plan: ship in v0.7.0 alongside the migration framework changes for the
-device-protected DataStore.
+1. `DirectBootStateStore` mirrors only the last active tint matrix,
+   selected engine, `enabled`, and `active` flags into device-protected
+   DataStore while the user is unlocked.
+2. `LockedBootReceiver` listens for `LOCKED_BOOT_COMPLETED` and starts
+   `LumenService.ACTION_DIRECT_BOOT_RESTORE` only when the mirror says a
+   tint was active.
+3. `LumenService` skips credential-protected preferences before unlock,
+   applies the mirrored matrix directly, and degrades SurfaceFlinger/KCAL
+   choices to Overlay until the user unlocks.
+
+Practical user benefit: the last active tint can come back on a fresh
+boot before unlock, which matters for users who unlock once per long
+stretch. Remaining proof belongs in `docs/device-matrix.md` hardware /
+emulator rows.
 
 ## What's already shipped from this group
 
