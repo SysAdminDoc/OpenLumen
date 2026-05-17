@@ -109,14 +109,12 @@ class LumenService : LifecycleService() {
     private val latestLux = AtomicReference(-1f)
     /**
      * The matrix the active engine actually received on its last successful
-     * [ColorEngine.apply]. Distinct from [lastTarget] so a mid-ramp
-     * interrupt can compute its new ramp from the displayed value rather
-     * than from a target the screen never finished converging on.
+     * [ColorEngine.apply]. Distinct from [applyGate]'s target cache so a
+     * mid-ramp interrupt can compute its new ramp from the displayed value
+     * rather than from a target the screen never finished converging on.
      */
     @Volatile private var lastApplied: LumenMatrix? = null
-    /** Most recent matrix requested by [applyIfShouldBeActive]. */
-    @Volatile private var lastTarget: LumenMatrix? = null
-    @Volatile private var lastShouldBeActive: Boolean = false
+    private val applyGate = ApplyDecisionGate()
 
     override fun onCreate() {
         super.onCreate()
@@ -352,8 +350,7 @@ class LumenService : LifecycleService() {
             engine = next
             // Reset cached state so the new engine receives a fresh apply on the next call.
             lastApplied = null
-            lastTarget = null
-            lastShouldBeActive = false
+            applyGate.reset()
             DiagnosticsLog.log(
                 this@LumenService, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.ENGINE,
                 "switched to engine ${next.kind.name}"
@@ -378,19 +375,13 @@ class LumenService : LifecycleService() {
         val shouldBeActive = scheduleActive || lightActive
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
-        if (shouldBeActive != lastShouldBeActive || matrix != lastTarget) {
+        applyGate.next(shouldBeActive, matrix)?.let { decision ->
             // Ramp only the state-flip transitions (active <-> inactive). User-
             // driven slider drags shouldn't lerp — they should feel direct.
             // Approximation: when only the matrix changed (not the active
             // flag), apply instantly even if a transition duration is set.
-            val isFlip = shouldBeActive != lastShouldBeActive
-            val rampMs = if (isFlip) p.transitionDurationMs.coerceAtLeast(0L) else 0L
-            // Record the new target *before* dispatching the ramp so a
-            // re-emission while we're awaiting the launch doesn't see
-            // stale `lastTarget` and double-schedule.
-            lastTarget = matrix
-            lastShouldBeActive = shouldBeActive
-            applyMatrix(matrix, rampMs)
+            val rampMs = if (decision.isStateFlip) p.transitionDurationMs.coerceAtLeast(0L) else 0L
+            applyMatrix(decision.matrix, rampMs)
         }
         // Always reschedule — the next transition time depends on the current mode and clock.
         rescheduleNextTransition(mode)
@@ -414,7 +405,7 @@ class LumenService : LifecycleService() {
             cancelTransitionLocked()
 
             // `previous` is the actually-displayed matrix from the last
-            // successful engine apply — distinct from `lastTarget` so a
+            // successful engine apply — distinct from the target cache so a
             // mid-ramp interrupt smoothly continues from the displayed value.
             val previous = lastApplied
             if (durationMs <= 0 || previous == null || previous == target) {

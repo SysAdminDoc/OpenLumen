@@ -146,6 +146,11 @@ find a case that violates one of these, it's a bug — file it.
 
 - **No engine `apply()` runs without first being able to `clear()`.**
   Each engine's `clear()` is exercised in the probe path or at install.
+- **Every engine switch resets the target cache.** The next preference
+  emission dispatches a fresh matrix to the newly selected engine even if
+  the user did not change intensity, dim, or preset values. JVM coverage
+  for `ApplyDecisionGate` protects the source-level behavior; rooted
+  device rows still need to record SF/KCAL smoke results.
 - **The service synchronously clears on `onDestroy()`.** When the
   service is killed (system, ADB, user), it blocks for up to 2 seconds
   trying to send the identity matrix.

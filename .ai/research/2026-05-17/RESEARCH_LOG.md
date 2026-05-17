@@ -508,3 +508,29 @@ This cleanup:
 - Marked C104 and C126 shipped in `ROADMAP.md`.
 - Recorded S00h as the local evidence tying the status update to current
   docs.
+
+## Implementation update (C117)
+
+C117 targeted the Red Moon issue-class where a root filter path requires
+a value change before the first root-engine apply happens. Local source
+audit showed `LumenService.ensureEngine()` already reset `lastApplied`,
+`lastTarget`, and `lastShouldBeActive`, but that behavior was not covered
+by JVM tests and was embedded in Android service state.
+
+Implementation:
+
+- Extracted the target-cache decision into `ApplyDecisionGate`.
+- `LumenService` now calls `applyGate.reset()` whenever the active engine
+  changes.
+- `ApplyDecisionGateTest` proves first active emissions dispatch,
+  duplicate emissions are suppressed, target changes dispatch without a
+  state-flip ramp, and the same active matrix dispatches again after
+  reset.
+- `docs/device-matrix.md` now asks real rooted SF/KCAL smoke testers to
+  record first-emission pass/fail rows instead of treating the JVM test as
+  hardware evidence.
+
+Verification:
+
+- `:app:testDebugUnitTest --no-daemon --rerun-tasks --stacktrace`
+  passed.

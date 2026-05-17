@@ -521,3 +521,16 @@ C104 and C126 are now marked shipped:
   `docs/overlay-and-per-app-design.md`.
 - C126: `docs/health-evidence.md` contains the 2025/2026 consensus-shift
   note and S99-S102 / S158-S162 source refresh.
+
+## C117 implementation state
+
+C117 is now implemented locally:
+
+- `ApplyDecisionGate` owns the service target-cache decision and is reset
+  whenever `LumenService` switches engines.
+- JVM tests prove a duplicate target is suppressed for the same engine but
+  dispatches again after reset, covering the first-emission regression
+  class without requiring root hardware in CI.
+- `docs/device-matrix.md` now asks rooted SurfaceFlinger and KCAL smoke
+  testers to record first-emission pass/fail evidence during C01 device
+  validation.

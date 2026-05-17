@@ -188,6 +188,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C105 | Shipped 2026-05-17 | QS/widget user starts recover from Android foreground-service background-start blocks. |
 | C104 | Shipped 2026-05-17 | AAPM accessibility auto-revocation documented in threat / Android 17 / overlay design docs. |
 | C126 | Shipped 2026-05-17 | Health-evidence doc contains the 2025/2026 consensus-shift note and source refresh. |
+| C117 | Shipped 2026-05-17 | Engine target cache reset is isolated in `ApplyDecisionGate` with JVM coverage for same-matrix first emission after reset. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and

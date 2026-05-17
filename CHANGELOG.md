@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quick Settings and widget toggle-on paths now classify Android background
   foreground-service start rejections, roll back stale enabled state, and open
   the app when Android 15+ requires a visible overlay before starting.
+- Engine switches now reset the service target cache so SurfaceFlinger, KCAL,
+  and other engines receive the first matrix emission even when the user did not
+  change preset, intensity, or dim values.
 - Default preferences now serialize with nullable solar coordinates instead of `NaN`,
   so profile export/import and DataStore writes remain valid JSON.
 - Rootless overlay tinting now uses non-zero alpha for color-only presets; previously

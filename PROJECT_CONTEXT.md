@@ -389,6 +389,11 @@ watchpoints future sessions should not miss:
   pass-2 race/stale-cache findings: ramp atomicity, cancel-before-clear,
   CDM partial-cache invalidation, overlay install/apply/clear locking, and
   SF/KCAL failed-write cache invalidation.
+- **Root first-emission dispatch (C117)**: shipped 2026-05-17. The
+  service uses `ApplyDecisionGate` so an engine switch resets the target
+  cache; JVM tests prove the same active matrix dispatches again after
+  reset. Device validation still records SF/KCAL first-emission smoke
+  results under C01.
 - **AAPM driver-report surface (C130)**: shipped 2026-05-17. The report
   has a reflection-gated Android 17 Advanced Protection section and a
   declared `QUERY_ADVANCED_PROTECTION_MODE` permission; older devices show

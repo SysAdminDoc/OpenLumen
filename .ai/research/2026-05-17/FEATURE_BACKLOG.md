@@ -371,3 +371,8 @@ stable base for Direct Boot restore.
   revocation rationale now appears in the overlay/per-app design note;
   C126's health-evidence source refresh was already present from the
   rev 4.1 docs pass. Source: S00h.
+- **C117 shipped 2026-05-17**. First-emission dispatch is now protected
+  by `ApplyDecisionGate`: engine switches reset the target cache, the
+  same active matrix dispatches again after reset, and the device matrix
+  asks rooted SF/KCAL smoke testers to record first-emission pass/fail.
+  Source: S00i.

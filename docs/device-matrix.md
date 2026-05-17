@@ -138,6 +138,10 @@ This is the device-matrix side of roadmap candidate **C143**.
 - The probe iterates candidate transaction codes (1015, 1023, 1030). If
   none work, mark ❌ and capture the device + Android version so we can
   add new candidate codes.
+- First-emission smoke: with the filter already enabled on another
+  engine, switch to SurfaceFlinger without changing preset/intensity/dim.
+  The tint must apply immediately. Record `SF first emission: pass/fail`
+  in the row notes.
 - Some Magisk modules block specific `service call` codes — note this in
   the row.
 
@@ -150,6 +154,10 @@ This is the device-matrix side of roadmap candidate **C143**.
   ```bash
   adb shell su -c "ls /sys/devices/platform/kcal_ctrl.0/"
   ```
+- First-emission smoke: with the filter already enabled on another
+  engine, switch to KCAL without changing preset/intensity/dim. The tint
+  must apply immediately. Record `KCAL first emission: pass/fail` in the
+  row notes.
 
 ## Overlay specifics
 

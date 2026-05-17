@@ -620,3 +620,32 @@ whose ROADMAP candidate rows still said `Now`.
 
 Docs/status-only cleanup. Verification: `git diff --check` after final
 edits.
+
+## Implementation pass 16 (C117, 2026-05-17)
+
+This pass implemented **C117 — Root-mode apply-on-first-emission
+verification**.
+
+### Files modified (pass 16)
+
+| File | Why |
+|---|---|
+| `app/src/main/java/com/openlumen/service/ApplyDecisionGate.kt` | Added a pure, synchronized target-cache decision helper for service apply dispatch. |
+| `app/src/main/java/com/openlumen/service/LumenService.kt` | Replaced embedded target-cache fields with `ApplyDecisionGate` and reset the gate on engine switch. |
+| `app/src/test/java/com/openlumen/service/ApplyDecisionGateTest.kt` | Added JVM regression coverage for first emission, duplicate suppression, target changes, and reset dispatch. |
+| `docs/root-safety.md` | Documented the engine-switch first-emission guarantee and the remaining need for rooted smoke rows. |
+| `docs/device-matrix.md` | Added SurfaceFlinger/KCAL first-emission smoke instructions. |
+| `docs/v0.5.0-release-readiness.md` | Marked C117 shipped with source-level coverage caveat. |
+| `ROADMAP.md` | Marked C117 shipped. |
+| `PROJECT_CONTEXT.md` | Added C117 to current planning watchpoints. |
+| `CHANGELOG.md` | Recorded the engine-switch dispatch fix. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00i for local implementation evidence. |
+| `.ai/research/2026-05-17/FEATURE_BACKLOG.md` | Recorded C117 as shipped. |
+| `.ai/research/2026-05-17/PRIORITIZATION_MATRIX.md` | Added C117 to the shipped execution table. |
+| `.ai/research/2026-05-17/RESEARCH_LOG.md` | Logged the implementation and verification. |
+| `.ai/research/2026-05-17/STATE_OF_REPO.md` | Added current C117 implementation state. |
+
+### Verification (pass 16)
+
+- `:app:testDebugUnitTest --no-daemon --rerun-tasks --stacktrace`
+  passed.
