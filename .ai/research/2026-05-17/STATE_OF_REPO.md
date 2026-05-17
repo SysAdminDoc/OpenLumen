@@ -477,3 +477,14 @@ C106 is now complete as a documentation/test-plan item:
   device rows.
 - No real device rows were marked passed. Actual pass/fail evidence
   remains part of C01.
+
+## C138 implementation state
+
+C138 is now implemented locally:
+
+- `PreferencesStore` no longer decodes import data through a `Reader`
+  before applying the limit.
+- `readImportBytes()` enforces `MAX_IMPORT_FILE_BYTES` at the raw stream
+  boundary and reads only one probe byte beyond the cap before failing.
+- `PreferencesImportReadTest` covers exact-limit acceptance and
+  max-plus-one rejection before decode.

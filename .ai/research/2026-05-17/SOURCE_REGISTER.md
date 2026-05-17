@@ -679,12 +679,17 @@ informed.
   confirms `vcsInfo.include` controls whether AGP packages VCS metadata
   in release builds; used for C120.
   https://developer.android.com/reference/tools/gradle-api/8.7/com/android/build/api/dsl/VcsInfo
+- **S00e**: Local implementation evidence for C138 —
+  `core-prefs/src/main/java/com/openlumen/prefs/PreferencesStore.kt`
+  now caps imports with `readImportBytes()` at the raw `InputStream`
+  byte layer before UTF-8 decoding; `PreferencesImportReadTest.kt`
+  covers exact-limit and max-plus-one behavior.
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d | 4 |
+| Local evidence | S00, S00b, S00c, S00d, S00e | 5 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
@@ -722,3 +727,5 @@ upstream tag / metadata checks used when implementing C142. S266 records
 the AOSP dump surface used for the C143 MemoryLimiter smoke flow. S267
 records the Android `Context` service constant used by C130.
 S268 records the AGP VCS-info DSL used by C120.
+S00e records the local C138 import-byte-limit implementation and focused
+unit test.

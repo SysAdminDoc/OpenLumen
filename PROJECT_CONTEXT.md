@@ -133,6 +133,9 @@ toggles (UI + tile + boot + widget) never race on read-modify-write.
 `sanitize()` runs on every read **and** every write — NaN, Inf, out-of-range
 imported values, oversized profile lists, invalid preset keys, all get
 clamped to defaults. A malicious profile import cannot crash the service.
+Profile import also caps raw `InputStream` bytes before UTF-8 decoding via
+`readImportBytes()`, so the 64 KiB import budget is a real byte budget rather
+than a decoded-character count.
 
 Schema is versioned (`Preferences.schemaVersion`, current = 1) and
 [PreferencesMigrations](core-prefs/src/main/java/com/openlumen/prefs/PreferencesMigrations.kt)

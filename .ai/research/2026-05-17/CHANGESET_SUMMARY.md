@@ -496,3 +496,30 @@ documentation/test-plan item without fabricating device results.
 
 Docs-only change. No device rows were marked passed; all new boot-restore
 rows remain pending until a real device or emulator run supplies evidence.
+
+## Implementation pass 12 (C138, 2026-05-17)
+
+This pass completed **C138 — `PreferencesStore` import-size cap
+byte-correctness**.
+
+### Files modified (pass 12)
+
+| File | Why |
+|---|---|
+| `core-prefs/src/main/java/com/openlumen/prefs/PreferencesStore.kt` | Replaced decoded-character import limiting with raw `InputStream` byte limiting before UTF-8 decode. |
+| `core-prefs/src/test/java/com/openlumen/prefs/PreferencesImportReadTest.kt` | Added exact-limit and max-plus-one unit coverage for the import byte reader. |
+| `ROADMAP.md` | Marked C138 shipped. |
+| `PROJECT_CONTEXT.md` | Added the import byte-cap rule to durable persistence context. |
+| `CHANGELOG.md` | Added the input-validation fix under `[Unreleased]`. |
+| `docs/v0.5.0-release-readiness.md` | Recorded C138 as shipped in the release-readiness checklist. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S00e for local implementation evidence. |
+| `.ai/research/2026-05-17/RESEARCH_LOG.md` | Logged the local source finding and verification. |
+| `.ai/research/2026-05-17/STATE_OF_REPO.md` | Added current implementation state for C138. |
+| `.ai/research/2026-05-17/FEATURE_BACKLOG.md` | Marked C138 shipped in the execution update. |
+| `.ai/research/2026-05-17/PRIORITIZATION_MATRIX.md` | Added C138 to the shipped execution table. |
+| `.ai/research/2026-05-17/SECURITY_AND_DEPENDENCY_REVIEW.md` | Recorded the input-validation hardening. |
+
+### Verification (pass 12)
+
+- `:core-prefs:test --no-daemon --rerun-tasks --stacktrace` passed
+  after stopping a stale Gradle daemon from an interrupted first run.

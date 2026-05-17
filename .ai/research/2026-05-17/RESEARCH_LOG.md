@@ -424,3 +424,18 @@ C106 was implemented as evidence slots, not fabricated validation:
   `docs/device-matrix.md` for Android 14+ rows.
 - Kept actual pass/fail device results under C01, because no real boot
   run was performed in this session.
+
+## Implementation update (C138)
+
+C138 required no new external research. The source finding was local:
+`PreferencesStore.readAllFromUri()` used a UTF-8 `Reader` and compared
+`StringBuilder.length` to a byte-sized limit. The fix now reads
+`MAX_IMPORT_FILE_BYTES + 1` bytes at the `InputStream` layer and rejects
+over-limit imports before decoding.
+
+Verification:
+
+- `:core-prefs:test --no-daemon --rerun-tasks --stacktrace` passed after
+  stopping a stale Gradle daemon from an earlier timed-out run.
+- `PreferencesImportReadTest` covers exactly-at-limit reads and one-byte
+  over-limit rejection.

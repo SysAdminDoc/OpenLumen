@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recover after transient API / OTA / sysfs drift.
 - Overlay engine view installation, tint updates, and removal are now serialized
   on the main thread to avoid rapid-toggle races during engine swaps.
+- Profile import size validation now caps raw UTF-8 bytes before decoding,
+  so multi-byte payloads cannot bypass the intended 64 KiB limit.
 - Default preferences now serialize with nullable solar coordinates instead of `NaN`,
   so profile export/import and DataStore writes remain valid JSON.
 - Rootless overlay tinting now uses non-zero alpha for color-only presets; previously

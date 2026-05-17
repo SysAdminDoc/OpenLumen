@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -16,6 +18,26 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
 private val Context.dataStore by preferencesDataStore(name = "openlumen-prefs")
+
+internal const val MAX_IMPORT_FILE_BYTES = 64 * 1024
+
+internal fun readImportBytes(input: InputStream, maxBytes: Int = MAX_IMPORT_FILE_BYTES): ByteArray {
+    require(maxBytes >= 0) { "maxBytes must be non-negative" }
+    val out = ByteArrayOutputStream(minOf(maxBytes, 4096))
+    val buffer = ByteArray(4096)
+    var total = 0
+    while (true) {
+        val bytesUntilFailure = maxBytes - total + 1
+        val n = input.read(buffer, 0, minOf(buffer.size, bytesUntilFailure))
+        if (n < 0) break
+        total += n
+        if (total > maxBytes) {
+            error("Import file exceeds $maxBytes bytes")
+        }
+        out.write(buffer, 0, n)
+    }
+    return out.toByteArray()
+}
 
 /**
  * Single-blob preferences store. We keep the whole [Preferences] object as a JSON string
@@ -103,19 +125,7 @@ class PreferencesStore(private val context: Context) {
     private fun readAllFromUri(uri: Uri): String {
         return context.contentResolver.openInputStream(uri).use { input ->
             checkNotNull(input) { "openInputStream returned null for $uri" }
-            val sb = StringBuilder()
-            input.bufferedReader(Charsets.UTF_8).use { reader ->
-                val buf = CharArray(4096)
-                while (true) {
-                    val n = reader.read(buf)
-                    if (n < 0) break
-                    sb.append(buf, 0, n)
-                    if (sb.length > MAX_IMPORT_BYTES) {
-                        error("Import file exceeds $MAX_IMPORT_BYTES bytes")
-                    }
-                }
-                sb.toString()
-            }
+            readImportBytes(input).toString(Charsets.UTF_8)
         }
     }
 
@@ -252,7 +262,6 @@ class PreferencesStore(private val context: Context) {
         this?.takeIf { it.isFinite() && it in min..max }
 
     private companion object {
-        const val MAX_IMPORT_BYTES = 64 * 1024
         const val MAX_FAVORITES = 8
     }
 }

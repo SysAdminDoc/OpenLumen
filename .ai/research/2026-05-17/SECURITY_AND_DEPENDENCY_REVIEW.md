@@ -284,3 +284,11 @@ DataStore 1.2.1 (S239, S252-S253). Track as **C144 (Next)** after the
 toolchain migration; this is not a security fire, but it reduces
 future forced-upgrade pressure and unlocks Direct Boot restore work on
 stable DataStore APIs.
+
+### C138 import-size hardening
+
+C138 is now shipped. `PreferencesStore` enforces its 64 KiB profile
+import limit on raw stream bytes before UTF-8 decoding, closing the
+local input-validation bug where multi-byte text could exceed the
+intended byte budget while still passing a decoded-character count.
+Focused unit coverage lives in `PreferencesImportReadTest`.
