@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test compilation on this toolchain.
 
 ### Changed
+- Release builds now disable AGP's packaged VCS-info metadata
+  (`META-INF/version-control-info.textproto`) and document the F-Droid
+  reproducibility rationale in `docs/reproducible-build.md`.
 - Driver reports now include an Android 17 Advanced Protection section with
   `enabled`, `disabled`, `n/a`, or bounded `unknown` status, and the app now
   declares `QUERY_ADVANCED_PROTECTION_MODE` for that query path.

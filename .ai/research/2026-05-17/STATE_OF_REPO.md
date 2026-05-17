@@ -430,3 +430,16 @@ C130 is now implemented locally:
   instead of throwing while generating a report.
 
 Verification is tracked in `CHANGESET_SUMMARY.md` pass 7.
+
+## C120 implementation state
+
+C120 is now implemented locally:
+
+- Release builds set `vcsInfo.include = false` in `app/build.gradle.kts`.
+- `docs/reproducible-build.md` explains why the embedded
+  `META-INF/version-control-info.textproto` can break F-Droid reference
+  APK comparisons and why clean tagged builds remain required.
+- External provenance remains Git tags, published SHA-256 sums, and
+  `actions/attest`.
+
+Verification is tracked in `CHANGESET_SUMMARY.md` pass 8.

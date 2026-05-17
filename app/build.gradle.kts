@@ -40,6 +40,11 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
+            // F-Droid rebuilds from the release tag; embedding the local Git
+            // revision in META-INF/version-control-info.textproto can make
+            // reference APK comparisons drift. GitHub release provenance stays
+            // external via actions/attest.
+            vcsInfo.include = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

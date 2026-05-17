@@ -342,3 +342,7 @@ stable base for Direct Boot restore.
 - **C130 shipped 2026-05-17**. Driver reports now include a reflection-
   gated Android 17 Advanced Protection section and declare
   `QUERY_ADVANCED_PROTECTION_MODE`. Sources: S134, S267.
+- **C120 shipped 2026-05-17**. Release builds disable packaged AGP
+  VCS-info metadata and the reproducible-build doc now explains the
+  F-Droid comparison risk plus the external provenance path. Sources:
+  S112, S156, S268.

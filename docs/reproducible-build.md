@@ -53,6 +53,13 @@ follows from those.
 
 - **Embedded build timestamps.** AGP no longer writes `Built-Date`
   timestamps into resources or DEX. We don't add any either.
+- **AGP VCS metadata in the APK.** Release builds set
+  `vcsInfo.include = false`, so AGP does not package
+  `META-INF/version-control-info.textproto` with a local Git revision.
+  F-Droid documents this file as a reproducible-build comparison pitfall
+  when a reference APK was built before the final release tag. OpenLumen
+  keeps provenance externally through Git tags, release SHA-256 sums, and
+  `actions/attest` instead.
 - **Locale-dependent string ordering.** Compose code does not iterate
   resource maps that depend on locale.
 - **Random IDs.** No `UUID.randomUUID()` in build-time codegen paths.
@@ -69,6 +76,10 @@ follows from those.
   bytes, which include a timestamp. Compare unsigned APKs (or compare
   `apksigner verify -v --print-certs` outputs separately from the byte
   hash).
+- **Building from a dirty tree.** F-Droid's preferred path is still to
+  build from a clean, tagged commit. The VCS-info toggle removes one known
+  APK payload drift source; it is not a substitute for tagging first and
+  building the exact tag.
 
 ## CI provenance
 

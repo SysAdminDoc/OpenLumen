@@ -197,6 +197,9 @@ Dependabot is configured for Gradle and GitHub Actions
 ([.github/dependabot.yml](.github/dependabot.yml)). All Actions pinned to
 major-version tags with a documented rotation policy in
 [docs/sbom-and-advisories.md](docs/sbom-and-advisories.md).
+Release builds disable AGP's packaged VCS-info file with
+`vcsInfo.include = false`; external release provenance remains Git tags,
+SHA-256 sums, and `actions/attest`.
 
 ## Key paths
 

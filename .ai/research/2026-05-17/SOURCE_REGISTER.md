@@ -670,6 +670,10 @@ informed.
   retrieving `AdvancedProtectionManager`, used by the C130 reflection
   implementation while the project remains on compile SDK 35.
   https://developer.android.com/reference/android/content/Context
+- **S268**: Android Gradle Plugin 8.7 `VcsInfo` DSL reference —
+  confirms `vcsInfo.include` controls whether AGP packages VCS metadata
+  in release builds; used for C120.
+  https://developer.android.com/reference/tools/gradle-api/8.7/com/android/build/api/dsl/VcsInfo
 
 ## Source-class coverage check
 
@@ -681,7 +685,7 @@ informed.
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
 | Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
 | AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
-| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194 | 27 |
+| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268 | 28 |
 | DataStore | S66, S95, S146-S147 | 4 |
 | F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
 | Security (OWASP / GHSA / SBOM tooling) | S60-S64, S67-S68, S77, S108-S110, S114, S122, S188-S192 | 19 |
@@ -698,7 +702,8 @@ rev 3 has ≥2 sources. New evidence introduces 3 new candidates
 report surface, C131 Eye Dropper picker integration); each cites ≥2
 sources.
 
-Rev 5 coverage update: pass 3 added 38 more sources (S230-S267). The
+Rev 5 coverage update: pass 3+implementation added 39 more sources
+(S230-S268). The
 newest coverage gap closed is **off-Play Android developer verification**,
 which was absent from rev 4.1 and now maps to C141. CI/action supply-chain
 coverage now includes the Node 24 deadline plus current action majors
@@ -711,3 +716,4 @@ bootstrap source used to complete local verification after `JAVA_HOME` and
 upstream tag / metadata checks used when implementing C142. S266 records
 the AOSP dump surface used for the C143 MemoryLimiter smoke flow. S267
 records the Android `Context` service constant used by C130.
+S268 records the AGP VCS-info DSL used by C120.

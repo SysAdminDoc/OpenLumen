@@ -405,3 +405,28 @@ and C140 require maintainer/account or release-asset work.
 - `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142
   actionable tasks). This specifically covered the API-36 permission
   declaration while the repo still compiles against SDK 35.
+
+## Implementation pass 8 (C120, 2026-05-17)
+
+This pass implemented **C120 — VCS info determinism**.
+
+### Files modified (pass 8)
+
+| File | Why |
+|---|---|
+| `app/build.gradle.kts` | Set `vcsInfo.include = false` for release builds so AGP does not package `META-INF/version-control-info.textproto`. |
+| `docs/reproducible-build.md` | Documented the F-Droid comparison risk, the clean-tag build requirement, and the external provenance replacement. |
+| `ROADMAP.md` | Marked C120 shipped. |
+| `PROJECT_CONTEXT.md` | Added the release VCS-info / provenance rule to durable context. |
+| `CHANGELOG.md` | Added the release build reproducibility change under `[Unreleased]`. |
+| `docs/v0.5.0-release-readiness.md` | Changed the C120 gate from "apply" to "confirm present." |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S268 for the AGP `VcsInfo` DSL reference. |
+
+### Verification (pass 8)
+
+- `:app:assembleRelease --stacktrace` passed (`BUILD SUCCESSFUL`, 155
+  actionable tasks). This verified the AGP 8.7 Kotlin DSL accepts
+  `vcsInfo.include = false` and that unsigned release assembly still
+  completes.
+- `jar tf app/build/outputs/apk/release/app-release-unsigned.apk` showed
+  `version-control-info.textproto absent`.

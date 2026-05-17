@@ -36,6 +36,10 @@ major versions.
   The driver report now includes a reflection-gated Android 17 Advanced
   Protection section, declares `QUERY_ADVANCED_PROTECTION_MODE`, and
   reports `enabled`, `disabled`, `n/a`, or a bounded `unknown` reason.
+- [x] **C120 — VCS info determinism** shipped on 2026-05-17. Release
+  builds now set `vcsInfo.include = false` so AGP does not package
+  `META-INF/version-control-info.textproto`; `docs/reproducible-build.md`
+  explains the F-Droid comparison risk and the external provenance path.
 
 ## What changed in rev 5
 
@@ -882,7 +886,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C117 | Root-mode apply-on-first-emission verification | reliability | rare | Now | 3/1/1 | Verify SF/KCAL receive their first matrix without requiring a value change | Red Moon has a known bug here; we should not | S86 |
 | C118 | GrapheneOS / lockdown-ROM overlay coverage | platform/OS | rare | Next | 3/3/3 | Test overlay z-order against system shade on GrapheneOS | Red Moon issue #347 indicates real OEM-divergence risk | S86 |
 | C119 | (folded into C35) | — | — | — | — | — | — | — |
-| C120 | VCS info determinism in reproducibility doc | distribution/docs | rare | Now | 2/1/1 | Document AGP `version-control-info.textproto` handling in `docs/reproducible-build.md` | Known F-Droid reproducibility friction | S112 |
+| C120 | VCS info determinism in reproducibility doc | distribution/docs | rare | Shipped 2026-05-17 | 2/1/1 | Release builds disable `vcsInfo.include`; `docs/reproducible-build.md` documents the AGP `version-control-info.textproto` handling and external provenance path | Known F-Droid reproducibility friction | S112, S156, S268 |
 | C121 | Tink + Proto DataStore replacement of EncryptedSharedPreferences (if we ever encrypt) | security | rare | Under Consideration | 2/3/2 | Document the modern path in `docs/threat-model.md`; not adopting now | EncryptedSharedPreferences deprecated; future-proof note | S122 |
 | C122 | Roborazzi gold-image CI | testing | rare | Next | 3/3/2 | Roborazzi gives JVM screenshot testing alongside Compose Preview Screenshot Testing | Belt-and-braces snapshot coverage | S97, S125 |
 | C123 | Glance API widget rewrite | mobile | emerging | Under Consideration | 3/3/2 | Replace RemoteViews with Glance once 1.0 stable | Cleaner widget code, `@PreviewTest` support | S118 |

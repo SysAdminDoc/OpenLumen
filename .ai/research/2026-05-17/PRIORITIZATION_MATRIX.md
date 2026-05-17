@@ -179,6 +179,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C135 | Shipped 2026-05-17 | Overlay install/apply/clear view mutation serialized with internal lock. |
 | C136 | Shipped 2026-05-17 | SF/KCAL failed apply/clear writes invalidate cached driver path/code. |
 | C130 | Shipped 2026-05-17 | Driver reports include API-36 reflection-gated Advanced Protection status. |
+| C120 | Shipped 2026-05-17 | Release builds disable packaged AGP VCS-info metadata and docs explain provenance. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C35/C36/C37/C140), and
