@@ -50,11 +50,18 @@ class OpenLumenViewModel @Inject constructor(
 
     fun setEnabled(enabled: Boolean) {
         viewModelScope.launch {
+            // Order matters: write the pref first so the service's
+            // observePreferences sees `enabled=true` on its first flow
+            // emission, then start the service. If the start request is
+            // rejected (very rare; usually ForegroundService restrictions
+            // in unusual lifecycle states), roll the pref back so the
+            // toggle UI reflects reality.
             prefs.update { it.copy(enabled = enabled) }
             if (enabled) {
                 if (!startService()) {
                     prefs.update { it.copy(enabled = false) }
-                    _exportResult.value = "Could not start OpenLumen service"
+                    _exportResult.value = getApplication<Application>()
+                        .getString(com.openlumen.R.string.toast_service_start_failed)
                 }
             } else {
                 stopService()
@@ -197,6 +204,10 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun refreshProbes() = viewModelScope.launch {
+        // Invalidate the per-process su availability cache before re-probing:
+        // a user who grants Magisk root after first launch should be able to
+        // see root-only engines light up without restarting the app.
+        com.openlumen.engine.Su.resetCache()
         _probes.value = probe.probeAll(getApplication())
     }
 

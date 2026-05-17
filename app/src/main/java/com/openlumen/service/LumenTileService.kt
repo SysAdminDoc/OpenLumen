@@ -83,15 +83,22 @@ class LumenTileService : TileService() {
     private fun refreshTile() {
         scope.launch {
             val snapshot: Preferences? = try { prefs.flow.first() } catch (_: Throwable) { null }
-            qsTile?.apply {
-                val enabled = snapshot?.enabled == true
-                state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-                // Tile.subtitle landed in API 29. On older API it's silently
-                // ignored, so the version gate is for *intent*, not safety.
-                if (Build.VERSION.SDK_INT >= 29) {
-                    subtitle = subtitleFor(snapshot)
+            try {
+                qsTile?.apply {
+                    val enabled = snapshot?.enabled == true
+                    state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                    // Tile.subtitle landed in API 29. On older API it's silently
+                    // ignored, so the version gate is for *intent*, not safety.
+                    if (Build.VERSION.SDK_INT >= 29) {
+                        subtitle = subtitleFor(snapshot)
+                    }
+                    updateTile()
                 }
-                updateTile()
+            } catch (t: Throwable) {
+                // Calling updateTile() outside an active onStartListening
+                // window throws on some OEM forks; swallow rather than
+                // crashing the service process.
+                Log.w(tag, "qsTile update failed: ${t.message}")
             }
         }
     }

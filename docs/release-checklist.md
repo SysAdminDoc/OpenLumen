@@ -14,6 +14,8 @@ Tied to roadmap candidate **C45**.
       that changed user-facing behavior.
 - [ ] Dependency review: `./gradlew dependencyUpdates` or read Dependabot
       open PRs. No transitive advisories newer than 30 days uncategorized.
+- [ ] CI action review: no JavaScript action is on an obsolete major for
+      the current GitHub runner Node line. See ROADMAP C142.
 - [ ] On-device smoke run on the primary device (see `docs/device-matrix.md`
       for the per-engine checklist).
 
@@ -111,6 +113,9 @@ GitHub → Actions → Release → "Run workflow" → enter `$VERSION`.
 - [ ] Flip the GitHub release from draft to published.
 - [ ] (Optional) Push to F-Droid if metadata is ready. See
       `fastlane/metadata/android/`.
+- [ ] If distributing outside Play after September 2026 enforcement begins,
+      confirm `com.openlumen` is registered through the Android developer
+      verification path. See ROADMAP C141.
 
 ## 10. Post-release
 

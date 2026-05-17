@@ -234,3 +234,68 @@ At repository root:
 - `PROJECT_CONTEXT.md` (new, canonical project memory)
 - `ROADMAP.md` (rev 3 → rev 4 update; preserves all rev 3 content)
 - `CLAUDE.md` (single pointer added near the top; rest preserved)
+
+## Third-pass research update (rev 5)
+
+This pass resumed the same 2026-05-17 notebook after rev 4.1. I did
+not relaunch background agents; the live queries were narrow enough to
+run directly.
+
+### Queries / source classes covered
+
+- Android developer verification:
+  - `site:developer.android.com developer verification Android apps September 2026`
+  - `site:developer.android.com developer verification guides FAQ`
+- Android 17 behavior gaps:
+  - `site:developer.android.com/about/versions/17 behavior changes all apps MemoryLimiter`
+  - `site:developer.android.com/about/versions/17 resizability orientation sw600`
+- Build / dependency refresh:
+  - `site:developer.android.com Android Gradle Plugin 9.2.0 release notes`
+  - `site:gradle.org Gradle 9.4.1 release notes`
+  - `site:developer.android.com/jetpack/androidx/versions lifecycle navigation activity core May 2026`
+  - `github google dagger releases 2.59.2 hilt AGP 9`
+- CI / supply chain:
+  - `GitHub Actions Node 20 deprecation June 2 2026 official changelog`
+  - `GitHub Actions security hardening pin actions full-length commit SHA`
+  - `actions/checkout v6`, `actions/setup-java v5`, `gradle/actions setup-gradle v6`
+  - `actions/attest-build-provenance v4`, `anchore/scan-action v7`
+- Competitor saturation:
+  - `android screen dimmer open source Shizuku 2026 GitHub`
+  - `"screen dimmer" "F-Droid" Android 2026 overlay`
+  - `"OpenLumen" "F-Droid" "com.openlumen"`
+- Verification bootstrap:
+  - `Android SDK command line tools Windows latest download commandlinetools-win`
+
+### Saturation notes
+
+- **Developer verification** was the only truly new strategic source
+  class. It was absent from rev 4.1 and changes distribution planning
+  because OpenLumen is explicitly F-Droid/direct-APK oriented.
+- **Android 17 behavior** was not exhausted in rev 4.1. AAPM / FGS /
+  BAL had strong coverage, but memory-limiter and sw600dp resizability
+  checks were missing from the test plan.
+- **CI supply chain** now has a time-bound trigger: GitHub's Node 24
+  default on 2026-06-02. The repo's existing "major tag" policy is
+  documented, but GitHub's secure-use docs still prefer full SHA pinning
+  for immutable references, so this became a concrete policy decision
+  rather than a generic security admonition.
+- **Competitors** did not yield a new direct framebuffer/root Android
+  peer. DimTV's current README is fresher than rev 4.1's Android TV
+  note, but it remains overlay/system-settings oriented rather than an
+  OpenLumen-equivalent multi-engine app.
+
+### Rev 5 outcomes
+
+- Added source IDs **S230-S257** to `SOURCE_REGISTER.md`.
+- Added roadmap candidates **C141-C144**:
+  - C141 Android Developer Console package registration.
+  - C142 CI action major rotation and SHA-pinning policy.
+  - C143 Android 17 memory/resizability smoke expansion.
+  - C144 AndroidX stable baseline refresh batch.
+- Sharpened existing C95/C96/C124 dependency strategy: Hilt 2.59.2 is
+  current, but the Hilt Gradle plugin now requires AGP 9; therefore the
+  Hilt bump should travel with the AGP 9 train, not as an isolated
+  pre-AGP-9 dependency bump.
+- Installed user-local JDK/Android SDK prerequisites and completed unit
+  tests, `assembleDebug`, and `lintDebug`; exact commands and outcomes are
+  recorded in `STATE_OF_REPO.md` and `CHANGESET_SUMMARY.md`.

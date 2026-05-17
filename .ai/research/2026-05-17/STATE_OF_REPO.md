@@ -278,3 +278,72 @@ These are non-negotiables baked into the repo:
 - No telemetry, no crash reporting, no remote config, no analytics.
 - No accessibility service. No `PACKAGE_USAGE_STATS`. (Both rejected
   permanently in rev 3 after Android 17 AAPM.)
+
+## Rev 5 local-state update (third pass)
+
+Snapshot command context:
+
+- Commands had to run from `C:\Users\Xray` because launching directly in
+  the VMware/shared-folder `Z:\Downloads\MavenRepo` cwd failed with
+  Windows error 267. All repo paths still targeted `Z:\repos\OpenLumen`.
+- `git rev-parse --short HEAD`: `1238907`.
+- `git status --short --branch`: `main...origin/main [ahead 24]` with
+  dirty working-tree changes.
+
+Inventory deltas from this pass:
+
+- Tool-instruction files: `CLAUDE.md` exists; `AGENTS.md`, `.claude/**`,
+  `.claude-instructions`, `.cursor/**`, `.cursorrules`, `.windsurfrules`,
+  `GEMINI.md`, `COPILOT_INSTRUCTIONS.md`, and
+  `.github/copilot-instructions.md` are absent.
+- Production Kotlin files: 49 across `app`, `core-engine`, `core-prefs`,
+  and `core-schedule`.
+- Kotlin test files: 12.
+- `@Test` count: 90.
+- Tracked file count: 157.
+
+Dirty working tree at rev 5 start:
+
+- 15 modified Kotlin / resource files from the 2026-05-17 hardening pass:
+  `DriverReport.kt`, `LumenService.kt`, `LumenTileService.kt`,
+  `AboutScreen.kt`, `OpenLumenViewModel.kt`, `strings.xml`, `Su.kt`,
+  `KcalEngine.kt`, `OverlayEngine.kt`, `PreferencesStore.kt`,
+  `LightSensorAdapter.kt`, `Schedule.kt`, `SolarCalculator.kt`,
+  `ScheduleTest.kt`, and `SolarCalculatorTest.kt`.
+- 4 untracked release/distribution docs/files: `SECURITY.md`,
+  `docs/fdroid-recipe-draft.md`, `docs/v0.5.0-release-readiness.md`,
+  and `fastlane/metadata/android/en-US/changelogs/5.txt`.
+
+Interpretation: the dirty Kotlin state appears to be the hardening work
+already described in `CHANGELOG.md` and rev 4.1, not a rev 5 research
+edit. Rev 5 documentation treats it as existing local state and does not
+revert it.
+
+## Rev 5 verification update
+
+Initial verification blockers:
+
+- `gradlew.bat` could not run because `JAVA_HOME` was unset and `java` was
+  not on PATH.
+- After adding a local Java 17 runtime, Gradle configured far enough to
+  report that no Android SDK was configured.
+
+Resolution:
+
+- Installed a user-local Temurin JDK 17.0.19 at
+  `C:\Users\Xray\.codex\jdks\temurin-17`.
+- Installed a user-local Android command-line SDK at
+  `C:\Users\Xray\.codex\android-sdk` with Android 35 platform/build tools.
+- Did not alter system PATH or repo-local `local.properties`; `JAVA_HOME`,
+  `ANDROID_HOME`, and `ANDROID_SDK_ROOT` were set only for verification
+  commands.
+
+Passing checks:
+
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --stacktrace`
+  passed (`BUILD SUCCESSFUL`, 133 actionable tasks).
+- `:app:assembleDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 98
+  actionable tasks).
+- `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142 actionable
+  tasks). The serial rerun is the authoritative lint result; the earlier
+  parallel attempt timed out while another Gradle build was running.

@@ -178,3 +178,47 @@ pointers to `PROJECT_CONTEXT.md`. Specifically:
   the file, just below the "Local-only file" admonition.
 
 `AGENTS.md` was not present, so no pointer was added there.
+
+## Rev 5 reconciliation update
+
+The third pass rechecked the requested tool-memory file set:
+
+| File / pattern | Status |
+|---|---|
+| `AGENTS.md` | absent |
+| `CLAUDE.md` | present; preserved as the local Claude scratchpad / instructions file |
+| `.claude/**` | absent |
+| `.claude-instructions` | absent |
+| `.cursor/**`, `.cursorrules` | absent |
+| `.windsurfrules` | absent |
+| `GEMINI.md` | absent |
+| `COPILOT_INSTRUCTIONS.md` | absent |
+| `.github/copilot-instructions.md` | absent |
+
+New durable facts promoted or cross-linked in rev 5:
+
+- Android developer verification is a distribution concern for OpenLumen,
+  not a Play-only concern, because the project is F-Droid/direct-APK
+  oriented and Android's 2026 enforcement applies to certified devices
+  in initial regions regardless of app source. Promoted to C141 and
+  summarized in `PROJECT_CONTEXT.md`.
+- CI action major versions and Node 24 readiness are now time-bound by
+  GitHub's 2026-06-02 runner change. Promoted to C142.
+- The existing Android 17 readiness memory was incomplete: it covered
+  AAPM / FGS / BAL but not the Beta 4 memory limiter or sw600dp
+  resizability behavior. Promoted to C143.
+
+Open conflicts after rev 5:
+
+1. **Release-readiness doc vs. dirty working tree**:
+   `docs/v0.5.0-release-readiness.md` says the 15-file hardening pass is
+   present but not yet committed. That was still true at the start of
+   rev 5. Some dirty Kotlin changes overlap rev 4.1's C132/C133/C135
+   concerns, but C134 is not visibly implemented in the sampled diff.
+   Treat these as working-tree implementation state until tests and a
+   commit confirm them.
+2. **Major-tag action policy vs. GitHub SHA-pinning guidance**:
+   `ci.yml` documents a major-version tag policy for Dependabot
+   ergonomics. GitHub's secure-use reference says full SHA pinning is the
+   only immutable action reference. Rev 5 does not silently change the
+   policy; C142 requires an explicit maintainer decision.

@@ -55,6 +55,17 @@ object Su {
             Log.d(TAG, "runShell: su not on PATH (${e.message})")
             return@withContext 127
         }
+        // Drain stdout in parallel with the stdin write so a verbose
+        // script can't deadlock the subshell waiting for us to read its
+        // pipe before it can accept more input. We spawn the drain on a
+        // daemon thread because Dispatchers.IO + a child coroutine would
+        // tie shutdown ordering to the parent scope, which is harder to
+        // reason about than a self-contained drainer.
+        val drainer = Thread({
+            try {
+                proc.inputStream.bufferedReader().use { it.readText() }
+            } catch (_: IOException) { /* process already gone */ }
+        }, "OpenLumen-su-drain").apply { isDaemon = true; start() }
         val exit = withTimeoutOrNull(CMD_TIMEOUT_MS) {
             // Write the script, then close stdin so the subshell sees EOF and exits.
             try {
@@ -66,16 +77,15 @@ object Su {
             } catch (e: IOException) {
                 Log.d(TAG, "runShell: stdin write failed (${e.message})")
             }
-            // Drain stdout so a verbose script doesn't deadlock on a full pipe buffer.
-            try {
-                proc.inputStream.bufferedReader().use { reader -> reader.readText() }
-            } catch (_: IOException) { /* process already gone */ }
             proc.waitFor()
         } ?: run {
             Log.w(TAG, "runShell timed out after ${CMD_TIMEOUT_MS}ms; destroying process")
             proc.destroyForcibly()
             -1
         }
+        // Best-effort wait for the drainer so the process's file
+        // descriptors are released promptly.
+        try { drainer.join(500) } catch (_: InterruptedException) { /* ignore */ }
         exit
     }
 

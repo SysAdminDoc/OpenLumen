@@ -57,16 +57,20 @@ object DriverReport {
         val full = DiagnosticsLog.read(context)
         if (full.isBlank()) {
             appendLine("(no events recorded)")
+        } else if (full.length <= DIAG_TAIL_BYTES) {
+            appendLine(full.trimEnd())
         } else {
-            val tail = if (full.length > 3000) full.substring(full.length - 3000) else full
-            // Drop any partial first line after the cut so the report stays
-            // parseable.
-            val cleanTail = if (tail.startsWith(full)) tail
-                            else tail.substringAfter('\n', tail)
-            appendLine(cleanTail.trimEnd())
+            // Take the tail and drop the (almost certainly) partial first
+            // line so each printed line is complete and grep-friendly.
+            // substringAfter('\n', defaultValue=tail) returns the whole
+            // tail if the cut happened to land on a line boundary.
+            val tail = full.substring(full.length - DIAG_TAIL_BYTES)
+            appendLine(tail.substringAfter('\n', tail).trimEnd())
         }
         appendLine()
     }
+
+    private const val DIAG_TAIL_BYTES = 3000
 
     private fun StringBuilder.appendHeader() {
         appendLine("OpenLumen driver report v$REPORT_VERSION")

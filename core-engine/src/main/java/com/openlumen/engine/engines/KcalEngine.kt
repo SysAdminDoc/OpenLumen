@@ -39,14 +39,20 @@ class KcalEngine : ColorEngine {
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         if (!Su.isAvailable()) return@withContext false
         for (base in CANDIDATE_BASES) {
-            val paths = Paths(base)
+            val rgbPath = "$base/kcal"
+            val enablePath = "$base/kcal_enable"
+            val minPath = "$base/kcal_min"
             // Both the RGB node and the enable node must exist. `kcal_min` is optional
-            // (some forks skip it); we'll handle that at apply() time.
+            // (some forks skip it); we probe it separately so apply() can avoid
+            // writing to a non-existent path entirely.
             val test = Su.runCommand(
-                "test -e '${paths.rgb}' && test -e '${paths.enable}' && echo ok"
+                "test -e '$rgbPath' && test -e '$enablePath' && echo ok"
             )
             if (test.exitCode == 0 && test.stdout.contains("ok")) {
-                Log.d(TAG, "probe: KCAL at $base (rgb=${paths.rgb}, enable=${paths.enable})")
+                val hasMin = Su.runCommand("test -e '$minPath' && echo ok")
+                val resolvedMin = if (hasMin.exitCode == 0 && hasMin.stdout.contains("ok")) minPath else null
+                val paths = Paths(base = base, rgb = rgbPath, enable = enablePath, min = resolvedMin)
+                Log.d(TAG, "probe: KCAL at $base (rgb=${paths.rgb}, enable=${paths.enable}, min=${paths.min ?: "absent"})")
                 resolvedPaths = paths
                 return@withContext true
             }
@@ -86,11 +92,13 @@ class KcalEngine : ColorEngine {
         Unit
     }
 
-    private data class Paths(val base: String) {
-        val rgb: String = "$base/kcal"
-        val min: String? = "$base/kcal_min"
-        val enable: String = "$base/kcal_enable"
-    }
+    private data class Paths(
+        val base: String,
+        val rgb: String,
+        val enable: String,
+        /** Some kernel forks omit kcal_min; null when not present. */
+        val min: String?
+    )
 
     private companion object {
         const val TAG = "OpenLumen/KCAL"

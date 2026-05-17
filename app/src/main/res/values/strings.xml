@@ -73,6 +73,11 @@
     <string name="diff_intensity">Intensity</string>
     <string name="diff_dim">Dim</string>
     <string name="diff_light_sensor">Light sensor</string>
+    <string name="diff_light_sensor_threshold">Light sensor threshold (lux)</string>
+    <string name="diff_contrast">Contrast</string>
+    <string name="diff_amoled_clamp">AMOLED true-black</string>
+    <string name="diff_sunset_offset">Sunset offset (m)</string>
+    <string name="diff_sunrise_offset">Sunrise offset (m)</string>
     <string name="diff_favorites">Favorites</string>
     <string name="diff_transition">Transition</string>
     <string name="value_unset">unset</string>
@@ -123,6 +128,7 @@
     <string name="driver_report_subject">OpenLumen driver report</string>
     <string name="command_copied">Command copied</string>
     <string name="report_copied">Report copied</string>
+    <string name="toast_service_start_failed">Could not start OpenLumen service. Check that overlay permission is granted, or pick a different driver in Settings.</string>
     <string name="clipboard_adb_grant">OpenLumen adb grant</string>
     <string name="clipboard_driver_report">OpenLumen driver report</string>
     <string name="clipboard_emergency_off">OpenLumen emergency off</string>

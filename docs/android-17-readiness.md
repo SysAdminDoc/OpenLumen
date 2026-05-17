@@ -37,7 +37,8 @@ S127 (release notes), S128 (behavior changes for apps targeting 17),
 S129 (features and APIs), S130 (FGS changes), S131 (FGS background-start
 restrictions), S132 (FGS service types), S133 (background audio),
 S134 (`AdvancedProtectionManager`), S135 (AAPM landing page),
-S137 (BAL restrictions), S138 (AOSP Night Light).
+S137 (BAL restrictions), S138 (AOSP Night Light), S235 (all-app
+behavior changes), S236 (large-screen resizability / orientation).
 
 | Behavior | OpenLumen exposure | Mitigation we'd ship | Source |
 |---|---|---|---|
@@ -46,6 +47,8 @@ S137 (BAL restrictions), S138 (AOSP Night Light).
 | **`MODE_BACKGROUND_ACTIVITY_START_ALLOWED` deprecated for IntentSender (use `_ALLOW_IF_VISIBLE`)** | Medium — PendingIntent / notification-tap / tile long-press paths | C111: audit IntentSender callers; switch to `_ALLOW_IF_VISIBLE` where appropriate | S84, S128, S137 |
 | **Advanced Protection Mode auto-revokes accessibility API for non-`isAccessibilityTool` apps** | Closes C79 / C80 permanently | C104 / C130: document in `docs/threat-model.md` and `docs/overlay-and-per-app-design.md`; surface AAPM state in driver report | S88, S89, S90, S121, S134, S135, S136 |
 | **MessageQueue rewrite (apps targeting 17)** | Low — we don't post Messages between threads at scale | None required; sanity-check via Compose screenshot tests once they're CI-wired | S128 |
+| **App memory limits / `MemoryLimiter` exit descriptions** | Low-to-medium — OpenLumen is small, but persistent service + overlay leaks would be user-visible | C143: add `ApplicationExitInfo` review to the Android 17 smoke flow; inspect crashes/ANRs for `MemoryLimiter:AnonSwap` after long-running service and overlay tests | S234, S235 |
+| **Orientation/resizability/aspect-ratio restrictions ignored on sw600dp+** | Medium — no explicit orientation lock today, but Compose state and bottom-nav layout need tablet/foldable/windowing verification | C143: add tablet/foldable/desktop-windowing rows to `docs/device-matrix.md`; pair with screenshot tests after C101 | S236 |
 | **Background audio hardening** | None — OpenLumen doesn't touch audio | N/A | S133 |
 | **Certificate Transparency by default + ECH** | None — we have no INTERNET permission | N/A | S128, S129 |
 | **`ACCESS_LOCAL_NETWORK` runtime permission** | None — we don't open local network sockets | N/A | S128 |
@@ -82,6 +85,11 @@ When the first stable Android 17 image lands (June 2026):
 9. Compare driver-report fingerprint against the most recent stored
    sample. The fingerprint captures the build identifier so version
    comparisons are straightforward.
+10. After a long-running overlay + smooth-transition smoke, inspect
+    recent `ApplicationExitInfo` entries for `MemoryLimiter:AnonSwap`.
+11. Run the app on a sw600dp emulator/tablet/foldable or desktop-windowing
+    mode; rotate/resize while each tab is open and confirm state is
+    retained and controls remain reachable.
 
 ## Migration path
 
@@ -116,6 +124,7 @@ We will:
   `_ALLOW_IF_VISIBLE`).
 - **C130** — AAPM driver-report surface (rev 4 new).
 - **C131** — Eye Dropper integration on Android 17+ (rev 4 new).
+- **C143** — Android 17 memory/resizability smoke expansion (rev 5 new).
 
 ## Sources
 
@@ -128,6 +137,8 @@ We will:
 - `AdvancedProtectionManager` reference — https://developer.android.com/reference/android/security/advancedprotection/AdvancedProtectionManager (S134)
 - Advanced Protection Mode landing page — https://developer.android.com/privacy-and-security/advanced-protection-mode (S135)
 - Android 17 Eye Dropper API — https://proandroiddev.com/exploring-the-eyedropper-api-android-17-9d7be86aaa16 (S139)
+- Android 17 behavior changes for all apps — https://developer.android.com/about/versions/17/behavior-changes-all (S235)
+- Android 17 orientation/resizability restrictions ignored — https://developer.android.com/about/versions/17/changes/ff-restrictions-ignored (S236)
 - AGP 9.x release notes — https://developer.android.com/build/releases/agp-9-0-0-release-notes (S140)
 - AGP roadmap (AGP 10 timeline) — https://developer.android.com/build/releases/gradle-plugin-roadmap (S143)
 - AndroidX Hilt releases — https://developer.android.com/jetpack/androidx/releases/hilt (S144)

@@ -102,7 +102,15 @@ class LumenService : LifecycleService() {
 
     private val latestPrefs = AtomicReference<Preferences?>(null)
     private val latestLux = AtomicReference(-1f)
+    /**
+     * The matrix the active engine actually received on its last successful
+     * [ColorEngine.apply]. Distinct from [lastTarget] so a mid-ramp
+     * interrupt can compute its new ramp from the displayed value rather
+     * than from a target the screen never finished converging on.
+     */
     @Volatile private var lastApplied: LumenMatrix? = null
+    /** Most recent matrix requested by [applyIfShouldBeActive]. */
+    @Volatile private var lastTarget: LumenMatrix? = null
     @Volatile private var lastShouldBeActive: Boolean = false
 
     override fun onCreate() {
@@ -171,9 +179,18 @@ class LumenService : LifecycleService() {
                 prefs.update { current -> com.openlumen.prefs.PresetCycle.next(current) }
             }
             ACTION_SET_PRESET -> lifecycleScope.launch {
-                val key = intent.getStringExtra(EXTRA_PRESET_KEY)?.takeIf { it.isNotBlank() }
-                if (key != null) {
-                    prefs.update { com.openlumen.prefs.PresetCycle.setActiveKey(it, key) }
+                val key = intent.getStringExtra(EXTRA_PRESET_KEY)
+                    ?.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
+                // Reject keys that don't resolve to a known preset; a
+                // Tasker/ADB caller passing "wrong" silently swapping
+                // active preset to garbage is worse than a no-op. "custom"
+                // is allowed because the in-app picker uses it as the
+                // sentinel for a user-tuned RGB matrix.
+                val accepted = key?.takeIf { it == "custom" || com.openlumen.engine.Presets.byKey(it) != null }
+                if (accepted != null) {
+                    prefs.update { com.openlumen.prefs.PresetCycle.setActiveKey(it, accepted) }
+                } else if (key != null) {
+                    Log.w(tag, "ACTION_SET_PRESET rejected unknown key: $key")
                 }
             }
             ACTION_RESTORE_PREVIOUS -> lifecycleScope.launch {
@@ -247,25 +264,49 @@ class LumenService : LifecycleService() {
      * Single long-lived collector on the prefs flow. `.conflate()` drops intermediate
      * emissions while the current apply is in flight, so slider drags can't queue up
      * dozens of su calls.
+     *
+     * Resilience: each emission is wrapped in a runCatching so a single
+     * failure (engine apply throwing, widget broadcast hitting a
+     * RemoteException, etc.) doesn't cancel the collector and silently
+     * leave the service deaf to future prefs changes.
      */
     private fun observePreferences() {
         lifecycleScope.launch {
             prefs.flow.conflate().collect { p ->
-                latestPrefs.set(p)
-                updateLightSensorSubscription(p.enabled && p.lightSensorEnabled)
-                // Nudge any installed widget instances so their visible state
-                // stays in sync with the in-app toggle. Cheap when no widgets
-                // are installed (the receivers no-op on empty getAppWidgetIds).
-                ToggleWidget.broadcastRefresh(this@LumenService)
-                PresetWidget.broadcastRefresh(this@LumenService)
-                if (!p.enabled) {
-                    clearAndStop()
-                    return@collect
+                try {
+                    handlePreferenceEmission(p)
+                } catch (cancel: kotlinx.coroutines.CancellationException) {
+                    // Don't swallow cancellation — let the lifecycleScope tear down cleanly.
+                    throw cancel
+                } catch (t: Throwable) {
+                    Log.e(tag, "prefs emission handler crashed: ${t.message}", t)
+                    DiagnosticsLog.log(
+                        this@LumenService,
+                        DiagnosticsLog.Level.ERROR,
+                        DiagnosticsLog.Category.SERVICE,
+                        "prefs handler crash: ${t.javaClass.simpleName}"
+                    )
                 }
-                ensureEngine(p)
-                applyIfShouldBeActive(p)
             }
         }
+    }
+
+    private suspend fun handlePreferenceEmission(p: Preferences) {
+        latestPrefs.set(p)
+        updateLightSensorSubscription(p.enabled && p.lightSensorEnabled)
+        // Nudge any installed widget instances so their visible state
+        // stays in sync with the in-app toggle. Cheap when no widgets
+        // are installed (the receivers no-op on empty getAppWidgetIds).
+        runCatching { ToggleWidget.broadcastRefresh(this@LumenService) }
+            .onFailure { Log.w(tag, "ToggleWidget broadcast failed: ${it.message}") }
+        runCatching { PresetWidget.broadcastRefresh(this@LumenService) }
+            .onFailure { Log.w(tag, "PresetWidget broadcast failed: ${it.message}") }
+        if (!p.enabled) {
+            clearAndStop()
+            return
+        }
+        ensureEngine(p)
+        applyIfShouldBeActive(p)
     }
 
     private suspend fun clearAndStop() {
@@ -286,8 +327,19 @@ class LumenService : LifecycleService() {
         }
         val current = engine
         if (current?.kind == want) return
+        // Cancel any in-flight ramp BEFORE acquiring applyMutex so the
+        // ramp's pending applyOnce can finish under the mutex and exit
+        // cleanly. Without this we'd race the ramp's mutex acquisition
+        // against ours and the new engine could receive a stale lerp
+        // step from the old engine's last target.
+        transitionJob?.let { prior ->
+            prior.cancel()
+            try { prior.join() } catch (_: Throwable) { /* expected */ }
+        }
+        transitionJob = null
         applyMutex.withLock {
             runCatching { current?.clear(this@LumenService) }
+                .onFailure { Log.w(tag, "engine.clear() during switch failed: ${it.message}") }
             val next = probe.engineOf(want)
             if (next == null) {
                 Log.e(tag, "DriverProbe returned null for $want — staying on previous engine")
@@ -298,7 +350,12 @@ class LumenService : LifecycleService() {
             engine = next
             // Reset cached state so the new engine receives a fresh apply on the next call.
             lastApplied = null
+            lastTarget = null
             lastShouldBeActive = false
+            DiagnosticsLog.log(
+                this@LumenService, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.ENGINE,
+                "switched to engine ${next.kind.name}"
+            )
         }
     }
 
@@ -319,16 +376,19 @@ class LumenService : LifecycleService() {
         val shouldBeActive = scheduleActive || lightActive
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
-        if (shouldBeActive != lastShouldBeActive || matrix != lastApplied) {
+        if (shouldBeActive != lastShouldBeActive || matrix != lastTarget) {
             // Ramp only the state-flip transitions (active <-> inactive). User-
             // driven slider drags shouldn't lerp — they should feel direct.
             // Approximation: when only the matrix changed (not the active
             // flag), apply instantly even if a transition duration is set.
             val isFlip = shouldBeActive != lastShouldBeActive
             val rampMs = if (isFlip) p.transitionDurationMs.coerceAtLeast(0L) else 0L
-            applyMatrix(matrix, rampMs)
+            // Record the new target *before* dispatching the ramp so a
+            // re-emission while we're awaiting the launch doesn't see
+            // stale `lastTarget` and double-schedule.
+            lastTarget = matrix
             lastShouldBeActive = shouldBeActive
-            lastApplied = matrix
+            applyMatrix(matrix, rampMs)
         }
         // Always reschedule — the next transition time depends on the current mode and clock.
         rescheduleNextTransition(mode)
@@ -344,10 +404,20 @@ class LumenService : LifecycleService() {
      * Tied to roadmap candidates C23 (fixed-time ramps) and C24 (solar ramps).
      */
     private suspend fun applyMatrix(target: LumenMatrix, durationMs: Long) {
-        val previous = lastApplied
-        transitionJob?.cancel()
+        // Cancel the previous ramp *and join it* so its in-flight applyOnce
+        // (under applyMutex) finishes before we read `lastApplied`. Without
+        // the join, the displayed-vs-recorded state can lag by one step and
+        // produce a one-frame backwards jump when the new ramp launches.
+        transitionJob?.let { prior ->
+            prior.cancel()
+            try { prior.join() } catch (_: Throwable) { /* CancellationException expected */ }
+        }
         transitionJob = null
 
+        // `previous` is the actually-displayed matrix from the last
+        // successful engine apply — distinct from `lastTarget` so a
+        // mid-ramp interrupt smoothly continues from the displayed value.
+        val previous = lastApplied
         if (durationMs <= 0 || previous == null || previous == target) {
             applyOnce(target)
             return
@@ -376,6 +446,13 @@ class LumenService : LifecycleService() {
         }
     }
 
+    /**
+     * Apply [matrix] under [applyMutex] and, on success, record it as
+     * [lastApplied]. The `lastApplied` write reflects the matrix the
+     * engine *actually* received — important so a mid-ramp interrupt can
+     * compute its lerp from the displayed value, not from a target the
+     * screen never finished converging on.
+     */
     private suspend fun applyOnce(matrix: LumenMatrix) {
         applyMutex.withLock {
             val e = engine
@@ -383,6 +460,7 @@ class LumenService : LifecycleService() {
                 Log.w(tag, "applyOnce: no engine yet, skipping")
             } else {
                 runCatching { e.apply(this@LumenService, matrix) }
+                    .onSuccess { lastApplied = matrix }
                     .onFailure { Log.w(tag, "engine.apply() failed: ${it.message}") }
             }
         }

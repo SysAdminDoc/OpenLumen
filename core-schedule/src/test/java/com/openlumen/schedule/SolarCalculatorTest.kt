@@ -48,6 +48,39 @@ class SolarCalculatorTest {
         val times = SolarCalculator.computeTimes(LocalDate.of(2026, 6, 15), TROMSO_LAT, TROMSO_LNG, zone)
         assertThat(times.sunrise.hour).isAtLeast(0)
         assertThat(times.sunset.hour).isAtMost(23)
+        // Polar enum signals the always-day state so callers can
+        // short-circuit instead of comparing against the noon placeholder.
+        assertThat(times.polar).isEqualTo(SolarCalculator.Polar.DAY)
+    }
+
+    @Test fun `polar latitude during polar night reports NIGHT`() {
+        val zone = ZoneId.of("Europe/Oslo")
+        val times = SolarCalculator.computeTimes(LocalDate.of(2026, 12, 21), TROMSO_LAT, TROMSO_LNG, zone)
+        assertThat(times.polar).isEqualTo(SolarCalculator.Polar.NIGHT)
+    }
+
+    @Test fun `returned sunrise and sunset land on the requested local date`() {
+        // Regression: pre-fix the western-hemisphere sunset stamped on the
+        // input UTC date converted to the previous local-zone date,
+        // meaning Schedule.isActive saw stale boundaries and the filter
+        // engaged 24h late. Snap-to-local-date guarantees the returned
+        // ZonedDateTime's local date matches the request.
+        val zone = ZoneId.of("America/New_York")
+        val date = LocalDate.of(2026, 6, 21)
+        val t = SolarCalculator.computeTimes(date, NY_LAT, NY_LNG, zone)
+        assertThat(t.sunrise.toLocalDate()).isEqualTo(date)
+        assertThat(t.sunset.toLocalDate()).isEqualTo(date)
+    }
+
+    @Test fun `eastern-hemisphere sunrise lands on the requested local date`() {
+        // Tokyo sunrise local-morning corresponds to the previous-day UTC
+        // evening at the algorithm's UT level. Snap-to-local-date catches
+        // this too.
+        val zone = ZoneId.of("Asia/Tokyo")
+        val date = LocalDate.of(2026, 5, 16)
+        val t = SolarCalculator.computeTimes(date, TOKYO_LAT, TOKYO_LNG, zone)
+        assertThat(t.sunrise.toLocalDate()).isEqualTo(date)
+        assertThat(t.sunset.toLocalDate()).isEqualTo(date)
     }
 
     private companion object {
@@ -63,5 +96,8 @@ class SolarCalculatorTest {
         // Tromsø, Norway — well above the Arctic Circle.
         const val TROMSO_LAT = 69.6492
         const val TROMSO_LNG = 18.9553
+        // Tokyo Imperial Palace (Eastern-hemisphere date-snap regression).
+        const val TOKYO_LAT = 35.6762
+        const val TOKYO_LNG = 139.6503
     }
 }

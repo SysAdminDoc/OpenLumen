@@ -173,3 +173,32 @@ collapses this category.
 The most useful artefact this category produces is the **reading list**
 in `docs/health-evidence.md` and the **competitor-borrowable patterns**
 captured in [COMPETITOR_MATRIX.md](COMPETITOR_MATRIX.md).
+
+## Rev 5 integration update
+
+Two integration-adjacent findings were added in the third pass:
+
+### Android developer verification
+
+**Evidence**: S230-S232.
+
+This is not an app runtime integration, but it is a platform-distribution
+registration workflow. OpenLumen's package name and signing certificate
+need to be registered through the Android developer verification path if
+the maintainer wants F-Droid/direct-APK users on certified devices in
+the first enforcement regions to avoid install blocks. Tracked as
+**C141**.
+
+### GitHub Actions supply-chain integration
+
+**Evidence**: S242-S251.
+
+OpenLumen's release process already depends on GitHub Actions for
+debug/release builds, permission audits, SBOM generation, advisory scans,
+hashing, and attestations. The Node 24 migration and current action
+majors make this a live integration-maintenance item, not just a generic
+dependency bump. Tracked as **C142**.
+
+No new ML/data/model workstream was found. The rev 5 additions reinforce
+the conclusion that OpenLumen's "integration" surface is mostly platform
+and distribution infrastructure, not web APIs or external datasets.

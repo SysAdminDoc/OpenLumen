@@ -144,30 +144,11 @@ class PreferencesStore(private val context: Context) {
         enabled = enabled,
         schemaVersion = if (p.schemaVersion <= 0) Preferences.CURRENT_SCHEMA_VERSION else p.schemaVersion,
         activePresetKey = sanitizePresetKey(p.activePresetKey),
+        previousPresetKey = p.previousPresetKey?.let { sanitizePresetKeyOrNull(it) },
         presetIntensity = p.presetIntensity.finiteIn(0f, 1f, default = 1f),
         dim = p.dim.finiteIn(0f, 0.95f, default = 0f),
-        customMatrix = p.customMatrix.copy(
-            r = p.customMatrix.r.finiteIn(0f, 1f, default = 1f),
-            g = p.customMatrix.g.finiteIn(0f, 1f, default = 0.78f),
-            b = p.customMatrix.b.finiteIn(0f, 1f, default = 0.55f),
-            biasR = p.customMatrix.biasR.finiteIn(-1f, 1f, default = 0f),
-            biasG = p.customMatrix.biasG.finiteIn(-1f, 1f, default = 0f),
-            biasB = p.customMatrix.biasB.finiteIn(-1f, 1f, default = 0f),
-            dim = p.customMatrix.dim.finiteIn(0f, 0.95f, default = 0f),
-            gammaR = p.customMatrix.gammaR.finiteIn(0.1f, 5f, default = 1f),
-            gammaG = p.customMatrix.gammaG.finiteIn(0.1f, 5f, default = 1f),
-            gammaB = p.customMatrix.gammaB.finiteIn(0.1f, 5f, default = 1f)
-        ),
-        schedule = p.schedule.copy(
-            startHour = p.schedule.startHour.coerceIn(0, 23),
-            startMinute = p.schedule.startMinute.coerceIn(0, 59),
-            endHour = p.schedule.endHour.coerceIn(0, 23),
-            endMinute = p.schedule.endMinute.coerceIn(0, 59),
-            latitude = p.schedule.latitude.finiteInOrNull(-90.0, 90.0),
-            longitude = p.schedule.longitude.finiteInOrNull(-180.0, 180.0),
-            sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
-            sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
-        ),
+        customMatrix = sanitizeMatrix(p.customMatrix),
+        schedule = sanitizeSchedule(p.schedule),
         lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
         favoritePresetKeys = sanitizeFavorites(p.favoritePresetKeys),
         transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
@@ -175,9 +156,43 @@ class PreferencesStore(private val context: Context) {
         savedProfiles = sanitizeProfiles(p.savedProfiles)
     )
 
+    /**
+     * Clamp every field of [m] into its valid range, replacing
+     * NaN/Infinity with the channel default. Used both for the top-level
+     * [Preferences.customMatrix] and for every snapshot inside
+     * [Preferences.savedProfiles] — defense-in-depth so an imported
+     * profile can't carry NaN values that only surface when the user
+     * later loads it.
+     */
+    private fun sanitizeMatrix(m: MatrixDto): MatrixDto = m.copy(
+        r = m.r.finiteIn(0f, 1f, default = 1f),
+        g = m.g.finiteIn(0f, 1f, default = 0.78f),
+        b = m.b.finiteIn(0f, 1f, default = 0.55f),
+        biasR = m.biasR.finiteIn(-1f, 1f, default = 0f),
+        biasG = m.biasG.finiteIn(-1f, 1f, default = 0f),
+        biasB = m.biasB.finiteIn(-1f, 1f, default = 0f),
+        dim = m.dim.finiteIn(0f, 0.95f, default = 0f),
+        gammaR = m.gammaR.finiteIn(0.1f, 5f, default = 1f),
+        gammaG = m.gammaG.finiteIn(0.1f, 5f, default = 1f),
+        gammaB = m.gammaB.finiteIn(0.1f, 5f, default = 1f)
+    )
+
+    private fun sanitizeSchedule(s: ScheduleDto): ScheduleDto = s.copy(
+        startHour = s.startHour.coerceIn(0, 23),
+        startMinute = s.startMinute.coerceIn(0, 59),
+        endHour = s.endHour.coerceIn(0, 23),
+        endMinute = s.endMinute.coerceIn(0, 59),
+        latitude = s.latitude.finiteInOrNull(-90.0, 90.0),
+        longitude = s.longitude.finiteInOrNull(-180.0, 180.0),
+        sunsetOffsetMin = s.sunsetOffsetMin.coerceIn(-180, 180),
+        sunriseOffsetMin = s.sunriseOffsetMin.coerceIn(-180, 180)
+    )
+
     private fun sanitizePresetKey(key: String): String =
+        sanitizePresetKeyOrNull(key) ?: "custom"
+
+    private fun sanitizePresetKeyOrNull(key: String): String? =
         key.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
-            ?: "custom"
 
     /**
      * Favorites list is bounded and de-duplicated. We don't cross-check against
@@ -195,10 +210,13 @@ class PreferencesStore(private val context: Context) {
     /**
      * Bounds: name non-blank + ≤ 48 chars; library size capped at 32
      * entries; duplicate names drop earlier occurrences (last-write-wins,
-     * matching `Profiles.saveCurrentAs` semantics). We don't re-validate
-     * each snapshot field — those are clamped at sanitize-time via the
-     * top-level copy() chain because a snapshot's fields are the same
-     * types we already clamp.
+     * matching `Profiles.saveCurrentAs` semantics).
+     *
+     * Defense-in-depth: each snapshot's matrix, schedule, intensity, dim,
+     * contrast, transition, lux threshold, and preset keys are clamped
+     * here so a maliciously crafted imported profile blob can't carry
+     * NaN/out-of-range values that only blow up when the user later
+     * loads the profile.
      */
     private fun sanitizeProfiles(list: List<NamedProfile>): List<NamedProfile> {
         if (list.isEmpty()) return list
@@ -208,12 +226,24 @@ class PreferencesStore(private val context: Context) {
             .mapNotNull { p ->
                 val name = p.name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
                 if (name.isBlank() || !seen.add(name)) null
-                else p.copy(name = name)
+                else p.copy(name = name, snapshot = sanitizeSnapshot(p.snapshot))
             }
             .take(Preferences.MAX_PROFILES)
             .toList()
             .asReversed()
     }
+
+    private fun sanitizeSnapshot(s: ProfileSnapshot): ProfileSnapshot = s.copy(
+        activePresetKey = sanitizePresetKey(s.activePresetKey),
+        customMatrix = sanitizeMatrix(s.customMatrix),
+        presetIntensity = s.presetIntensity.finiteIn(0f, 1f, default = 1f),
+        dim = s.dim.finiteIn(0f, 0.95f, default = 0f),
+        schedule = sanitizeSchedule(s.schedule),
+        lightSensorLuxThreshold = s.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
+        favoritePresetKeys = sanitizeFavorites(s.favoritePresetKeys),
+        transitionDurationMs = s.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
+        contrast = s.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f)
+    )
 
     private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
         if (isFinite()) coerceIn(min, max) else default

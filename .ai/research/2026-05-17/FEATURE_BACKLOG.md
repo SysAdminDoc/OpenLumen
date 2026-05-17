@@ -220,3 +220,107 @@ These came up in the research and were considered, then declined.
   expanded scope ("API 36" → "Android 17") without renumbering. Future
   passes should keep doing this so commit-message traceability stays
   intact.
+
+## Third-pass harvested candidates (rev 5)
+
+### C141 — Android Developer Console package registration
+
+**Tier**: Now
+**Category**: distribution / trust
+**Sources**: S230, S231, S232
+
+**Idea**: Register `com.openlumen` and the release signing certificate
+through the correct Android developer verification path (Play Console if
+the maintainer chooses Play, Android Developer Console if OpenLumen stays
+outside Play).
+
+**Why it fits**: OpenLumen is explicitly F-Droid-first and direct-APK
+friendly. Android's 2026 verification program applies to certified
+Android devices regardless of app source in initial enforcement regions,
+so this is not a Play-only concern.
+
+**Implementation sketch**:
+
+1. Decide account ownership (individual vs organization) and record the
+   durable owner in maintainer-only release notes, not in Git.
+2. Verify identity in Play Console or Android Developer Console.
+3. Register `com.openlumen` and prove signing-key ownership with the
+   release APK certificate.
+4. Add a release-checklist reminder to verify package registration
+   before September 2026 regional enforcement.
+
+### C142 — CI action major rotation and SHA-pinning policy
+
+**Tier**: Now
+**Category**: supply chain / CI
+**Sources**: S242-S251
+
+**Idea**: Rotate GitHub Actions to Node-24-capable current majors and
+make an explicit policy decision on major tags vs full SHA pinning with
+version comments.
+
+**Why it fits**: OpenLumen's release story depends on CI attestations,
+SBOM generation, and permissions audits. GitHub's Node 24 default starts
+2026-06-02, and the repo currently runs older majors across CI, release,
+and SBOM workflows.
+
+**Implementation sketch**:
+
+1. Update `checkout@v4 -> v6`, `setup-java@v4 -> v5`,
+   `setup-gradle@v4 -> v6`, `attest-build-provenance@v2 -> actions/attest@v4`
+   or `attest-build-provenance@v4`, `scan-action@v6 -> v7`.
+2. Evaluate `upload-artifact@v7` only if non-zipped SBOM artifacts are
+   desired; otherwise keep standard zipped behavior.
+3. Add a short policy note to `docs/sbom-and-advisories.md`: either
+   continue major tags for Dependabot ergonomics or adopt full SHA pins
+   with version comments and a rotation checklist.
+4. Run `ci.yml`, `release.yml`, and `sbom.yml` once on a branch before
+   cutting v0.5.0/v0.6.0.
+
+### C143 — Android 17 memory/resizability smoke expansion
+
+**Tier**: Now
+**Category**: mobile / compatibility
+**Sources**: S233-S236
+
+**Idea**: Extend C103's Android 17 readiness work to cover the Beta 4
+all-app memory limiter and target-37 large-screen resizability behavior.
+
+**Why it fits**: The app is small, but OpenLumen runs a persistent
+foreground service and overlay; memory leaks or large-screen Compose
+state loss would be release-quality issues. The sw600dp behavior matters
+for tablets, foldables, desktop windowing, and Android TV exploration.
+
+**Implementation sketch**:
+
+1. Add `ApplicationExitInfo` / `MemoryLimiter` review to
+   `docs/android-17-readiness.md`.
+2. Add one tablet/foldable/desktop-windowing row to `docs/device-matrix.md`.
+3. Confirm no manifest orientation/resizability assumptions are being
+   relied on.
+4. Pair with C101 screenshot tests once the screenshot framework lands.
+
+### C144 — AndroidX stable baseline refresh batch
+
+**Tier**: Next
+**Category**: upgrade strategy
+**Sources**: S237-S241, S252, S253
+
+**Idea**: After the AGP 9 migration, refresh stable AndroidX floors in
+one controlled batch: core/activity/lifecycle/navigation/DataStore and
+Compose Material 3.
+
+**Why it fits**: The repo intentionally defers broad dependency churn
+until the release foundation is stable. The current AndroidX stable
+matrix is now far ahead of OpenLumen's floor, and DataStore 1.2.1 is the
+stable base for Direct Boot restore.
+
+**Implementation sketch**:
+
+1. Land C95 first: AGP 9.2.0 + Gradle 9.4.1 + compile SDK/toolchain
+   validation.
+2. Land C96/C124 with the Hilt artifact rename and Hilt 2.59.2.
+3. Batch stable AndroidX updates; keep alpha tracks out unless a
+   candidate explicitly needs them.
+4. Re-run unit tests, lint, permission audit, profile export/import, and
+   service smoke.

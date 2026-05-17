@@ -4,6 +4,8 @@ import android.app.Service
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -45,6 +47,11 @@ class OverlayEngine : ColorEngine {
      * Must be called from a Service or Activity context that holds a window token capable
      * of TYPE_APPLICATION_OVERLAY. Returns false if the overlay permission isn't granted
      * or if `addView` throws (e.g. token revoked). Idempotent.
+     *
+     * WindowManager mutations must occur on the main thread. We post the
+     * work onto the main looper synchronously rather than asserting the
+     * caller's thread, so service code that ends up here from a
+     * non-Main coroutine still installs cleanly.
      */
     fun installView(serviceContext: Context, initial: LumenMatrix): Boolean {
         if (hostView != null) return true
@@ -52,6 +59,11 @@ class OverlayEngine : ColorEngine {
             Log.w(tag, "installView: SYSTEM_ALERT_WINDOW not granted; overlay engine disabled")
             return false
         }
+        return runOnMain { installViewLocked(serviceContext, initial) }
+    }
+
+    private fun installViewLocked(serviceContext: Context, initial: LumenMatrix): Boolean {
+        if (hostView != null) return true
         val view = View(serviceContext).apply {
             setBackgroundColor(initial.toOverlayArgb())
             isFocusable = false
@@ -64,12 +76,22 @@ class OverlayEngine : ColorEngine {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                 or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
-        ).apply { gravity = Gravity.START or Gravity.TOP }
+        ).apply {
+            gravity = Gravity.START or Gravity.TOP
+            // Cover the display cutout so the tint visibly matches the
+            // rest of the screen on notch/punch-hole devices (API 28+).
+            // Older APIs don't have cutouts to worry about.
+            if (Build.VERSION.SDK_INT >= 28) {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        }
         val wm = serviceContext.getSystemService(Service.WINDOW_SERVICE) as? WindowManager
             ?: run {
-                Log.e(tag, "installView: WINDOW_SERVICE unavailable")
+                Log.e(tag, "installViewLocked: WINDOW_SERVICE unavailable")
                 return false
             }
         return try {
@@ -89,7 +111,9 @@ class OverlayEngine : ColorEngine {
             v.setBackgroundColor(matrix.toOverlayArgb())
             return@withContext
         }
-        if (!installView(context, matrix)) {
+        // Already on Main, but go through installViewLocked to avoid a
+        // pointless re-post via runOnMain.
+        if (!installViewLocked(context, matrix)) {
             Log.w(tag, "apply: installView failed; tint will not be visible")
         }
     }
@@ -103,5 +127,25 @@ class OverlayEngine : ColorEngine {
         }
         hostView = null
         hostWm = null
+    }
+
+    /**
+     * Run [block] on the main looper and block the calling thread until it
+     * completes. We deliberately don't use a coroutine `withContext` here
+     * because `installView` is callable from non-suspend code (the service
+     * call site is inside `applyMutex.withLock`, which doesn't switch
+     * dispatchers).
+     */
+    private inline fun runOnMain(crossinline block: () -> Boolean): Boolean {
+        if (Looper.myLooper() == Looper.getMainLooper()) return block()
+        val handler = Handler(Looper.getMainLooper())
+        val lock = java.util.concurrent.CountDownLatch(1)
+        var result = false
+        handler.post {
+            try { result = block() } finally { lock.countDown() }
+        }
+        // Bounded wait so a wedged main thread can't pin the caller forever.
+        return if (lock.await(2, java.util.concurrent.TimeUnit.SECONDS)) result
+               else { Log.w(tag, "installView: timed out waiting for main thread"); false }
     }
 }

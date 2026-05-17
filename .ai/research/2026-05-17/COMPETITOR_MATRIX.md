@@ -91,3 +91,14 @@ form factor. Tracked as roadmap C21 (Wear OS companion).
 4. **Wear OS is open** — first-mover FOSS opportunity. C21 already on roadmap.
 5. **Per-website / per-context (S178)** validates the broader per-app/per-context exclusion design (C11/C12/C69).
 6. **TV REST/MQTT (S184)** as integration story for C22 — ship the intent surface, let a separate HA bridge translate.
+
+## Rev 5 competitor saturation update
+
+Third-pass search did not find a new direct OpenLumen-grade competitor
+with both root/framebuffer paths and a modern F-Droid-clean posture.
+
+| Project / source | New signal | Lesson |
+|---|---|---|
+| DimTV (S254) | README now positions it as an Android TV + phone dimmer with overlay display, notification controls, scheduled dimming, color filter support, and a stated 3.3.1 build 37 release. | Keep Android TV flavor (C22) separate; TV users value simple overlay / blackout behavior, but DimTV's permission surface includes system settings / running-app retrieval that OpenLumen avoids. |
+| F-Droid Dimmer package (S255) | Old overlay-only app is still useful as store taxonomy and permission-language reference. | F-Droid category / permission copy should be plain and conservative: Theming + System, overlay permission explained directly. |
+| General blue-light-filter roundups (S256) | User-facing content still separates native Night Light, overlay filters, and root/KCAL quality paths. | OpenLumen's README distinction between CDM / SurfaceFlinger / KCAL / Overlay remains strategically important; don't blur it into generic "blue light filter" marketing. |

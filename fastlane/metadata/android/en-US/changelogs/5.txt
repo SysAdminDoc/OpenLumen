@@ -1,0 +1,14 @@
+v0.4.0 — Engineering audit pass.
+
+Engine apply/clear is now serialized; slider drags no longer fan out
+into many su calls. Reliability fixes across the overlay,
+ColorDisplayManager, and boot receiver paths.
+
+Schedule transitions now use AlarmManager — no 60-second background
+ticker.
+
+Profile import range-clamps every numeric field on read.
+
+First JVM unit tests for matrix, schedule, and solar math.
+
+No INTERNET permission. CI enforces.

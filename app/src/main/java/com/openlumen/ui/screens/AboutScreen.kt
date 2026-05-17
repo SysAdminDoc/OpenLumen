@@ -383,7 +383,30 @@ private fun describeDiff(
     diff(R.string.diff_location, currentCoords, nextCoords)
     diff(R.string.diff_intensity, "%.2f".format(current.presetIntensity), "%.2f".format(next.presetIntensity))
     diff(R.string.diff_dim, "%.2f".format(current.dim), "%.2f".format(next.dim))
+    diff(R.string.diff_contrast, "%.2f".format(current.contrast), "%.2f".format(next.contrast))
+    diff(
+        R.string.diff_amoled_clamp,
+        enabledLabel(context, current.amoledBlackClamp),
+        enabledLabel(context, next.amoledBlackClamp)
+    )
     diff(R.string.diff_light_sensor, enabledLabel(context, current.lightSensorEnabled), enabledLabel(context, next.lightSensorEnabled))
+    if (current.lightSensorEnabled || next.lightSensorEnabled) {
+        diff(
+            R.string.diff_light_sensor_threshold,
+            "%d".format(current.lightSensorLuxThreshold.toInt()),
+            "%d".format(next.lightSensorLuxThreshold.toInt())
+        )
+    }
+    diff(
+        R.string.diff_sunset_offset,
+        "%d".format(current.schedule.sunsetOffsetMin),
+        "%d".format(next.schedule.sunsetOffsetMin)
+    )
+    diff(
+        R.string.diff_sunrise_offset,
+        "%d".format(current.schedule.sunriseOffsetMin),
+        "%d".format(next.schedule.sunriseOffsetMin)
+    )
     diff(
         R.string.diff_favorites,
         current.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) },

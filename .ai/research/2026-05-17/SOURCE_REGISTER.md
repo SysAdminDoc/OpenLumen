@@ -505,6 +505,129 @@ informed.
   **New roadmap candidate C137**.
   https://developer.android.com/reference/kotlin/androidx/compose/material/icons/package-summary
 
+## Third-pass additions (S230-S256)
+
+### Android developer verification / off-Play distribution
+
+- **S230**: Android developer verification landing page — starting in
+  September 2026, apps in Brazil, Indonesia, Singapore, and Thailand
+  must be registered by a verified developer to install on certified
+  Android devices; applies outside Play as well.
+  https://developer.android.com/developer-verification
+- **S231**: Android developer verification guides — explains the Android
+  Developer Console path for apps distributed only outside Google Play,
+  package-name registration, signing-key proof, and 2027+ global rollout.
+  https://developer.android.com/developer-verification/guides
+- **S232**: Android developer verification FAQ — confirms non-compliance
+  leads to install blocks in applicable regions and notes ADB installs
+  remain possible for developers. Feeds C141.
+  https://developer.android.com/developer-verification/guides/faq
+
+### Android 17 behavior gaps found in pass 3
+
+- **S233**: Android 17 landing page — Beta 4 available; app developers
+  should test compatibility and release updates before stable.
+  https://developer.android.com/about/versions/17
+- **S234**: Android 17 release notes — Beta 4 released 2026-04-16 and
+  introduces app memory limits surfaced through `ApplicationExitInfo`
+  descriptions containing `MemoryLimiter`.
+  https://developer.android.com/about/versions/17/release-notes
+- **S235**: Android 17 behavior changes for all apps — app memory limits,
+  `ApplicationExitInfo` diagnostics, per-app keystore limits, and other
+  all-app behavior changes.
+  https://developer.android.com/about/versions/17/behavior-changes-all
+- **S236**: Android 17 restrictions on orientation and resizability are
+  ignored — target-37 apps cannot rely on `screenOrientation`,
+  `resizeableActivity`, min/max aspect ratio, or requested-orientation
+  APIs on sw600dp+ displays. Feeds C143.
+  https://developer.android.com/about/versions/17/changes/ff-restrictions-ignored
+
+### Dependency and build-tool targets
+
+- **S237**: Android Gradle plugin 9.2.0 release notes — AGP 9.2 supports
+  maximum API level 36.1 and requires Gradle 9.4.1, Build Tools 36.0.0,
+  and JDK 17.
+  https://developer.android.com/build/releases/gradle-plugin
+- **S238**: Gradle 9.4.1 release notes — patch release for Gradle 9.4.0,
+  released 2026-03-19, with Java 26 support.
+  https://docs.gradle.org/9.4.1/release-notes.html
+- **S239**: AndroidX releases overview — current stable snapshot as of
+  May 2026: activity 1.13.0, core 1.18.0, lifecycle 2.10.0,
+  navigation 2.9.8, compose 1.11.1, material3 1.4.0, DataStore 1.2.1.
+  https://developer.android.com/jetpack/androidx/versions
+- **S240**: Dagger releases — Dagger/Hilt 2.59.2 current; Hilt's AGP 9
+  support replaced the old transform and fixed slow incremental builds.
+  Hilt 2.59.1 explicitly raised the Hilt Gradle plugin minimum to AGP 9.
+  https://github.com/google/dagger/releases
+- **S241**: Hilt Android Maven page — latest stable Hilt Android
+  artifacts are 2.59.2, while OpenLumen is on 2.53.1.
+  https://mvnrepository.com/artifact/com.google.dagger/hilt-android/versions
+- **S252**: DataStore release notes — stable 1.2.1; Direct Boot support
+  landed in 1.2.0 with `createInDeviceProtectedStorage()` and
+  `deviceProtectedDataStore()`.
+  https://developer.android.com/jetpack/androidx/releases/datastore
+- **S253**: Compose Material 3 release notes — stable 1.4.0 as of
+  2026-05-06; `material3` alpha line continues separately.
+  https://developer.android.com/jetpack/androidx/releases/compose-material3
+
+### GitHub Actions / CI supply chain
+
+- **S242**: GitHub Changelog — Node 20 deprecation for GitHub Actions
+  runners; runners begin defaulting JavaScript actions to Node 24 on
+  2026-06-02. Feeds C142.
+  https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+- **S243**: GitHub Actions secure-use reference — GitHub states full-length
+  commit SHA pinning is the only way to use an action as an immutable
+  release.
+  https://docs.github.com/en/actions/reference/security/secure-use
+- **S244**: `actions/checkout` repository — latest documented major is
+  v6; checkout v5 improved credential security by storing credentials
+  under `$RUNNER_TEMP` instead of directly in `.git/config`.
+  https://github.com/actions/checkout
+- **S245**: `actions/setup-java` releases — v5.2.0 latest; v5 moved to
+  Node 24 and requires a sufficiently recent runner.
+  https://github.com/actions/setup-java/releases
+- **S246**: `gradle/actions` repository — current setup-gradle usage is
+  `gradle/actions/setup-gradle@v6`.
+  https://github.com/gradle/actions
+- **S247**: GitHub Changelog — `actions/upload-artifact` v7 can upload
+  non-zipped artifacts when `archive: false`.
+  https://github.blog/changelog/2026-02-26-github-actions-now-supports-uploading-and-downloading-non-zipped-artifacts/
+- **S248**: `actions/attest-build-provenance` repository — v4.1.0 latest;
+  new implementations should use `actions/attest` directly.
+  https://github.com/actions/attest-build-provenance
+- **S249**: `actions/attest` repository — generic attestation action,
+  v4.1.0 latest.
+  https://github.com/actions/attest
+- **S250**: `anchore/sbom-action` repository — v0.24.0 latest; still uses
+  the v0 major tag but Syft is managed by the action.
+  https://github.com/anchore/sbom-action
+- **S251**: `anchore/scan-action` repository — latest major is v7, while
+  OpenLumen currently uses v6.
+  https://github.com/anchore/scan-action
+
+### Competitor / saturation refresh
+
+- **S254**: MarshMeadow/DimTV — Android TV / phone overlay dimmer with
+  scheduling, notification controls, F-Droid-oriented positioning, and
+  a stated 3.3.1 build 37 current release in the README.
+  https://github.com/MarshMeadow/DimTV
+- **S255**: F-Droid Dimmer package — old overlay-only dimmer; still useful
+  as a store taxonomy / permission-language reference, not a modern
+  OpenLumen peer.
+  https://f-droid.org/en/packages/giraffine.dimmer/
+- **S256**: MakeUseOf blue-light-filter roundup — not roadmap evidence
+  by itself, but confirms user-facing comparison language still separates
+  built-in Night Light, overlay apps, and root/KCAL paths.
+  https://www.makeuseof.com/tag/get-good-nights-sleep-filtering-phones-blue-light/
+
+### Verification bootstrap
+
+- **S257**: Android Developers SDK download page — official source for
+  the Windows command-line tools used to install a local Android SDK for
+  this verification pass.
+  https://developer.android.com/studio
+
 ## Source-class coverage check
 
 | Class | Sources | Counts |
@@ -531,3 +654,14 @@ rev 3 has ≥2 sources. New evidence introduces 3 new candidates
 (C128 FabricatedOverlay engine, C129 OLED gamma LUT, C130 AAPM driver-
 report surface, C131 Eye Dropper picker integration); each cites ≥2
 sources.
+
+Rev 5 coverage update: pass 3 added 28 more sources (S230-S257). The
+newest coverage gap closed is **off-Play Android developer verification**,
+which was absent from rev 4.1 and now maps to C141. CI/action supply-chain
+coverage now includes the Node 24 deadline plus current action majors
+(C142). Android 17 readiness now includes memory-limiter and large-screen
+resizability behavior (C143). Dependency coverage now includes the AGP
+9.2 / Gradle 9.4.1 / Dagger 2.59.2 / AndroidX stable-version matrix
+that sharpens C95, C96, C124, and C144. S257 records the official SDK
+bootstrap source used to complete local verification after `JAVA_HOME` and
+`ANDROID_HOME` were initially missing.

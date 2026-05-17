@@ -128,3 +128,43 @@ If we hit all 13 Now items, OpenLumen ships its first F-Droid-ready 1.0
 inside the Android 17 stable window. If we slip on C95 or C82, AGP 10
 and Android 17's behavior changes both become forced migrations under
 deadline.
+
+## Rev 5 prioritization update
+
+### New candidate scoring
+
+| ID | Candidate | Proposed tier | Impact | Effort | Risk | Score | Notes |
+|---|---|---|---:|---:|---:|---:|---|
+| C141 | Android Developer Console package registration | Now | 5 | 2 | 2 | +1 | Distribution-blocking for certified devices in first enforcement regions if OpenLumen remains off-Play. |
+| C142 | CI action major rotation and SHA-pinning policy | Now | 4 | 2 | 2 | 0 | Time-bound Node 24 migration plus supply-chain hardening; release workflow depends on it. |
+| C143 | Android 17 memory/resizability smoke expansion | Now | 3 | 1 | 1 | +1 | Cheap addition to C103 test plan while Android 17 Beta 4 is current. |
+| C144 | AndroidX stable baseline refresh batch | Next | 3 | 2 | 2 | -1 | Useful, but should wait until AGP 9 / Hilt train lands. |
+
+### Rev 5 Now-tier additions
+
+Add these to the rev 4.1 Now list:
+
+1. **C141 — Android Developer Console package registration**
+2. **C142 — CI action major rotation and SHA-pinning policy**
+3. **C143 — Android 17 memory/resizability smoke expansion**
+
+Rationale: C141 affects the project's distribution promise, C142 affects
+release automation in the same quarter, and C143 is a low-effort gap in
+the already-Now Android 17 readiness work.
+
+### Rev 5 Next-tier addition
+
+- **C144 — AndroidX stable baseline refresh batch** after C95/C96/C124.
+
+Rationale: dependency drift is real, but mixing AndroidX churn into the
+AGP 9 migration would make failures hard to isolate.
+
+### Existing candidate refinements
+
+- **C95 / C96 / C124**: treat Hilt 2.59.2 as AGP-9-coupled. Do not land
+  the Hilt 2.59.x bump independently while the repo remains on AGP 8.7.3.
+- **C103**: expand acceptance criteria to include Android 17
+  `ApplicationExitInfo` memory-limiter review and sw600dp resizability /
+  orientation checks.
+- **C140**: C141 does not replace the F-Droid MR. It is a parallel
+  platform-distribution requirement for certified devices.

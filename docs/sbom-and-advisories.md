@@ -78,6 +78,13 @@ changes ownership or its scanning model materially, the workflow file
 needs review — there's no automated check that the scanner is still
 trustworthy.
 
+Rev 5 update: GitHub Actions starts defaulting JavaScript actions to
+Node 24 on 2026-06-02. `anchore/scan-action` has a v7 line and
+`actions/attest-build-provenance` has a v4 line; new attestation work
+should consider `actions/attest@v4`. ROADMAP C142 tracks the action
+major rotation plus the explicit decision between current major tags and
+full commit-SHA pinning.
+
 ## Why not GitHub Dependency Graph + Dependabot alerts?
 
 We use both. The repository has Dependabot version updates configured

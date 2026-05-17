@@ -201,3 +201,73 @@ All pass-2 changes are reversible:
 - `ROADMAP.md` rev 4.1 prepends a "What changed in rev 4.1" section and
   appends new candidate rows + new source URLs; rev 4 content is
   preserved.
+
+## Pass 3 changeset (rev 5, 2026-05-17)
+
+Pass 3 resumed after rev 4.1 and added a distribution / platform / CI
+refresh.
+
+### Files modified (pass 3)
+
+| File | Why |
+|---|---|
+| `ROADMAP.md` | Promoted rev 4.1 -> rev 5. Added C141-C144 and summarized Android developer verification, Android 17 memory/resizability, CI action/Node 24, and AndroidX/Hilt/AGP findings. |
+| `PROJECT_CONTEXT.md` | Added a short rev 5 context note so future sessions see Android developer verification and CI action rotation as current planning constraints. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S230-S257 and a rev 5 coverage update. |
+| `.ai/research/2026-05-17/RESEARCH_LOG.md` | Added third-pass queries, saturation notes, and outcomes. |
+| `.ai/research/2026-05-17/FEATURE_BACKLOG.md` | Added raw candidate sketches for C141-C144. |
+| `.ai/research/2026-05-17/PRIORITIZATION_MATRIX.md` | Added rev 5 scoring and tier placement for C141-C144. |
+| `.ai/research/2026-05-17/SECURITY_AND_DEPENDENCY_REVIEW.md` | Added developer-verification, GitHub Actions Node 24 / major rotation, AGP/Hilt coupling, and AndroidX drift analysis. |
+| `.ai/research/2026-05-17/STATE_OF_REPO.md` | Added current local command context, file counts, and dirty-tree state. |
+| `.ai/research/2026-05-17/MEMORY_CONSOLIDATION.md` | Rechecked requested instruction files and recorded rev 5 conflicts. |
+| `.ai/research/2026-05-17/COMPETITOR_MATRIX.md` | Added DimTV / F-Droid Dimmer / general-roundup saturation update. |
+| `.ai/research/2026-05-17/DATASET_MODEL_INTEGRATION_REVIEW.md` | Added developer-verification and GitHub Actions as platform/distribution integration findings. |
+| `docs/v0.5.0-release-readiness.md` | Added soft-gate reminders for C141-C143. |
+| `docs/android-17-readiness.md` | Added memory-limiter and sw600dp resizability checks to the Android 17 behavior table and test plan. |
+| `docs/sbom-and-advisories.md` | Added Node 24 / action-major rotation note under workflow rotation. |
+| `docs/release-checklist.md` | Added CI action review and developer-verification checks. |
+| `docs/research-watchlist.md` | Added Android developer verification and GitHub Actions watchpoints. |
+
+### Counts (pass 3)
+
+| Metric | Count |
+|---|---:|
+| New source IDs introduced | 28 (S230-S257) |
+| New candidate IDs introduced | 4 (C141-C144) |
+| Kotlin source files modified by pass 3 | 0 |
+
+### What pass 3 did NOT modify
+
+- Kotlin behavior. Existing dirty Kotlin files were preserved and treated
+  as pre-existing hardening work.
+- `CLAUDE.md` / `AGENTS.md`. `CLAUDE.md` already has the canonical-context
+  pointer; `AGENTS.md` is absent.
+- Release versionCode / versionName. Rev 5 is planning/research only.
+
+### Reversibility (pass 3)
+
+All rev 5 changes are additive documentation changes. Reverting the pass
+is a normal Git revert of the rev 5 documentation commit.
+
+### Verification (pass 3)
+
+The machine did not have `java`, `JAVA_HOME`, or `ANDROID_HOME` available
+when verification began. Pass 3 installed user-local prerequisites only:
+
+- Temurin JDK 17.0.19 under `C:\Users\Xray\.codex\jdks\temurin-17`.
+- Android command-line SDK under `C:\Users\Xray\.codex\android-sdk`,
+  sourced from the official Android Developers SDK download page (S257).
+- Android packages: `platform-tools`, `platforms;android-35`, and
+  `build-tools;35.0.0`.
+
+Verification commands run from `C:\Users\Xray` with `JAVA_HOME` and
+`ANDROID_HOME` scoped to each command:
+
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --stacktrace`
+  — passed, `BUILD SUCCESSFUL`, 133 actionable tasks.
+- `:app:assembleDebug --stacktrace` — passed, `BUILD SUCCESSFUL`, 98
+  actionable tasks.
+- `:app:lintDebug --stacktrace` — passed on the serial rerun,
+  `BUILD SUCCESSFUL`, 142 actionable tasks. The first lint attempt ran in
+  parallel with `assembleDebug` and timed out without useful lint output,
+  so it was rerun alone.

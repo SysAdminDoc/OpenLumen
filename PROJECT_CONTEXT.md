@@ -338,6 +338,26 @@ window.
   evidence consensus has shifted further toward "total luminance > spectrum
   for sleep onset"; we lean into the comfort framing.
 
+## Current planning watchpoints (rev 5)
+
+The latest research pass in `ROADMAP.md` rev 5 adds four current
+watchpoints future sessions should not miss:
+
+- **Android developer verification (C141)**: because OpenLumen is
+  F-Droid/direct-APK oriented, the package name and release signing
+  certificate need an Android Developer Console / Play Console
+  registration plan before the September 2026 regional enforcement
+  window.
+- **GitHub Actions Node 24 and action majors (C142)**: CI/release/SBOM
+  workflows need a current-major rotation and an explicit major-tag vs
+  full-SHA pinning policy before release automation is treated as stable.
+- **Android 17 smoke expansion (C143)**: the Android 17 readiness plan
+  now needs memory-limiter (`ApplicationExitInfo`) and sw600dp
+  resizability/orientation checks in addition to AAPM, FGS, and BAL.
+- **AndroidX stable refresh (C144)**: after AGP 9 lands, batch the
+  stable AndroidX floor refresh rather than mixing broad dependency churn
+  into the toolchain migration.
+
 ## Where to look for what
 
 | Question | File |

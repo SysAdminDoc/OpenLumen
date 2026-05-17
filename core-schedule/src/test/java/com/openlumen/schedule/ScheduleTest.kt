@@ -79,6 +79,53 @@ class ScheduleTest {
         assertThat(isActive(mode, at(3, 0), zone)).isTrue()
     }
 
+    @Test fun `Solar schedule honors the now parameter (not the system clock) for date`() {
+        // Regression guard: previously the function called `LocalDate.now(zoneId)`
+        // and ignored the caller's `now`. That made unit tests time-bomb against
+        // the real system clock and produced stale sunrise/sunset windows near
+        // midnight. The check below would have failed on most calendar days
+        // before the fix because today's NYC sunrise/sunset != Dec 21's.
+        val winterEvening = ZonedDateTime.of(
+            LocalDate.of(2026, 12, 21), LocalTime.of(23, 0), zone
+        )
+        val mode = ScheduleMode.Solar(latitude = 40.71, longitude = -74.0)
+        // 23:00 UTC on Dec 21 = 18:00 NYC (past sunset on the winter solstice).
+        assertThat(isActive(mode, winterEvening, zone)).isTrue()
+    }
+
+    @Test fun `Solar mode in polar night is always active`() {
+        // Tromsø in deep winter has no sunrise. Even at noon, the filter
+        // should be on. Previously the calculator returned noon for both
+        // polar night and polar day, which inverted the polar-day branch.
+        val mode = ScheduleMode.Solar(latitude = 69.65, longitude = 18.96)
+        val winterNoon = ZonedDateTime.of(
+            LocalDate.of(2026, 12, 21), LocalTime.of(12, 0), ZoneId.of("Europe/Oslo")
+        )
+        assertThat(isActive(mode, winterNoon, ZoneId.of("Europe/Oslo"))).isTrue()
+    }
+
+    @Test fun `Solar mode in polar day is never active`() {
+        // Tromsø in midsummer has no sunset. Even at midnight, the filter
+        // should NOT be on (the panel is broadcasting daylight).
+        val mode = ScheduleMode.Solar(latitude = 69.65, longitude = 18.96)
+        val summerMidnight = ZonedDateTime.of(
+            LocalDate.of(2026, 6, 21), LocalTime.of(0, 0), ZoneId.of("Europe/Oslo")
+        )
+        assertThat(isActive(mode, summerMidnight, ZoneId.of("Europe/Oslo"))).isFalse()
+    }
+
+    @Test fun `nextTransition in polar window reschedules at next local midnight`() {
+        // Without a per-day boundary the alarm would never fire and the
+        // service would forget to re-evaluate when the polar window ends.
+        val mode = ScheduleMode.Solar(latitude = 69.65, longitude = 18.96)
+        val oslo = ZoneId.of("Europe/Oslo")
+        val now = ZonedDateTime.of(LocalDate.of(2026, 12, 21), LocalTime.of(14, 0), oslo)
+        val next = checkNotNull(nextTransition(mode, now, oslo))
+        // Strictly future and at most ~24 hours away.
+        assertThat(next.isAfter(now)).isTrue()
+        assertThat(next.toEpochSecond() - now.toEpochSecond()).isAtMost(25L * 3600)
+    }
+
     @Test fun `UntilNextAlarm is active between start and the supplied alarm time`() {
         val start = LocalTime.of(22, 0)
         val alarmAt = at(7, 0).plusDays(1) // tomorrow 07:00

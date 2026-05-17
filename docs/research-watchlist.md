@@ -7,8 +7,9 @@ Reviewed before each release planning pass. Not a hard dependency for any
 release — it exists so we notice ecosystem-level shifts before they show up
 as user pain.
 
-Last review: **2026-05-17** (rev 3 + rev 4 of `ROADMAP.md` walked every
-entry in this watchlist; see `.ai/research/2026-05-17/RESEARCH_LOG.md`).
+Last review: **2026-05-17** (rev 3 + rev 4 walked every entry; rev 5
+added developer verification and CI action-major watchpoints. See
+`.ai/research/2026-05-17/RESEARCH_LOG.md`).
 
 ## Quick rules
 
@@ -39,6 +40,7 @@ entry in this watchlist; see `.ai/research/2026-05-17/RESEARCH_LOG.md`).
 | Android Behavior Changes pages (annual) | Each release tightens FGS, overlay, exact-alarm, or sensor rules | Update manifest, runtime checks |
 | `developer.android.com` foreground service types | `specialUse` rules can change between releases | Update the manifest property and `docs/release-checklist.md` |
 | Android Developers blog → Privacy / Trust labels | Play Store labeling impacts the optional Play track | Adjust `fastlane/metadata/` if we ever ship to Play |
+| Android developer verification docs | Off-Play package registration can affect F-Droid/direct APK installs on certified devices | C141 package-registration plan |
 | Android Gradle Plugin release notes | AGP 9 plugin behavior changes | C95 spike |
 | AndroidX Hilt release notes | Hilt Compose artifact moves | C96 spike |
 
@@ -47,6 +49,7 @@ entry in this watchlist; see `.ai/research/2026-05-17/RESEARCH_LOG.md`).
 | Source | Why we watch | What we'd change |
 |---|---|---|
 | GitHub Advisory Database (Gradle / Maven) | Transitive vulnerabilities in build deps | Bump or replace, document in `docs/release-checklist.md` |
+| GitHub Actions changelog / secure-use docs | Node runtime migrations and action-pinning policy affect release automation | C142 workflow rotation / pinning policy |
 | F-Droid build metadata reference | Format / required fields can change | `fastlane/metadata/` updates |
 | OWASP MASVS / MASTG updates | Overlay-attack guidance and threat-model changes | C51 threat model doc |
 

@@ -1,5 +1,58 @@
 # OpenLumen Roadmap
 
+Research version: 2026-05-17 **rev 5**. Rev 5 is the third walk-away
+pass on the same day. It preserves rev 4.1 and adds a distribution /
+platform / CI refresh from live primary sources: Android developer
+verification, Android 17 Beta 4 behavior changes, AGP 9.2 / Gradle
+9.4.1 compatibility, Dagger/Hilt 2.59.2 constraints, AndroidX current
+stable versions, GitHub Actions Node 24 migration, and current action
+major versions.
+
+## What changed in rev 5
+
+- **Android developer verification is now a release-planning item**.
+  Starting September 2026, apps in Brazil, Indonesia, Singapore, and
+  Thailand must be registered by a verified developer to install on
+  certified Android devices, regardless of whether they come from Play
+  or outside Play. OpenLumen is F-Droid-first, so this becomes **C141
+  - Android Developer Console package registration**. Sources: S230-S232.
+- **GitHub Actions needs a Node 24 / action-major rotation before the
+  release train hardens**. GitHub says runners begin defaulting
+  JavaScript actions to Node 24 on 2026-06-02; OpenLumen still uses
+  `actions/checkout@v4`, `actions/setup-java@v4`,
+  `gradle/actions/setup-gradle@v4`, `actions/upload-artifact@v4`,
+  `actions/attest-build-provenance@v2`, and `anchore/scan-action@v6`
+  in workflows. Current upstream majors are checkout v6, setup-java
+  v5, setup-gradle v6, attest/attest-build-provenance v4, and
+  scan-action v7. This becomes **C142 - CI action major rotation and
+  SHA-pinning policy**. Sources: S242-S251.
+- **Android 17 Beta 4 adds two test-plan gaps**. The previous C103
+  Android 17 readiness work covered AAPM, BAL, FGS, and API naming,
+  but not the Beta 4 all-app memory limiter or the target-37
+  large-screen orientation/resizability behavior. These become
+  **C143 - Android 17 memory/resizability smoke expansion** under the
+  existing Android 17 readiness umbrella. Sources: S233-S236.
+- **Dependency targets are now more concrete**. AGP 9.2.0 requires
+  Gradle 9.4.1 and supports API 36.1; DataStore 1.2.1 is the stable
+  Direct Boot floor; AndroidX current stable versions have moved well
+  beyond the repo's current floor; Dagger/Hilt 2.59.2 is current but
+  its Hilt Gradle plugin now requires AGP 9. This sharpens C95/C96/C124
+  rather than adding a separate feature. Sources: S237-S241, S252-S253.
+- **Competitor sweep saturation retested**. No new direct OpenLumen-grade
+  framebuffer/root competitor surfaced. DimTV has a fresher Android TV /
+  overlay signal than rev 4 recorded, and general Android help content
+  still points users back to Red Moon / Twilight / Screen Filter for the
+  overlay class. Sources: S254-S256.
+
+### Rev 5 candidate additions
+
+| ID | Candidate | Category | Tier | I/E/R | Concrete action | Why now | Sources |
+|---|---|---|---|---|---|---|---|
+| C141 | Android Developer Console package registration | distribution / trust | Now | 5/2/2 | Decide Play Console vs Android Developer Console path; verify identity; register `com.openlumen` and release signing certificate before the September 2026 regional enforcement window. Document the account owner and package-registration evidence outside Git. | F-Droid / direct APK users in the first enforcement regions can otherwise hit install blocks even though OpenLumen stays outside Play. | S230, S231, S232 |
+| C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Now | 4/2/2 | Rotate workflow actions to current Node-24-capable majors; add a policy note deciding whether to keep major tags or pin full SHAs with version comments; run the release and SBOM workflows after the rotation. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251 |
+| C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Now | 3/1/1 | Extend `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236 |
+| C144 | AndroidX stable baseline refresh batch | upgrade strategy | Next | 3/2/2 | After C95 lands, refresh core/activity/lifecycle/navigation/DataStore as one AndroidX batch and run unit tests, lint, Compose UI smoke, and profile import/export. Keep alpha trains out unless a candidate explicitly needs them. | Current stable AndroidX releases are far ahead of the repo floor; batching avoids mixing dependency churn with AGP 9 toolchain risk. | S237, S238, S239, S252, S253 |
+
 Research version: 2026-05-17 **rev 4.1**. Rev 4.1 is the second walk-away
 pass on the same day. It preserves rev 4 verbatim (which itself
 supplements rev 3) and adds nine more candidates (C132-C140) drawn from

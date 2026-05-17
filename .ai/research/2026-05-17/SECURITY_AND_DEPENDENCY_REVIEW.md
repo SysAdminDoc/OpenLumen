@@ -12,18 +12,18 @@ From [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) on
 
 | Dep | Current | Notes |
 |---|---|---|
-| AGP | 8.7.3 | C95 (Now): migrate to AGP 9.x; AGP 10 mid-2026 removes the AGP 8 opt-out paths (S140-S143). |
-| Kotlin | 2.1.0 | Compose Preview Screenshot Testing wants Kotlin 2.2.10 as of Apr 2026 (S148). Pair the Kotlin bump with C95. |
-| KSP | 2.1.0-1.0.29 | Tracks Kotlin. |
-| Compose BOM | 2024.12.01 | Survey BOM 2025 / 2026 lines once AGP 9 is settled. |
+| AGP | 8.7.3 | C95 (Now): migrate to AGP 9.2.0 / Gradle 9.4.1; AGP 10 mid-2026 removes the AGP 8 opt-out paths (S140-S143, S237-S238). |
+| Kotlin | 2.1.0 | Pair the Kotlin/KSP bump with C95; AGP 9.x and newer Hilt lines assume a newer toolchain. |
+| KSP | 2.1.0-1.0.29 | Tracks Kotlin today; rev 5 notes KSP's newer lines decouple from old Kotlin-tied versioning, but do this with C95. |
+| Compose BOM | 2024.12.01 | Concrete rev 4.1 target: 2026.05.00; rev 5 AndroidX table confirms compose 1.11.1 / material3 1.4.0 stable (S225, S239, S253). |
 | Compose compiler | 1.5.15 | Compose Compiler plugin from Kotlin Compose plugin (`kotlin.plugin.compose`); compose compiler version is implied by the plugin. |
 | Material 3 | 1.3.1 | C110 surveys Material 3 Expressive components when timing fits. |
-| Hilt | 2.53.1 | Bump to 2.56+ recommended (rev 3 C124, Now); pairs with C96. |
+| Hilt | 2.53.1 | C124 target is now Hilt 2.59.2, but it is AGP-9-coupled; do not land independently before C95 (S240-S241). |
 | Hilt navigation-compose | 1.2.0 | C96: move `hiltViewModel()` to `androidx.hilt:hilt-lifecycle-viewmodel-compose` (1.3.0-stable Sep 2025; S144-S145). |
-| DataStore | 1.1.1 | C28 / C102: use `deviceProtectedDataStore()` (1.2.0-alpha01+; S146). |
+| DataStore | 1.1.1 | C28 / C102: use stable 1.2.1 / Direct Boot APIs (`deviceProtectedDataStore()`, S252). |
 | kotlinx.serialization | 1.7.3 | No upgrade pressure. |
 | kotlinx.coroutines | 1.9.0 | No upgrade pressure. |
-| AndroidX core-ktx | 1.15.0 | No upgrade pressure. |
+| AndroidX core-ktx | 1.15.0 | Rev 5 C144 batches stable AndroidX refresh after C95; current stable core is 1.18.0 (S239). |
 | JUnit 4 | 4.13.2 | OK; could move to JUnit 5 but not urgent. |
 | Truth | 1.4.4 | OK. |
 
@@ -32,7 +32,7 @@ From [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) on
 Per [docs/sbom-and-advisories.md](../../../docs/sbom-and-advisories.md) the
 SBOM workflow runs `anchore/sbom-action@v0` weekly Mondays plus on every
 release, with `fail-build: false` and `severity-cutoff: medium`. The
-"Accepted exposures" section is currently empty.
+"Accepted exposures" section now records protobuf-java CVE-2024-7254.
 
 Known surface:
 
@@ -229,3 +229,58 @@ on each Dependabot batch. Documented in
 | S156 (textproto disable) | High | Direct fix for C120 |
 | S158-S162 (sleep evidence) | Low security, high docs | C126 sources |
 | S193-S194 (Glance stable) | Low security, high upgrade | C123 tier promotion |
+
+## Rev 5 security / dependency update
+
+### Android developer verification is a distribution-security gate
+
+Android's 2026 developer verification program applies to apps installed
+on certified Android devices in the first enforcement regions, even when
+the app is distributed outside Play (S230-S232). For OpenLumen, this is
+not a telemetry or Play Services issue; it is a package-ownership and
+signing-certificate registration task. Track as **C141 (Now)** and keep
+identity documents / account recovery material out of Git.
+
+### GitHub Actions Node 24 and action-major rotation
+
+GitHub's Node 20 deprecation starts affecting JavaScript actions on
+2026-06-02 (S242). Current workflow majors in this repo are now behind
+upstream on the core release path:
+
+| Workflow dependency | Current | Current upstream signal | Action |
+|---|---|---|---|
+| `actions/checkout` | v4 | v6 current (S244) | Rotate in C142 |
+| `actions/setup-java` | v4 | v5.2.0 current; Node 24 action line (S245) | Rotate in C142 |
+| `gradle/actions/setup-gradle` | v4 | docs show v6 (S246) | Rotate in C142 |
+| `actions/upload-artifact` | v4 | v7 adds optional unzipped artifacts (S247) | Consider only if useful |
+| `actions/attest-build-provenance` | v2 | v4.1.0 current; new work should consider `actions/attest` (S248-S249) | Rotate in C142 |
+| `anchore/sbom-action` | v0 | v0.24.0 current under same major (S250) | Keep v0 but pin/check release notes |
+| `anchore/scan-action` | v6 | v7 current (S251) | Rotate in C142 |
+
+Policy decision: `ci.yml` currently documents major-version tags for
+Dependabot ergonomics. GitHub's secure-use docs say full SHA pinning is
+the only immutable action reference (S243). C142 should either preserve
+the major-tag policy explicitly or switch to full SHAs with version
+comments and a rotation checklist.
+
+### AGP / Gradle / Hilt dependency train
+
+AGP 9.2.0 requires Gradle 9.4.1 and Build Tools 36.0.0 (S237). Dagger /
+Hilt 2.59.2 is current, but the Hilt Gradle plugin line now assumes AGP
+9, and 2.59.2 specifically fixes AGP-9-era Hilt transform / incremental
+build issues (S240-S241). That changes the rev 4 guidance:
+
+- Do **not** treat Hilt 2.56+ as a standalone low-risk pre-AGP-9 bump.
+- Land C95 first or in the same branch: AGP 9.2.0, Gradle 9.4.1,
+  SDK/build-tools update, CI validation.
+- Then land C96/C124: AndroidX Hilt artifact rename and Hilt 2.59.2.
+
+### AndroidX stable baseline drift
+
+AndroidX current stable versions as of the rev 5 pass are materially
+newer than OpenLumen's floor: activity 1.13.0, core 1.18.0, lifecycle
+2.10.0, navigation 2.9.8, compose 1.11.1, material3 1.4.0, and
+DataStore 1.2.1 (S239, S252-S253). Track as **C144 (Next)** after the
+toolchain migration; this is not a security fire, but it reduces
+future forced-upgrade pressure and unlocks Direct Boot restore work on
+stable DataStore APIs.
