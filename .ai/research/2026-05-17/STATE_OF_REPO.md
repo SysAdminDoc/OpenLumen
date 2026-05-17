@@ -35,6 +35,7 @@ Sourced from [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) and
 | Hilt | 2.59.2 |
 | AndroidX Hilt lifecycle-viewmodel-compose | 1.3.0 |
 | Compose screenshot plugin | 0.0.1-alpha14 |
+| Roborazzi / Robolectric | 1.60.0 / 4.16.1 |
 | DataStore (preferences) | 1.2.1 |
 | kotlinx.serialization JSON | 1.7.3 |
 | kotlinx.coroutines | 1.9.0 |
@@ -99,7 +100,8 @@ Components declared:
 Three workflows under [.github/workflows/](../../../.github/workflows/):
 
 - **[ci.yml](../../../.github/workflows/ci.yml)** — `assembleDebug + lint`,
-  `testDebugUnitTest` plus each `core-*` `test`, and a
+  `testDebugUnitTest` plus each `core-*` `test`,
+  `validateDebugScreenshotTest`, `verifyRoborazziDebug`, and a
   `permissions-audit` job that:
   1. Builds the debug APK.
   2. Runs `aapt2 dump permissions` against the merged manifest and fails the
@@ -535,6 +537,8 @@ This batch is now implemented locally:
 - The initial screenshot fixture lives under
   `app/src/screenshotTest/kotlin/` with references in
   `app/src/screenshotTestDebug/reference/`.
+- C122 later added the Roborazzi companion lane; see the C122 state
+  section below.
 - A stale `core-engine` `consumer-rules.pro` declaration was removed
   because no such rule file existed and AGP 9 validates that input.
 
@@ -622,3 +626,14 @@ C123 is now implemented locally:
 - Emulator-backed widget/device evidence remains blocked on this host:
   the x86_64 Android emulator requires hardware acceleration that is not
   available here.
+
+## C122 implementation state
+
+C122 is now implemented locally:
+
+- Roborazzi 1.60.0 and Robolectric 4.16.1 are test-only dependencies.
+- `ThemeTokenRoborazziTest` records light/dark textless theme-token
+  screenshots under `app/src/test/roborazzi/`.
+- CI runs `:app:verifyRoborazziDebug` alongside
+  `:app:validateDebugScreenshotTest`.
+- Strict dependency verification now includes the Roborazzi lane.

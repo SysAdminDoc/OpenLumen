@@ -106,6 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compose Preview Screenshot Testing is wired into Gradle and CI with an
   initial textless theme-token fixture plus checked-in debug reference
   images.
+- Roborazzi JVM screenshot verification is wired into Gradle and CI with
+  two checked-in theme-token PNG baselines.
 - `CONTRIBUTING.md`, `docs/ARCHITECTURE.md`, `docs/troubleshooting.md`,
   `docs/device-matrix.md`, `docs/release-checklist.md`,
   `docs/reproducible-build.md`, `docs/root-safety.md`,

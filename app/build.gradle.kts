@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.screenshot)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -71,6 +72,18 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
+            }
+        }
+    }
+}
+
+roborazzi {
+    outputDir.set(file("src/test/roborazzi"))
 }
 
 dependencies {
@@ -105,4 +118,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
 }

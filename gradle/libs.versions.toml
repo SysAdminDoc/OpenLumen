@@ -15,6 +15,8 @@ material3 = "1.4.0"
 core-ktx = "1.18.0"
 glance = "1.1.1"
 screenshot = "0.0.1-alpha14"
+roborazzi = "1.60.0"
+robolectric = "4.16.1"
 
 junit = "4.13.2"
 truth = "1.4.4"
@@ -36,6 +38,9 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshot" }
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
@@ -57,3 +62,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

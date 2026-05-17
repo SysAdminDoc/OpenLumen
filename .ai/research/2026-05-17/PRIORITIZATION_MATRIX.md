@@ -79,6 +79,9 @@ composition for v0.7.0 → v0.8.0:
 6. C84 / C91 — Connected permission / overlay tests
 7. Research-watchlist maintenance
 
+C122 is no longer in the remaining Next list: it shipped as a
+supplemental Roborazzi JVM golden lane on 2026-05-17.
+
 ## Later-tier additions for rev 4
 
 Rev 3's Later list plus C129, C131.
@@ -200,6 +203,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C127 | Shipped 2026-05-17 | Home-tab perceived brightness reduction landed next to blue suppression, backed by sRGB-weighted transformed-white luminance. |
 | C48 | Shipped 2026-05-17 | Gradle dependency verification metadata is checked in and strict verification passes across assemble, lint, screenshot validation, and unit tests. |
 | C123 | Shipped 2026-05-17 | Toggle and preset home-screen widgets now render through Glance 1.1.1 while preserving the existing widget broadcast action path. |
+| C122 | Shipped 2026-05-17 | Roborazzi 1.60.0 / Robolectric 4.16.1 validates two checked-in theme-token PNG baselines in CI. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

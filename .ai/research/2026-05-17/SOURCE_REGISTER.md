@@ -2,10 +2,10 @@
 
 Every local and external source used in this research pass. Inherits the
 roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
-entries through `S282` collected during this session and implementation
+entries through `S284` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00p)
+## Local evidence (S00 / S00b-S00q)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -758,6 +758,14 @@ informed.
   Local emulator provisioning was attempted for widget/device evidence
   but blocked because the x86_64 emulator requires hardware acceleration
   on this host.
+- **S00q**: Local implementation evidence for C122 —
+  `ThemeTokenRoborazziTest.kt` records light/dark theme-token PNG
+  baselines under `app/src/test/roborazzi/`; `ci.yml` now runs
+  `:app:verifyRoborazziDebug`; the Gradle catalog pins Roborazzi 1.60.0
+  and Robolectric 4.16.1; dependency verification metadata was refreshed.
+  Strict validation passed from `C:\Users\Xray\OpenLumen-agp9-verify`
+  across assemble, lint, Compose screenshot validation, Roborazzi
+  verification, and unit tests.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -805,18 +813,25 @@ informed.
   updates via the Glance update APIs; used to validate the C123 update
   pattern.
   https://developer.android.com/develop/ui/compose/glance/glance-app-widget
+- **S283**: Maven Central metadata for Roborazzi — confirms 1.60.0 as the
+  current `roborazzi-gradle-plugin`, `roborazzi`, and `roborazzi-compose`
+  release used for C122.
+  https://repo1.maven.org/maven2/io/github/takahirom/roborazzi/
+- **S284**: Maven Central metadata for Robolectric — confirms 4.16.1 as
+  the current Robolectric release used by the C122 JVM screenshot lane.
+  https://repo1.maven.org/maven2/org/robolectric/robolectric/
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p | 16 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p, S00q | 17 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
 | Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
 | AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
-| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S282 | 42 |
+| AGP / Hilt / Compose / Glance / Roborazzi | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S284 | 44 |
 | DataStore | S66, S95, S146-S147, S252, S280 | 6 |
 | F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
 | Security (OWASP / GHSA / SBOM tooling) | S60-S64, S67-S68, S77, S108-S110, S114, S122, S188-S192 | 19 |
@@ -866,6 +881,8 @@ verification. S00n records the C127 perceived-luminance implementation
 and focused verification. S00o records the C48 checked-in dependency
 verification metadata and strict Gradle validation. S00p records the C123
 Glance widget rewrite and local emulator hardware-acceleration blocker.
-S275-S281 capture the AndroidX / Compose release evidence used for that
-batch. S282 records the official Glance AppWidget update/state guidance
-used for the C123 rewrite.
+S00q records the C122 Roborazzi golden-image implementation and strict
+validation. S275-S281 capture the AndroidX / Compose release evidence
+used for that batch. S282 records the official Glance AppWidget
+update/state guidance used for the C123 rewrite. S283-S284 record the
+Maven Central metadata used to pin Roborazzi/Robolectric for C122.

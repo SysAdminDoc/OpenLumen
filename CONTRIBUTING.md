@@ -63,14 +63,15 @@ These are non-negotiable for any PR that wants to merge:
 - **Unit tests** for any matrix math, schedule logic, or preferences
   serialization. See `core-engine/src/test/`, `core-schedule/src/test/`,
   `core-prefs/src/test/` for patterns. We use JUnit 4 + Google Truth.
-- **Tests must run on the JVM** (no Robolectric, no instrumented tests yet —
-  that's tracked in C83/C84 on the roadmap).
+- **Tests must run on the JVM**. Robolectric is available only for the
+  Roborazzi screenshot lane; instrumented device tests are still tracked
+  in C83/C84 on the roadmap.
 - New driver code should add at minimum a "doesn't throw on unavailable
   hardware" test if it can't be exercised on the JVM.
 - Run `./gradlew test` before pushing. For UI or theme changes, also run
-  `./gradlew :app:validateDebugScreenshotTest --no-configuration-cache`.
-  CI runs `:app:assembleDebug`, `:app:lint`, module tests, and screenshot
-  validation; please don't make CI the first place a failure is seen.
+  `./gradlew :app:validateDebugScreenshotTest :app:verifyRoborazziDebug --no-configuration-cache`.
+  CI runs `:app:assembleDebug`, `:app:lint`, module tests, and both
+  screenshot lanes; please don't make CI the first place a failure is seen.
 
 ## Commit messages
 

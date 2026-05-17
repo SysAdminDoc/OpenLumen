@@ -302,6 +302,15 @@ for the new artifacts, and strict verification passed across assemble,
 lint, screenshot validation, and unit tests from the local mirror (S00p,
 S282).
 
+### C122 Roborazzi / Robolectric test dependency
+
+C122 is now shipped. OpenLumen adds Roborazzi 1.60.0 and Robolectric
+4.16.1 as test-only dependencies for the JVM screenshot lane (S150-S151,
+S283-S284). These artifacts do not enter the release runtime classpath
+and do not change the no-INTERNET or no-GMS posture. Dependency
+verification metadata was refreshed and strict validation now includes
+`:app:verifyRoborazziDebug` (S00q).
+
 ### C138 import-size hardening
 
 C138 is now shipped. `PreferencesStore` enforces its 64 KiB profile

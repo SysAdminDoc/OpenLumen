@@ -823,3 +823,30 @@ This pass implemented **C123 — Glance API widget rewrite**.
 - A local x86_64 emulator / AVD was provisioned for C01/C36/C103 follow-up
   checks but could not launch because hardware acceleration is unavailable
   on this host.
+
+## Implementation pass 24 (C122, 2026-05-17)
+
+This pass implemented **C122 — Roborazzi gold-image CI**.
+
+### Files modified (pass 24)
+
+| File | Why |
+|---|---|
+| `gradle/libs.versions.toml`, `build.gradle.kts`, `app/build.gradle.kts` | Added Roborazzi 1.60.0, Robolectric 4.16.1, the Roborazzi Gradle plugin, native-graphics unit-test settings, and the Roborazzi output directory. |
+| `app/src/test/java/com/openlumen/screenshot/ThemeTokenRoborazziTest.kt` | Added a textless Robolectric JVM screenshot fixture for dark/light theme-token coverage. |
+| `app/src/test/roborazzi/theme_tokens_dark.png`, `app/src/test/roborazzi/theme_tokens_light.png` | Checked in the initial Roborazzi PNG baselines. |
+| `.github/workflows/ci.yml` | Extended the screenshot job to run `:app:verifyRoborazziDebug` alongside Compose Preview Screenshot Testing. |
+| `gradle/verification-metadata.xml` | Refreshed dependency verification metadata for Roborazzi/Robolectric and transitive artifacts. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**` | Marked C122 shipped and documented the new screenshot lane. |
+| `.ai/research/2026-05-17/*.md` | Added S00q/S283-S284 and recorded implementation / verification state. |
+
+### Verification (pass 24)
+
+- `:app:compileDebugUnitTestKotlin --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:recordRoborazziDebug --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  generated the checked-in baselines.
+- `:app:verifyRoborazziDebug --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  passed against the baselines.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:verifyRoborazziDebug :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed after refreshing `gradle/verification-metadata.xml`.

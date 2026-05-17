@@ -85,6 +85,11 @@ major versions.
   AppWidgetProviderInfo layouts remain as launcher picker / initial
   previews only. Strict dependency verification passed from the local
   mirror after refreshing metadata.
+- [x] **C122 — Roborazzi gold-image CI** shipped on 2026-05-17.
+  The build now uses Roborazzi 1.60.0 plus Robolectric 4.16.1 for a
+  JVM/Robolectric theme-token golden lane. CI runs
+  `:app:verifyRoborazziDebug`, and two textless PNG baselines live under
+  `app/src/test/roborazzi/`.
 - [x] **C28 / C102 — Direct Boot restore** shipped on 2026-05-17. The
   unlocked service mirrors the last active tint matrix and selected engine
   to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
@@ -942,7 +947,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C119 | (folded into C35) | — | — | — | — | — | — | — |
 | C120 | VCS info determinism in reproducibility doc | distribution/docs | rare | Shipped 2026-05-17 | 2/1/1 | Release builds disable `vcsInfo.include`; `docs/reproducible-build.md` documents the AGP `version-control-info.textproto` handling and external provenance path | Known F-Droid reproducibility friction | S112, S156, S268 |
 | C121 | Tink + Proto DataStore replacement of EncryptedSharedPreferences (if we ever encrypt) | security | rare | Under Consideration | 2/3/2 | Document the modern path in `docs/threat-model.md`; not adopting now | EncryptedSharedPreferences deprecated; future-proof note | S122 |
-| C122 | Roborazzi gold-image CI | testing | rare | Next | 3/3/2 | Roborazzi gives JVM screenshot testing alongside Compose Preview Screenshot Testing | Belt-and-braces snapshot coverage | S97, S125 |
+| C122 | Roborazzi gold-image CI | testing | rare | Shipped 2026-05-17 | 3/3/2 | Added Roborazzi 1.60.0 / Robolectric 4.16.1, a textless theme-token JVM screenshot test, checked-in PNG baselines, and CI `:app:verifyRoborazziDebug` | Belt-and-braces snapshot coverage alongside Compose Preview Screenshot Testing | S97, S98, S150, S151, S00q |
 | C123 | Glance API widget rewrite | mobile | emerging | Shipped 2026-05-17 | 3/3/2 | Replaced runtime RemoteViews providers with Glance receivers on `androidx.glance:glance-appwidget:1.1.1`; kept XML layouts as launcher previews and preserved the existing widget broadcast actions | Cleaner widget code on the stable Glance line; strict dependency verification refreshed and passed | S118, S193, S194, S00p |
 | C124 | Hilt 2.56+ minimum | upgrade strategy | emerging | Shipped 2026-05-17 | 3/1/1 | Bumped Dagger/Hilt to 2.59.2 with KSP 2.3.8 as part of the AGP 9 train | Pairs with C96 | S94, S240, S241, S269 |
 | C125 | Twilight 14.25 feature scan | research | emerging | Later | 2/1/1 | Periodic check of Twilight's per-app/Wear/Chromebook frontier | Trend signal, not parity goal | S87 |
@@ -1001,6 +1006,12 @@ above; the others continue with their rev 2 placement.
   emulator provisioning for widget screenshots remained blocked because
   x86_64 Android emulator images require hardware acceleration on this
   host.
+- **S00q**: 2026-05-17 C122 Roborazzi implementation —
+  `ThemeTokenRoborazziTest.kt` records light/dark theme-token PNG
+  baselines under `app/src/test/roborazzi/`; CI now runs
+  `:app:verifyRoborazziDebug`; `gradle/verification-metadata.xml` was
+  refreshed for Roborazzi/Robolectric dependencies; strict verification
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 
 ### External URLs (rev 2 — preserved)
 

@@ -720,3 +720,31 @@ Verification:
 - `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
   passed from the same local mirror after refreshing
   `gradle/verification-metadata.xml`.
+
+## Implementation update (C122)
+
+C122 was the next implementable testing item after C123. Primary-source
+checks confirmed Roborazzi 1.60.0 and Robolectric 4.16.1 as current
+Maven Central releases for the JVM screenshot lane.
+
+Implementation:
+
+- Added the Roborazzi Gradle plugin and test dependencies.
+- Added a Robolectric-native `ThemeTokenRoborazziTest` that records dark
+  and light textless theme-token PNG baselines.
+- Checked in the generated baselines under `app/src/test/roborazzi/`.
+- Extended CI's screenshot job to run both
+  `:app:validateDebugScreenshotTest` and `:app:verifyRoborazziDebug`.
+- Updated contributor, release, dependency-verification, roadmap, and
+  context docs so the new screenshot lane is visible.
+
+Verification:
+
+- `:app:compileDebugUnitTestKotlin --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:recordRoborazziDebug --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  generated the two PNG baselines.
+- `:app:verifyRoborazziDebug --dependency-verification=off --no-daemon --no-configuration-cache --stacktrace`
+  passed against the checked-in baselines.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:verifyRoborazziDebug :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed after refreshing `gradle/verification-metadata.xml`.

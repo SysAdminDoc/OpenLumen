@@ -118,11 +118,13 @@ the dual-channel release process.
 
 ## Compose screenshot tests — C83 (partially unblocked)
 
-**Status**: C101 shipped the CI/runtime foundation on 2026-05-17:
-Compose Preview Screenshot Testing `0.0.1-alpha14`, an initial textless
-theme-token `@PreviewTest`, checked-in debug references, and
-`:app:validateDebugScreenshotTest` in CI. C83 is now the broader screen-
-coverage expansion, not the framework bootstrap.
+**Status**: C101 and C122 shipped the CI/runtime foundation on
+2026-05-17. Compose Preview Screenshot Testing `0.0.1-alpha14` covers an
+initial textless theme-token `@PreviewTest` with checked-in debug
+references; Roborazzi 1.60.0 covers the same theme-token surface through
+Robolectric with checked-in PNG baselines and `:app:verifyRoborazziDebug`
+in CI. C83 is now the broader screen-coverage expansion, not the
+framework bootstrap.
 
 **Plan**:
 
@@ -132,8 +134,9 @@ coverage expansion, not the framework bootstrap.
    explicitly validating copy/layout.
 3. Add dark/light variants for the public app chrome and tablet-ish
    widths once the first tab fixtures are stable.
-4. Consider Roborazzi only if Compose Preview Screenshot Testing cannot
-   express a needed device/font/layout dimension.
+4. Use Roborazzi for JVM goldens that benefit from Robolectric device
+   qualifiers, and keep Compose Preview Screenshot Testing for static
+   preview coverage.
 
 **Why deferred**: the CI gate now exists, but full tab coverage needs a
 deliberate fixture design so goldens do not churn on localization,

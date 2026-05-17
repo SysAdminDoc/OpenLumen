@@ -43,6 +43,7 @@ rm -rf ~/.gradle/caches
     :app:assembleRelease \
     :app:lintDebug \
     :app:validateDebugScreenshotTest \
+    :app:verifyRoborazziDebug \
     :app:testDebugUnitTest \
     :core-engine:test \
     :core-schedule:test \
@@ -53,6 +54,7 @@ rm -rf ~/.gradle/caches
     :app:assembleDebug \
     :app:lintDebug \
     :app:validateDebugScreenshotTest \
+    :app:verifyRoborazziDebug \
     :app:testDebugUnitTest \
     :core-engine:test \
     :core-schedule:test \

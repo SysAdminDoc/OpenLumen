@@ -210,8 +210,9 @@ These came up in the research and were considered, then declined.
   Captured as C131 instead.
 - **Adopting Roborazzi or Paparazzi as the primary screenshot framework**
   instead of Compose Preview Screenshot Testing: keep Compose Preview as
-  primary (S148) because it's IDE-native; Roborazzi/Paparazzi can be
-  belt-and-braces if the alpha tool burns us. Already C122 in rev 3.
+  primary (S148) because it is IDE-native. C122 is now shipped as a
+  supplemental Roborazzi JVM golden lane, not a replacement for Compose
+  Preview Screenshot Testing. Paparazzi remains deferred.
 
 ## Backlog discipline notes
 
