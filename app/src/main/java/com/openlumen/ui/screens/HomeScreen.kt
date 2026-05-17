@@ -149,6 +149,13 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                val luminanceReductionPct =
+                    (MatrixPreview.perceivedLuminanceReduction(prefs) * 100f).toInt()
+                Text(
+                    stringResource(R.string.home_luminance_reduction, luminanceReductionPct),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
                 Spacer(Modifier.height(8.dp))
                 Row(

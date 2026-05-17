@@ -646,3 +646,25 @@ Verification:
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 - `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
   passed from the same local mirror.
+
+## Implementation update (C127)
+
+C127 was the next small local UX/data slice after Direct Boot. The prior
+Home tab only exposed blue-channel suppression even though the research
+notes say total luminance is the more defensible display-output metric.
+
+Implementation:
+
+- Added `MatrixPreview.perceivedLuminanceReduction()`, using transformed-
+  white relative luminance with sRGB channel weights.
+- Added Home-tab copy: "Perceived brightness reduced by N%" next to the
+  existing blue-channel reduction line.
+- Added `MatrixPreviewTest` coverage for identity, dimming, and weighted
+  channel behavior.
+
+Verification:
+
+- `:app:testDebugUnitTest :app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.

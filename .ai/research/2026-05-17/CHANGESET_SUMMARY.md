@@ -754,3 +754,24 @@ This pass implemented **C28/C102 — Direct Boot restore**.
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 - `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
   passed from the same local mirror.
+
+## Implementation pass 21 (C127, 2026-05-17)
+
+This pass implemented **C127 — Perceived-luminance reduction indicator**.
+
+### Files modified (pass 21)
+
+| File | Why |
+|---|---|
+| `app/src/main/java/com/openlumen/diagnostics/MatrixPreview.kt` | Added transformed-white relative luminance reduction using sRGB channel weights. |
+| `app/src/main/java/com/openlumen/ui/screens/HomeScreen.kt`, `app/src/main/res/values/strings.xml` | Displayed "Perceived brightness reduced by N%" next to the existing blue-suppression metric. |
+| `app/src/test/java/com/openlumen/diagnostics/MatrixPreviewTest.kt` | Covered identity, dimming, and weighted-channel behavior. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `docs/**` | Marked C127 shipped and documented the metric as display-output, not medical efficacy. |
+| `.ai/research/2026-05-17/*.md` | Added S00n and recorded C127 implementation/verification state. |
+
+### Verification (pass 21)
+
+- `:app:testDebugUnitTest :app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.

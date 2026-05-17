@@ -432,6 +432,9 @@ watchpoints future sessions should not miss:
   results. Real pass/fail data still belongs to C01 device validation.
 - **Direct Boot restore (C28/C102)**: shipped 2026-05-17. Real
   pass/fail evidence still belongs in C01 device-matrix rows.
+- **Perceived luminance indicator (C127)**: shipped 2026-05-17. Home
+  shows transformed-white perceived brightness reduction next to the
+  existing blue-channel reduction metric.
 - **AndroidX stable refresh (C144)**: shipped 2026-05-17. The Android 17
   `targetSdk` bump remains separate C103 work.
 

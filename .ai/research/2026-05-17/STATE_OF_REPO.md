@@ -199,6 +199,10 @@ C36 store screenshots remain blocked in this environment: the local SDK
 has build-tools/platform packages but no emulator binary, no AVD, and no
 system image. A real device or provisioned emulator is still required.
 
+C28/C102 and C127 also shipped after the AndroidX refresh. Direct Boot now
+has a device-protected restore mirror, and the Home tab now exposes
+perceived brightness reduction alongside blue suppression.
+
 ## Architecture (verified against source)
 
 Architecture as documented in [docs/ARCHITECTURE.md](../../../docs/ARCHITECTURE.md)

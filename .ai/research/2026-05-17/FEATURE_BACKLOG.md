@@ -395,3 +395,6 @@ stable base for Direct Boot restore.
   from `LOCKED_BOOT_COMPLETED`, and avoids credential-protected
   preferences before first unlock. Device pass/fail evidence remains C01.
   Source: S00m.
+- **C127 shipped 2026-05-17**. Home now shows perceived brightness
+  reduction next to blue suppression, backed by transformed-white relative
+  luminance in `MatrixPreview`. Source: S00n.

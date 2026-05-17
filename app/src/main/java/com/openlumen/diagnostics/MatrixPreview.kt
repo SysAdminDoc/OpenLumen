@@ -77,4 +77,22 @@ object MatrixPreview {
         val blue = rgb.getOrNull(2)?.coerceIn(0f, 1f) ?: 1f
         return (1f - blue).coerceIn(0f, 1f)
     }
+
+    /**
+     * Relative luminance reduction for transformed white, using Rec. 709 /
+     * sRGB luminance weights. This is a display-output metric, not a sleep
+     * or medical efficacy claim.
+     */
+    fun perceivedLuminanceReduction(p: Preferences): Float {
+        val matrix = matrixFor(p)
+        val rgb = matrix.scaledRgb()
+        val r = (rgb.getOrNull(0) ?: 1f) + matrix.biasR
+        val g = (rgb.getOrNull(1) ?: 1f) + matrix.biasG
+        val b = (rgb.getOrNull(2) ?: 1f) + matrix.biasB
+        val luminance =
+            (0.2126f * r.coerceIn(0f, 1f)) +
+                (0.7152f * g.coerceIn(0f, 1f)) +
+                (0.0722f * b.coerceIn(0f, 1f))
+        return (1f - luminance).coerceIn(0f, 1f)
+    }
 }

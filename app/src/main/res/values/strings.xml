@@ -19,6 +19,7 @@
     <string name="home_contrast_value">%1$.2f×</string>
     <string name="home_contrast_state">%1$.2f times</string>
     <string name="home_blue_suppression">Blue channel reduced by %1$d%%</string>
+    <string name="home_luminance_reduction">Perceived brightness reduced by %1$d%%</string>
     <string name="home_amoled_clamp_title">AMOLED true-black</string>
     <string name="home_amoled_clamp_subtitle">Snap very dim subpixels to fully off. No effect on LCD panels.</string>
     <string name="home_kelvin_title">Color temperature</string>

@@ -77,6 +77,10 @@ major versions.
   to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
   direct-boot-aware service path, and root-only engines degrade to the
   rootless Overlay path until the user unlocks.
+- [x] **C127 — Perceived-luminance reduction indicator** shipped on
+  2026-05-17. The Home tab now pairs blue-channel reduction with a
+  relative perceived-brightness reduction metric derived from the effective
+  transformed-white luminance.
 
 ## What changed in rev 5
 
@@ -697,17 +701,18 @@ Partial (per rev 2, still partial in rev 3):
     - Impact 4, effort 2, risk 2. Sources: S60, S61, S62, S63, S64,
       S67, S68, S77, S108, S110, S114.
 
-12. **Sleep-evidence consensus update (C100 extension, C127 new)**
+12. **Sleep-evidence consensus update (C100 extension, C127 new) —
+    shipped 2026-05-17**
     - The 2025/2026 sleep-science consensus has shifted: total
       luminance matters more than spectrum for sleep onset, and one
       prominent researcher publicly retracted earlier blue-light
       advocacy. Update `docs/health-evidence.md` with a one-paragraph
       "what changed since rev 2" note and reinforce the Home tab's
-      "comfort, not treatment" copy. New candidate C127: surface a
-      "perceived luminance reduction" indicator alongside the
-      existing blue-suppression metric on the Home tab.
+      "comfort, not treatment" copy. C127 now surfaces a
+      "perceived brightness reduced" indicator alongside the existing
+      blue-suppression metric on the Home tab.
     - Impact 3, effort 1, risk 1. Sources: S45, S46, S47, S99, S100,
-      S101, S102, S158, S159, S160, S161, S162.
+      S101, S102, S158, S159, S160, S161, S162, S00n.
 
 13. **AAPM driver-report surface (C130, new in rev 4)**
     - Reflection-gated query for `AdvancedProtectionManager` state on
@@ -933,7 +938,7 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C124 | Hilt 2.56+ minimum | upgrade strategy | emerging | Shipped 2026-05-17 | 3/1/1 | Bumped Dagger/Hilt to 2.59.2 with KSP 2.3.8 as part of the AGP 9 train | Pairs with C96 | S94, S240, S241, S269 |
 | C125 | Twilight 14.25 feature scan | research | emerging | Later | 2/1/1 | Periodic check of Twilight's per-app/Wear/Chromebook frontier | Trend signal, not parity goal | S87 |
 | C126 | Stronger sleep-evidence disclaimer | docs/licensing | rare | Shipped 2026-05-17 | 3/1/1 | `docs/health-evidence.md` now has the 2025/2026 consensus-shift note plus S99-S102 and S158-S162 source refresh | Consensus shift demands explicit acknowledgement | S99-S102, S158-S162 |
-| C127 | Perceived-luminance reduction indicator | UX/data | rare | Next | 3/2/1 | Surface "Perceived brightness reduced by N%" alongside blue-suppression on Home | Aligns the UI metric with current sleep-evidence consensus | S99-S102 |
+| C127 | Perceived-luminance reduction indicator | UX/data | rare | Shipped 2026-05-17 | 3/2/1 | Added `MatrixPreview.perceivedLuminanceReduction()` and Home-tab copy for "Perceived brightness reduced by N%" alongside blue suppression | Aligns the UI metric with current sleep-evidence consensus | S99-S102, S00n |
 
 ### Hardening (post-rev-2 audit) — landed on `main`
 

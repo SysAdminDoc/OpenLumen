@@ -164,6 +164,11 @@ contradicted, by the new evidence. Sources:
 - **S162** — SAGE Journals (2026) — Blue-light-filtering spectacle lenses
   in managing vision-related symptoms: updated review.
   https://journals.sagepub.com/doi/10.1177/25158414251412798
+
+Implementation note: C127 shipped the Home-tab "Perceived brightness
+reduced by N%" metric on 2026-05-17. It is computed from transformed-white
+relative luminance using sRGB channel weights, and remains a display-output
+metric rather than a sleep or treatment claim.
   Takeaway: 2026 update confirms little/no clinical benefit on visual
   fatigue from blue-blocking products.
 

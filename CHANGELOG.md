@@ -83,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is now 36 while `targetSdk` stays 35 until Android 17 validation.
 - The foreground service is direct-boot aware and falls root-only driver
   choices back to the Overlay engine until the user unlocks.
+- Home now shows perceived brightness reduction next to blue-channel
+  reduction, using transformed-white relative luminance as a display-output
+  metric.
 - Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
   `WRITE_SECURE_SETTINGS` declaration so the documented ADB grant can succeed.
 - The foreground service subscribes to the light sensor only while the filter and
