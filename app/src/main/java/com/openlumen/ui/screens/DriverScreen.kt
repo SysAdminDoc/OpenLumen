@@ -153,6 +153,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 val command = adbGrantCommand(ctx.packageName)
+                val clipboardAdbGrant = stringResource(R.string.clipboard_adb_grant)
+                val commandCopied = stringResource(R.string.command_copied)
                 Text(
                     command,
                     style = MaterialTheme.typography.bodySmall
@@ -161,12 +163,12 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     onClick = {
                         copyToClipboard(
                             ctx,
-                            label = ctx.getString(R.string.clipboard_adb_grant),
+                            label = clipboardAdbGrant,
                             text = command
                         )
                         Toast.makeText(
                             ctx,
-                            ctx.getString(R.string.command_copied),
+                            commandCopied,
                             Toast.LENGTH_SHORT
                         ).show()
                     },
@@ -184,17 +186,21 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val clipboardDriverReport = stringResource(R.string.clipboard_driver_report)
+            val reportCopied = stringResource(R.string.report_copied)
+            val driverReportSubject = stringResource(R.string.driver_report_subject)
+            val driverShareReport = stringResource(R.string.driver_share_report)
             LumenOutlinedButton(
                 onClick = {
                     val report = vm.buildDriverReport()
                     copyToClipboard(
                         ctx,
-                        label = ctx.getString(R.string.clipboard_driver_report),
+                        label = clipboardDriverReport,
                         text = report
                     )
                     Toast.makeText(
                         ctx,
-                        ctx.getString(R.string.report_copied),
+                        reportCopied,
                         Toast.LENGTH_SHORT
                     ).show()
                 },
@@ -206,11 +212,11 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     val report = vm.buildDriverReport()
                     val send = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_SUBJECT, ctx.getString(R.string.driver_report_subject))
+                        putExtra(Intent.EXTRA_SUBJECT, driverReportSubject)
                         putExtra(Intent.EXTRA_TEXT, report)
                     }
                     ctx.startActivity(
-                        Intent.createChooser(send, ctx.getString(R.string.driver_share_report))
+                        Intent.createChooser(send, driverShareReport)
                     )
                 },
                 modifier = Modifier.weight(1f)

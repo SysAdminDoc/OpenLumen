@@ -138,7 +138,7 @@ deadline.
 | C141 | Android Developer Console package registration | Now | 5 | 2 | 2 | +1 | Distribution-blocking for certified devices in first enforcement regions if OpenLumen remains off-Play. |
 | C142 | CI action major rotation and SHA-pinning policy | Shipped 2026-05-17 | 4 | 2 | 2 | 0 | Implemented after rev 5: current major tags, `actions/attest@v4`, and documented major-tag policy with full-SHA exception path. |
 | C143 | Android 17 memory/resizability smoke expansion | Shipped 2026-05-17 | 3 | 1 | 1 | +1 | Implemented after rev 5: Android 17 readiness plus device-matrix MemoryLimiter and sw600dp smoke steps. |
-| C144 | AndroidX stable baseline refresh batch | Next | 3 | 2 | 2 | -1 | Useful and now unblocked by the AGP 9 / Hilt train, but should remain separate from that migration for attribution. |
+| C144 | AndroidX stable baseline refresh batch | Shipped 2026-05-17 | 3 | 2 | 2 | -1 | Implemented after the AGP 9 / Hilt train as a separate stable AndroidX batch. |
 
 ### Rev 5 Now-tier additions
 
@@ -152,11 +152,11 @@ were implemented after rev 5 and no longer block the Now queue.
 
 ### Rev 5 Next-tier addition
 
-- **C144 — AndroidX stable baseline refresh batch** after the shipped
-  C95/C96/C124 train.
+- None remaining from rev 5. **C144 — AndroidX stable baseline refresh
+  batch** shipped after the C95/C96/C124 train.
 
-Rationale: dependency drift is real, but mixing AndroidX churn into the
-AGP 9 migration would make failures hard to isolate.
+Rationale: dependency drift was real, but keeping AndroidX churn out of
+the AGP 9 migration made failures attributable.
 
 ### Existing candidate refinements
 
@@ -196,6 +196,7 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C101 | Shipped 2026-05-17 | Compose screenshot plugin 0.0.1-alpha14, initial theme-token references, and CI validation job landed. |
 | C124 | Shipped 2026-05-17 | Dagger/Hilt bumped to 2.59.2 as part of the AGP 9 train. |
 | C35 | Shipped 2026-05-17 | Final adaptive/store icon assets landed with source SVG and fastlane 512x512 PNG. |
+| C144 | Shipped 2026-05-17 | Stable AndroidX floors refreshed; compileSdk is 36, targetSdk remains 35, and Direct Boot now has DataStore 1.2.1 available. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

@@ -204,8 +204,7 @@ deferred items have design sketches in
 Post-v0.5.0 work clusters around:
 
 - A Shizuku-backed privileged path for per-app behavior (C06)
-- Direct Boot restore (C28)
-- AndroidX stable baseline refresh now that AGP 9 / Hilt migration landed (C144)
+- Direct Boot restore now that DataStore 1.2.1 has landed (C28/C102)
 - Broader Compose screenshot screen coverage beyond the initial CI fixture (C83)
 - Wear OS companion as a separate F-Droid package (C21)
 - Real-device validation rows in `docs/device-matrix.md` (C01)

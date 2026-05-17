@@ -304,13 +304,18 @@ for tablets, foldables, desktop windowing, and Android TV exploration.
 
 ### C144 — AndroidX stable baseline refresh batch
 
-**Tier**: Next
+**Tier**: Shipped 2026-05-17
 **Category**: upgrade strategy
 **Sources**: S237-S241, S252, S253
 
 **Idea**: After the AGP 9 migration, refresh stable AndroidX floors in
 one controlled batch: core/activity/lifecycle/navigation/DataStore and
 Compose Material 3.
+
+**Implementation result**: Shipped as C144. OpenLumen now pins Compose
+BOM 2026.05.00, Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation
+2.9.8, DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0.
+`compileSdk` is 36 and `targetSdk` remains 35.
 
 **Why it fits**: The repo intentionally defers broad dependency churn
 until the release foundation is stable. The current AndroidX stable
@@ -319,12 +324,11 @@ stable base for Direct Boot restore.
 
 **Implementation sketch**:
 
-1. C95/C96/C124 are now landed: AGP 9.2.1 + Gradle 9.4.1 + Kotlin
+1. C95/C96/C124 landed first: AGP 9.2.1 + Gradle 9.4.1 + Kotlin
    2.3.21 + KSP 2.3.8 + Hilt 2.59.2.
-2. Batch stable AndroidX updates; keep alpha tracks out unless a
-   candidate explicitly needs them.
-3. Re-run unit tests, lint, permission audit, profile export/import, and
-   service smoke.
+2. C144 batched stable AndroidX updates and kept alpha tracks out.
+3. Full validation passed from the local mirror: assemble debug, lint,
+   screenshot validation, app unit tests, and all core module tests.
 
 ## Roadmap execution update after rev 5
 
@@ -379,8 +383,11 @@ stable base for Direct Boot restore.
   screenshot train is landed: AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21,
   KSP 2.3.8, Hilt 2.59.2, AndroidX Hilt Compose 1.3.0, and Compose
   screenshot plugin 0.0.1-alpha14. C83 remains broader tab/screen
-  screenshot coverage; C144 is now unblocked as a separate AndroidX
-  stable refresh. Source: S00j.
+  screenshot coverage. Source: S00j.
 - **C35 shipped 2026-05-17**. The adaptive launcher and 512x512
   fastlane/store icon now use the final minimal crescent mark. C36 store
   screenshots remain the artwork/distribution blocker. Source: S00k.
+- **C144 shipped 2026-05-17**. Stable AndroidX floors were refreshed as
+  a separate post-AGP-9 batch, `compileSdk` moved to 36, and updated
+  Compose lint findings were fixed. Direct Boot restore now has the
+  DataStore 1.2.1 floor it was waiting on. Source: S00l.

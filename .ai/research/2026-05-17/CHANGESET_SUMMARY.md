@@ -707,3 +707,27 @@ This pass implemented **C35 — Final adaptive icon**.
 - Generated PNG was visually inspected.
 - `:app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+
+## Implementation pass 19 (C144, 2026-05-17)
+
+This pass implemented **C144 — AndroidX stable baseline refresh batch**.
+
+### Files modified (pass 19)
+
+| File | Why |
+|---|---|
+| `gradle/libs.versions.toml` | Refreshed stable AndroidX floors: Compose BOM 2026.05.00, Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation 2.9.8, DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0. |
+| `app/build.gradle.kts`, `core-engine/build.gradle.kts`, `core-prefs/build.gradle.kts`, `core-schedule/build.gradle.kts` | Raised `compileSdk` to 36 for the refreshed AndroidX artifacts while leaving `targetSdk` at 35. |
+| `app/src/main/java/com/openlumen/ui/screens/AboutScreen.kt`, `app/src/main/java/com/openlumen/ui/screens/DriverScreen.kt` | Hoisted string resources out of click handlers to satisfy updated Compose lint checks. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `README.md`, `CHANGELOG.md`, `docs/**` | Marked C144 shipped, updated stack/version notes, and revised Direct Boot / dependency-verification follow-ups. |
+| `.ai/research/2026-05-17/*.md` | Added S00l and S275-S281; updated backlog, prioritization, dependency review, repo state, research log, and this changeset. |
+
+### Verification (pass 19)
+
+- `:app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- C36 store screenshots were checked and remain blocked locally because
+  the installed Android SDK has no emulator binary, no AVD, and no system
+  image.

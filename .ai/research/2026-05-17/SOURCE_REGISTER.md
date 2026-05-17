@@ -2,10 +2,10 @@
 
 Every local and external source used in this research pass. Inherits the
 roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
-entries through `S274` collected during this session and implementation
+entries through `S281` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00j)
+## Local evidence (S00 / S00b-S00l)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -717,6 +717,14 @@ informed.
   `branding/openlumen-icon.svg`, and
   `fastlane/metadata/android/en-US/images/icon.png` now contain the final
   minimal crescent adaptive/store icon assets.
+- **S00l**: Local implementation evidence for C144 —
+  `gradle/libs.versions.toml` now pins Compose BOM 2026.05.00,
+  Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation 2.9.8,
+  DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0; app and
+  library modules compile with SDK 36 while target SDK remains 35.
+  `AboutScreen.kt` and `DriverScreen.kt` were adjusted for the new
+  Compose lint rule by reading string resources outside click handlers.
+  Full validation passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -741,19 +749,37 @@ informed.
 - **S274**: Dagger releases — Dagger/Hilt 2.59.2 fixes AGP-9-era Hilt
   transform and incremental-build issues.
   https://github.com/google/dagger/releases
+- **S275**: AndroidX releases overview — current stable matrix for
+  Activity, Core, Lifecycle, Navigation, DataStore, Compose, and Material 3.
+  https://developer.android.com/jetpack/androidx/versions
+- **S276**: AndroidX Core releases — `core-ktx` 1.18.0 stable.
+  https://developer.android.com/jetpack/androidx/releases/core
+- **S277**: AndroidX Activity releases — Activity / Activity Compose
+  1.13.0 stable.
+  https://developer.android.com/jetpack/androidx/releases/activity
+- **S278**: AndroidX Lifecycle releases — Lifecycle 2.10.0 stable.
+  https://developer.android.com/jetpack/androidx/releases/lifecycle
+- **S279**: AndroidX Navigation releases — Navigation Compose 2.9.8 stable.
+  https://developer.android.com/jetpack/androidx/releases/navigation
+- **S280**: AndroidX DataStore releases — DataStore preferences 1.2.1 stable.
+  https://developer.android.com/jetpack/androidx/releases/datastore
+- **S281**: Compose BOM mapping and Material 3 releases — Compose BOM
+  2026.05.00 and Material 3 1.4.0 stable.
+  https://developer.android.com/develop/ui/compose/bom/bom-mapping and
+  https://developer.android.com/jetpack/androidx/releases/compose-material3
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k | 11 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l | 12 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
 | Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
 | AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
-| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S274 | 34 |
-| DataStore | S66, S95, S146-S147 | 4 |
+| AGP / Hilt / Compose / Glance | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S281 | 41 |
+| DataStore | S66, S95, S146-S147, S252, S280 | 6 |
 | F-Droid | S60-S61, S111-S112, S154-S157 | 8 |
 | Security (OWASP / GHSA / SBOM tooling) | S60-S64, S67-S68, S77, S108-S110, S114, S122, S188-S192 | 19 |
 | Sleep / circadian | S45-S47, S99-S102, S158-S162 | 12 |
@@ -795,4 +821,7 @@ S00i records the local C117 first-emission dispatch implementation and
 JVM regression coverage. S00j records the local C95/C96/C101/C124 AGP 9
 / Hilt / screenshot implementation evidence. S269-S274 refresh the
 current external toolchain sources that informed that implementation.
-S00k records the local C35 final icon assets.
+S00k records the local C35 final icon assets. S00l records the C144
+stable AndroidX baseline refresh and full local-mirror validation.
+S275-S281 capture the AndroidX / Compose release evidence used for that
+batch.

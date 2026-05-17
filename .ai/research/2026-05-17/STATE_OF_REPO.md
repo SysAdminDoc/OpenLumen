@@ -26,22 +26,22 @@ Sourced from [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) and
 | Kotlin | 2.3.21 |
 | AGP | 9.2.1 |
 | KSP | 2.3.8 |
-| Compose BOM | 2024.12.01 |
+| Compose BOM | 2026.05.00 |
 | Compose compiler | Kotlin Compose plugin 2.3.21 |
-| Material 3 | 1.3.1 |
-| Activity Compose | 1.9.3 |
-| Lifecycle (runtime/viewmodel/service) | 2.8.7 |
-| Navigation Compose | 2.8.5 |
+| Material 3 | 1.4.0 |
+| Activity Compose | 1.13.0 |
+| Lifecycle (runtime/viewmodel/service) | 2.10.0 |
+| Navigation Compose | 2.9.8 |
 | Hilt | 2.59.2 |
 | AndroidX Hilt lifecycle-viewmodel-compose | 1.3.0 |
 | Compose screenshot plugin | 0.0.1-alpha14 |
-| DataStore (preferences) | 1.1.1 |
+| DataStore (preferences) | 1.2.1 |
 | kotlinx.serialization JSON | 1.7.3 |
 | kotlinx.coroutines | 1.9.0 |
-| AndroidX core-ktx | 1.15.0 |
+| AndroidX core-ktx | 1.18.0 |
 | JUnit 4 | 4.13.2 |
 | Truth | 1.4.4 |
-| minSdk / targetSdk / compileSdk | 26 / 35 / 35 |
+| minSdk / targetSdk / compileSdk | 26 / 35 / 36 |
 | JVM target | 17 |
 | `versionCode` / `versionName` | 5 / `0.4.0` |
 
@@ -185,6 +185,19 @@ f1c55c8 Post-v0.4.0 hardening pass: nullable solar coords, overlay alpha fix, sa
 
 Every feature commit references a roadmap candidate ID. That traceability is
 preserved.
+
+## Current implementation state after C144
+
+C144 shipped the stable AndroidX refresh on 2026-05-17. The repo now
+compiles against SDK 36 for current AndroidX artifacts, but still targets
+SDK 35 until C103 Android 17 device validation is complete. Full Gradle
+validation passed from `C:\Users\Xray\OpenLumen-agp9-verify`; direct
+builds from `Z:\repos\OpenLumen` remain affected by the known AGP 9 D8
+Windows shared-folder path limitation.
+
+C36 store screenshots remain blocked in this environment: the local SDK
+has build-tools/platform packages but no emulator binary, no AVD, and no
+system image. A real device or provisioned emulator is still required.
 
 ## Architecture (verified against source)
 

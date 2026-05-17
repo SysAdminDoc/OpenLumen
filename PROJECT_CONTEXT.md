@@ -39,15 +39,15 @@ August 2022) on Android 14 / 15 / 17.
 | Kotlin | 2.3.21 | AGP 9 built-in Kotlin compiles Android modules; only Compose / serialization plugins are applied separately. |
 | AGP | 9.2.1 | C95 shipped on 2026-05-17; `targetSdk` still waits for C103 Android 17 validation. |
 | KSP | 2.3.8 | |
-| Compose BOM | 2024.12.01 | |
+| Compose BOM | 2026.05.00 | C144 shipped on 2026-05-17 as the post-AGP-9 stable AndroidX batch. |
 | Compose compiler | Kotlin Compose plugin 2.3.21 | The old standalone `compose-compiler` catalog version was removed. |
-| Material 3 | 1.3.1 | C137 removed `material-icons-extended`; nav/favorite icons are local vector resources under `app/src/main/res/drawable/`. |
+| Material 3 | 1.4.0 | C137 removed `material-icons-extended`; nav/favorite icons are local vector resources under `app/src/main/res/drawable/`. |
 | Hilt | 2.59.2 | C96/C124 shipped on 2026-05-17; Compose `hiltViewModel()` comes from `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`. |
 | Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped initial theme-token preview references and CI validation. |
-| DataStore | 1.1.1 | New `deviceProtectedDataStore()` API unlocks Direct Boot restore (C28). |
+| DataStore | 1.2.1 | Stable Direct Boot helper APIs now unlock C28/C102 implementation work. |
 | kotlinx.serialization | 1.7.3 | |
 | kotlinx.coroutines | 1.9.0 | |
-| `minSdk` / `targetSdk` / `compileSdk` | 26 / 35 / 35 | Bump to 36 (Android 17) is C103. |
+| `minSdk` / `targetSdk` / `compileSdk` | 26 / 35 / 36 | C144 raised compile SDK for current AndroidX; the target SDK bump remains C103 Android 17 validation work. |
 | JVM target | 17 | |
 | Test framework | JUnit 4 + Truth | |
 
@@ -424,9 +424,9 @@ watchpoints future sessions should not miss:
   `docs/wake-and-vitals.md` has Android 14/15/16/17 pending rows and
   `docs/device-matrix.md` requires a `boot restore` note for Android 14+
   results. Real pass/fail data still belongs to C01 device validation.
-- **AndroidX stable refresh (C144)**: now unblocked by the AGP/Hilt train;
-  batch the stable AndroidX floor refresh separately so failures remain
-  attributable.
+- **AndroidX stable refresh (C144)**: shipped 2026-05-17. Direct Boot
+  restore now has the stable DataStore 1.2.1 floor; the Android 17
+  `targetSdk` bump remains separate C103 work.
 
 ## Where to look for what
 

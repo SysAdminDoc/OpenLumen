@@ -203,13 +203,15 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 val command = emergencyOffCommand(ctx.packageName)
+                val clipboardEmergencyOff = stringResource(R.string.clipboard_emergency_off)
+                val emergencyOffCopied = stringResource(R.string.about_emergency_off_copied)
                 Text(command, style = MaterialTheme.typography.bodySmall)
                 LumenOutlinedButton(
                     onClick = {
-                        copyToClipboardAbout(ctx, ctx.getString(R.string.clipboard_emergency_off), command)
+                        copyToClipboardAbout(ctx, clipboardEmergencyOff, command)
                         Toast.makeText(
                             ctx,
-                            ctx.getString(R.string.about_emergency_off_copied),
+                            emergencyOffCopied,
                             Toast.LENGTH_SHORT
                         ).show()
                     },

@@ -595,3 +595,28 @@ Verification:
 - Visually inspected the generated PNG.
 - `:app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+
+## Implementation update (C144)
+
+C144 was the next executable dependency slice after C35. C36 store
+screenshots were checked first, but this machine has no emulator binary,
+no AVD, and no installed system image, so screenshot capture still needs a
+real device or provisioned emulator.
+
+Implementation:
+
+- Updated the stable AndroidX baseline: Compose BOM 2026.05.00,
+  Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation 2.9.8,
+  DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0.
+- Raised all Android modules to `compileSdk = 36` because the refreshed
+  AndroidX artifacts require it; `targetSdk` intentionally remains 35
+  until C103 Android 17 validation.
+- Fixed new Compose lint findings by hoisting string resources out of
+  About / Driver screen click handlers.
+
+Verification:
+
+- `:app:assembleDebug --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --no-daemon --no-configuration-cache --stacktrace`
+  passed from the same local mirror.

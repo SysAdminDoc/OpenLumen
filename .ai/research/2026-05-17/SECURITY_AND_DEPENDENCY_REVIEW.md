@@ -15,16 +15,16 @@ From [gradle/libs.versions.toml](../../../gradle/libs.versions.toml) on
 | AGP | 9.2.1 | C95 shipped 2026-05-17; Gradle wrapper is 9.4.1. AGP 10 remains a future watch item (S270). |
 | Kotlin | 2.3.21 | AGP 9 built-in Kotlin compiles Android modules; Compose and serialization plugins remain explicit where needed. |
 | KSP | 2.3.8 | Matches the post-C95 Kotlin/Hilt train and resolves from Maven Central (S273). |
-| Compose BOM | 2024.12.01 | Concrete rev 4.1 target: 2026.05.00; rev 5 AndroidX table confirms compose 1.11.1 / material3 1.4.0 stable (S225, S239, S253). |
+| Compose BOM | 2026.05.00 | C144 shipped the stable Compose BOM refresh after the AGP 9 train (S225, S253, S281). |
 | Compose compiler | Kotlin Compose plugin 2.3.21 | The stale standalone catalog version was removed; compose compiler is implied by the Kotlin Compose plugin. |
-| Material 3 | 1.3.1 | C110 surveys Material 3 Expressive components when timing fits; C137 removed the deprecated `material-icons-extended` dependency. |
+| Material 3 | 1.4.0 | C110 surveys Material 3 Expressive components when timing fits; C137 removed the deprecated `material-icons-extended` dependency. |
 | Hilt | 2.59.2 | C124 shipped with the AGP 9 train (S274). |
 | Hilt lifecycle-viewmodel-compose | 1.3.0 | C96 shipped; `hiltViewModel()` imports now use `androidx.hilt.lifecycle.viewmodel.compose` (S269). |
 | Compose screenshot plugin | 0.0.1-alpha14 | C101 shipped an initial `@PreviewTest` fixture and CI validation. |
-| DataStore | 1.1.1 | C28 / C102: use stable 1.2.1 / Direct Boot APIs (`deviceProtectedDataStore()`, S252). |
+| DataStore | 1.2.1 | C144 shipped the stable floor needed before C28 / C102 Direct Boot restore work (S252, S280). |
 | kotlinx.serialization | 1.7.3 | No upgrade pressure. |
 | kotlinx.coroutines | 1.9.0 | No upgrade pressure. |
-| AndroidX core-ktx | 1.15.0 | Rev 5 C144 batches stable AndroidX refresh after C95; current stable core is 1.18.0 (S239). |
+| AndroidX core-ktx | 1.18.0 | C144 shipped the stable AndroidX baseline refresh after C95 (S239, S276). |
 | JUnit 4 | 4.13.2 | OK; could move to JUnit 5 but not urgent. |
 | Truth | 1.4.4 | OK. |
 
@@ -159,16 +159,16 @@ this version range.
 
 Risk: medium. Documented in rev 3 as I/E/R 4/3/3.
 
-### PR 3 — Compose BOM bump + Material 3 survey (C110)
+### PR 3 — Material 3 Expressive survey (C110)
 
-After PR 2 lands. Pick a 2025/2026 Compose BOM line, verify Material 3
-Expressive components surface, decide whether to adopt FAB Menu /
-ToggleButtons. Documented in rev 3 as C110 (Later) — only do this if
-PR 2's AGP 9 work doesn't bring it in incidentally.
+C144 already moved the app to Compose BOM 2026.05.00 and Material 3
+1.4.0. C110 remains only the separate decision on whether future stable
+Material 3 Expressive components are worth adopting for FAB Menu /
+ToggleButtons.
 
 ### PR 4 — DataStore 1.2 + Direct Boot restore (C28 / C102)
 
-- Bump `datastore = "1.2.x"`.
+- Use the already-landed `datastore = "1.2.1"` floor.
 - Build a `LockedBootCompletedReceiver` (separate from `BootReceiver`).
 - Mirror `enabled` + active `engine` minima into
   `deviceProtectedDataStore()`.
@@ -271,18 +271,18 @@ Kotlin 2.3.21, KSP 2.3.8, Dagger/Hilt 2.59.2, and AndroidX Hilt
 Compose 1.3.0. Dagger/Hilt 2.59.2 is still the right pairing because it
 fixes AGP-9-era Hilt transform / incremental-build issues (S274).
 
-Follow-up: keep C144 as a separate AndroidX stable refresh so dependency
-churn remains attributable.
+Follow-up: C144 is now complete. Generate Gradle dependency verification
+metadata next once release-surface review is ready, because the largest
+planned dependency churn has landed.
 
-### AndroidX stable baseline drift
+### AndroidX stable baseline refresh
 
-AndroidX current stable versions as of the rev 5 pass are materially
-newer than OpenLumen's floor: activity 1.13.0, core 1.18.0, lifecycle
-2.10.0, navigation 2.9.8, compose 1.11.1, material3 1.4.0, and
-DataStore 1.2.1 (S239, S252-S253). Track as **C144 (Next)** now that the
-toolchain migration has landed; this is not a security fire, but it reduces
-future forced-upgrade pressure and unlocks Direct Boot restore work on
-stable DataStore APIs.
+C144 is now shipped. OpenLumen uses Activity Compose 1.13.0, core-ktx
+1.18.0, Lifecycle 2.10.0, Navigation Compose 2.9.8, Compose BOM
+2026.05.00, Material 3 1.4.0, and DataStore 1.2.1 (S239, S252-S253,
+S275-S281, S00l). This was not a security fire, but it reduces future
+forced-upgrade pressure and unlocks Direct Boot restore work on stable
+DataStore APIs.
 
 ### C138 import-size hardening
 

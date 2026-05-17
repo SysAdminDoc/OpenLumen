@@ -92,11 +92,13 @@ major versions.
   large-screen orientation/resizability behavior. These become
   **C143 - Android 17 memory/resizability smoke expansion** under the
   existing Android 17 readiness umbrella. Sources: S233-S236.
-- **Dependency targets are now partially landed**. C95/C96/C124 shipped
-  the AGP 9.2.1 / Gradle 9.4.1 / Kotlin 2.3.21 / Hilt 2.59.2 train.
-  DataStore 1.2.1 and the broader AndroidX stable refresh remain C144
-  so the dependency surface changes in attributable batches. Sources:
-  S237-S241, S252-S253, S269-S274.
+- **Dependency targets landed in attributable batches**. C95/C96/C124
+  shipped the AGP 9.2.1 / Gradle 9.4.1 / Kotlin 2.3.21 / Hilt 2.59.2
+  train. C144 then refreshed the stable AndroidX floor to Compose BOM
+  2026.05.00, Material 3 1.4.0, Activity Compose 1.13.0, Lifecycle
+  2.10.0, Navigation 2.9.8, DataStore 1.2.1, and core-ktx 1.18.0 while
+  raising `compileSdk` to 36 and keeping `targetSdk` at 35. Sources:
+  S237-S241, S252-S253, S269-S281, S00l.
 - **Competitor sweep saturation retested**. No new direct OpenLumen-grade
   framebuffer/root competitor surfaced. DimTV has a fresher Android TV /
   overlay signal than rev 4 recorded, and general Android help content
@@ -110,7 +112,7 @@ major versions.
 | C141 | Android Developer Console package registration | distribution / trust | Now | 5/2/2 | Decide Play Console vs Android Developer Console path; verify identity; register `com.openlumen` and release signing certificate before the September 2026 regional enforcement window. Document the account owner and package-registration evidence outside Git. | F-Droid / direct APK users in the first enforcement regions can otherwise hit install blocks even though OpenLumen stays outside Play. | S230, S231, S232 |
 | C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Shipped 2026-05-17 | 4/2/2 | Rotated workflow actions to current Node-24-capable majors; documented major-tag policy with a full-SHA exception path; local validation covered YAML parsing plus debug build/lint/unit tests. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251, S258-S265 |
 | C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Shipped 2026-05-17 | 3/1/1 | Extended `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236, S266 |
-| C144 | AndroidX stable baseline refresh batch | upgrade strategy | Next | 3/2/2 | Now that C95/C96/C124 landed, refresh core/activity/lifecycle/navigation/DataStore as one AndroidX batch and run unit tests, lint, screenshot validation, profile import/export, and service smoke. Keep alpha trains out unless a candidate explicitly needs them. | Current stable AndroidX releases are far ahead of the repo floor; batching avoids mixing dependency churn with AGP 9 toolchain risk. | S237, S238, S239, S252, S253 |
+| C144 | AndroidX stable baseline refresh batch | upgrade strategy | Shipped 2026-05-17 | 3/2/2 | Refreshed core/activity/lifecycle/navigation/DataStore, Compose BOM, and Material 3 as one stable AndroidX batch; raised `compileSdk` to 36 while leaving `targetSdk` at 35; fixed the new Compose lint findings by hoisting string resources out of click handlers. | Current stable AndroidX releases were far ahead of the repo floor; the batch keeps dependency churn separate from the AGP 9 toolchain migration and gives Direct Boot restore a stable DataStore 1.2.1 floor. | S237, S238, S239, S252, S253, S275-S281, S00l |
 
 Research version: 2026-05-17 **rev 4.1**. Rev 4.1 is the second walk-away
 pass on the same day. It preserves rev 4 verbatim (which itself
@@ -171,10 +173,10 @@ Rev 4.1 history pointers:
   C128 as a "Shizuku-not-root" 5th engine. C128 either becomes a
   root-tier option or merges into the C06 root-tier spike scope.
 - **Concrete AGP 9 + Compose BOM targets identified** (S225-S229) for
-  the C95 migration PR: Compose BOM `2024.12.01 → 2026.05.00`,
-  Material 3 `1.3.1 → 1.4.0`, do NOT adopt `material3-expressive` yet
-  (still alpha). `material-icons-extended` is deprecated — track as
-  C137. The Compose migration is one PR, low risk.
+  the C95/C144 migration sequence: C95 shipped the AGP 9 train and C144
+  shipped Compose BOM `2024.12.01 -> 2026.05.00` plus Material 3
+  `1.3.1 -> 1.4.0`. Do NOT adopt `material3-expressive` yet (still
+  alpha). `material-icons-extended` was removed under C137.
 - **Concrete Shizuku integration code shapes harvested** (S212-S221)
   for the C06 spike: `Shizuku.OnBinderReceivedListenerSticky` +
   `Shizuku.OnBinderDeadListener` for service-restart survival;
@@ -1282,6 +1284,28 @@ Compose BOM / Material 3 / AGP 9 migration targets:
 - **S274**: Dagger releases — Dagger/Hilt 2.59.2 fixes AGP-9-era Hilt
   transform and incremental-build issues —
   https://github.com/google/dagger/releases
+- **S275**: AndroidX releases overview — current stable matrix for
+  Activity, Core, Lifecycle, Navigation, DataStore, Compose, and
+  Material 3 —
+  https://developer.android.com/jetpack/androidx/versions
+- **S276**: AndroidX Core releases — `core-ktx` 1.18.0 stable —
+  https://developer.android.com/jetpack/androidx/releases/core
+- **S277**: AndroidX Activity releases — Activity / Activity Compose
+  1.13.0 stable —
+  https://developer.android.com/jetpack/androidx/releases/activity
+- **S278**: AndroidX Lifecycle releases — Lifecycle 2.10.0 stable —
+  https://developer.android.com/jetpack/androidx/releases/lifecycle
+- **S279**: AndroidX Navigation releases — Navigation Compose 2.9.8
+  stable —
+  https://developer.android.com/jetpack/androidx/releases/navigation
+- **S280**: AndroidX DataStore releases — DataStore preferences 1.2.1
+  stable and Direct Boot helper APIs available in the 1.2 line —
+  https://developer.android.com/jetpack/androidx/releases/datastore
+- **S281**: Compose BOM mapping and Material 3 releases — Compose BOM
+  2026.05.00 maps to Compose 1.11.1-era artifacts; Material 3 1.4.0 is
+  stable while Material 3 Expressive remains alpha-only —
+  https://developer.android.com/develop/ui/compose/bom/bom-mapping and
+  https://developer.android.com/jetpack/androidx/releases/compose-material3
 
 ## Phase 5 Self-Audit
 

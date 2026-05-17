@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Engine switches now reset the service target cache so SurfaceFlinger, KCAL,
   and other engines receive the first matrix emission even when the user did not
   change preset, intensity, or dim values.
+- About and Driver screen clipboard actions now read Compose string resources
+  outside click handlers, satisfying the updated Compose lint configuration
+  invalidation check.
 - Default preferences now serialize with nullable solar coordinates instead of `NaN`,
   so profile export/import and DataStore writes remain valid JSON.
 - Rootless overlay tinting now uses non-zero alpha for color-only presets; previously
@@ -70,6 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android 17 release planning now includes concrete MemoryLimiter /
   `ApplicationExitInfo` and sw600dp/foldable/windowing smoke steps in
   the device validation matrix.
+- AndroidX stable baseline is refreshed to Compose BOM 2026.05.00,
+  Activity Compose 1.13.0, Lifecycle 2.10.0, Navigation 2.9.8,
+  DataStore 1.2.1, Material 3 1.4.0, and core-ktx 1.18.0; `compileSdk`
+  is now 36 while `targetSdk` stays 35 until Android 17 validation.
 - Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
   `WRITE_SECURE_SETTINGS` declaration so the documented ADB grant can succeed.
 - The foreground service subscribes to the light sensor only while the filter and
