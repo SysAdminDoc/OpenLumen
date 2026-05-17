@@ -251,9 +251,10 @@ so this is not a Play-only concern.
 
 ### C142 — CI action major rotation and SHA-pinning policy
 
+**Status**: Shipped 2026-05-17 after rev 5.
 **Tier**: Now
 **Category**: supply chain / CI
-**Sources**: S242-S251
+**Sources**: S242-S251, S258-S265
 
 **Idea**: Rotate GitHub Actions to Node-24-capable current majors and
 make an explicit policy decision on major tags vs full SHA pinning with

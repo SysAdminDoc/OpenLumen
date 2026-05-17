@@ -72,18 +72,31 @@ needs to consider:
 ## Rotation
 
 The SBOM workflow uses `anchore/sbom-action@v0` and
-`anchore/scan-action@v6`, pinned to major-version tags so Dependabot
-can bump them like any other Action dependency. If either project
-changes ownership or its scanning model materially, the workflow file
-needs review — there's no automated check that the scanner is still
-trustworthy.
+`anchore/scan-action@v7`, pinned to major-version tags so Dependabot
+can bump them like any other Action dependency. CI and release workflows
+use current major tags for `actions/checkout`, `actions/setup-java`,
+`gradle/actions/setup-gradle`, `actions/upload-artifact`, and
+`actions/attest`.
 
-Rev 5 update: GitHub Actions starts defaulting JavaScript actions to
-Node 24 on 2026-06-02. `anchore/scan-action` has a v7 line and
-`actions/attest-build-provenance` has a v4 line; new attestation work
-should consider `actions/attest@v4`. ROADMAP C142 tracks the action
-major rotation plus the explicit decision between current major tags and
-full commit-SHA pinning.
+Policy: OpenLumen defaults to current major-version tags because this
+keeps Dependabot's GitHub Actions updates readable and avoids hiding
+routine security fixes behind manual SHA refreshes. Full-length commit
+SHA pins are still allowed, and should be used when:
+
+- a supply-chain incident is confirmed or plausible for a referenced
+  action;
+- a high-risk release wants a frozen, audited workflow snapshot;
+- an action has weak maintenance signals or unclear ownership;
+- a tag move or suspicious release requires emergency containment.
+
+If full-SHA pins are used, include a trailing comment with the intended
+upstream version tag and add a release-checklist reminder to refresh the
+SHA during the next action-rotation pass.
+
+Rev 5 / C142 implementation: GitHub Actions starts defaulting JavaScript
+actions to Node 24 on 2026-06-02. OpenLumen rotated to Node-24-capable
+current majors on 2026-05-17 and moved release provenance from
+`actions/attest-build-provenance@v2` to `actions/attest@v4`.
 
 ## Why not GitHub Dependency Graph + Dependabot alerts?
 

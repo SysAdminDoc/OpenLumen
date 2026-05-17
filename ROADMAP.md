@@ -8,6 +8,18 @@ verification, Android 17 Beta 4 behavior changes, AGP 9.2 / Gradle
 stable versions, GitHub Actions Node 24 migration, and current action
 major versions.
 
+## Implementation progress after rev 5
+
+- [x] **C142 — CI action major rotation and SHA-pinning policy** shipped
+  on 2026-05-17. Workflows now use `actions/checkout@v6`,
+  `actions/setup-java@v5`, `gradle/actions/setup-gradle@v6`,
+  `actions/upload-artifact@v7`, `actions/attest@v4`, and
+  `anchore/scan-action@v7`. The release workflow now grants
+  `id-token: write` and `attestations: write` for provenance. The
+  project keeps current major-version tags for Dependabot ergonomics,
+  with full-SHA pins reserved for incident response, high-risk release
+  hardening, or actions without trustworthy major-maintenance signals.
+
 ## What changed in rev 5
 
 - **Android developer verification is now a release-planning item**.
@@ -49,7 +61,7 @@ major versions.
 | ID | Candidate | Category | Tier | I/E/R | Concrete action | Why now | Sources |
 |---|---|---|---|---|---|---|---|
 | C141 | Android Developer Console package registration | distribution / trust | Now | 5/2/2 | Decide Play Console vs Android Developer Console path; verify identity; register `com.openlumen` and release signing certificate before the September 2026 regional enforcement window. Document the account owner and package-registration evidence outside Git. | F-Droid / direct APK users in the first enforcement regions can otherwise hit install blocks even though OpenLumen stays outside Play. | S230, S231, S232 |
-| C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Now | 4/2/2 | Rotate workflow actions to current Node-24-capable majors; add a policy note deciding whether to keep major tags or pin full SHAs with version comments; run the release and SBOM workflows after the rotation. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251 |
+| C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Shipped 2026-05-17 | 4/2/2 | Rotated workflow actions to current Node-24-capable majors; documented major-tag policy with a full-SHA exception path; local validation covered YAML parsing plus debug build/lint/unit tests. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251, S258-S265 |
 | C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Now | 3/1/1 | Extend `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236 |
 | C144 | AndroidX stable baseline refresh batch | upgrade strategy | Next | 3/2/2 | After C95 lands, refresh core/activity/lifecycle/navigation/DataStore as one AndroidX batch and run unit tests, lint, Compose UI smoke, and profile import/export. Keep alpha trains out unless a candidate explicitly needs them. | Current stable AndroidX releases are far ahead of the repo floor; batching avoids mixing dependency churn with AGP 9 toolchain risk. | S237, S238, S239, S252, S253 |
 
@@ -432,7 +444,7 @@ Shipped on `main` (full list preserved from rev 2):
 - **C33** CF.Lumen import notes — manual mapping table
 - **C34** F-Droid metadata ([fastlane/metadata/android/](fastlane/metadata/android/))
 - **C37** Reproducible build notes ([docs/reproducible-build.md](docs/reproducible-build.md))
-- **C38** Artifact attestations — `actions/attest-build-provenance@v2` in release workflow
+- **C38** Artifact attestations — `actions/attest@v4` in release workflow
 - **C40** README troubleshooting table ([docs/troubleshooting.md](docs/troubleshooting.md))
 - **C41** CONTRIBUTING.md
 - **C42** ARCHITECTURE.md ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md))
@@ -613,12 +625,12 @@ Partial (per rev 2, still partial in rev 3):
     - Impact 5, effort 3, risk 2. Sources: S97, S98, S113, S26, S27, S28.
 
 11. **Security and supply-chain baseline (C38, C47-C51, C94)**
-    - Already shipped; the Now item is making the artifact attestation
-      cadence visible in the release checklist and confirming SLSA v1
-      provenance v1 in `actions/attest-build-provenance@v2` (current).
-      Document the protobuf-java CVE-2024-7254 triage state in
-      `docs/sbom-and-advisories.md` since the scanner will keep
-      surfacing it.
+    - Already shipped; C142 refreshed the Actions baseline to
+      Node-24-capable current majors and moved release provenance to
+      `actions/attest@v4`. Keep the artifact attestation cadence visible
+      in the release checklist. Document the protobuf-java CVE-2024-7254
+      triage state in `docs/sbom-and-advisories.md` since the scanner
+      will keep surfacing it.
     - Impact 4, effort 2, risk 2. Sources: S60, S61, S62, S63, S64,
       S67, S68, S77, S108, S110, S114.
 

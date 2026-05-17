@@ -347,3 +347,27 @@ Passing checks:
 - `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142 actionable
   tasks). The serial rerun is the authoritative lint result; the earlier
   parallel attempt timed out while another Gradle build was running.
+
+## C142 implementation state
+
+After commit `d8d6d9e`, the next implementable Now-tier roadmap item was
+C142. The implementation pass updated CI/release/SBOM workflows to current
+Node-24-capable action majors and marked C142 shipped in `ROADMAP.md`.
+
+Current workflow action baseline:
+
+- `actions/checkout@v6`
+- `actions/setup-java@v5`
+- `gradle/actions/setup-gradle@v6`
+- `actions/upload-artifact@v7`
+- `actions/attest@v4`
+- `anchore/sbom-action@v0`
+- `anchore/scan-action@v7`
+
+Verification after the C142 edit:
+
+- Workflow YAML parsed under `prettier@3.5.3 --check`.
+- Unit tests passed:
+  `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test`.
+- `:app:assembleDebug` passed.
+- `:app:lintDebug` passed.

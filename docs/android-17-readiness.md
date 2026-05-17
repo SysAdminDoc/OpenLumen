@@ -78,7 +78,7 @@ When the first stable Android 17 image lands (June 2026):
    press destination and notification-tap activity (C111).
 6. Verify the `permissions-audit` CI job still works against the new
    build tools (no merged-manifest changes from AGP 9.x).
-7. Confirm `actions/attest-build-provenance@v2` still attests against the
+7. Confirm `actions/attest@v4` still attests against the
    new artifact format.
 8. Re-run the in-app driver report. The new AAPM block (C130) should
    appear when AAPM is on; otherwise the block reports "off" or "unknown."

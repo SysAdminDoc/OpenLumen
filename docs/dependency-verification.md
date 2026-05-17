@@ -109,9 +109,8 @@ ours when it sees the verification update.
   category guard, not artifact integrity, so it complements rather
   than replaces dependency verification.
 - The `Release` workflow runs
-  `actions/attest-build-provenance@v2` for each release APK, which is
-  build-side provenance (separate from this artifact-side
-  verification).
+  `actions/attest@v4` for each release APK, which is build-side
+  provenance (separate from this artifact-side verification).
 - The SBOM workflow (`.github/workflows/sbom.yml`) produces a
   SPDX-format dependency manifest on every release and weekly schedule,
   and runs an advisory scan against it.

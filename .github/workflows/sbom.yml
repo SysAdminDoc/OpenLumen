@@ -17,10 +17,10 @@ jobs:
     name: Build SBOM and run advisory scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: "17" }
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Build release classpath
         run: ./gradlew :app:assembleRelease --stacktrace || true
@@ -33,14 +33,14 @@ jobs:
           output-file: sbom.spdx.json
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openlumen-sbom-${{ github.run_id }}
           path: sbom.spdx.json
           retention-days: 30
 
       - name: Advisory scan against the SBOM
-        uses: anchore/scan-action@v6
+        uses: anchore/scan-action@v7
         id: scan
         with:
           sbom: sbom.spdx.json
@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload advisory report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openlumen-advisory-report-${{ github.run_id }}
           path: ${{ steps.scan.outputs.sarif }}

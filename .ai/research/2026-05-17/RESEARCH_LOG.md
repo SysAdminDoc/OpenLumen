@@ -299,3 +299,31 @@ run directly.
 - Installed user-local JDK/Android SDK prerequisites and completed unit
   tests, `assembleDebug`, and `lintDebug`; exact commands and outcomes are
   recorded in `STATE_OF_REPO.md` and `CHANGESET_SUMMARY.md`.
+
+## Implementation update (C142)
+
+After the rev 5 checkpoint, the next implementable Now-tier roadmap item
+was **C142**. C141 requires maintainer account / identity work outside
+Git, while C143's documentation pieces were already added in rev 5.
+
+Implementation evidence gathered:
+
+- `git ls-remote --tags` against `actions/checkout`,
+  `actions/setup-java`, `gradle/actions`, `actions/upload-artifact`,
+  `actions/attest`, `actions/attest-build-provenance`,
+  `anchore/scan-action`, and `anchore/sbom-action`.
+- Raw upstream action metadata / READMEs for `setup-java@v5`,
+  `upload-artifact@v7`, `actions/attest@v4`,
+  `actions/attest-build-provenance@v4`, and `anchore/scan-action@v7`.
+
+Outcome:
+
+- Workflows now use checkout v6, setup-java v5, setup-gradle v6,
+  upload-artifact v7, actions/attest v4, and scan-action v7.
+- `anchore/sbom-action` remains on v0 because that project still has no
+  non-zero major line.
+- The release workflow has explicit `id-token: write` and
+  `attestations: write` permissions for provenance.
+- The documented policy keeps major-version tags by default and reserves
+  full-SHA pins for incident response, high-risk release hardening, weak
+  maintenance signals, or suspicious tag/release behavior.

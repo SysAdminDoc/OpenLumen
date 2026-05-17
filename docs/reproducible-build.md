@@ -13,7 +13,7 @@ twice and get a different APK, that's a bug — file it.
 
 | Tool | Pinned version | Where |
 |---|---|---|
-| JDK | Temurin 17 | `actions/setup-java@v4 with: distribution: temurin, java-version: "17"` |
+| JDK | Temurin 17 | `actions/setup-java@v5 with: distribution: temurin, java-version: "17"` |
 | Android SDK | Build-tools 35, Platform 35 | Auto-installed by AGP |
 | Gradle | 8.11.1 | `gradle/wrapper/gradle-wrapper.properties` |
 | AGP | 8.7.3 | `gradle/libs.versions.toml` |
@@ -73,7 +73,7 @@ follows from those.
 ## CI provenance
 
 `.github/workflows/release.yml` runs
-`actions/attest-build-provenance@v2` for each release artifact. This
+`actions/attest@v4` for each release artifact. This
 gives downstream consumers a way to verify "this APK was built by this
 GitHub workflow run from this commit", which is a different (and
 complementary) trust signal from byte-level reproducibility.

@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test compilation on this toolchain.
 
 ### Changed
+- GitHub Actions workflows now use current Node-24-capable major tags:
+  `checkout@v6`, `setup-java@v5`, `setup-gradle@v6`,
+  `upload-artifact@v7`, `actions/attest@v4`, and
+  `anchore/scan-action@v7`.
 - Removed unused location and `USE_EXACT_ALARM` permissions; added the requested
   `WRITE_SECURE_SETTINGS` declaration so the documented ADB grant can succeed.
 - The foreground service subscribes to the light sensor only while the filter and
@@ -45,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every PR, and a `permissions-audit` job that fails the build if the merged
   manifest contains `INTERNET`, `ACCESS_NETWORK_STATE`, or `ACCESS_WIFI_STATE`,
   or if any Play Services / Firebase artifact reaches the release classpath.
-- Release workflow now generates an `actions/attest-build-provenance` for each
+- Release workflow now generates an `actions/attest` provenance record for each
   release APK.
 - In-app driver report on the Driver tab: Copy and Share buttons produce a
   paste-friendly device summary (build, SoC, granted permissions, exact-alarm

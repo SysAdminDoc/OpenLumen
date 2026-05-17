@@ -628,6 +628,35 @@ informed.
   this verification pass.
   https://developer.android.com/studio
 
+### C142 implementation checks
+
+- **S258**: `actions/checkout` tag check via `git ls-remote` — confirmed
+  v6 major tag and v6.0.2 tag were available during C142 implementation.
+  https://github.com/actions/checkout
+- **S259**: `actions/setup-java` tag check and README — confirmed v5
+  major tag / v5.2.0 tag and the v5 Node 24 runner requirement.
+  https://github.com/actions/setup-java
+- **S260**: `gradle/actions` tag check — confirmed v6 major tag and
+  v6.1.0 tag were available for `setup-gradle`.
+  https://github.com/gradle/actions
+- **S261**: `actions/upload-artifact` tag check and README — confirmed
+  v7 major tag / v7.0.1 tag and that zipped uploads remain the default.
+  https://github.com/actions/upload-artifact
+- **S262**: `actions/attest` tag check and README — confirmed v4 major
+  tag / v4.1.0 tag, `subject-path` provenance mode, and required
+  attestation permissions.
+  https://github.com/actions/attest
+- **S263**: `actions/attest-build-provenance` v4 action metadata —
+  confirmed v4 is a wrapper around `actions/attest@59d894...` and that
+  the direct `actions/attest@v4` migration preserves `subject-path`.
+  https://github.com/actions/attest-build-provenance
+- **S264**: `anchore/scan-action` tag check and action metadata —
+  confirmed v7 major tag / v7.4.0 tag and `runs.using: node24`.
+  https://github.com/anchore/scan-action
+- **S265**: `anchore/sbom-action` tag check — confirmed the project
+  remains on a v0 major line; no major rotation was available for C142.
+  https://github.com/anchore/sbom-action
+
 ## Source-class coverage check
 
 | Class | Sources | Counts |
@@ -655,7 +684,7 @@ rev 3 has ≥2 sources. New evidence introduces 3 new candidates
 report surface, C131 Eye Dropper picker integration); each cites ≥2
 sources.
 
-Rev 5 coverage update: pass 3 added 28 more sources (S230-S257). The
+Rev 5 coverage update: pass 3 added 36 more sources (S230-S265). The
 newest coverage gap closed is **off-Play Android developer verification**,
 which was absent from rev 4.1 and now maps to C141. CI/action supply-chain
 coverage now includes the Node 24 deadline plus current action majors
@@ -664,4 +693,5 @@ resizability behavior (C143). Dependency coverage now includes the AGP
 9.2 / Gradle 9.4.1 / Dagger 2.59.2 / AndroidX stable-version matrix
 that sharpens C95, C96, C124, and C144. S257 records the official SDK
 bootstrap source used to complete local verification after `JAVA_HOME` and
-`ANDROID_HOME` were initially missing.
+`ANDROID_HOME` were initially missing. S258-S265 record the direct
+upstream tag / metadata checks used when implementing C142.

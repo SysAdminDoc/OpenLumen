@@ -181,8 +181,8 @@ Three workflows under [.github/workflows/](.github/workflows/):
 | Workflow | Trigger | Job |
 |---|---|---|
 | `ci.yml` | push / PR to `main` | `assembleDebug + lint`, module unit tests, **permissions-audit** (manifest grep for INTERNET; `releaseRuntimeClasspath` grep for play-services / firebase / GMS) |
-| `release.yml` | `workflow_dispatch` with semver input | keystore decode, `assembleRelease`, release-APK no-INTERNET assertion, SHA-256, **`actions/attest-build-provenance@v2`** |
-| `sbom.yml` | weekly Monday 06:00 UTC + every release | SPDX-JSON SBOM via `anchore/sbom-action`, advisory scan via `anchore/scan-action` (severity-cutoff: medium, fail-build: false — triage-then-fix posture) |
+| `release.yml` | `workflow_dispatch` with semver input | keystore decode, `assembleRelease`, release-APK no-INTERNET assertion, SHA-256, **`actions/attest@v4`** |
+| `sbom.yml` | weekly Monday 06:00 UTC + every release | SPDX-JSON SBOM via `anchore/sbom-action@v0`, advisory scan via `anchore/scan-action@v7` (severity-cutoff: medium, fail-build: false — triage-then-fix posture) |
 
 Dependabot is configured for Gradle and GitHub Actions
 ([.github/dependabot.yml](.github/dependabot.yml)). All Actions pinned to
@@ -348,9 +348,11 @@ watchpoints future sessions should not miss:
   certificate need an Android Developer Console / Play Console
   registration plan before the September 2026 regional enforcement
   window.
-- **GitHub Actions Node 24 and action majors (C142)**: CI/release/SBOM
-  workflows need a current-major rotation and an explicit major-tag vs
-  full-SHA pinning policy before release automation is treated as stable.
+- **GitHub Actions Node 24 and action majors (C142)**: shipped
+  2026-05-17. Workflows now use `checkout@v6`, `setup-java@v5`,
+  `setup-gradle@v6`, `upload-artifact@v7`, `actions/attest@v4`, and
+  `scan-action@v7`; the project keeps major tags by default with a
+  documented full-SHA exception path.
 - **Android 17 smoke expansion (C143)**: the Android 17 readiness plan
   now needs memory-limiter (`ApplicationExitInfo`) and sw600dp
   resizability/orientation checks in addition to AAPM, FGS, and BAL.

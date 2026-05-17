@@ -271,3 +271,46 @@ Verification commands run from `C:\Users\Xray` with `JAVA_HOME` and
   `BUILD SUCCESSFUL`, 142 actionable tasks. The first lint attempt ran in
   parallel with `assembleDebug` and timed out without useful lint output,
   so it was rerun alone.
+
+## Implementation pass 4 (C142, 2026-05-17)
+
+This pass switched from research/planning into roadmap execution and
+implemented **C142 — CI action major rotation and SHA-pinning policy**.
+
+### Files modified (pass 4)
+
+| File | Why |
+|---|---|
+| `.github/workflows/ci.yml` | Rotated checkout/setup-java/setup-gradle to current Node-24-capable majors and clarified the major-tag policy comment. |
+| `.github/workflows/release.yml` | Rotated checkout/setup-java/setup-gradle, moved provenance from `actions/attest-build-provenance@v2` to `actions/attest@v4`, and added attestation permissions. |
+| `.github/workflows/sbom.yml` | Rotated checkout/setup-java/setup-gradle/upload-artifact/scan-action to current majors while leaving `anchore/sbom-action@v0` on its only major line. |
+| `ROADMAP.md` | Marked C142 shipped and recorded the exact workflow major versions. |
+| `PROJECT_CONTEXT.md` | Updated the CI/supply-chain snapshot so future sessions see C142 as complete. |
+| `CHANGELOG.md` | Added the workflow rotation to `[Unreleased]`. |
+| `docs/sbom-and-advisories.md` | Replaced the C142 reminder with the active major-tag policy and full-SHA exception path. |
+| `docs/reproducible-build.md` | Updated the JDK action and release provenance references. |
+| `docs/dependency-verification.md` | Updated the release provenance control reference. |
+| `docs/android-17-readiness.md` | Updated the Android 17 test-plan attestation reference. |
+| `docs/v0.5.0-release-readiness.md` | Marked C142 done instead of deferred. |
+| `.ai/research/2026-05-17/SOURCE_REGISTER.md` | Added S258-S265 for the upstream tag / metadata checks used during implementation. |
+| `.ai/research/2026-05-17/CHANGESET_SUMMARY.md` | Logged this implementation pass. |
+
+### Verification (pass 4)
+
+- Upstream tag checks via `git ls-remote` confirmed the selected major
+  lines: checkout v6, setup-java v5, setup-gradle v6, upload-artifact v7,
+  attest v4, attest-build-provenance v4 wrapper, scan-action v7, and
+  sbom-action v0.
+- Workflow metadata checks confirmed `actions/setup-java@v5` and
+  `anchore/scan-action@v7` are Node-24 lines, `actions/upload-artifact@v7`
+  preserves zipped uploads by default, and `actions/attest@v4` accepts the
+  existing `subject-path` provenance shape.
+- `npx --yes prettier@3.5.3 --check "Z:/repos/OpenLumen/.github/workflows/*.yml"`
+  passed; this was the local YAML parser/format validation path.
+- `:app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --stacktrace`
+  passed (`BUILD SUCCESSFUL`, 133 actionable tasks, configuration cache
+  reused).
+- `:app:assembleDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 98
+  actionable tasks, configuration cache reused).
+- `:app:lintDebug --stacktrace` passed (`BUILD SUCCESSFUL`, 142
+  actionable tasks, configuration cache reused).

@@ -149,11 +149,11 @@ this version range.
 - AGP 9.0 → 9.1 → 9.2; Kotlin 2.1.0 → 2.2.10 (the version Compose Preview
   Screenshot Testing wants per S148).
 - Verify all three GitHub Actions workflows still work
-  (`gradle/actions/setup-gradle@v4` is already AGP-9-compatible).
+  (`gradle/actions/setup-gradle@v6` is the current post-C142 baseline).
 - Verify the SBOM workflow's `assembleRelease` still produces the
   expected `releaseRuntimeClasspath`.
 - Verify `permissions-audit` still passes.
-- Verify `actions/attest-build-provenance@v2` still attests the new
+- Verify `actions/attest@v4` still attests the new
   artifact format.
 
 Risk: medium. Documented in rev 3 as I/E/R 4/3/3.
@@ -244,24 +244,24 @@ identity documents / account recovery material out of Git.
 ### GitHub Actions Node 24 and action-major rotation
 
 GitHub's Node 20 deprecation starts affecting JavaScript actions on
-2026-06-02 (S242). Current workflow majors in this repo are now behind
-upstream on the core release path:
+2026-06-02 (S242). C142 was implemented on 2026-05-17 and the workflow
+baseline is now:
 
 | Workflow dependency | Current | Current upstream signal | Action |
 |---|---|---|---|
-| `actions/checkout` | v4 | v6 current (S244) | Rotate in C142 |
-| `actions/setup-java` | v4 | v5.2.0 current; Node 24 action line (S245) | Rotate in C142 |
-| `gradle/actions/setup-gradle` | v4 | docs show v6 (S246) | Rotate in C142 |
-| `actions/upload-artifact` | v4 | v7 adds optional unzipped artifacts (S247) | Consider only if useful |
-| `actions/attest-build-provenance` | v2 | v4.1.0 current; new work should consider `actions/attest` (S248-S249) | Rotate in C142 |
-| `anchore/sbom-action` | v0 | v0.24.0 current under same major (S250) | Keep v0 but pin/check release notes |
-| `anchore/scan-action` | v6 | v7 current (S251) | Rotate in C142 |
+| `actions/checkout` | v6 | v6.0.2 observed (S258) | Done in C142 |
+| `actions/setup-java` | v5 | v5.2.0 observed; Node 24 action line (S245, S259) | Done in C142 |
+| `gradle/actions/setup-gradle` | v6 | v6.1.0 observed (S260) | Done in C142 |
+| `actions/upload-artifact` | v7 | v7.0.1 observed; zipped uploads still default (S247, S261) | Done in C142 |
+| `actions/attest` | v4 | v4.1.0 observed; direct provenance action (S262-S263) | Done in C142 |
+| `anchore/sbom-action` | v0 | v0.24.0 current under same major (S250, S265) | Keep v0 but pin/check release notes |
+| `anchore/scan-action` | v7 | v7.4.0 observed; Node 24 action line (S251, S264) | Done in C142 |
 
-Policy decision: `ci.yml` currently documents major-version tags for
+Policy decision: OpenLumen keeps current major-version tags for
 Dependabot ergonomics. GitHub's secure-use docs say full SHA pinning is
-the only immutable action reference (S243). C142 should either preserve
-the major-tag policy explicitly or switch to full SHAs with version
-comments and a rotation checklist.
+the only immutable action reference (S243), so the documented exception
+path is to use full SHAs for incident response, high-risk release
+hardening, weak maintenance signals, or suspicious tag/release behavior.
 
 ### AGP / Gradle / Hilt dependency train
 
