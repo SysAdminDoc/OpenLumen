@@ -772,3 +772,36 @@ Verification:
 
 - `:core-prefs:test :app:compileDebugKotlin :app:testDebugUnitTest --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
   passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+
+## Implementation update (C63 matrix slice)
+
+C63 was resumed after C139. The first design check found that a literal
+256-entry per-pixel LUT would be misleading in the current architecture:
+SurfaceFlinger can consume a 4x4 matrix, while CDM, KCAL, and Overlay only
+have scalar/fallback paths. DaltonLens's C reference (S285) also warns that
+tritan needs the piecewise Brettel path for accuracy rather than a single
+Viénot 3x3 matrix. AOSP SurfaceFlinger transaction handling (S286)
+confirmed the service-call matrix must be packed column-major.
+
+Implementation:
+
+- Added optional 3x3 RGB coefficients to `LumenMatrix`, keeping existing
+  scalar `r/g/b` fields as fallback behavior.
+- Updated `toSurfaceFlinger16()` so matrix-capable engines receive
+  off-diagonal terms in SurfaceFlinger's column-major order.
+- Added `withIntensity()` and matrix-aware interpolation so preset
+  intensity and smooth ramps work with matrix presets.
+- Updated Protan / Deutan / Tritan presets with DaltonLens-derived
+  matrices while retaining the existing scalar fallbacks for CDM / KCAL /
+  Overlay.
+- Extended `MatrixDto`, import sanitization, and Direct Boot mirroring so
+  the additive matrix fields round-trip safely.
+- Split the unresolved full per-pixel LUT / piecewise tritan work into
+  C145 rather than claiming all engines can consume LUTs.
+
+Verification:
+
+- `:core-engine:test :core-prefs:test :app:compileDebugKotlin :app:testDebugUnitTest --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+- `:app:assembleDebug :app:lintDebug :app:validateDebugScreenshotTest :app:verifyRoborazziDebug :app:testDebugUnitTest :core-engine:test :core-schedule:test :core-prefs:test --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`
+  also passed from the same mirror before commit.

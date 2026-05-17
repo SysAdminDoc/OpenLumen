@@ -866,6 +866,24 @@ This pass implemented **C139 — import duplicate-name UI feedback**.
 | `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `docs/profile-import-formats.md` | Marked C139 shipped and documented the import-summary contract. |
 | `.ai/research/2026-05-17/*.md` | Added S00r and recorded the implementation state. |
 
+## Implementation pass 26 (C63 matrix slice, 2026-05-17)
+
+This pass implemented the matrix-capable slice of **C63 — CVD LUT
+correction** and split the true per-pixel LUT / piecewise tritan work into
+**C145**.
+
+| File | Change |
+|---|---|
+| `core-engine/src/main/java/com/openlumen/engine/ColorMatrix.kt` | Added optional 3x3 RGB coefficients, column-major matrix-aware SurfaceFlinger export, intensity scaling, and interpolation support. |
+| `core-engine/src/main/java/com/openlumen/engine/Presets.kt` | Updated Protan / Deutan / Tritan with DaltonLens-derived matrices while retaining scalar fallbacks. |
+| `core-prefs/src/main/java/com/openlumen/prefs/Preferences.kt` | Extended `MatrixDto` with optional matrix fields for imports and Direct Boot mirrors. |
+| `core-prefs/src/main/java/com/openlumen/prefs/PreferencesStore.kt` | Sanitizes the additive matrix coefficients on imports / stored snapshots. |
+| `app/src/main/java/com/openlumen/diagnostics/MatrixPreview.kt` | Uses matrix-aware intensity, contrast, transformed-white blue suppression, and perceived-luminance calculations. |
+| `app/src/main/java/com/openlumen/service/LumenService.kt` | Mirrors full matrix fields into and out of Direct Boot state. |
+| `core-engine/src/test/java/com/openlumen/engine/LumenMatrixTest.kt`, `app/src/test/java/com/openlumen/diagnostics/MatrixPreviewTest.kt` | Added regression coverage for matrix intensity and SurfaceFlinger off-diagonal terms. |
+| `ROADMAP.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `docs/profile-import-formats.md` | Recorded C63's shipped matrix slice and the C145 split. |
+| `.ai/research/2026-05-17/*.md` | Added S00s/S285 and recorded implementation, prioritization, dependency, dataset/model, and changeset state. |
+
 ### Verification (pass 25)
 
 - `:core-prefs:test :app:compileDebugKotlin :app:testDebugUnitTest --dependency-verification=strict --no-daemon --no-configuration-cache --stacktrace`

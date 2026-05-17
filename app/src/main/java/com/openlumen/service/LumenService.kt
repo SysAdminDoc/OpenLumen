@@ -646,7 +646,17 @@ class LumenService : LifecycleService() {
         dim = dim,
         gammaR = gammaR,
         gammaG = gammaG,
-        gammaB = gammaB
+        gammaB = gammaB,
+        hasColorMatrix = hasColorMatrix,
+        matrixRr = matrixRr,
+        matrixRg = matrixRg,
+        matrixRb = matrixRb,
+        matrixGr = matrixGr,
+        matrixGg = matrixGg,
+        matrixGb = matrixGb,
+        matrixBr = matrixBr,
+        matrixBg = matrixBg,
+        matrixBb = matrixBb
     )
 
     private fun DirectBootState.toLumenMatrix(): LumenMatrix = LumenMatrix(
@@ -660,7 +670,17 @@ class LumenService : LifecycleService() {
         gammaR = matrix.gammaR,
         gammaG = matrix.gammaG,
         gammaB = matrix.gammaB,
-        amoledClamp = amoledBlackClamp
+        amoledClamp = amoledBlackClamp,
+        hasColorMatrix = matrix.hasColorMatrix,
+        matrixRr = matrix.matrixRr,
+        matrixRg = matrix.matrixRg,
+        matrixRb = matrix.matrixRb,
+        matrixGr = matrix.matrixGr,
+        matrixGg = matrix.matrixGg,
+        matrixGb = matrix.matrixGb,
+        matrixBr = matrix.matrixBr,
+        matrixBg = matrix.matrixBg,
+        matrixBb = matrix.matrixBb
     )
 
     /**

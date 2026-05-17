@@ -1,5 +1,11 @@
 # Memory Consolidation — 2026-05-17
 
+Post-rev memory update: implementation passes later on 2026-05-17 updated
+the canonical committed memory through C63's matrix-capable CVD preset
+slice. Use `PROJECT_CONTEXT.md`, `ROADMAP.md`, `RESEARCH_LOG.md`, and
+`CHANGESET_SUMMARY.md` as the current state; older stale notes below are
+historical reconciliation evidence.
+
 Inventory and reconciliation of every AI memory / instruction / project-
 context file in the OpenLumen repository, plus the broader memory surface
 this session inherited.

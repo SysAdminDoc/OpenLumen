@@ -648,3 +648,17 @@ C139 is now implemented locally:
   the import preview dialog and the post-import result message.
 - `ProfilesTest` covers duplicate-name detection for the last-write-wins
   import behavior.
+
+## C63 implementation state
+
+C63's matrix-capable slice is now implemented locally:
+
+- `LumenMatrix` can carry optional 3x3 RGB coefficients while preserving
+  scalar fallback behavior.
+- SurfaceFlinger receives the full RGB matrix; CDM, KCAL, and Overlay keep
+  the scalar fallback path.
+- Protan / Deutan / Tritan presets include DaltonLens-derived matrices.
+- `MatrixDto`, import sanitization, and Direct Boot mirroring preserve the
+  additive matrix fields.
+- The unresolved per-pixel LUT / piecewise Brettel tritan completion is
+  split into C145.

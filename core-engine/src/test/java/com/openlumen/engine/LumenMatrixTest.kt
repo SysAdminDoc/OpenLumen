@@ -127,9 +127,44 @@ class LumenMatrixTest {
         assertThat(a.lerp(b, 10f).r).isEqualTo(0f)
     }
 
+    @Test fun `matrix intensity interpolates off diagonal coefficients from identity`() {
+        val matrix = LumenMatrix(
+            hasColorMatrix = true,
+            matrixRr = 0.2f,
+            matrixRg = 0.8f,
+            matrixRb = 0f,
+            matrixGr = 0.2f,
+            matrixGg = 0.8f,
+            matrixGb = 0f,
+            matrixBr = 0f,
+            matrixBg = 0f,
+            matrixBb = 1f
+        )
+
+        val half = matrix.withIntensity(0.5f)
+
+        assertThat(half.hasColorMatrix).isTrue()
+        assertThat(half.matrixRr).isWithin(EPS).of(0.6f)
+        assertThat(half.matrixRg).isWithin(EPS).of(0.4f)
+        assertThat(half.matrixGg).isWithin(EPS).of(0.9f)
+        assertThat(half.matrixBb).isWithin(EPS).of(1f)
+    }
+
+    @Test fun `surface matrix carries CVD off diagonal terms`() {
+        val m = Presets.PROTAN.toSurfaceFlinger16()
+
+        assertThat(m[0]).isWithin(EPS).of(0.11238f)
+        assertThat(m[1]).isWithin(EPS).of(0.11238f)
+        assertThat(m[2]).isWithin(EPS).of(0.00401f)
+        assertThat(m[4]).isWithin(EPS).of(0.88762f)
+        assertThat(m[5]).isWithin(EPS).of(0.88762f)
+        assertThat(m[6]).isWithin(EPS).of(-0.00401f)
+        assertThat(m[10]).isWithin(EPS).of(1f)
+    }
+
     @Test fun `SurfaceFlinger16 matrix has identity layout for IDENTITY`() {
         val m = LumenMatrix.IDENTITY.toSurfaceFlinger16()
-        // Row-major 4x4: diagonal should be (1, 1, 1, 1); off-diagonal zero except bias row.
+        // Column-major 4x4: diagonal should be (1, 1, 1, 1); off-diagonal zero except bias column.
         assertThat(m[0]).isEqualTo(1f)
         assertThat(m[5]).isEqualTo(1f)
         assertThat(m[10]).isEqualTo(1f)

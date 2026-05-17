@@ -73,7 +73,7 @@ composition for v0.7.0 → v0.8.0:
 
 1. C06 — Shizuku-backed privileged backend (also unblocks C11, C12, C69)
 2. C21 — Wear OS companion
-3. C63 — CVD LUT correction
+3. C145 — true CVD LUT / piecewise tritan completion (C63 matrix slice shipped)
 4. Driver-compatibility learning (continued)
 5. Preset system v2 polish
 6. C84 / C91 — Connected permission / overlay tests
@@ -82,12 +82,17 @@ composition for v0.7.0 → v0.8.0:
 C122 is no longer in the remaining Next list: it shipped as a
 supplemental Roborazzi JVM golden lane on 2026-05-17.
 
+C63 is no longer a single remaining Next item: the matrix-capable slice
+shipped on 2026-05-17, and the unresolved per-pixel LUT / piecewise
+tritan work is split out as C145.
+
 ## Later-tier additions for rev 4
 
 Rev 3's Later list plus C129, C131.
 
 - C22 — Android TV flavor
 - C67 — AMOLED content-aware dimming (privacy-heavy; effectively blocked)
+- C145 — True CVD LUT / piecewise tritan completion
 - C68 — Partial-screen filters
 - C89 — Pixel-grid AMOLED dimming
 - PWM-sensitive workflow guidance
@@ -205,6 +210,8 @@ The following rev 4.1 Now-tier code-review candidates are now shipped:
 | C123 | Shipped 2026-05-17 | Toggle and preset home-screen widgets now render through Glance 1.1.1 while preserving the existing widget broadcast action path. |
 | C122 | Shipped 2026-05-17 | Roborazzi 1.60.0 / Robolectric 4.16.1 validates two checked-in theme-token PNG baselines in CI. |
 | C139 | Shipped 2026-05-17 | Profile import preview/result surfaces duplicate saved-profile names skipped by the sanitizer. |
+| C63 | Shipped 2026-05-17 (matrix slice) | `LumenMatrix` and SurfaceFlinger now support optional 3x3 coefficients for CVD presets; scalar-only engines keep fallbacks. C145 tracks true per-pixel LUT / piecewise tritan work. |
+| C145 | Later | Current engine surfaces cannot consume per-pixel LUTs; revisit only if a shader/LUT-capable path exists or the accessibility value justifies a larger engine redesign. |
 
 Outstanding Now-tier work is therefore concentrated in maintainer-account
 action (C141), release/distribution gates (C01, C36/C37/C140), and

@@ -45,7 +45,17 @@ data class MatrixDto(
     val dim: Float = 0f,
     val gammaR: Float = 1f,
     val gammaG: Float = 1f,
-    val gammaB: Float = 1f
+    val gammaB: Float = 1f,
+    val hasColorMatrix: Boolean = false,
+    val matrixRr: Float = 1f,
+    val matrixRg: Float = 0f,
+    val matrixRb: Float = 0f,
+    val matrixGr: Float = 0f,
+    val matrixGg: Float = 1f,
+    val matrixGb: Float = 0f,
+    val matrixBr: Float = 0f,
+    val matrixBg: Float = 0f,
+    val matrixBb: Float = 1f
 )
 
 @Serializable

@@ -31,13 +31,20 @@ object MatrixPreview {
         val raw = preset ?: LumenMatrix(
             r = p.customMatrix.r,
             g = p.customMatrix.g,
-            b = p.customMatrix.b
+            b = p.customMatrix.b,
+            hasColorMatrix = p.customMatrix.hasColorMatrix,
+            matrixRr = p.customMatrix.matrixRr,
+            matrixRg = p.customMatrix.matrixRg,
+            matrixRb = p.customMatrix.matrixRb,
+            matrixGr = p.customMatrix.matrixGr,
+            matrixGg = p.customMatrix.matrixGg,
+            matrixGb = p.customMatrix.matrixGb,
+            matrixBr = p.customMatrix.matrixBr,
+            matrixBg = p.customMatrix.matrixBg,
+            matrixBb = p.customMatrix.matrixBb
         )
         val t = p.presetIntensity.coerceIn(0f, 1f)
-        val intensityScaled = raw.copy(
-            r = 1f + (raw.r - 1f) * t,
-            g = 1f + (raw.g - 1f) * t,
-            b = 1f + (raw.b - 1f) * t,
+        val intensityScaled = raw.withIntensity(t).copy(
             gammaR = p.customMatrix.gammaR,
             gammaG = p.customMatrix.gammaG,
             gammaB = p.customMatrix.gammaB,
@@ -51,13 +58,25 @@ object MatrixPreview {
         val c = contrast.coerceIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX)
         if (c == 1f) return m
         val bias = (1f - c) * 0.5f
-        return m.copy(
+        val contrasted = m.copy(
             r = (m.r * c).coerceIn(0f, 2f),
             g = (m.g * c).coerceIn(0f, 2f),
             b = (m.b * c).coerceIn(0f, 2f),
             biasR = (m.biasR + bias).coerceIn(-1f, 1f),
             biasG = (m.biasG + bias).coerceIn(-1f, 1f),
             biasB = (m.biasB + bias).coerceIn(-1f, 1f)
+        )
+        if (!m.hasColorMatrix) return contrasted
+        return contrasted.copy(
+            matrixRr = (m.matrixRr * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixRg = (m.matrixRg * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixRb = (m.matrixRb * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixGr = (m.matrixGr * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixGg = (m.matrixGg * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixGb = (m.matrixGb * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixBr = (m.matrixBr * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixBg = (m.matrixBg * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
+            matrixBb = (m.matrixBb * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX)
         )
     }
 
@@ -73,7 +92,7 @@ object MatrixPreview {
      * who want to know how much they've turned blue down.
      */
     fun blueSuppression(p: Preferences): Float {
-        val rgb = matrixFor(p).scaledRgb()
+        val rgb = transformedWhiteRgb(matrixFor(p))
         val blue = rgb.getOrNull(2)?.coerceIn(0f, 1f) ?: 1f
         return (1f - blue).coerceIn(0f, 1f)
     }
@@ -85,7 +104,7 @@ object MatrixPreview {
      */
     fun perceivedLuminanceReduction(p: Preferences): Float {
         val matrix = matrixFor(p)
-        val rgb = matrix.scaledRgb()
+        val rgb = transformedWhiteRgb(matrix)
         val r = (rgb.getOrNull(0) ?: 1f) + matrix.biasR
         val g = (rgb.getOrNull(1) ?: 1f) + matrix.biasG
         val b = (rgb.getOrNull(2) ?: 1f) + matrix.biasB
@@ -95,4 +114,17 @@ object MatrixPreview {
                 (0.0722f * b.coerceIn(0f, 1f))
         return (1f - luminance).coerceIn(0f, 1f)
     }
+
+    private fun transformedWhiteRgb(matrix: LumenMatrix): FloatArray {
+        if (!matrix.hasColorMatrix) return matrix.scaledRgb()
+        val m = matrix.surfaceRgbMatrix()
+        return floatArrayOf(
+            (m[0] + m[1] + m[2]).coerceIn(0f, 1f),
+            (m[3] + m[4] + m[5]).coerceIn(0f, 1f),
+            (m[6] + m[7] + m[8]).coerceIn(0f, 1f)
+        )
+    }
+
+    private const val MATRIX_COEFF_MIN = -4f
+    private const val MATRIX_COEFF_MAX = 4f
 }

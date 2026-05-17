@@ -1,7 +1,7 @@
 package com.openlumen.engine
 
 /**
- * 4x5 color matrix in RGBA-out, RGBA-in column-major SurfaceFlinger order.
+ * 4x5 color matrix in RGBA-out, RGBA-in transform form.
  *
  * SurfaceFlinger's 1015 transaction code accepts a 16-element float[] representing
  * a 4x4 matrix (no translation column; that is what the per-channel `bias` provides).
@@ -27,7 +27,22 @@ data class LumenMatrix(
      * range. On LCD panels this is a no-op (the backlight stays lit
      * regardless of pixel value).
      */
-    val amoledClamp: Boolean = false
+    val amoledClamp: Boolean = false,
+    /**
+     * Optional full RGB transform for matrix-capable engines. The scalar
+     * [r], [g], and [b] fields remain the fallback for CDM, KCAL, and the
+     * rootless overlay path, which cannot consume cross-channel terms.
+     */
+    val hasColorMatrix: Boolean = false,
+    val matrixRr: Float = 1f,
+    val matrixRg: Float = 0f,
+    val matrixRb: Float = 0f,
+    val matrixGr: Float = 0f,
+    val matrixGg: Float = 1f,
+    val matrixGb: Float = 0f,
+    val matrixBr: Float = 0f,
+    val matrixBg: Float = 0f,
+    val matrixBb: Float = 1f
 ) {
     /** Scale factor [0,1] for a final brightness reduction beyond panel minimum. */
     val effectiveDim: Float get() = dim.finiteIn(0f, 0.95f, default = 0f)
@@ -62,13 +77,44 @@ data class LumenMatrix(
         return scaled
     }
 
-    /** 4x4 row-major matrix for SurfaceFlinger. */
-    fun toSurfaceFlinger16(): FloatArray {
-        val s = scaledRgb()
+    /**
+     * Row-major 3x3 RGB transform for matrix-capable engines. Normal scalar
+     * matrices are represented as a diagonal transform; CVD presets can supply
+     * off-diagonal terms while still retaining scalar fallbacks.
+     */
+    fun surfaceRgbMatrix(): FloatArray {
+        if (!hasColorMatrix) {
+            val s = scaledRgb()
+            return floatArrayOf(
+                s[0], 0f, 0f,
+                0f, s[1], 0f,
+                0f, 0f, s[2]
+            )
+        }
+        val dimFactor = 1f - effectiveDim
+        val rowR = rowScale(dimFactor, gammaR)
+        val rowG = rowScale(dimFactor, gammaG)
+        val rowB = rowScale(dimFactor, gammaB)
         return floatArrayOf(
-            s[0], 0f,   0f,   0f,
-            0f,   s[1], 0f,   0f,
-            0f,   0f,   s[2], 0f,
+            matrixRr.matrixCoeff(default = 1f) * rowR,
+            matrixRg.matrixCoeff(default = 0f) * rowR,
+            matrixRb.matrixCoeff(default = 0f) * rowR,
+            matrixGr.matrixCoeff(default = 0f) * rowG,
+            matrixGg.matrixCoeff(default = 1f) * rowG,
+            matrixGb.matrixCoeff(default = 0f) * rowG,
+            matrixBr.matrixCoeff(default = 0f) * rowB,
+            matrixBg.matrixCoeff(default = 0f) * rowB,
+            matrixBb.matrixCoeff(default = 1f) * rowB
+        )
+    }
+
+    /** 4x4 column-major matrix for SurfaceFlinger. */
+    fun toSurfaceFlinger16(): FloatArray {
+        val m = surfaceRgbMatrix()
+        return floatArrayOf(
+            m[0], m[3], m[6], 0f,
+            m[1], m[4], m[7], 0f,
+            m[2], m[5], m[8], 0f,
             biasR.finiteIn(-1f, 1f, default = 0f),
             biasG.finiteIn(-1f, 1f, default = 0f),
             biasB.finiteIn(-1f, 1f, default = 0f),
@@ -102,6 +148,9 @@ data class LumenMatrix(
         val u = t.coerceIn(0f, 1f)
         if (u <= 0f) return this
         if (u >= 1f) return target
+        val useMatrix = hasColorMatrix || target.hasColorMatrix
+        val fromMatrix = matrixFieldsOrDiagonal()
+        val toMatrix = target.matrixFieldsOrDiagonal()
         return LumenMatrix(
             r = lerpF(r, target.r, u),
             g = lerpF(g, target.g, u),
@@ -112,14 +161,73 @@ data class LumenMatrix(
             dim = lerpF(dim, target.dim, u),
             gammaR = lerpF(gammaR, target.gammaR, u),
             gammaG = lerpF(gammaG, target.gammaG, u),
-            gammaB = lerpF(gammaB, target.gammaB, u)
+            gammaB = lerpF(gammaB, target.gammaB, u),
+            amoledClamp = if (u < 0.5f) amoledClamp else target.amoledClamp,
+            hasColorMatrix = useMatrix,
+            matrixRr = lerpF(fromMatrix[0], toMatrix[0], u),
+            matrixRg = lerpF(fromMatrix[1], toMatrix[1], u),
+            matrixRb = lerpF(fromMatrix[2], toMatrix[2], u),
+            matrixGr = lerpF(fromMatrix[3], toMatrix[3], u),
+            matrixGg = lerpF(fromMatrix[4], toMatrix[4], u),
+            matrixGb = lerpF(fromMatrix[5], toMatrix[5], u),
+            matrixBr = lerpF(fromMatrix[6], toMatrix[6], u),
+            matrixBg = lerpF(fromMatrix[7], toMatrix[7], u),
+            matrixBb = lerpF(fromMatrix[8], toMatrix[8], u)
         )
     }
+
+    /** Scale preset strength from identity to this matrix. */
+    fun withIntensity(strength: Float): LumenMatrix {
+        val u = strength.coerceIn(0f, 1f)
+        val scalar = copy(
+            r = 1f + (r - 1f) * u,
+            g = 1f + (g - 1f) * u,
+            b = 1f + (b - 1f) * u
+        )
+        if (!hasColorMatrix) return scalar
+        return scalar.copy(
+            matrixRr = lerpF(1f, matrixRr, u),
+            matrixRg = lerpF(0f, matrixRg, u),
+            matrixRb = lerpF(0f, matrixRb, u),
+            matrixGr = lerpF(0f, matrixGr, u),
+            matrixGg = lerpF(1f, matrixGg, u),
+            matrixGb = lerpF(0f, matrixGb, u),
+            matrixBr = lerpF(0f, matrixBr, u),
+            matrixBg = lerpF(0f, matrixBg, u),
+            matrixBb = lerpF(1f, matrixBb, u)
+        )
+    }
+
+    private fun rowScale(dimFactor: Float, gamma: Float): Float {
+        val scaled = Math.pow(
+            dimFactor.coerceIn(0f, 1f).toDouble(),
+            1.0 / gamma.finiteIn(0.05f, 5f, default = 1f)
+        ).toFloat()
+        return if (amoledClamp && scaled < AMOLED_CLAMP_THRESHOLD) 0f else scaled
+    }
+
+    private fun matrixFieldsOrDiagonal(): FloatArray =
+        if (hasColorMatrix) {
+            floatArrayOf(
+                matrixRr, matrixRg, matrixRb,
+                matrixGr, matrixGg, matrixGb,
+                matrixBr, matrixBg, matrixBb
+            )
+        } else {
+            floatArrayOf(
+                r, 0f, 0f,
+                0f, g, 0f,
+                0f, 0f, b
+            )
+        }
 
     private fun lerpF(a: Float, b: Float, u: Float): Float = a + (b - a) * u
 
     private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
         if (isFinite()) coerceIn(min, max) else default
+
+    private fun Float.matrixCoeff(default: Float): Float =
+        finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = default)
 
     companion object {
         val IDENTITY = LumenMatrix()
@@ -132,5 +240,8 @@ data class LumenMatrix(
          * range where OLED true-black savings are useful.
          */
         const val AMOLED_CLAMP_THRESHOLD: Float = 0.02f
+
+        private const val MATRIX_COEFF_MIN: Float = -4f
+        private const val MATRIX_COEFF_MAX: Float = 4f
     }
 }

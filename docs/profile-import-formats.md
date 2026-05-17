@@ -23,7 +23,15 @@ For comparison, an OpenLumen export looks like (abridged):
   "schemaVersion": 1,
   "enabled": false,
   "activePresetKey": "night",
-  "customMatrix": { "r": 1.0, "g": 0.78, "b": 0.55, ... },
+  "customMatrix": {
+    "r": 1.0,
+    "g": 0.78,
+    "b": 0.55,
+    "hasColorMatrix": false,
+    "matrixRr": 1.0, "matrixRg": 0.0, "matrixRb": 0.0,
+    "matrixGr": 0.0, "matrixGg": 1.0, "matrixGb": 0.0,
+    "matrixBr": 0.0, "matrixBg": 0.0, "matrixBb": 1.0
+  },
   "presetIntensity": 1.0,
   "dim": 0.0,
   "schedule": {
@@ -45,6 +53,10 @@ For comparison, an OpenLumen export looks like (abridged):
 Every importer's goal is to produce a `Preferences` instance with at
 least the fields filled in that the source format expressed, and
 defaults elsewhere.
+
+`customMatrix.hasColorMatrix` and the nine `matrix*` coefficients are
+optional additive fields. Legacy exports without them decode to the
+identity 3x3 transform and continue to use the scalar `r/g/b` fallback.
 
 ## Red Moon (`LibreShift/red-moon`)
 

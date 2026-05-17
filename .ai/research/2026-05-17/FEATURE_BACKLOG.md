@@ -4,7 +4,8 @@ Raw harvested ideas before prioritisation. Inherits the full candidate
 inventory from `ROADMAP.md` rev 3 (C01-C127 preserved verbatim — see rev 3
 text). This file:
 
-1. Adds **new candidates C128-C131** drawn from this session's research.
+1. Adds **new candidates C128-C131** drawn from this session's research
+   plus **C145** split out after the C63 implementation pass.
 2. Notes **tier-shift implications** for existing candidates without
    pre-committing the change (the actual tier shifts land in
    `PRIORITIZATION_MATRIX.md` and ROADMAP rev 4).
@@ -13,6 +14,27 @@ text). This file:
 
 The full C01-C127 inventory is NOT duplicated here. See
 [../../../ROADMAP.md#candidate-inventory](../../../ROADMAP.md) lines 578-654.
+
+## Split candidate from implementation pass 26
+
+### C145 — True CVD LUT / piecewise tritan completion
+
+**Category**: accessibility / image quality
+**Tier**: Later
+**I/E/R**: 3 / 4 / 3
+**Sources**: S119, S120, S285, S286, S00s
+
+**Description**: C63 shipped the practical matrix-capable slice: the
+SurfaceFlinger path can receive off-diagonal 3x3 RGB transforms, and the
+CVD presets retain scalar fallbacks for other engines. A true LUT pass is
+still a different feature because overlay, KCAL, and CDM cannot consume
+per-pixel 256-entry LUTs, and DaltonLens's own reference treats tritan as
+a piecewise Brettel case rather than a single accurate 3x3 matrix.
+
+**Decision rule**: keep this Later until OpenLumen has a shader/LUT-capable
+engine path or strong accessibility evidence that justifies an engine
+redesign. Do not replace C63's matrix preset work with static unused LUT
+tables.
 
 ## New candidates from this research pass
 

@@ -14,10 +14,59 @@ object Presets {
     val DEEP     = LumenMatrix(r = 1.00f, g = 0.45f, b = 0.20f, dim = 0.30f) // pre-bedtime
     val OFF      = LumenMatrix.IDENTITY
 
-    /** Color-vision-deficiency remap presets (channel-shuffled rather than scaled). */
-    val PROTAN   = LumenMatrix(r = 0.85f, g = 1.00f, b = 0.95f)
-    val DEUTAN   = LumenMatrix(r = 1.00f, g = 0.85f, b = 0.95f)
-    val TRITAN   = LumenMatrix(r = 1.00f, g = 0.95f, b = 0.85f)
+    /**
+     * Color-vision-deficiency remap presets.
+     *
+     * Matrix-capable engines receive the DaltonLens Viénot 1999 linear-RGB
+     * matrices for protan/deutan and the documented single-matrix tritan
+     * approximation. Scalar-only engines keep the older coarse channel-scale
+     * fallbacks so these presets still do something useful on overlay/KCAL/CDM.
+     */
+    val PROTAN   = LumenMatrix(
+        r = 0.85f,
+        g = 1.00f,
+        b = 0.95f,
+        hasColorMatrix = true,
+        matrixRr = 0.11238f,
+        matrixRg = 0.88762f,
+        matrixRb = 0.00000f,
+        matrixGr = 0.11238f,
+        matrixGg = 0.88762f,
+        matrixGb = -0.00000f,
+        matrixBr = 0.00401f,
+        matrixBg = -0.00401f,
+        matrixBb = 1.00000f
+    )
+    val DEUTAN   = LumenMatrix(
+        r = 1.00f,
+        g = 0.85f,
+        b = 0.95f,
+        hasColorMatrix = true,
+        matrixRr = 0.29275f,
+        matrixRg = 0.70725f,
+        matrixRb = 0.00000f,
+        matrixGr = 0.29275f,
+        matrixGg = 0.70725f,
+        matrixGb = -0.00000f,
+        matrixBr = -0.02234f,
+        matrixBg = 0.02234f,
+        matrixBb = 1.00000f
+    )
+    val TRITAN   = LumenMatrix(
+        r = 1.00f,
+        g = 0.95f,
+        b = 0.85f,
+        hasColorMatrix = true,
+        matrixRr = 1.00000f,
+        matrixRg = 0.14461f,
+        matrixRb = -0.14461f,
+        matrixGr = 0.00000f,
+        matrixGg = 0.85924f,
+        matrixGb = 0.14076f,
+        matrixBr = -0.00000f,
+        matrixBg = 0.85924f,
+        matrixBb = 0.14076f
+    )
 
     data class Entry(val key: String, val displayName: String, val matrix: LumenMatrix)
 

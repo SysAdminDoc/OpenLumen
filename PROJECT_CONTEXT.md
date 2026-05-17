@@ -453,6 +453,11 @@ watchpoints future sessions should not miss:
   `PreferencesStore.importFrom()` / `previewImport()` return
   `ImportSummary`; the import preview and result message name duplicate
   saved profiles skipped by the last-write-wins sanitizer.
+- **CVD matrix preset slice (C63)**: shipped 2026-05-17. `LumenMatrix`
+  now has optional 3x3 RGB coefficients for matrix-capable engines, and
+  the Protan / Deutan / Tritan presets carry DaltonLens-derived matrices
+  with scalar fallbacks for CDM / KCAL / Overlay. The true per-pixel LUT /
+  piecewise Brettel tritan completion is intentionally split out as C145.
 - **AndroidX stable refresh (C144)**: shipped 2026-05-17. The Android 17
   `targetSdk` bump remains separate C103 work.
 

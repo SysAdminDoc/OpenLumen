@@ -201,7 +201,16 @@ class PreferencesStore(private val context: Context) {
         dim = m.dim.finiteIn(0f, 0.95f, default = 0f),
         gammaR = m.gammaR.finiteIn(0.1f, 5f, default = 1f),
         gammaG = m.gammaG.finiteIn(0.1f, 5f, default = 1f),
-        gammaB = m.gammaB.finiteIn(0.1f, 5f, default = 1f)
+        gammaB = m.gammaB.finiteIn(0.1f, 5f, default = 1f),
+        matrixRr = m.matrixRr.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f),
+        matrixRg = m.matrixRg.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
+        matrixRb = m.matrixRb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
+        matrixGr = m.matrixGr.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
+        matrixGg = m.matrixGg.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f),
+        matrixGb = m.matrixGb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
+        matrixBr = m.matrixBr.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
+        matrixBg = m.matrixBg.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
+        matrixBb = m.matrixBb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f)
     )
 
     private fun sanitizeSchedule(s: ScheduleDto): ScheduleDto = s.copy(
@@ -280,6 +289,8 @@ class PreferencesStore(private val context: Context) {
 
     private companion object {
         const val MAX_FAVORITES = 8
+        const val MATRIX_COEFF_MIN = -4f
+        const val MATRIX_COEFF_MAX = 4f
     }
 }
 

@@ -29,17 +29,20 @@ convenience. **No roadmap shift**.
 
 **Current state**: OpenLumen ships **CVD-remap presets** in
 [core-engine/.../Presets.kt](../../../core-engine/src/main/java/com/openlumen/engine/Presets.kt)
-(Protan / Deutan / Tritan) as coarse channel-shuffle approximations.
+(Protan / Deutan / Tritan). After the C63 implementation pass, those
+presets carry optional 3x3 linear-RGB matrix coefficients for
+matrix-capable engines plus scalar fallbacks for CDM / KCAL / Overlay.
 
-**Adjacent reference**: DaltonLens (S119, S120) is the canonical open
-reference for CVD simulation math (Viénot 1999 in linear RGB). The
-proper implementation is a precomputed 256-entry LUT per channel per
-deficiency type.
+**Adjacent reference**: DaltonLens (S119, S120, S285) is the canonical
+open reference for CVD simulation math. Its public-domain C reference
+uses single 3x3 Viénot matrices for protan/deutan and warns that tritan
+needs the more accurate piecewise Brettel path.
 
-**Action**: this is **C63** in rev 3, Next-tier. The DaltonLens math is
-fully open; the implementation question is whether to bundle (APK-size
-cost, reproducibility cost) or compute at runtime (CPU cost on slider
-drags). Rev 4 keeps the candidate at Next.
+**Action**: **C63** is now split. The matrix-capable preset slice shipped
+on 2026-05-17 (S00s), with SurfaceFlinger column-major packing checked
+against AOSP (S286). The full per-pixel LUT / piecewise tritan
+completion remains **C145** because the current overlay, KCAL, and CDM
+engines cannot consume per-pixel LUTs.
 
 ### Sleep / circadian evidence base
 

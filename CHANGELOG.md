@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test compilation on this toolchain.
 
 ### Changed
+- Protan, Deutan, and Tritan presets now carry optional 3x3 RGB matrix
+  coefficients for matrix-capable engines, while scalar-only engines keep
+  channel-scale fallbacks.
 - Launcher and store artwork now use the final minimal OpenLumen crescent
   mark, with a source SVG under `branding/` and the F-Droid 512x512 icon
   under `fastlane/metadata/android/en-US/images/`.

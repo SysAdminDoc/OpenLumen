@@ -2,10 +2,10 @@
 
 Every local and external source used in this research pass. Inherits the
 roadmap's `S00`-`S125` namespace from `ROADMAP.md` rev 3 and adds new
-entries through `S284` collected during this session and implementation
+entries through `S286` collected during this session and implementation
 passes.
 
-## Local evidence (S00 / S00b-S00r)
+## Local evidence (S00 / S00b-S00s)
 
 - **S00**: Local repo reconnaissance on 2026-05-17: working tree, `git status`,
   `git diff --stat HEAD`, last 30 commits, `gradle/libs.versions.toml`,
@@ -772,6 +772,15 @@ informed.
   `sanitizeProfiles()` are surfaced in `AboutScreen` and in the
   post-import result message. `ProfilesTest` covers duplicate-name
   detection.
+- **S00s**: Local implementation evidence for C63 —
+  `LumenMatrix` now carries optional 3x3 RGB coefficients and
+  SurfaceFlinger receives off-diagonal terms; Protan/Deutan/Tritan
+  presets include DaltonLens-derived matrices plus scalar fallbacks;
+  `MatrixDto` preserves those additive fields for imports and
+  direct-boot mirrors. Focused strict validation passed from
+  `C:\Users\Xray\OpenLumen-agp9-verify`; the full strict suite
+  (assemble, lint, Compose screenshot validation, Roborazzi verification,
+  and module unit tests) also passed before commit.
 
 ### Post-rev-5 build-tool implementation sources
 
@@ -826,16 +835,25 @@ informed.
 - **S284**: Maven Central metadata for Robolectric — confirms 4.16.1 as
   the current Robolectric release used by the C122 JVM screenshot lane.
   https://repo1.maven.org/maven2/org/robolectric/robolectric/
+- **S285**: DaltonLens `libDaltonLens.c` — public-domain C reference with
+  precomputed Viénot 1999 protan/deutan matrices, the documented tritan
+  warning, and Brettel 1997 tritan parameters.
+  https://raw.githubusercontent.com/DaltonLens/libDaltonLens/master/libDaltonLens.c
+- **S286**: AOSP `SurfaceFlinger.cpp` transaction handling — documents
+  that the service-call color matrix is sent as a column-major `mat4` and
+  validates the last row shape; used to verify off-diagonal packing for
+  C63.
+  https://android.googlesource.com/platform/frameworks/native/+/d40036791bd882431bafb7e5d3401a1661c6e459/services/surfaceflinger/SurfaceFlinger.cpp
 
 ## Source-class coverage check
 
 | Class | Sources | Counts |
 |---|---|---:|
-| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p, S00q, S00r | 18 |
+| Local evidence | S00, S00b, S00c, S00d, S00e, S00f, S00g, S00h, S00i, S00j, S00k, S00l, S00m, S00n, S00o, S00p, S00q, S00r, S00s | 19 |
 | Direct OSS competitors (incl. refreshed) | S10-S19, S69-S71, S81-S82, S86, S103, S166-S169, S179-S180, S195-S197, S199-S201 | 30 |
 | Commercial / platform references | S20-S25, S39, S87, S104, S198 | 11 |
 | Adjacent (desktop / Wayland) | S34-S40, S72, S104-S106, S170-S178 | 18 |
-| Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267 | 25 |
+| Android platform docs | S25-S29, S65-S68, S83-S85, S126-S139, S267, S286 | 26 |
 | AAPM / a11y policy | S88-S90, S121, S134-S136, S267 | 8 |
 | AGP / Hilt / Compose / Glance / Roborazzi | S75-S76, S91-S98, S118, S123-S125, S140-S153, S193-S194, S268-S284 | 44 |
 | DataStore | S66, S95, S146-S147, S252, S280 | 6 |
@@ -845,7 +863,7 @@ informed.
 | PWM | S80, S107, S185-S187 | 5 |
 | Wear OS | S117, **(negative result for new entries)** | 1 |
 | TV | S16, S182 | 2 |
-| CVD | S119-S120 | 2 |
+| CVD | S119-S120, S285 | 3 |
 | Color science (Wayland CTM parity) | S171 | 1 |
 
 Saturation: every Now/Next/Later/Under-Consideration item in `ROADMAP.md`
@@ -889,7 +907,11 @@ verification metadata and strict Gradle validation. S00p records the C123
 Glance widget rewrite and local emulator hardware-acceleration blocker.
 S00q records the C122 Roborazzi golden-image implementation and strict
 validation. S00r records the C139 import duplicate-name feedback
+implementation. S00s records the C63 matrix-capable CVD preset
 implementation. S275-S281 capture the AndroidX / Compose release evidence
 used for that batch. S282 records the official Glance AppWidget
 update/state guidance used for the C123 rewrite. S283-S284 record the
-Maven Central metadata used to pin Roborazzi/Robolectric for C122.
+Maven Central metadata used to pin Roborazzi/Robolectric for C122. S285
+records the DaltonLens coefficient source used by C63 and the C145 split.
+S286 records the SurfaceFlinger column-major matrix packing check used by
+C63.

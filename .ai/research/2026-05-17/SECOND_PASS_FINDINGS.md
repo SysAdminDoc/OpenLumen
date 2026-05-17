@@ -1,5 +1,10 @@
 # Second-Pass Findings — 2026-05-17
 
+Post-rev note: later implementation passes on 2026-05-17 have superseded
+several "still open" bullets below. See `CHANGESET_SUMMARY.md`,
+`RESEARCH_LOG.md`, and `ROADMAP.md` for the current shipped state through
+C63's matrix-capable preset slice and the C145 split.
+
 This file captures the second deep pass on OpenLumen, after the first pass
 produced the rev 4 roadmap supplement, canonical `PROJECT_CONTEXT.md`, and
 the 10-file research notebook (committed as `e71ee12`).

@@ -95,6 +95,13 @@ major versions.
   return `ImportSummary`, and the import preview / result path lists
   duplicate profile names that were skipped by the existing
   last-write-wins sanitizer.
+- [x] **C63 — matrix-capable CVD preset slice** shipped on 2026-05-17.
+  `LumenMatrix` now carries optional 3x3 RGB matrix coefficients for
+  SurfaceFlinger-class engines; Protan / Deutan / Tritan presets use
+  DaltonLens-derived linear-RGB matrices where a matrix engine can consume
+  them, while scalar-only engines keep the older channel-scale fallback.
+  A true per-pixel LUT / piecewise Brettel tritan pass remains split into
+  C145.
 - [x] **C28 / C102 — Direct Boot restore** shipped on 2026-05-17. The
   unlocked service mirrors the last active tint matrix and selected engine
   to a device-protected DataStore, `LOCKED_BOOT_COMPLETED` starts a
@@ -150,6 +157,7 @@ major versions.
 | C142 | CI action major rotation and SHA-pinning policy | supply chain / CI | Shipped 2026-05-17 | 4/2/2 | Rotated workflow actions to current Node-24-capable majors; documented major-tag policy with a full-SHA exception path; local validation covered YAML parsing plus debug build/lint/unit tests. | GitHub starts defaulting JavaScript actions to Node 24 on 2026-06-02; GitHub docs still state full SHA is the only immutable action reference. | S242, S243, S244, S245, S246, S247, S248, S249, S250, S251, S258-S265 |
 | C143 | Android 17 memory/resizability smoke expansion | mobile / compatibility | Shipped 2026-05-17 | 3/1/1 | Extended `docs/android-17-readiness.md` and the device-matrix smoke flow to cover `ApplicationExitInfo` MemoryLimiter review plus sw600dp / foldable / desktop-windowing layout checks. | Android 17 Beta 4 is the final scheduled beta; these two behaviors were not covered in rev 4.1's C103 notes. | S233, S234, S235, S236, S266 |
 | C144 | AndroidX stable baseline refresh batch | upgrade strategy | Shipped 2026-05-17 | 3/2/2 | Refreshed core/activity/lifecycle/navigation/DataStore, Compose BOM, and Material 3 as one stable AndroidX batch; raised `compileSdk` to 36 while leaving `targetSdk` at 35; fixed the new Compose lint findings by hoisting string resources out of click handlers. | Current stable AndroidX releases were far ahead of the repo floor; the batch keeps dependency churn separate from the AGP 9 toolchain migration and gives Direct Boot restore a stable DataStore 1.2.1 floor. | S237, S238, S239, S252, S253, S275-S281, S00l |
+| C145 | True CVD LUT / piecewise tritan completion | accessibility / image quality | Later | 3/4/3 | Decide whether to add a shader/LUT-capable path or keep documenting the current matrix-engine slice; if implemented, use per-pixel LUTs and Brettel-style piecewise tritan math rather than a single 3x3 approximation. | C63 shipped the useful matrix-capable slice, but overlay/KCAL/CDM cannot consume per-pixel LUTs and DaltonLens explicitly treats tritan as a piecewise Brettel case. | S119, S120, S285, S286, S00s |
 
 Research version: 2026-05-17 **rev 4.1**. Rev 4.1 is the second walk-away
 pass on the same day. It preserves rev 4 verbatim (which itself
@@ -780,11 +788,13 @@ Partial (per rev 2, still partial in rev 3):
    action path. The old XML layouts remain as initial / picker previews,
    not the active runtime UI. Sources: S118, S193, S194, S00p.
 
-5. **CVD LUT correction (C63)** — bundle precomputed 256-entry per-channel
-   LUTs for deuteranomaly/protanomaly/tritanomaly. Reference DaltonLens
-   for canonical math (Viénot 1999 in linear RGB). The shipped CVD-remap
-   presets in `Presets.kt` are the coarser baseline. Sources: S13, S31,
-   S119, S120.
+5. **CVD matrix / LUT correction (C63 → C145 split)** — C63 shipped the
+   matrix-capable slice: `LumenMatrix` has optional 3x3 RGB coefficients,
+   SurfaceFlinger receives those off-diagonal terms, and Protan / Deutan /
+   Tritan presets use DaltonLens-derived matrices with scalar fallbacks for
+   engines that cannot consume a full matrix. The true per-pixel LUT /
+   piecewise Brettel tritan completion is now C145. Sources: S13, S31,
+   S119, S120, S285, S286, S00s.
 
 6. **Driver compatibility learning (continued)** — extend
    `SurfaceFlinger.candidatesFor()` and `Kcal.CANDIDATE_BASES` as device
@@ -1022,6 +1032,13 @@ above; the others continue with their rev 2 placement.
   `ImportSummary`; duplicate profile names dropped by the sanitizer are
   reported in `AboutScreen`'s import preview and in the post-import result
   message; `ProfilesTest` covers duplicate-name detection.
+- **S00s**: 2026-05-17 C63 matrix-capable CVD preset slice —
+  `LumenMatrix` carries optional 3x3 RGB coefficients, SurfaceFlinger
+  applies column-major off-diagonal terms, Protan/Deutan/Tritan presets include
+  DaltonLens-derived matrices plus scalar fallbacks, `MatrixDto` preserves
+  the fields for import/direct-boot mirrors, and focused strict Gradle
+  plus full strict Gradle verification passed from
+  `C:\Users\Xray\OpenLumen-agp9-verify`.
 
 ### External URLs (rev 2 — preserved)
 
@@ -1139,6 +1156,8 @@ above; the others continue with their rev 2 placement.
 - **S118**: Jetpack Glance — https://developer.android.com/develop/ui/compose/glance
 - **S119**: DaltonLens CVD simulation review — https://daltonlens.org/opensource-cvd-simulation/
 - **S120**: DaltonLens SVG filters for CVD simulation — https://daltonlens.org/cvd-simulation-svg-filters/
+- **S285**: DaltonLens `libDaltonLens.c` precomputed Viénot / Brettel matrices — https://raw.githubusercontent.com/DaltonLens/libDaltonLens/master/libDaltonLens.c
+- **S286**: AOSP `SurfaceFlinger.cpp` column-major color-transform transaction handling — https://android.googlesource.com/platform/frameworks/native/+/d40036791bd882431bafb7e5d3401a1661c6e459/services/surfaceflinger/SurfaceFlinger.cpp
 - **S121**: SecurityAffairs — AAPM in Android 17 prevents accessibility misuse — https://securityaffairs.com/189497/security/advanced-protection-mode-in-android-17-prevents-apps-from-misusing-accessibility-services.html
 - **S122**: EncryptedSharedPreferences deprecation + Tink/Proto DataStore migration — https://proandroiddev.com/goodbye-encryptedsharedpreferences-a-2026-migration-guide-4b819b4a537a
 - **S123**: Compose Material 3 release notes — https://developer.android.com/jetpack/androidx/releases/compose-material3

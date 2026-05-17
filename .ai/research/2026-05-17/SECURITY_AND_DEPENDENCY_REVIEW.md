@@ -326,6 +326,16 @@ boundary: the sanitizer already dropped earlier duplicate saved-profile
 names with last-write-wins semantics, and the import preview/result now
 reports those dropped names through `ImportSummary` (S00r).
 
+### C63 CVD matrix preset slice
+
+C63's shipped slice adds no runtime dependencies and no network / account
+surface. The DaltonLens-derived coefficients are embedded as source
+constants in `Presets.kt`, and `MatrixDto` treats the 3x3 matrix fields as
+additive optional JSON fields. Import hardening still sanitizes
+coefficients into a bounded `-4..4` range before use. SurfaceFlinger
+packing was checked against AOSP's column-major transaction handling
+(S00s, S285, S286).
+
 ### C137 material icon dependency removal
 
 C137 is now shipped. The app no longer declares
