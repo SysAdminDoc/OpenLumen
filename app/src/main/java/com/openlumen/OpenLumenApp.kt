@@ -6,30 +6,60 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.UserManager
+import android.util.Log
 import dagger.hilt.android.HiltAndroidApp
 
+/**
+ * Application root. Declared `directBootAware="true"` in the manifest so the
+ * Hilt-injected `LockedBootReceiver` and the directBootAware foreground
+ * service can construct their dependency graph before the user unlocks the
+ * device. That means `onCreate()` may run twice for the same boot — once in
+ * device-protected (locked) mode and once in credential-protected (unlocked)
+ * mode — so every action here must be idempotent and must not touch
+ * credential-protected storage before unlock.
+ *
+ * - [CrashLogger] writes to credential-protected `filesDir`, so it's gated
+ *   on `isUserUnlocked()`. The locked-boot path stays uninstrumented; any
+ *   crash before unlock will fall through to the system handler.
+ * - The notification channel is registered defensively: it's only useful
+ *   after unlock (the user sees notifications then), and some OEMs throw
+ *   from `NotificationManager` calls before unlock. We swallow and retry on
+ *   the next Application.onCreate() (post-unlock).
+ */
 @HiltAndroidApp
 class OpenLumenApp : Application() {
+
+    private val tag = "OpenLumen/App"
+
     override fun onCreate() {
         super.onCreate()
         if (isUserUnlocked()) {
             CrashLogger.install(this)
+            registerNotificationChannel()
         }
-        registerNotificationChannel()
     }
 
     private fun registerNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channel = NotificationChannel(
-            getString(R.string.notif_channel_id),
-            getString(R.string.notif_channel_name),
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = getString(R.string.notif_channel_desc)
-            setShowBadge(false)
+        runCatching {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return@runCatching
+            val channel = NotificationChannel(
+                getString(R.string.notif_channel_id),
+                getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.notif_channel_desc)
+                setShowBadge(false)
+            }
+            nm.createNotificationChannel(channel)
+        }.onFailure {
+            // OEM forks occasionally throw on createNotificationChannel during
+            // an early boot or low-storage state; the service's startInForeground
+            // call site recreates the notification builder against the same
+            // channel ID, so a missing channel here is recoverable.
+            Log.w(tag, "createNotificationChannel failed: ${it.message}")
         }
-        nm.createNotificationChannel(channel)
     }
 
     private fun isUserUnlocked(): Boolean =

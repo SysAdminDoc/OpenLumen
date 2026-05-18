@@ -37,6 +37,7 @@ import com.openlumen.R
 import com.openlumen.diagnostics.MatrixPreview
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
+import com.openlumen.prefs.EngineKindDto
 import com.openlumen.presetLabel
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -59,7 +60,16 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             .padding(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        OverlayPermissionCard()
+        // The overlay-permission card is only relevant if the active engine
+        // selection actually needs the rootless overlay path. A root user who
+        // pinned SurfaceFlinger or KCAL doesn't need SYSTEM_ALERT_WINDOW and
+        // shouldn't see a permission nag. "Auto" is treated as "might use
+        // overlay" because the driver probe is the only thing that knows
+        // whether a higher-rank engine is actually available, and the
+        // probe runs off the UI thread.
+        val overlayCardRelevant =
+            prefs.engine == EngineKindDto.Auto || prefs.engine == EngineKindDto.Overlay
+        OverlayPermissionCard(requiredByActiveEngine = overlayCardRelevant)
 
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),

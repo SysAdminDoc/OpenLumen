@@ -117,6 +117,15 @@ class LumenService : LifecycleService() {
     private val latestLux = AtomicReference(-1f)
     private val lastMirroredDirectBootState = AtomicReference<DirectBootState?>(null)
     /**
+     * Last set of preference fields the home-screen widgets actually
+     * render. Used to suppress widget refresh broadcasts on emissions
+     * that change only invisible-to-widget state (intensity slider drag,
+     * gamma, contrast, schedule offsets, ...). Without this diff a
+     * slider-drag flood translates into a flood of Glance recomposes
+     * which is both wasteful and visibly stutters on lower-end devices.
+     */
+    private val lastWidgetSnapshot = AtomicReference<WidgetSnapshot?>(null)
+    /**
      * The matrix the active engine actually received on its last successful
      * [ColorEngine.apply]. Distinct from [applyGate]'s target cache so a
      * mid-ramp interrupt can compute its new ramp from the displayed value
@@ -124,6 +133,19 @@ class LumenService : LifecycleService() {
      */
     @Volatile private var lastApplied: LumenMatrix? = null
     private val applyGate = ApplyDecisionGate()
+
+    /**
+     * Cached result of the last `DriverProbe.pickBest()` call for an
+     * `Auto`-mode preference. Even with the round-two engine probe caches
+     * making `isAvailable` cheap, `pickBest` still walks 4 engines and
+     * allocates a sorted list per call. This cache holds the chosen kind
+     * across emissions so a slider drag doesn't re-run that walk on every
+     * conflated tick. Invalidated whenever the user changes their engine
+     * preference (Auto → pinned or back), since that's the only time the
+     * chosen kind could change without the engine itself dying.
+     */
+    @Volatile private var cachedAutoKind: EngineKind? = null
+    @Volatile private var lastEngineSelection: EngineKindDto? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -197,7 +219,24 @@ class LumenService : LifecycleService() {
                 if (isUserUnlocked()) latestPrefs.get()?.let { applyIfShouldBeActive(it) }
             }
             ACTION_CYCLE_PRESET -> lifecycleScope.launch {
-                if (isUserUnlocked()) prefs.update { current -> com.openlumen.prefs.PresetCycle.next(current) }
+                if (!isUserUnlocked()) return@launch
+                // PresetCycle.next is a no-op when favorites is empty. The
+                // notification action stays visible on purpose (it would
+                // require rebuilding the notification on every favorites
+                // edit), so without this breadcrumb a user troubleshooting
+                // via the diagnostics log sees nothing happen.
+                prefs.update { current ->
+                    val next = com.openlumen.prefs.PresetCycle.next(current)
+                    if (next === current && current.favoritePresetKeys.isEmpty()) {
+                        DiagnosticsLog.log(
+                            this@LumenService,
+                            DiagnosticsLog.Level.INFO,
+                            DiagnosticsLog.Category.PROFILE,
+                            "cycle ignored: no favorites set"
+                        )
+                    }
+                    next
+                }
             }
             ACTION_SET_PRESET -> lifecycleScope.launch {
                 if (!isUserUnlocked()) return@launch
@@ -319,13 +358,12 @@ class LumenService : LifecycleService() {
     private suspend fun handlePreferenceEmission(p: Preferences) {
         latestPrefs.set(p)
         updateLightSensorSubscription(p.enabled && p.lightSensorEnabled)
-        // Nudge any installed widget instances so their visible state
-        // stays in sync with the in-app toggle. Cheap when no widgets
-        // are installed (the receivers no-op on empty getAppWidgetIds).
-        runCatching { ToggleWidget.broadcastRefresh(this@LumenService) }
-            .onFailure { Log.w(tag, "ToggleWidget broadcast failed: ${it.message}") }
-        runCatching { PresetWidget.broadcastRefresh(this@LumenService) }
-            .onFailure { Log.w(tag, "PresetWidget broadcast failed: ${it.message}") }
+        // Nudge installed widget instances only when fields they actually
+        // render have changed. A slider drag (intensity / dim / gamma /
+        // contrast / schedule offsets) is invisible to both widgets and
+        // would otherwise re-broadcast Glance updates per conflated
+        // emission — measurable jank on lower-end devices.
+        maybeBroadcastWidgetRefresh(p)
         if (!p.enabled) {
             mirrorDirectBootState(p, active = false, matrix = LumenMatrix.IDENTITY)
             clearAndStop()
@@ -334,6 +372,30 @@ class LumenService : LifecycleService() {
         ensureEngine(p)
         applyIfShouldBeActive(p)
     }
+
+    private fun maybeBroadcastWidgetRefresh(p: Preferences) {
+        val snapshot = WidgetSnapshot(
+            enabled = p.enabled,
+            activePresetKey = p.activePresetKey,
+            favoritePresetKeys = p.favoritePresetKeys
+        )
+        if (lastWidgetSnapshot.getAndSet(snapshot) == snapshot) return
+        runCatching { ToggleWidget.broadcastRefresh(this@LumenService) }
+            .onFailure { Log.w(tag, "ToggleWidget broadcast failed: ${it.message}") }
+        runCatching { PresetWidget.broadcastRefresh(this@LumenService) }
+            .onFailure { Log.w(tag, "PresetWidget broadcast failed: ${it.message}") }
+    }
+
+    /**
+     * Subset of [Preferences] fields the home-screen widgets actually
+     * render. Equality on this is the gate for skipping a widget-refresh
+     * broadcast on a no-op-for-widgets emission.
+     */
+    private data class WidgetSnapshot(
+        val enabled: Boolean,
+        val activePresetKey: String,
+        val favoritePresetKeys: List<String>
+    )
 
     private suspend fun clearAndStop() {
         cancelTransition()
@@ -345,8 +407,18 @@ class LumenService : LifecycleService() {
     }
 
     private suspend fun ensureEngine(p: Preferences) {
+        // Invalidate the auto-mode cache when the user flips their engine
+        // preference (Auto → pinned or back). Otherwise keep the cached
+        // pickBest result across emissions; the underlying engine probes
+        // self-invalidate on apply/clear failure.
+        if (p.engine != lastEngineSelection) {
+            cachedAutoKind = null
+            lastEngineSelection = p.engine
+        }
         val want = when (p.engine) {
-            EngineKindDto.Auto -> probe.pickBest(this).kind
+            EngineKindDto.Auto ->
+                cachedAutoKind
+                    ?: probe.pickBest(this).kind.also { cachedAutoKind = it }
             EngineKindDto.ColorDisplayManager -> EngineKind.COLOR_DISPLAY_MANAGER
             EngineKindDto.SurfaceFlinger -> EngineKind.SURFACE_FLINGER
             EngineKindDto.Kcal -> EngineKind.KCAL
@@ -753,6 +825,17 @@ class LumenService : LifecycleService() {
         // Synchronously clear the engine — the lifecycleScope is about to be cancelled,
         // so a normal `launch { engine?.clear() }` would race with cancellation. We
         // block on a short timeout so we never hang shutdown if su is misbehaving.
+        //
+        // We deliberately keep the default runBlocking dispatcher (BlockingEventLoop
+        // on the calling Main thread) rather than handing off to Dispatchers.Default:
+        //
+        // - Root engines do their own `withContext(Dispatchers.IO)` switch, which
+        //   works fine because Dispatchers.IO has its own worker pool and the
+        //   BlockingEventLoop on Main keeps draining its queue while parked.
+        // - OverlayEngine.clear runs on the Main looper. Its internal `onMain`
+        //   check detects that we're already on the Main thread and runs inline
+        //   rather than scheduling through Dispatchers.Main (which would deadlock
+        //   waiting on a parked Looper).
         val e = engine
         if (e != null) {
             runBlocking {

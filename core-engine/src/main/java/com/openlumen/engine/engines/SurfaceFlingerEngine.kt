@@ -42,24 +42,29 @@ class SurfaceFlingerEngine : ColorEngine {
         get() = workingCode
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
-        if (!Su.isAvailable()) return@withContext false
-        // Try the identity matrix with each candidate code; the first one that returns 0
-        // without "Service: SurfaceFlinger not found" is our winner.
-        val candidates = candidatesFor(Build.VERSION.SDK_INT)
-        for (code in candidates) {
-            val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
-            if (res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) {
-                Log.d(TAG, "probe: code $code worked (api ${Build.VERSION.SDK_INT})")
-                workingCode = code
-                return@withContext true
-            }
-        }
-        Log.w(TAG, "probe: no SurfaceFlinger color-transform code worked (tried ${candidates.toList()})")
-        false
+        // Short-circuit if a previous probe already found a working code.
+        // Without this, a slider drag on an Auto-mode preference (which
+        // triggers DriverProbe.pickBest on every conflated emission) re-spawns
+        // up to three `su service call SurfaceFlinger ...` subprocesses per
+        // emission — a real performance bug. The cache is invalidated by
+        // apply/clear when a write fails (see invalidateOnFailure), so a code
+        // that's gone stale gets re-probed naturally on next call.
+        workingCode?.let { return@withContext true }
+        probeLocked()
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
-        val code = workingCode ?: return@withContext
+        // If the cache is empty — first call after construction or
+        // invalidation from a failed apply/clear — re-probe once before
+        // silently no-op'ing. Without this, a user who pinned SurfaceFlinger
+        // can land in a state where the engine claims to be active but
+        // every apply() is a no-op because no code was probed yet.
+        val code = workingCode ?: run {
+            if (probeLocked()) workingCode else null
+        } ?: run {
+            Log.w(TAG, "apply: no working SurfaceFlinger transaction code; tint will not be visible")
+            return@withContext
+        }
         val res = Su.runCommand(buildServiceCall(code, matrix))
         invalidateOnFailure(res, code, "apply")
         Unit
@@ -70,6 +75,26 @@ class SurfaceFlingerEngine : ColorEngine {
         val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
         invalidateOnFailure(res, code, "clear")
         Unit
+    }
+
+    /**
+     * Try the identity matrix with each candidate code; the first one that
+     * returns 0 without "Service: SurfaceFlinger not found" is the winner.
+     * Sets [workingCode] on success.
+     */
+    private suspend fun probeLocked(): Boolean {
+        if (!Su.isAvailable()) return false
+        val candidates = candidatesFor(Build.VERSION.SDK_INT)
+        for (code in candidates) {
+            val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
+            if (res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) {
+                Log.d(TAG, "probe: code $code worked (api ${Build.VERSION.SDK_INT})")
+                workingCode = code
+                return true
+            }
+        }
+        Log.w(TAG, "probe: no SurfaceFlinger color-transform code worked (tried ${candidates.toList()})")
+        return false
     }
 
     private fun buildServiceCall(code: Int, matrix: LumenMatrix): String {

@@ -54,4 +54,39 @@ class DirectBootStateSerializerTest {
         assertThat(decoded.matrix.biasR).isEqualTo(1f)
         assertThat(decoded.matrix.gammaB).isEqualTo(5f)
     }
+
+    @Test fun `direct boot matrix CVD coefficients are clamped and NaN-defaulted`() = runBlocking {
+        // Regression: pre-fix the sanitizer left the 9 cross-channel matrix
+        // coefficients un-clamped, so a corrupted mirror payload could feed
+        // NaN / out-of-range values straight into the engine on Locked Boot
+        // restore.
+        val state = DirectBootState(
+            enabled = true,
+            active = true,
+            matrix = MatrixDto(
+                hasColorMatrix = true,
+                matrixRr = Float.NaN,
+                matrixRg = 99f,
+                matrixGb = Float.NEGATIVE_INFINITY,
+                matrixBb = -99f
+            )
+        )
+
+        val out = ByteArrayOutputStream()
+        DirectBootStateSerializer.writeTo(state, out)
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(out.toByteArray()))
+
+        assertThat(decoded.matrix.matrixRr).isEqualTo(1f)
+        assertThat(decoded.matrix.matrixRg).isEqualTo(4f)
+        assertThat(decoded.matrix.matrixGb).isEqualTo(0f)
+        assertThat(decoded.matrix.matrixBb).isEqualTo(-4f)
+    }
+
+    @Test fun `unreadable bytes decode to safe default rather than throwing`() = runBlocking {
+        val garbage = "{ this is not json :: }".toByteArray()
+
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(garbage))
+
+        assertThat(decoded).isEqualTo(DirectBootState())
+    }
 }

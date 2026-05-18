@@ -61,9 +61,17 @@ object Su {
         // daemon thread because Dispatchers.IO + a child coroutine would
         // tie shutdown ordering to the parent scope, which is harder to
         // reason about than a self-contained drainer.
+        //
+        // We discard the output entirely (callers of runShell only care
+        // about the exit code) and bound the read with a fixed buffer so
+        // a misbehaving script writing MBs of output inside the timeout
+        // window can't spike memory before the process is killed.
         val drainer = Thread({
             try {
-                proc.inputStream.bufferedReader().use { it.readText() }
+                proc.inputStream.use { input ->
+                    val buf = ByteArray(4096)
+                    while (input.read(buf) >= 0) { /* discard */ }
+                }
             } catch (_: IOException) { /* process already gone */ }
         }, "OpenLumen-su-drain").apply { isDaemon = true; start() }
         val exit = withTimeoutOrNull(CMD_TIMEOUT_MS) {
@@ -101,10 +109,29 @@ object Su {
             return@withContext SuResult(127, "", "su not on PATH: ${e.message}")
         }
         val combined = StringBuilder()
+        var truncated = false
         val exit = withTimeoutOrNull(timeoutMs) {
             try {
                 BufferedReader(InputStreamReader(proc.inputStream)).use { reader ->
-                    reader.forEachLine { combined.appendLine(it) }
+                    // forEachLine reads each line as a String of unbounded
+                    // length; a misbehaving su writing one giant line (or many
+                    // small lines totaling MBs) before the timeout fires could
+                    // wedge the process in StringBuilder.append. Cap captured
+                    // output and drain the rest into /dev/null.
+                    val buffer = CharArray(4096)
+                    while (true) {
+                        val n = reader.read(buffer)
+                        if (n < 0) break
+                        if (combined.length < MAX_CAPTURED_OUTPUT_CHARS) {
+                            val room = MAX_CAPTURED_OUTPUT_CHARS - combined.length
+                            combined.append(buffer, 0, minOf(n, room))
+                            if (combined.length >= MAX_CAPTURED_OUTPUT_CHARS) {
+                                truncated = true
+                            }
+                        } else {
+                            truncated = true
+                        }
+                    }
                 }
             } catch (_: IOException) { /* process already gone */ }
             proc.waitFor()
@@ -113,8 +140,18 @@ object Su {
             proc.destroyForcibly()
             -1
         }
+        if (truncated) {
+            Log.w(TAG, "su output truncated at $MAX_CAPTURED_OUTPUT_CHARS chars: ${cmdline.take(60)}")
+        }
         SuResult(exit, combined.toString().trim(), "")
     }
+
+    /**
+     * Hard cap on captured `su` output. 16 KiB is generous for our use cases
+     * (success exit code + a short status line is the norm) and small enough
+     * to bound worst-case memory even if every command spammed output.
+     */
+    private const val MAX_CAPTURED_OUTPUT_CHARS = 16 * 1024
 
     /**
      * @param exitCode 0 on success, 127 if `su` isn't on PATH, -1 on timeout, otherwise

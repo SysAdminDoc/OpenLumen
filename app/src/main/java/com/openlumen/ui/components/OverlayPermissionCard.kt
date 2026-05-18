@@ -23,9 +23,19 @@ import com.openlumen.R
  * Rationale card shown when the rootless Overlay driver is the only path we'd be able
  * to use but the user hasn't granted SYSTEM_ALERT_WINDOW yet. Tap "Open settings" jumps
  * to the per-app overlay setting screen.
+ *
+ * When [requiredByActiveEngine] is false the card is suppressed even if overlay
+ * permission is missing — for example a root user who pinned SurfaceFlinger /
+ * KCAL doesn't need overlay and shouldn't see a permission nag. Default is
+ * true so callers that don't know which engine the user picked still get the
+ * safety-net card.
  */
 @Composable
-fun OverlayPermissionCard(modifier: Modifier = Modifier) {
+fun OverlayPermissionCard(
+    modifier: Modifier = Modifier,
+    requiredByActiveEngine: Boolean = true
+) {
+    if (!requiredByActiveEngine) return
     val ctx = LocalContext.current
     if (Build.VERSION.SDK_INT >= 23 && Settings.canDrawOverlays(ctx)) return
 

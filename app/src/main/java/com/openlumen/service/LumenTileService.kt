@@ -45,7 +45,11 @@ class LumenTileService : TileService() {
 
     override fun onCreate() {
         super.onCreate()
-        // Replace any stale scope from a previous binding.
+        // If `onDestroy` didn't run (rare but documented on some OEMs that
+        // skip the call when ripping a tile binding), cancel the prior scope
+        // before swapping so its in-flight work doesn't leak past this
+        // binding.
+        (scope.coroutineContext[Job])?.cancel()
         scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     }
 

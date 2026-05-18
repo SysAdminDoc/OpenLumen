@@ -38,6 +38,14 @@ import com.openlumen.schedule.OfflineCities
  * convenience layer over the same lat/lng fields — picking a city fills both
  * fields and leaves the user free to refine, rather than locking them out of
  * manual entry.
+ *
+ * **Locale safety.** Decimal coordinates always render and parse against
+ * [Locale.ROOT] (i.e. dot-separated). Without this, German / French / Spanish
+ * locales hit a Catch-22: `"%.4f".format(...)` writes `52,5200` but
+ * `String.toDoubleOrNull()` only accepts `.`, so the city picker fills the
+ * field with a value the validator can't read and Save stays disabled. The
+ * manual-input path additionally tolerates a single `,` as the user's decimal
+ * separator and normalizes it to `.` before parsing.
  */
 @Composable
 fun LocationEntryDialog(
@@ -47,15 +55,15 @@ fun LocationEntryDialog(
     onSave: (lat: Double, lng: Double) -> Unit
 ) {
     var latText by rememberSaveable {
-        mutableStateOf(initialLat?.let { "%.4f".format(it) } ?: "")
+        mutableStateOf(initialLat?.let { formatCoord(it) } ?: "")
     }
     var lngText by rememberSaveable {
-        mutableStateOf(initialLng?.let { "%.4f".format(it) } ?: "")
+        mutableStateOf(initialLng?.let { formatCoord(it) } ?: "")
     }
     var query by rememberSaveable { mutableStateOf("") }
 
-    val latVal = latText.toDoubleOrNull()
-    val lngVal = lngText.toDoubleOrNull()
+    val latVal = parseCoord(latText)
+    val lngVal = parseCoord(lngText)
     val canSave = latVal != null && lngVal != null &&
         latVal in -90.0..90.0 && lngVal in -180.0..180.0
 
@@ -116,8 +124,8 @@ fun LocationEntryDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    latText = "%.4f".format(city.latitude)
-                                    lngText = "%.4f".format(city.longitude)
+                                    latText = formatCoord(city.latitude)
+                                    lngText = formatCoord(city.longitude)
                                 }
                                 .padding(vertical = 4.dp),
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -129,8 +137,8 @@ fun LocationEntryDialog(
                             )
                             AssistChip(
                                 onClick = {
-                                    latText = "%.4f".format(city.latitude)
-                                    lngText = "%.4f".format(city.longitude)
+                                    latText = formatCoord(city.latitude)
+                                    lngText = formatCoord(city.longitude)
                                 },
                                 label = { Text(stringResource(R.string.location_use_city)) },
                                 colors = AssistChipDefaults.assistChipColors()
@@ -155,3 +163,8 @@ fun LocationEntryDialog(
         }
     )
 }
+
+// Locale-tolerant parse/format lives in `CoordParsing` so it's unit-testable
+// without spinning up a Composable harness.
+private fun formatCoord(value: Double): String = CoordParsing.format(value)
+private fun parseCoord(raw: String): Double? = CoordParsing.parse(raw)

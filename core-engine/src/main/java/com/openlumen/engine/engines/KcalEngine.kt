@@ -37,32 +37,25 @@ class KcalEngine : ColorEngine {
         get() = resolvedPaths?.base
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
-        if (!Su.isAvailable()) return@withContext false
-        for (base in CANDIDATE_BASES) {
-            val rgbPath = "$base/kcal"
-            val enablePath = "$base/kcal_enable"
-            val minPath = "$base/kcal_min"
-            // Both the RGB node and the enable node must exist. `kcal_min` is optional
-            // (some forks skip it); we probe it separately so apply() can avoid
-            // writing to a non-existent path entirely.
-            val test = Su.runCommand(
-                "test -e '$rgbPath' && test -e '$enablePath' && echo ok"
-            )
-            if (test.exitCode == 0 && test.stdout.contains("ok")) {
-                val hasMin = Su.runCommand("test -e '$minPath' && echo ok")
-                val resolvedMin = if (hasMin.exitCode == 0 && hasMin.stdout.contains("ok")) minPath else null
-                val paths = Paths(base = base, rgb = rgbPath, enable = enablePath, min = resolvedMin)
-                Log.d(TAG, "probe: KCAL at $base (rgb=${paths.rgb}, enable=${paths.enable}, min=${paths.min ?: "absent"})")
-                resolvedPaths = paths
-                return@withContext true
-            }
-        }
-        Log.w(TAG, "probe: no known KCAL sysfs surface found")
-        false
+        // Short-circuit if a previous probe already resolved the sysfs
+        // surface — otherwise every conflated prefs emission re-spawns one
+        // su subprocess per candidate root. `invalidateOnFailure` resets
+        // the cache when an apply/clear fails (e.g. the kernel module was
+        // unloaded), so a stale path gets re-probed the next time around.
+        resolvedPaths?.let { return@withContext true }
+        probeLocked()
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
-        val paths = resolvedPaths ?: return@withContext
+        val paths = resolvedPaths ?: run {
+            // Same defense as SurfaceFlingerEngine.apply — re-probe once
+            // before silently no-op'ing. A user who pinned KCAL otherwise
+            // sees an "available" engine that does nothing.
+            if (probeLocked()) resolvedPaths else null
+        } ?: run {
+            Log.w(TAG, "apply: no resolved KCAL sysfs path; tint will not be visible")
+            return@withContext
+        }
         val s = matrix.scaledRgb()
         val r = (s[0] * 256f).toInt().coerceIn(0, 256)
         val g = (s[1] * 256f).toInt().coerceIn(0, 256)
@@ -99,6 +92,34 @@ class KcalEngine : ColorEngine {
         if (exitCode == 0) return
         Log.w(TAG, "$operation failed for KCAL at ${paths.base} (exit=$exitCode); invalidating probe cache")
         resolvedPaths = null
+    }
+
+    /**
+     * Walk [CANDIDATE_BASES] looking for a sysfs root that has both
+     * `kcal` and `kcal_enable` nodes. Sets [resolvedPaths] on success.
+     * Caller is responsible for the `Su.isAvailable()` gate; we skip
+     * the probe entirely if there's no root shell.
+     */
+    private suspend fun probeLocked(): Boolean {
+        if (!Su.isAvailable()) return false
+        for (base in CANDIDATE_BASES) {
+            val rgbPath = "$base/kcal"
+            val enablePath = "$base/kcal_enable"
+            val minPath = "$base/kcal_min"
+            val test = Su.runCommand(
+                "test -e '$rgbPath' && test -e '$enablePath' && echo ok"
+            )
+            if (test.exitCode == 0 && test.stdout.contains("ok")) {
+                val hasMin = Su.runCommand("test -e '$minPath' && echo ok")
+                val resolvedMin = if (hasMin.exitCode == 0 && hasMin.stdout.contains("ok")) minPath else null
+                val paths = Paths(base = base, rgb = rgbPath, enable = enablePath, min = resolvedMin)
+                Log.d(TAG, "probe: KCAL at $base (rgb=${paths.rgb}, enable=${paths.enable}, min=${paths.min ?: "absent"})")
+                resolvedPaths = paths
+                return true
+            }
+        }
+        Log.w(TAG, "probe: no known KCAL sysfs surface found")
+        return false
     }
 
     private data class Paths(

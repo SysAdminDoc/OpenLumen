@@ -2,11 +2,13 @@ package com.openlumen.prefs
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -142,7 +144,25 @@ class PreferencesStore(private val context: Context) {
 
     private fun decodeOrDefault(raw: String): Preferences =
         runCatching { decodeWithMigration(raw) }
-            .getOrElse { Preferences() }
+            .getOrElse { t ->
+                // Decode failure here means the persisted JSON is corrupted —
+                // most likely cause is a power loss mid-write, an OEM backup
+                // restoration mishap, or a developer who hand-edited the
+                // DataStore file. We don't surface this to the user
+                // (recovering to defaults is the right behavior) but we DO
+                // log it once per process so a contributor pulling a driver
+                // report has a breadcrumb instead of "config inexplicably
+                // reset itself". Silent defaulting was the previous
+                // behavior, which made this class of bug invisible.
+                if (decodeFailureLogged.compareAndSet(false, true)) {
+                    Log.w(
+                        TAG,
+                        "persisted prefs decode failed (${t.javaClass.simpleName}); " +
+                            "reverting to defaults: ${t.message?.take(120)}"
+                    )
+                }
+                Preferences()
+            }
 
     /**
      * Decode JSON and run schema migrations. The schema version detection is
@@ -288,9 +308,18 @@ class PreferencesStore(private val context: Context) {
         this?.takeIf { it.isFinite() && it in min..max }
 
     private companion object {
+        const val TAG = "OpenLumen/Prefs"
         const val MAX_FAVORITES = 8
         const val MATRIX_COEFF_MIN = -4f
         const val MATRIX_COEFF_MAX = 4f
+
+        /**
+         * Process-wide latch so a repeated decode failure (the DataStore
+         * flow can re-read the same corrupt blob many times) only writes
+         * one log line. Reset on process restart, which is when a clean
+         * blob would be re-written anyway.
+         */
+        val decodeFailureLogged = AtomicBoolean(false)
     }
 }
 
