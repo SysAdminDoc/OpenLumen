@@ -180,7 +180,11 @@
     <string name="action_close">Close</string>
     <string name="action_clear">Clear</string>
 
-    <string name="notif_channel_id">openlumen.filter</string>
+    <!-- Notification channel ID — must NOT be translated. Used as an
+         identifier by Android's NotificationManager; translating it
+         orphans the user's per-channel preferences (sound, vibration,
+         importance overrides) on locale change. -->
+    <string name="notif_channel_id" translatable="false">openlumen.filter</string>
     <string name="notif_channel_name">Filter status</string>
     <string name="notif_channel_desc">Indicates that OpenLumen is currently tinting the display.</string>
     <string name="notif_title">OpenLumen active</string>
