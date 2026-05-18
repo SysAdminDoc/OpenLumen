@@ -153,3 +153,38 @@ Run this on a release build with a normal user-unlocked boot:
   only when the device-protected mirror says a tint was active — and
   even then, only once per boot. Doesn't change the steady-state vitals
   story.
+
+## WorkManager / JobScheduler policy (C107)
+
+OpenLumen does **not** use `WorkManager` or `JobScheduler` today.
+Every wake source is either an `AlarmManager` schedule alarm
+(documented above) or a system broadcast (`BOOT_COMPLETED`,
+`LOCKED_BOOT_COMPLETED`, `ACTION_SCREEN_OFF`). Foreground-service
+runtime quotas added in Android 16 (rev-5 source S85, S130) and
+their per-FGS-type budgets therefore do not apply to OpenLumen.
+
+This is a forward-policy note: **if** the project ever adds
+`WorkManager` (e.g. for a periodic profile-backup task or a
+sysfs-availability re-probe), the integration must:
+
+1. Tag the work request with the correct constraints
+   (`requiresCharging`, `requiresBatteryNotLow`, etc.) — never
+   default to "always run."
+2. Use `WorkRequest.setExpedited(...)` only when the work is
+   user-visible and cannot be deferred. Per Android 16 quota
+   rules, expedited work consumes a non-renewable per-period
+   budget; spending it on background backup would be wrong.
+3. Stay under the Android 16 quota of ~30 seconds of expedited
+   work per app per 10-minute window. Background tint apply runs
+   inside the existing FGS and does not count against this
+   budget; new WorkManager jobs would.
+4. Surface the new wake source in this document so the audit
+   stays accurate.
+
+The deliberate decision today is "no WorkManager" — the FGS plus
+two daily AlarmManager fires is enough surface area. If a future
+candidate needs periodic background work (e.g. a daily SBOM
+refresh fetch, which we don't do because no INTERNET), that
+candidate should re-justify against this policy.
+
+Tied to roadmap candidate **C107**.

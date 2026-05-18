@@ -428,6 +428,36 @@ Second-sweep correctness, concurrency, performance, and UX fixes from the
   CVD matrix-coefficient clamping and for garbage-bytes decoding to the
   safe default rather than throwing.
 
+### Continuation batch 3 (post-rev-6 backlog, same day)
+
+Three more backlog items closed in the same session — two docs + a
+small test-coverage refactor.
+
+- **C107 docs — FGS job runtime quota policy.** `docs/wake-and-vitals.md`
+  now has a 'WorkManager / JobScheduler policy (C107)' section
+  documenting the deliberate decision to not use WorkManager today,
+  noting that the Android 16+ FGS runtime quotas therefore don't
+  apply to OpenLumen, and listing the four constraints any future
+  WorkManager integration must satisfy (correct constraints,
+  expedited-only-when-justified, stay under the 30s/10min
+  expedited budget, surface new wake sources in this audit).
+- **C110 review — Material 3 1.5.0 / Expressive components.**
+  `docs/deferred-candidates.md` adds a review section that scopes
+  the expressive component set against OpenLumen's UI surface:
+  `SplitButton` is the clearest fit (Driver tab's Copy/Share
+  buttons), `FloatingToolbar` and `ButtonGroup` are deferred, the
+  rest are not relevant today. Decision: continue to hold the
+  rev-5 "do not adopt yet" position; re-review at
+  `material3-expressive 1.5.0-stable`.
+- **C53 stretch — refactor: extract `DiagnosticsLog.lineMatches`.**
+  The per-line filter logic moved out of the `AboutScreen` dialog
+  into a public helper on `DiagnosticsLog` so it has JVM tests
+  (five new cases in `DiagnosticsLogFormatTest` covering happy
+  path, level-filtered-out, category-filtered-out, blank/malformed
+  rejection, and multi-word message preservation through
+  `split(' ', limit = 4)`). No behavior change — same filter, just
+  now reachable without spinning up a Compose harness.
+
 ### Continuation batch 2 (post-rev-6 backlog, same day)
 
 Three small backlog items — two UX + one docs — closed in the same

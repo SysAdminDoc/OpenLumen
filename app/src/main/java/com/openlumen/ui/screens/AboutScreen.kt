@@ -488,10 +488,7 @@ private fun DiagnosticsLogDialog(
     val filteredLines = remember(rawLines, selectedLevels, selectedCategories) {
         if (rawLines.isEmpty()) emptyList()
         else rawLines.filter { line ->
-            val tokens = line.split(' ', limit = 4)
-            val level = tokens.getOrNull(1) ?: return@filter false
-            val category = tokens.getOrNull(2) ?: return@filter false
-            level in selectedLevels && category in selectedCategories
+            DiagnosticsLog.lineMatches(line, selectedLevels, selectedCategories)
         }
     }
 

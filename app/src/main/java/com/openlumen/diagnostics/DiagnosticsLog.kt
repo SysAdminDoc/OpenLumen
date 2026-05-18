@@ -103,6 +103,29 @@ object DiagnosticsLog {
         "${Instant.now()} ${level.name} ${category.name} ${message.take(512)}"
 
     /**
+     * Filter helper consumed by the About-tab diagnostics-log dialog
+     * (roadmap **C53 stretch**). Tests live in
+     * `DiagnosticsLogFormatTest`. Returns true when [line] is a
+     * well-formed log line whose level token is in [levels] and
+     * category token is in [categories]. Returns false for blank or
+     * malformed lines, so the dialog never shows a torn-write or
+     * pre-format line by accident.
+     *
+     * The format we filter against is the one [formatLine] produces:
+     * `<instant> LEVEL CATEGORY <message>` — four whitespace-separated
+     * tokens with the message taking the rest. `split(' ', limit = 4)`
+     * keeps the message intact.
+     */
+    fun lineMatches(line: String, levels: Set<String>, categories: Set<String>): Boolean {
+        if (line.isBlank()) return false
+        val tokens = line.split(' ', limit = 4)
+        if (tokens.size < 3) return false
+        val level = tokens[1]
+        val category = tokens[2]
+        return level in levels && category in categories
+    }
+
+    /**
      * Rewrite [f] to keep at most [TRIM_TO_BYTES] of tail content. Uses
      * RandomAccessFile so we don't allocate the whole-file byte buffer on
      * the heap when the cap is exceeded by a single append.

@@ -39,4 +39,55 @@ class DiagnosticsLogFormatTest {
             assertThat(cat.name.all { it.isUpperCase() || it == '_' || it.isDigit() }).isTrue()
         }
     }
+
+    // C53 stretch: filter helper tests. The About-tab dialog filters log
+    // lines using `DiagnosticsLog.lineMatches`; these tests prove the
+    // helper handles malformed input and the round-trip from formatLine.
+
+    @Test fun `lineMatches accepts a well-formed line whose level and category are selected`() {
+        val line = DiagnosticsLog.formatLine(
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.SCHEDULE,
+            "fallback to inexact alarm"
+        )
+        val ok = DiagnosticsLog.lineMatches(line, setOf("WARN"), setOf("SCHEDULE"))
+        assertThat(ok).isTrue()
+    }
+
+    @Test fun `lineMatches rejects when level is not in the selected set`() {
+        val line = DiagnosticsLog.formatLine(
+            DiagnosticsLog.Level.DEBUG,
+            DiagnosticsLog.Category.SERVICE,
+            "onCreate"
+        )
+        val ok = DiagnosticsLog.lineMatches(line, setOf("WARN", "ERROR"), setOf("SERVICE"))
+        assertThat(ok).isFalse()
+    }
+
+    @Test fun `lineMatches rejects when category is not in the selected set`() {
+        val line = DiagnosticsLog.formatLine(
+            DiagnosticsLog.Level.INFO,
+            DiagnosticsLog.Category.WIDGET,
+            "refresh broadcast"
+        )
+        val ok = DiagnosticsLog.lineMatches(line, setOf("INFO"), setOf("SERVICE"))
+        assertThat(ok).isFalse()
+    }
+
+    @Test fun `lineMatches rejects blank and malformed lines`() {
+        assertThat(DiagnosticsLog.lineMatches("", setOf("INFO"), setOf("SERVICE"))).isFalse()
+        assertThat(DiagnosticsLog.lineMatches("   ", setOf("INFO"), setOf("SERVICE"))).isFalse()
+        assertThat(DiagnosticsLog.lineMatches("notalogline", setOf("INFO"), setOf("SERVICE"))).isFalse()
+        // Two tokens isn't enough to extract a level + category.
+        assertThat(DiagnosticsLog.lineMatches("instant WARN", setOf("WARN"), setOf("SCHEDULE"))).isFalse()
+    }
+
+    @Test fun `lineMatches preserves a message containing spaces`() {
+        // Sanity check that split(limit=4) keeps the message intact rather
+        // than splitting on every space; otherwise a multi-word message
+        // would push CATEGORY into the message slot and break the filter.
+        val line = "2026-05-17T22:00:00Z WARN ENGINE this message has many spaces in it"
+        val ok = DiagnosticsLog.lineMatches(line, setOf("WARN"), setOf("ENGINE"))
+        assertThat(ok).isTrue()
+    }
 }

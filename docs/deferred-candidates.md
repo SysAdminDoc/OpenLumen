@@ -318,6 +318,54 @@ the implementation more constrained than the original Android 8 era
 this technique was designed for. Burn-in concerns are also real.
 Needs a hardware spike before commitment.
 
+## Material 3 1.5.0 / Expressive components — C110 (Later)
+
+**Status**: Later-tier (review-only, not committing).
+
+**Context**: Compose Material 3 `material3-expressive` shipped its
+first stable building blocks alongside Material 3 1.4.0 — but the
+expressive overload set itself remains alpha-only per the rev-5
+source register (S227). Rev 5 explicitly held the line:
+"Do NOT adopt `material3-expressive` yet (still alpha)."
+
+**Review (this revision)**: the components that would be useful
+for OpenLumen are:
+
+- `FloatingToolbar` — could host the Home tab's Filter toggle as
+  a floating control. Risk: floating UI competes with the existing
+  toggle Card; would need a UX decision.
+- `ButtonGroup` / connected button rows — could replace the
+  schedule-mode RadioButton list with a more compact selector.
+  Risk: introduces a new UX pattern when the existing list works.
+- `WideNavigationRail` — only relevant if we ever ship a tablet
+  layout (out of scope today).
+- `SplitButton` — could combine the Driver tab's "Copy report" +
+  "Share report" buttons. Risk: low; this is the cleanest fit.
+- `LoadingIndicator` (the contained variant) — replaces the
+  generic spinner pattern. We don't have any loading spinners
+  today (every screen reads from `StateFlow` and renders
+  synchronously), so no fit.
+
+**Decision (2026-05-17)**: continue to hold. None of the
+expressive components are stable enough to justify the API
+churn risk before v0.5.0 ships. Re-review when
+`material3-expressive` reaches `1.5.0-stable` or when the
+candidate list above grows past two useful components.
+
+**Implementation sketch** (when we lift the hold):
+
+1. Add `material3-expressive` to `libs.versions.toml` against
+   whichever stable release lands first.
+2. Apply behind a `BuildConfig.USE_M3_EXPRESSIVE` flag for one
+   release so we can roll back if the visual change is
+   unwelcome.
+3. Migrate `SplitButton` first (lowest risk, clearest win) on
+   the Driver tab; defer `FloatingToolbar` / `ButtonGroup`.
+
+**Why deferred**: alpha API risk vs. minimal user-visible win
+for a single-developer project that prizes API stability over
+aesthetic refresh cadence.
+
 ## What's not in this document
 
 The candidates that *are* shipped in v0.5.0 are listed in the
