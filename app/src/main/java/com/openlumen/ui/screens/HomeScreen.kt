@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -45,6 +46,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import kotlin.math.roundToInt
+
+/**
+ * C114: fine-adjust step for the Dim slider's inline +/- pair. 0.5%
+ * lets PWM-sensitive users land at half-percent increments in the
+ * low-dim region where pulse-width-modulation flicker is most visible.
+ */
+private const val DIM_FINE_STEP: Float = 0.005f
 
 @Composable
 fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
@@ -119,10 +127,18 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 )
 
                 Spacer(Modifier.height(8.dp))
-                val dimPct = (prefs.dim * 100).toInt()
+                // C114: dim value displayed with one decimal so the inline
+                // fine-adjust pair (sub-1% steps) is legible. PWM-sensitive
+                // users specifically want to land at half-percent values in
+                // the 0-10% dim region where the panel is at lowest
+                // backlight and pulse-width-modulation flicker is most
+                // visible. The coarse Slider handles broad strokes; the
+                // +/- buttons step in 0.5% increments for fine landing.
+                val dimPctF = prefs.dim * 100f
+                val dimPct = dimPctF.toInt()
                 val dimState = stringResource(R.string.home_percent_state, dimPct)
                 Text(stringResource(R.string.home_dim), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.home_percent_value, dimPct),
+                Text(stringResource(R.string.home_dim_value_precise, dimPctF),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
@@ -133,6 +149,32 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         stateDescription = dimState
                     }
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val fineDecLabel = stringResource(R.string.home_dim_fine_decrease)
+                    val fineIncLabel = stringResource(R.string.home_dim_fine_increase)
+                    IconButton(
+                        onClick = { vm.setDim((prefs.dim - DIM_FINE_STEP).coerceAtLeast(0f)) },
+                        modifier = Modifier.semantics { stateDescription = fineDecLabel }
+                    ) {
+                        Text("−", style = MaterialTheme.typography.titleMedium)
+                    }
+                    Text(
+                        stringResource(R.string.home_dim_fine_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = { vm.setDim((prefs.dim + DIM_FINE_STEP).coerceAtMost(0.95f)) },
+                        modifier = Modifier.semantics { stateDescription = fineIncLabel }
+                    ) {
+                        Text("+", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
 
                 Spacer(Modifier.height(8.dp))
                 val contrastState = stringResource(R.string.home_contrast_state, prefs.contrast)

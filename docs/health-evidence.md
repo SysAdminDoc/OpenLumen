@@ -94,6 +94,22 @@ suggest it improves sleep anywhere in the app.
 - **C100** (Medical/pain-mode disclaimer templates): when/if PWM-sensitive
   guidance lands, it must explicitly state "this is anecdotal user
   guidance, not medical advice."
+- **C114** (Fine-grain dim precision for PWM-sensitive users): shipped
+  2026-05-17 as inline ±0.5% nudge buttons next to the Home tab dim
+  slider. Documentation framing: the affordance is a precision
+  convenience for users who self-report needing sub-1% landing
+  resolution, not a treatment for PWM sensitivity.
+- **C115** ("Filter green light too"): the Kelvin slider on the Home
+  tab (1000-10 000 K, via the Tanner Helland approximation) already
+  suppresses green channel output at low Kelvin values; e.g. 1500 K
+  drives green to roughly 17/255 alongside its red-saturation behavior.
+  Users asking for "filter green light" (Red Moon issue #353, S86)
+  should use Kelvin below ~2000 K. We deliberately do not add a
+  separate "filter green" control because the Kelvin axis is the
+  physically-grounded one and a separate G-channel suppressor would
+  produce non-physical color casts the user couldn't reason about.
+  Documented here so the answer is in the canonical evidence note
+  rather than buried in a forum reply.
 
 ## Sources
 

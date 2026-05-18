@@ -834,7 +834,11 @@ Shipped on `main` (full list preserved from rev 2):
 - **C50** No-INTERNET CI assertion — `permissions-audit` job
 - **C51** OWASP MASVS-lite threat model ([docs/threat-model.md](docs/threat-model.md))
 - **C52** Local diagnostics bundle — `DiagnosticsLog` ring-buffered event log, tail in driver report
-- **C53** Structured log viewer — About → "View diagnostics log"
+- **C53** Structured log viewer — About → "View diagnostics log"; the
+  post-v1 filter-by-category/level stretch shipped 2026-05-17 as a new
+  `DiagnosticsLogDialog` composable with level and category `FilterChip`
+  rows backed by `rememberSaveable` selection state (default: WARN +
+  ERROR levels, all categories). Showing-N-of-M counter included.
 - **C54** Wake/alarm/battery audit ([docs/wake-and-vitals.md](docs/wake-and-vitals.md))
 - **C55** Slider TalkBack state descriptions — light/threshold/offsets/RGB/gamma/Kelvin/intensity/dim/contrast
 - **C58** RTL / string-resource baseline
@@ -1106,7 +1110,9 @@ Partial (per rev 2, still partial in rev 3):
   / Iris approach without claiming health benefits.
 - **Multi-user / work-profile behavior (C81)** — polish after C11/C12.
 - **Local diagnostics viewer with timeline filtering** — already
-  shipped as C53; the post-v1 stretch is filter-by-category/level.
+  shipped as C53; the filter-by-category/level stretch also shipped
+  2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
+  scrubbing (jump to range), text search within filtered subset.
 - **Optional Play Store listing (C39)** — `specialUse` evidence pack
   is ready (C93); we just have not committed maintenance bandwidth.
   See [docs/play-fgs-evidence.md](docs/play-fgs-evidence.md).
@@ -1230,8 +1236,8 @@ or "→" indicate a tier shift). New candidates start at C101.
 | C111 | BAL hardening readiness | platform/OS | rare | Shipped 2026-05-17 | 3/1/1 | Audited for `IntentSender`, `ActivityOptions`, and `MODE_BACKGROUND_ACTIVITY_START_*`; no migration call sites exist today | Android 17 deprecation | S84, S128, S137, S00d |
 | C112 | (n/a — no network, unaffected by CT/ECH) | — | — | — | — | — | — | — |
 | C113 | (n/a — same) | — | — | — | — | — | — | — |
-| C114 | Fine-grain dim precision for PWM users | UX | rare | Later | 3/2/2 | Sub-1% slider step in the low-dim region | Community signal (S80, S107) | S80, S103, S107 |
-| C115 | "Filter green light too" (Red Moon #353) | UX | rare | Under Consideration | 2/2/2 | Already partly satisfied by low-Kelvin slider; document explicitly | Adjacent to existing Kelvin path | S86 |
+| C114 | Fine-grain dim precision for PWM users | UX | rare | Shipped 2026-05-17 | 3/2/2 | Inline ±0.5% nudge buttons next to the Home tab dim slider; new `home_dim_value_precise` string shows one-decimal percentage; `DIM_FINE_STEP` constant centralizes the step. PWM-sensitive users can now land at half-percent values in the 0-10% region without fighting slider-thumb precision. | S80, S103, S107 |
+| C115 | "Filter green light too" (Red Moon #353) | UX | rare | Shipped 2026-05-17 (docs) | 2/2/2 | `docs/health-evidence.md` now documents that the existing Kelvin slider already suppresses green at low temperatures (~17/255 at 1500 K) and explains why we don't add a separate G-channel control — the Kelvin axis is the physically-grounded one. | S86 |
 | C116 | "Don't resume after restart if paused" docs | docs | rare | Shipped 2026-05-17 | 2/1/1 | `BootReceiver` already restores only when persisted `enabled = true`; documented the paused reboot behavior in troubleshooting | Red Moon users currently lack this | S86, `BootReceiver.kt`, `docs/troubleshooting.md` |
 | C117 | Root-mode apply-on-first-emission verification | reliability | rare | Shipped 2026-05-17 | 3/1/1 | `ApplyDecisionGate` resets on engine switch and has JVM coverage proving the same target dispatches again after reset; device matrix now calls out SF/KCAL first-emission smoke evidence | Red Moon has a known bug here; we should not | S86, S00i |
 | C118 | GrapheneOS / lockdown-ROM overlay coverage | platform/OS | rare | Next | 3/3/3 | Test overlay z-order against system shade on GrapheneOS | Red Moon issue #347 indicates real OEM-divergence risk | S86 |

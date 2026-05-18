@@ -13,6 +13,10 @@
     <string name="home_toggle">Toggle filter</string>
     <string name="home_intensity">Intensity</string>
     <string name="home_dim">Dim below minimum</string>
+    <string name="home_dim_value_precise">%1$.1f%%</string>
+    <string name="home_dim_fine_hint">Fine adjust: ±0.5%%</string>
+    <string name="home_dim_fine_decrease">Decrease dim by half a percent</string>
+    <string name="home_dim_fine_increase">Increase dim by half a percent</string>
     <string name="home_contrast">Contrast</string>
     <string name="home_percent_value">%1$d%%</string>
     <string name="home_percent_state">%1$d percent</string>
@@ -158,6 +162,10 @@
     <string name="about_view_diag_log">View diagnostics log</string>
     <string name="about_diag_log_title">Diagnostics log</string>
     <string name="about_diag_log_empty">No events recorded yet.</string>
+    <string name="about_diag_log_filter_level">Levels</string>
+    <string name="about_diag_log_filter_category">Categories</string>
+    <string name="about_diag_log_count">Showing %1$d of %2$d lines</string>
+    <string name="about_diag_log_no_matches">No lines match the current filter.</string>
     <string name="about_profiles_title">Profiles</string>
     <string name="about_profiles_body">Save the current preset, schedule, intensity, dim, and favorites as a named profile. Load it later from this list.</string>
     <string name="about_profiles_save">Save current as…</string>

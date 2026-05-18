@@ -428,6 +428,37 @@ Second-sweep correctness, concurrency, performance, and UX fixes from the
   CVD matrix-coefficient clamping and for garbage-bytes decoding to the
   safe default rather than throwing.
 
+### Continuation batch 2 (post-rev-6 backlog, same day)
+
+Three small backlog items — two UX + one docs — closed in the same
+session as the C166/C168/C169 continuation.
+
+- **C114 — Fine-grain dim precision for PWM-sensitive users.** Inline
+  ±0.5% nudge buttons next to the Home tab dim slider. New
+  `home_dim_value_precise` string renders the dim value with one
+  decimal place so the precision is visible. PWM-sensitive users
+  asking for sub-1% landing in the 0-10% region (rev-4 PWM signal
+  cluster S80 / S103 / S107) now have a thumb-precision-independent
+  path. `DIM_FINE_STEP = 0.005` constant centralizes the step size
+  for future tuning.
+- **C53 stretch — Diagnostics-log filter by category/level.** The
+  About-tab "View diagnostics log" dialog now exposes two FilterChip
+  rows — one for the 4 levels (DEBUG/INFO/WARN/ERROR) and one for
+  the 8 categories. Default selection is WARN + ERROR (the maintainer
+  triage default) with all categories on. Selection persists across
+  reopens via `rememberSaveable`. Line count shows "N of M". Pre-fix
+  the dialog dumped raw log text; a 32 KiB log was unscrollable
+  in practice for triage purposes.
+- **C115 docs — Kelvin slider already filters green light.**
+  `docs/health-evidence.md` now documents that the existing Kelvin
+  control (1000-10 000 K via the Tanner Helland approximation)
+  suppresses green output at low Kelvin values (~17/255 at 1500 K)
+  and explains why we don't add a dedicated G-channel filter: the
+  Kelvin axis is physically grounded, a separate G-suppressor would
+  produce color casts users couldn't reason about. Answers Red Moon
+  issue #353 (S86) in the canonical health-evidence document
+  instead of in a forum reply.
+
 ### Continuation (post-rev-6 polish, same day)
 
 Three of the four `Later`-tier follow-ups surfaced in the rev 6 audit

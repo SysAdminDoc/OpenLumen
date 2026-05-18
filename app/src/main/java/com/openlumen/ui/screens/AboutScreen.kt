@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -252,29 +255,9 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     }
 
     if (showDiagLog) {
-        val log = remember { DiagnosticsLog.read(ctx) }
-        AlertDialog(
-            onDismissRequest = { showDiagLog = false },
-            title = { Text(stringResource(R.string.about_diag_log_title)) },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(
-                        if (log.isBlank()) stringResource(R.string.about_diag_log_empty) else log,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            },
-            confirmButton = {
-                LumenTextButton(onClick = { showDiagLog = false }) {
-                    Text(stringResource(R.string.action_close))
-                }
-            },
-            dismissButton = {
-                LumenTextButton(onClick = {
-                    DiagnosticsLog.clear(ctx)
-                    showDiagLog = false
-                }) { Text(stringResource(R.string.action_clear)) }
-            }
+        DiagnosticsLogDialog(
+            ctx = ctx,
+            onDismiss = { showDiagLog = false }
         )
     }
 
@@ -470,4 +453,134 @@ private fun copyToClipboardAbout(context: Context, label: String, text: String) 
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
         ?: return
     cm.setPrimaryClip(ClipData.newPlainText(label, text))
+}
+
+/**
+ * Diagnostics-log dialog with level + category filter chips
+ * (roadmap **C53 stretch**). The underlying log format is
+ * `<instant> LEVEL CATEGORY <message>` so we can filter by checking
+ * the second and third whitespace-separated tokens of each line.
+ * Level chips default to WARN + ERROR (the maintainer-triage default);
+ * category chips default to all-on. The chip rows persist across
+ * dialog reopens via `rememberSaveable` — a user troubleshooting a
+ * specific subsystem doesn't have to re-select on each open.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DiagnosticsLogDialog(
+    ctx: Context,
+    onDismiss: () -> Unit
+) {
+    val rawLog = remember { DiagnosticsLog.read(ctx) }
+    val rawLines = remember(rawLog) {
+        if (rawLog.isBlank()) emptyList() else rawLog.lineSequence().filter { it.isNotBlank() }.toList()
+    }
+
+    // Default: ERROR + WARN visible (the high-signal triage view). Users can
+    // multi-select to add INFO / DEBUG.
+    var selectedLevels by rememberSaveable {
+        mutableStateOf(setOf("WARN", "ERROR"))
+    }
+    var selectedCategories by rememberSaveable {
+        mutableStateOf(com.openlumen.diagnostics.DiagnosticsLog.Category.values().map { it.name }.toSet())
+    }
+
+    val filteredLines = remember(rawLines, selectedLevels, selectedCategories) {
+        if (rawLines.isEmpty()) emptyList()
+        else rawLines.filter { line ->
+            val tokens = line.split(' ', limit = 4)
+            val level = tokens.getOrNull(1) ?: return@filter false
+            val category = tokens.getOrNull(2) ?: return@filter false
+            level in selectedLevels && category in selectedCategories
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.about_diag_log_title)) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (rawLines.isEmpty()) {
+                    Text(
+                        stringResource(R.string.about_diag_log_empty),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
+                    Text(
+                        stringResource(R.string.about_diag_log_filter_level),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        com.openlumen.diagnostics.DiagnosticsLog.Level.values().forEach { lvl ->
+                            FilterChip(
+                                selected = lvl.name in selectedLevels,
+                                onClick = {
+                                    selectedLevels = if (lvl.name in selectedLevels) selectedLevels - lvl.name
+                                                     else selectedLevels + lvl.name
+                                },
+                                label = { Text(lvl.name) }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.about_diag_log_filter_category),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        com.openlumen.diagnostics.DiagnosticsLog.Category.values().forEach { cat ->
+                            FilterChip(
+                                selected = cat.name in selectedCategories,
+                                onClick = {
+                                    selectedCategories = if (cat.name in selectedCategories) selectedCategories - cat.name
+                                                         else selectedCategories + cat.name
+                                },
+                                label = { Text(cat.name) }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        stringResource(
+                            R.string.about_diag_log_count,
+                            filteredLines.size,
+                            rawLines.size
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    if (filteredLines.isEmpty()) {
+                        Text(
+                            stringResource(R.string.about_diag_log_no_matches),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            filteredLines.joinToString("\n"),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            LumenTextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_close))
+            }
+        },
+        dismissButton = {
+            LumenTextButton(onClick = {
+                DiagnosticsLog.clear(ctx)
+                onDismiss()
+            }) { Text(stringResource(R.string.action_clear)) }
+        }
+    )
 }
