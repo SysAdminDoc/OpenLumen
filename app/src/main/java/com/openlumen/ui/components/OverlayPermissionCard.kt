@@ -13,10 +13,19 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.openlumen.R
 
 /**
@@ -29,6 +38,12 @@ import com.openlumen.R
  * KCAL doesn't need overlay and shouldn't see a permission nag. Default is
  * true so callers that don't know which engine the user picked still get the
  * safety-net card.
+ *
+ * The `Settings.canDrawOverlays(...)` check is a Binder roundtrip; we cache its
+ * result and only re-query on `ON_RESUME` (the user just returned from the
+ * system settings screen and may have granted) and `ON_START`. Without this
+ * cache, every recomposition of the Home screen — including every slider tick
+ * — would issue a fresh Binder call. Tied to roadmap candidate **C168**.
  */
 @Composable
 fun OverlayPermissionCard(
@@ -37,7 +52,38 @@ fun OverlayPermissionCard(
 ) {
     if (!requiredByActiveEngine) return
     val ctx = LocalContext.current
-    if (Build.VERSION.SDK_INT >= 23 && Settings.canDrawOverlays(ctx)) return
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Cache the canDrawOverlays result. Pre-Android-6 the API treated overlay
+    // permission as granted at install time, so the cached value stays true
+    // and we never refresh on those builds.
+    var canDrawOverlays by remember {
+        mutableStateOf(Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(ctx))
+    }
+    DisposableEffect(lifecycleOwner, ctx) {
+        if (Build.VERSION.SDK_INT < 23) {
+            // No refresh path needed; the initial true sticks.
+            return@DisposableEffect onDispose { /* nothing to do */ }
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
+                canDrawOverlays = Settings.canDrawOverlays(ctx)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Also re-query immediately when the composable enters composition for
+    // the first time, so a screen rotation or navigation back here doesn't
+    // wait for the next ON_RESUME tick.
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            canDrawOverlays = Settings.canDrawOverlays(ctx)
+        }
+    }
+
+    if (canDrawOverlays) return
 
     Card(
         shape = MaterialTheme.shapes.large,

@@ -4,8 +4,10 @@ Research version: 2026-05-17 **rev 6**. Rev 6 is the fourth walk-away
 pass on 2026-05-17, layered on top of the rev 5 distribution / platform
 / CI refresh. It folds in a four-round in-tree audit (post-rev-5,
 later the same day) that landed 21 correctness, concurrency,
-performance, observability, and UX fixes (C146-C165 + C170) and
-surfaces 4 follow-up candidates (C166-C169). It also retracts one
+performance, observability, and UX fixes (C146-C165 + C170), and a
+follow-up continuation pass that landed 3 of the 4 surfaced
+candidates (C166, C168, C169) on top — leaving only C167
+(LumenService subsystem split) as `Later`. Rev 6 also retracts one
 round-one audit "finding" that turned out to be wrong (the
 `DataStoreFactory.createInDeviceProtectedStorage` API does exist —
 see the rev 6 correction note below).
@@ -151,6 +153,44 @@ ship in v0.5.0 or v0.5.1 alongside the rev-5 hardening batch.
   silent recovery is the right behavior for users — but a contributor
   pulling a driver report finally has a breadcrumb. Sources: S00.
 
+### Continuation pass (post-rev-6, same day)
+
+Three of the four `Later`-tier follow-ups surfaced in the rev 6
+audit (C166, C168, C169) landed on `main` immediately after the rev 6
+roadmap entry was written. They are small, self-contained, and
+unblock no other work — but each closes a real polish gap that
+would otherwise rot. C167 (LumenService subsystem split) remains
+`Later` because the size of the surgery doesn't justify the
+maintainability win right now.
+
+- [x] **C169 — PresetWidget highlights the currently-active favorite.**
+  `PresetSlotUi.isActive = enabled && entry.key == activePresetKey`.
+  The active chip is wrapped in a `Surface1` contrast-ring `Box`
+  (24 dp outer, 16 dp inner) and the label is rendered in
+  `FontWeight.Bold`. Inactive labels render in `WidgetColors.MutedText`
+  so the active slot stands out without making the widget noisy.
+  New `WidgetColors.ActiveRing` (Catppuccin Surface1 / `0xFF45475A`)
+  added to the shared palette. Sources: S00, S118.
+- [x] **C168 — OverlayPermissionCard memoizes `Settings.canDrawOverlays`.**
+  The card now keeps a `mutableStateOf(...)` cache of the overlay
+  permission, populated by a `DisposableEffect` that listens for
+  `Lifecycle.Event.ON_START` / `ON_RESUME` on `LocalLifecycleOwner`
+  and re-queries only then. A `LaunchedEffect(Unit)` also re-queries
+  on first entry so a screen rotation or back-navigation doesn't
+  wait for the next resume tick. Per-recompose binder roundtrip
+  removed. On pre-Android-6 (API < 23) the cache stays `true` and
+  no observer is registered. Sources: S00.
+- [x] **C166 — KCAL preserves the user's existing `kcal_min`.**
+  Probe now reads `kcal_min` into `Paths.originalMin` via a
+  best-effort `cat`. `apply` only raises the floor to
+  `SAFETY_MIN = 20` if the user's original was lower, and only once
+  per probed session (tracked via a `BoolHolder` latch on the
+  `Paths` record). `clear` restores the original value only when
+  we actually raised it. KCAL no longer silently mutates a kernel
+  parameter the user may have tuned themselves; uninstalling the
+  app leaves `kcal_min` exactly where the user found it. Sources:
+  S00.
+
 ## What changed in rev 6
 
 - **In-tree audit pass (rounds 1-4)** shipped 21 fixes (C146-C165 plus
@@ -211,10 +251,10 @@ ship in v0.5.0 or v0.5.1 alongside the rev-5 hardening batch.
 | C163 | KcalEngine apply() re-probe | reliability | Shipped 2026-05-17 | 3/1/1 | Same defense as C162 for KCAL `resolvedPaths`. | S00 |
 | C164 | LumenService widget-broadcast diff | performance | Shipped 2026-05-17 | 3/1/1 | `WidgetSnapshot(enabled, activePresetKey, favoritePresetKeys)` diff gates `ToggleWidget.broadcastRefresh` + `PresetWidget.broadcastRefresh`. Slider drags no longer fan out to Glance recomposes. | S00 |
 | C165 | LumenService Auto-mode `pickBest` cache | performance | Shipped 2026-05-17 | 3/1/1 | `cachedAutoKind` holds the chosen `EngineKind` across emissions; invalidated only when `Preferences.engine` flips. | S00 |
-| C166 | KCAL preserve user's existing `kcal_min` | UX | Later | 3/2/2 | Read the current `kcal_min` value before first apply and restore on clear, instead of overwriting with the hardcoded literal `20`. Product question: do we ever want to lower it? | S00 |
+| C166 | KCAL preserve user's existing `kcal_min` | UX | Shipped 2026-05-17 | 3/2/2 | Probe captures `originalMin` once; `apply` only raises `kcal_min` to the `SAFETY_MIN = 20` floor when the user's value is lower; `clear` restores the original. KCAL engine no longer silently mutates a kernel parameter the user may have tuned themselves. | S00 |
 | C167 | LumenService subsystem split | maintainability | Later | 2/4/2 | Extract engine lifecycle, schedule alarm wiring, light-sensor subscription, widget bridge, and ramp coroutine into focused classes. The 830-line service is the largest file in the repo. | S00 |
-| C168 | OverlayPermissionCard memoize `canDrawOverlays` | performance | Later | 1/1/1 | `produceState`-bound poll on `onResume` instead of per-recompose binder calls. Not measurable today; cleaner pattern. | S00 |
-| C169 | PresetWidget highlight active favorite | UX | Later | 2/2/1 | Show a 2-dp border or fill tint on the chip whose `entry.key == prefs.activePresetKey`. Pure polish. | S00, S118 |
+| C168 | OverlayPermissionCard memoize `canDrawOverlays` | performance | Shipped 2026-05-17 | 1/1/1 | `mutableStateOf` cache + `DisposableEffect` on `LocalLifecycleOwner` re-queries only on `ON_START`/`ON_RESUME` and `LaunchedEffect(Unit)` for first entry. Per-recompose binder roundtrip removed. | S00 |
+| C169 | PresetWidget highlight active favorite | UX | Shipped 2026-05-17 | 2/2/1 | `PresetSlotUi.isActive = enabled && entry.key == activePresetKey`; active chip wrapped in a Surface1 contrast-ring `Box`, label rendered bold via `FontWeight.Bold`, inactive chips muted. New `WidgetColors.ActiveRing` (Catppuccin Surface1). | S00, S118 |
 | C170 | PreferencesStore decode-failure visibility log | observability | Shipped 2026-05-17 | 2/1/1 | `decodeOrDefault` logs the exception class + truncated message once per process via an `AtomicBoolean` latch when persisted JSON fails to decode; still falls back to defaults. | S00 |
 
 ### Rev 6 sources

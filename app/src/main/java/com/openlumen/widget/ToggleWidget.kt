@@ -119,6 +119,9 @@ internal object WidgetColors {
     val Surface = ColorProvider(Color(0xFF1E1E2E))
     val Text = ColorProvider(Color(0xFFCDD6F4))
     val MutedText = ColorProvider(Color(0xFFA6ADC8))
+    // Catppuccin Mocha Surface1, used by PresetWidget as the contrast ring
+    // behind the active-favorite chip (C169).
+    val ActiveRing = ColorProvider(Color(0xFF45475A))
 }
 
 internal const val WIDGET_READ_TIMEOUT_MS = 1_000L

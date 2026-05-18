@@ -26,6 +26,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
@@ -81,6 +82,7 @@ private class PresetGlanceWidget : GlanceAppWidget() {
             }
         }.getOrNull() ?: Preferences()
 
+        val activePresetKey = snapshot.activePresetKey
         val slots = snapshot.favoritePresetKeys
             .asSequence()
             .mapNotNull { key -> Presets.byKey(key) }
@@ -94,6 +96,14 @@ private class PresetGlanceWidget : GlanceAppWidget() {
                         blue = entry.matrix.b.coerceIn(0f, 1f),
                         alpha = 1f
                     ),
+                    // C169: highlight the currently-active favorite so a
+                    // user glancing at the widget can tell at a glance
+                    // which preset is engaged without opening the app.
+                    // Active matches only when the filter is on AND the
+                    // active preset matches this slot's key — an "off"
+                    // filter would otherwise paint the last-used preset
+                    // as if it were the live one.
+                    isActive = snapshot.enabled && entry.key == activePresetKey,
                     action = actionSendBroadcast(
                         Intent(context, WidgetActionReceiver::class.java)
                             .setAction(WidgetActionReceiver.ACTION_SET_PRESET)
@@ -120,6 +130,7 @@ private class PresetGlanceWidget : GlanceAppWidget() {
 private data class PresetSlotUi(
     val label: String,
     val color: Color,
+    val isActive: Boolean,
     val action: Action
 )
 
@@ -154,6 +165,12 @@ private fun PresetSlots(slots: List<PresetSlotUi>) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         slots.forEach { slot ->
+            // C169: the active chip gets a contrast-ring wrapper (Surface1
+            // background under the colored swatch) and a bolder label so
+            // the active preset reads at a glance. Inactive slots stay
+            // visually minimal so the active slot stands out without
+            // making the widget look noisy.
+            val labelWeight = if (slot.isActive) FontWeight.Bold else FontWeight.Normal
             Column(
                 modifier = GlanceModifier
                     .defaultWeight()
@@ -163,17 +180,33 @@ private fun PresetSlots(slots: List<PresetSlotUi>) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = GlanceModifier
-                        .size(20.dp)
-                        .background(ColorProvider(slot.color))
-                ) {}
+                if (slot.isActive) {
+                    Box(
+                        modifier = GlanceModifier
+                            .size(24.dp)
+                            .background(WidgetColors.ActiveRing),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = GlanceModifier
+                                .size(16.dp)
+                                .background(ColorProvider(slot.color))
+                        ) {}
+                    }
+                } else {
+                    Box(
+                        modifier = GlanceModifier
+                            .size(20.dp)
+                            .background(ColorProvider(slot.color))
+                    ) {}
+                }
                 Spacer(modifier = GlanceModifier.height(2.dp))
                 Text(
                     text = slot.label,
                     style = TextStyle(
-                        color = WidgetColors.Text,
-                        textAlign = TextAlign.Center
+                        color = if (slot.isActive) WidgetColors.Text else WidgetColors.MutedText,
+                        textAlign = TextAlign.Center,
+                        fontWeight = labelWeight
                     )
                 )
             }

@@ -428,6 +428,35 @@ Second-sweep correctness, concurrency, performance, and UX fixes from the
   CVD matrix-coefficient clamping and for garbage-bytes decoding to the
   safe default rather than throwing.
 
+### Continuation (post-rev-6 polish, same day)
+
+Three of the four `Later`-tier follow-ups surfaced in the rev 6 audit
+landed on `main` immediately after the rev 6 roadmap entry. Small,
+self-contained polish closing gaps the audit pass identified but
+didn't fix in the first sweep.
+
+- **C169 — PresetWidget highlights the currently-active favorite.**
+  Active chip wrapped in a Catppuccin Surface1 contrast-ring `Box`
+  (24 dp outer, 16 dp inner) with the label in `FontWeight.Bold`.
+  Inactive chips render with `WidgetColors.MutedText` so the active
+  slot reads at a glance without making the widget noisy. Highlight
+  is keyed on `enabled && entry.key == activePresetKey` so an "off"
+  filter doesn't make any chip look active.
+- **C168 — OverlayPermissionCard memoizes `Settings.canDrawOverlays`.**
+  `mutableStateOf(...)` cache + `DisposableEffect` on
+  `LocalLifecycleOwner` listening for `ON_START` / `ON_RESUME`
+  replaces the per-recompose binder roundtrip. `LaunchedEffect(Unit)`
+  also re-queries on first composition so a navigation back doesn't
+  wait for the next resume tick. Pre-API-23 the cache stays `true`
+  and no observer is registered.
+- **C166 — KCAL preserves the user's existing `kcal_min`.** Probe
+  captures the original value once; `apply` only raises the floor to
+  `SAFETY_MIN = 20` when the user's original is lower, and only once
+  per probed session; `clear` restores the original. KCAL no longer
+  silently overwrites a kernel parameter the user may have tuned
+  themselves. Uninstalling OpenLumen now leaves `kcal_min` exactly
+  where the user found it.
+
 ### Hardening (2026-05-17 in-tree audit pass)
 Correctness fixes from the 2026-05-17 audit pass (see ROADMAP.md rev 3 / rev 4
 "Hardening (post-rev-2 audit)"). On disk on `main`; ships in v0.5.0 or a v0.5.1
