@@ -40,6 +40,12 @@ git checkout -b release/v$VERSION
 - [ ] `./gradlew assembleDebug` — must succeed.
 - [ ] `./gradlew test` — all module tests pass.
 - [ ] `./gradlew :app:lint` — no new lint errors at severity `error`.
+      Optional: `./gradlew :app:updateLintBaseline` once to capture
+      pre-existing warnings into `app/lint-baseline.xml`, then add
+      `lint { baseline = file("lint-baseline.xml") }` to
+      `app/build.gradle.kts` so future runs surface only new findings.
+      Not done yet; tracked as informal maintainer follow-up rather
+      than a roadmap candidate.
 - [ ] `./gradlew :app:validateDebugScreenshotTest --no-configuration-cache`
       — Compose preview screenshot references match.
 - [ ] `./gradlew :app:verifyRoborazziDebug --no-configuration-cache`
