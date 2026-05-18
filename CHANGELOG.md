@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+(Nothing here yet — v0.5.0 cut on 2026-05-17 rolls up every prior
+`[Unreleased]` entry. Add new entries above this line, under
+`### Added` / `### Changed` / `### Fixed` headings.)
+
+## [0.5.0] — 2026-05-17
+
+Reliability, polish, and Direct Boot restore. Rolls up the rev 5
+distribution / platform / CI refresh, the 21-fix rev 6 audit pass
+(C146-C165 + C170), and the three rev-6 follow-ups that landed in
+the continuation passes (C166, C168, C169) plus the small backlog
+batch (C114, C53 stretch, C115, C107, C110).
+
+User-visible highlights (also in `fastlane/.../changelogs/6.txt`):
+
+- Direct Boot restore: tint returns on reboot before unlock.
+- 4x1 widget highlights the currently-active preset.
+- Fine ±0.5% dim nudge buttons (PWM-sensitive users).
+- Perceived-brightness reduction indicator alongside blue suppression.
+- Diagnostics log filter by level / category.
+- Location dialog Save works on comma-decimal locales.
+
+Many under-the-hood reliability, concurrency, and performance fixes
+detailed below.
+
 ### Fixed
 - Service smooth-ramp scheduling now has a dedicated ramp mutex and cancels /
   joins in-flight ramps before engine switch or filter-off clear, preventing

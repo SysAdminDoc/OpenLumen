@@ -206,18 +206,74 @@ display tinting is small and highly individual, and any in-app
 number that suggests otherwise would be a health claim we can't
 support.
 
-## Color-vision-deficiency LUT correction — C63 (Later)
+## Color-vision-deficiency matrix slice — C63 (shipped in v0.5.0)
 
-**Status**: Later-tier.
+Shipped as a matrix-capable CVD preset slice on 2026-05-17.
+`LumenMatrix` gained an optional 3×3 RGB transform, the Protan /
+Deutan / Tritan presets carry DaltonLens-derived Viénot 1999
+matrices (S119 / S120 / S285), and SurfaceFlinger applies them as
+off-diagonal terms in its 4×4 color transform. Scalar-only engines
+(`ColorDisplayManager`, `KCAL`, `Overlay`) keep the older
+channel-scale fallback because they cannot consume a full matrix.
 
-**Plan**: ship a precomputed LUT (256 entries per channel) for the
-common CVD types (deuteranomaly / protanomaly / tritanomaly).
+The true per-pixel LUT path with proper piecewise Brettel tritan
+math is split out as **C145** below.
 
-**Why deferred**: requires either a small bundled binary LUT
-(non-reproducibility risk) or runtime LUT computation (CPU cost on
-slider drags). Needs a careful implementation pass. Existing
-CVD-remap presets in `Presets.kt` are a coarser channel-shuffle
-approximation that covers the same use case at lower fidelity.
+## True per-pixel CVD LUT / piecewise tritan — C145 (Later)
+
+**Status**: Later-tier, effort 4 / impact 3 / risk 3.
+
+**What's missing today**: a single 3×3 matrix is a linear
+approximation. DaltonLens documents (S119, S120) that tritanopia
+specifically needs a *piecewise* Brettel transform — two matrices,
+selected per input pixel by which side of a plane through the LMS
+origin the pixel falls on. A 3×3 matrix can only approximate one
+of the two halves; the other half ends up wrong.
+
+For protanopia and deuteranopia, the Viénot 1999 matrices we ship
+in C63 are the canonical single-matrix path and don't need a LUT
+to be correct. For tritanopia, the single matrix is a known
+compromise.
+
+**Design sketch (when we lift the deferral)**:
+
+1. Generate a 256³ LUT once at app install (or on first CVD-mode
+   apply) by running the Brettel piecewise function in pure
+   Kotlin against every (r, g, b) input. Persist the LUT to
+   `filesDir/cvd-tritan-lut.bin` as 768 KiB of raw bytes (256³ × 3
+   bytes per pixel) — or 4× that if we want 16-bit precision per
+   channel.
+2. Apply the LUT via a `RenderEffect` color filter (API 31+) on a
+   compositor surface, OR via an OpenGL shader if we extend the
+   overlay path. SurfaceFlinger's 4×4 color transform can't
+   consume a LUT, so this is a separate code path from the C63
+   matrix slice — both have to coexist.
+3. Cache the generated LUT under `Preferences.schemaVersion` so a
+   schema bump or LUT-format change invalidates it.
+4. Defer for non-tritan modes: protan/deutan ship via C63 and
+   don't need the LUT.
+
+**Why deferred**:
+
+- The bundled-LUT option (~768 KiB checked into the repo)
+  conflicts with F-Droid reproducibility — a generated artifact in
+  the source tree fights `docs/reproducible-build.md` discipline.
+- The runtime-compute option needs ~5-10 seconds of CPU per
+  generation on a mid-range device. Adding "computing CVD LUT…"
+  spinner UX to a display filter feels excessive for the audience.
+- `RenderEffect.createColorFilterEffect` exists from API 31, but
+  applying it on the *whole screen* (vs. a single app's window) is
+  not in the public API — we'd need to extend the overlay engine
+  to host a `RenderNode` that the OS composites, which has its
+  own untrusted-touch caveats.
+
+The DaltonLens reference implementation at S285
+(`libDaltonLens.c`) is the canonical math reference. When we
+implement C145, the JVM tritan LUT generator should produce output
+that round-trips through `libDaltonLens.c` within 1 LSB per
+channel.
+
+## Contrast control — C64 (shipped in v0.5.0)
 
 ## Contrast control — C64 (shipped in v0.5.0)
 
@@ -317,6 +373,80 @@ demand. Android 12+ untrusted-touch and overlay-alpha rules make
 the implementation more constrained than the original Android 8 era
 this technique was designed for. Burn-in concerns are also real.
 Needs a hardware spike before commitment.
+
+## LumenService subsystem split — C167 (Later)
+
+**Status**: Later-tier, effort 4 / impact 2 / risk 2.
+
+**Why it's a roadmap entry at all**: `LumenService.kt` is ~830
+lines (the largest file in the repo by a wide margin). It owns
+every cross-cutting concern: engine lifecycle, schedule alarm
+wiring, light-sensor subscription, widget broadcast diff, ramp
+coroutine, ApplyDecisionGate orchestration, Direct Boot restore,
+intent action dispatch (10 actions), screen-state receiver, FGS
+notification building, AlarmManager exact-alarm scheduling, and
+mirror persistence to the device-protected DataStore. Anything
+that touches "what the engine should be displaying right now"
+goes through one file.
+
+**Why it's deferred**: I/E/R of 2/4/2 is bad on the surface — the
+refactor is a multi-day surgery with regression risk, and the
+"win" is purely contributor-readability with no user-visible
+benefit. The existing file is dense but coherent — the comments
+at the top of each method explain *why* each concurrency primitive
+exists (applyMutex vs rampMutex, the onMain helper, the
+WidgetSnapshot diff). A naive split could lose that context.
+
+**Design sketch (when we lift the deferral)**: extract five
+focused classes that each take a `Context` (or `LifecycleOwner` +
+`CoroutineScope`) and expose suspend functions the service calls.
+
+1. **`EngineController(probe, applyMutex)`** —
+   `currentEngine: ColorEngine?`, `ensureEngineFor(p: Preferences)`,
+   `applyMatrix(target, durationMs)`, `clearAndStop()`.
+   Owns `applyMutex`, `rampMutex`, `transitionJob`, `lastApplied`,
+   `cachedAutoKind`, `lastEngineSelection`, `applyGate`. Returns
+   the engine instance to the service for direct-boot mirror
+   queries.
+
+2. **`ScheduleAlarmOrchestrator(alarmManager, scope)`** —
+   `rescheduleNextTransition(mode: ScheduleMode)`,
+   `cancelAlarm()`, `nextAlarmClockAt()` helper. Owns the
+   `PendingIntent` to `ScheduleAlarmReceiver`. The service hands
+   it the mode; it owns AlarmManager interaction.
+
+3. **`LightSensorSubscription(lightSensorAdapter, scope)`** —
+   `updateSubscription(enabled)`, `currentLuxOrNegative()`. Owns
+   the `lightJob` and the AtomicReference cache. Exposes a
+   callback hook for "lux changed, please re-evaluate."
+
+4. **`WidgetBridge(context)`** —
+   `maybeBroadcastRefresh(snapshot: WidgetSnapshot)`. Owns the
+   diff state. Two-method surface.
+
+5. **`DirectBootMirror(directBootStateStore)`** —
+   `mirror(prefs, active, matrix, amoledClamp)`,
+   `readSnapshotForRestore()`, `clearMirror()`. Owns the
+   `lastMirroredDirectBootState` cache.
+
+The service shrinks to the orchestrator: receives prefs/lux/intent
+events, fans them out to the right subsystem, owns the FGS
+notification, owns the screen-state receiver. Estimated post-split:
+~250 lines for `LumenService`, plus ~150 lines per extracted
+subsystem.
+
+**Test impact**: each subsystem becomes JVM-testable in isolation
+once Hilt-injectable. Today `LumenService` itself is untested
+because it requires a full Android service harness; the
+refactor would let us add focused unit tests for the
+WidgetBridge diff and the EngineController switch logic without
+needing Robolectric.
+
+**Why we'd actually do it**: the next time someone needs to
+modify behavior across two of these subsystems (e.g. a Wear OS
+companion integration that needs both engine state and widget
+broadcasts), the 830-line file becomes the bottleneck. Until
+then, the comments-as-architecture form is honest about cost.
 
 ## Material 3 1.5.0 / Expressive components — C110 (Later)
 

@@ -96,6 +96,38 @@ TLS. This is intentional — there is no network surface to encrypt. The
 release APK signature is the only crypto we touch, and that lives in the
 release workflow, not in the running app.
 
+**Future-proofing note (C121).** AndroidX Security's
+`EncryptedSharedPreferences` is deprecated as of late-2024 (S122).
+OpenLumen does not currently use it — we use plain DataStore with
+no encryption — so the deprecation does not affect us today. **If**
+a future candidate ever needs at-rest encryption (e.g. an
+"encrypted profile bundle" export feature, or a sensitive-secret
+field added to the preference schema), the modern replacement is
+Tink (`com.google.crypto.tink:tink-android`) wrapping a Proto
+DataStore. The migration path looks like:
+
+1. Add Tink to `gradle/libs.versions.toml` and `app/build.gradle.kts`.
+2. Generate or unwrap a master key via
+   `KeysetHandle.generateNew(AeadKeyTemplates.AES256_GCM)` and
+   persist the keyset to Android Keystore via Tink's
+   `AndroidKeysetManager`.
+3. Wrap the existing JSON serializer in an `Aead.encrypt` /
+   `Aead.decrypt` round-trip; or, for a typed Proto DataStore, use
+   Tink's `StreamingAead` if the payload is large.
+4. Bump `Preferences.CURRENT_SCHEMA_VERSION` and add a one-way
+   migration that reads the plaintext blob, encrypts it, and writes
+   it back. The migration must tolerate downgrade (next read on a
+   pre-encryption build would see ciphertext and fall back to
+   defaults — acceptable for the trust-recovery-from-downgrade
+   posture).
+
+Decision today: **defer**. We have no field that warrants the cost
+of bringing in Tink + key-rotation complexity + the deprecated
+EncryptedSharedPreferences class would otherwise still be the path,
+but it's wrong-for-2026 so we won't reach for it either. Documented
+here so a future contributor doesn't reach for the deprecated API
+under time pressure.
+
 ### MASVS-AUTH — Authentication
 
 OpenLumen has no accounts and no authentication surfaces. The only
