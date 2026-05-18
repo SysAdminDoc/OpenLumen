@@ -1,12 +1,248 @@
 # OpenLumen Roadmap
 
-Research version: 2026-05-17 **rev 5**. Rev 5 is the third walk-away
-pass on the same day. It preserves rev 4.1 and adds a distribution /
-platform / CI refresh from live primary sources: Android developer
-verification, Android 17 Beta 4 behavior changes, AGP 9.2 / Gradle
-9.4.1 compatibility, Dagger/Hilt 2.59.2 constraints, AndroidX current
+Research version: 2026-05-17 **rev 6**. Rev 6 is the fourth walk-away
+pass on 2026-05-17, layered on top of the rev 5 distribution / platform
+/ CI refresh. It folds in a four-round in-tree audit (post-rev-5,
+later the same day) that landed 21 correctness, concurrency,
+performance, observability, and UX fixes (C146-C165 + C170) and
+surfaces 4 follow-up candidates (C166-C169). It also retracts one
+round-one audit "finding" that turned out to be wrong (the
+`DataStoreFactory.createInDeviceProtectedStorage` API does exist —
+see the rev 6 correction note below).
+
+Rev 5 (preserved verbatim below) was the third walk-away pass on the
+same day. It preserves rev 4.1 and adds a distribution / platform / CI
+refresh from live primary sources: Android developer verification,
+Android 17 Beta 4 behavior changes, AGP 9.2 / Gradle 9.4.1
+compatibility, Dagger/Hilt 2.59.2 constraints, AndroidX current
 stable versions, GitHub Actions Node 24 migration, and current action
 major versions.
+
+## Implementation progress after rev 6
+
+All twenty-one C146-C165 + C170 items below landed on `main` after
+rev 5 was written, in a four-round audit pass on 2026-05-17. They
+ship in v0.5.0 or v0.5.1 alongside the rev-5 hardening batch.
+
+- [x] **C146 — DirectBoot mirror CVD-coefficient sanitize gap** shipped
+  2026-05-17. `DirectBootStateStore.sanitizeDirectBootMatrix` now
+  clamps the optional 3x3 CVD matrix coefficients and `hasColorMatrix`
+  flag mirrored to the device-protected payload so a malformed mirror
+  cannot reach the engine on Locked Boot restore. Mirrors the bounds
+  applied by `PreferencesStore.sanitizeMatrix`. Sources: S00, S00s.
+- [x] **C147 — OverlayEngine stale-hostView after service-process kill**
+  shipped 2026-05-17. The engine is `@Singleton`, so the same instance
+  survives an FGS process kill while the WindowManager rips the
+  underlying window token. `installView`/`apply` now check
+  `View.isAttachedToWindow` and reinstall against the fresh service
+  token instead of silently writing `setBackgroundColor` to a detached
+  view. Also caches `lastAppliedArgb` so widget-refresh broadcasts
+  that re-emit the same color don't repaint redundantly. Sources:
+  S00, S288.
+- [x] **C148 — OverlayEngine main-thread deadlock on shutdown** shipped
+  2026-05-17. `LumenService.onDestroy` calls `runBlocking { e.clear() }`
+  on Main. `OverlayEngine.clear` was `withContext(Dispatchers.Main)`,
+  which would block waiting for a dispatch into the parked Looper and
+  only the 2 s `withTimeoutOrNull` escaped the hang. New
+  `suspend inline onMain` helper detects "already on Main" via
+  `Looper.myLooper() == Looper.getMainLooper()` and runs inline,
+  removing the deadlock. The service's `onDestroy` comment now
+  explains why the default `runBlocking` dispatcher must be preserved.
+  Sources: S00, S289.
+- [x] **C149 — LocationEntryDialog locale-decimal Catch-22** shipped
+  2026-05-17. `String.format("%.4f", lat)` uses `Locale.getDefault()`,
+  so on German / French / Spanish locales the city picker auto-filled
+  `52,5200` and `String.toDoubleOrNull()` rejected it — Save stayed
+  disabled forever and the user could not proceed. Coordinate
+  format/parse is now locked to `Locale.ROOT` and the parse path
+  tolerates a single comma as the user's decimal separator. Logic
+  extracted to a testable `CoordParsing` object with 7 new JVM tests.
+  Sources: S00, S290.
+- [x] **C150 / C151 — DiagnosticsLog and CrashLogger append+trim race**
+  shipped 2026-05-17. Both writers did `appendText` → `length()` →
+  `readBytes` → `writeBytes` with no synchronization. Two concurrent
+  callers (service + tile, or two threads in a multi-threaded crash)
+  could lose interleaved appends to the loser's trim. Append + size
+  check + trim is now one `synchronized(writeLock)` critical section.
+  Trim itself was also rewritten to use `RandomAccessFile.seek` +
+  `readFully` so it never allocates the whole file on the heap.
+  Sources: S00.
+- [x] **C152 — DiagnosticsLog/CrashLogger read-during-trim torn read**
+  shipped 2026-05-17. Reads briefly acquire the same `writeLock`, so
+  the in-app log dialog never observes a partial trim rewrite. The
+  contention cost is negligible because reads are user-driven. Sources:
+  S00.
+- [x] **C153 — Application directBootAware + safe channel registration**
+  shipped 2026-05-17. `LumenService` and `LockedBootReceiver` were
+  declared `directBootAware="true"` but `OpenLumenApp` was not, which
+  the AOSP rule treats as "Application creation may be deferred until
+  unlock" — defeating Hilt injection on the locked-boot path.
+  `OpenLumenApp` is now declared `directBootAware="true"` and its
+  `NotificationManager.createNotificationChannel` call is wrapped in
+  `runCatching` so OEM forks that throw in early boot don't crash the
+  Application init. Sources: S00, S153.
+- [x] **C154 — Su.runCommandInternal output cap** shipped 2026-05-17.
+  The capture buffer is now a 16 KiB hard cap with a single warn log
+  on truncation. Previously a misbehaving `su` writing MBs of output
+  inside the 4 s timeout could OOM the captured `StringBuilder`.
+  Sources: S00.
+- [x] **C155 — Su.runShell drainer cap** shipped 2026-05-17. The
+  drainer thread no longer uses `BufferedReader.readText()` (an
+  unbounded `String` allocation) and instead reads into a fixed 4 KiB
+  byte buffer that discards output. Callers of `runShell` only care
+  about the exit code. Same OOM class as C154 but on the
+  pipe-into-`sh` path. Sources: S00.
+- [x] **C156 — OverlayPermissionCard relevance-aware visibility**
+  shipped 2026-05-17. The card previously nagged every user with
+  missing `SYSTEM_ALERT_WINDOW`, including root users who pinned
+  `SurfaceFlinger` / `KCAL` and never needed overlay. Now accepts a
+  `requiredByActiveEngine` flag and the Home screen passes `false`
+  when the user's engine choice doesn't require overlay. Sources: S00.
+- [x] **C157 — MainActivity notification-permission prompt cleanup**
+  shipped 2026-05-17. Replaced the legacy `ActivityCompat.requestPermissions`
+  with `ActivityResultContracts.RequestPermission`. The launcher is
+  now a class field so it survives configuration changes and behaves
+  correctly on Android 13+'s two-deny-then-permanent rule. Sources:
+  S00.
+- [x] **C158 — Notification cycle no-op diagnostic breadcrumb** shipped
+  2026-05-17. The notification's "Next preset" action stays visible
+  even when favorites is empty (rebuilding the notification on every
+  favorites edit was the documented trade-off). Now writes a single
+  `DiagnosticsLog` line on the empty-favorites no-op path so users
+  troubleshooting via About → diagnostics log see the cause instead
+  of a silent button. Sources: S00.
+- [x] **C159 — LumenTileService scope hygiene across missed onDestroy**
+  shipped 2026-05-17. TileService docs are vague about cycle
+  guarantees; some OEMs skip `onDestroy` on rebind. `onCreate` now
+  cancels the prior scope's Job before swapping, so the previous
+  scope's in-flight work doesn't leak. Sources: S00.
+- [x] **C160 / C161 — SurfaceFlingerEngine and KcalEngine probe caches**
+  shipped 2026-05-17. `isAvailable` now short-circuits when
+  `workingCode` / `resolvedPaths` is cached. Pre-fix, an `Auto`-mode
+  user dragging a slider triggered up to 9 `su` subprocess spawns per
+  conflated emission — `pickBest` → 4 × `isAvailable`, and SF/KCAL
+  each re-probed every candidate. Cache invalidation on apply/clear
+  failure (rev-5 C136 work) keeps stale state recoverable. Sources:
+  S00, S00d.
+- [x] **C162 / C163 — SurfaceFlingerEngine and KcalEngine apply()
+  re-probe** shipped 2026-05-17. A user who pinned SF/KCAL could
+  land in a state where the engine was "available" but every apply
+  silently no-op'd because the cache was empty (first call after
+  construction or after invalidation). Both `apply` paths now re-probe
+  once before logging loudly and giving up. Sources: S00.
+- [x] **C164 — LumenService widget-broadcast diff** shipped 2026-05-17.
+  `maybeBroadcastWidgetRefresh` diffs a `WidgetSnapshot(enabled,
+  activePresetKey, favoritePresetKeys)` against the last broadcast
+  and skips the refresh pair when the widget-rendered fields haven't
+  changed. Pre-fix, a slider drag flooded both Glance widgets with
+  recompose requests for fields they don't render. Sources: S00.
+- [x] **C165 — LumenService Auto-mode pickBest result cache** shipped
+  2026-05-17. Even with C160/C161 making the leaf probes cheap,
+  `pickBest` still walked 4 engines and allocated a sorted list per
+  call. `cachedAutoKind` now holds the chosen `EngineKind` across
+  emissions, invalidated only when `Preferences.engine` flips between
+  Auto and a pinned kind. Sources: S00.
+- [x] **C170 — PreferencesStore decode-failure visibility log** shipped
+  2026-05-17. `decodeOrDefault` previously reverted to `Preferences()`
+  on any throw, making "config reset itself" a black-box failure mode.
+  Now logs the exception class + truncated message once per process
+  (gated by an `AtomicBoolean` because the DataStore flow can re-read
+  the same corrupt blob many times). Still falls back to defaults —
+  silent recovery is the right behavior for users — but a contributor
+  pulling a driver report finally has a breadcrumb. Sources: S00.
+
+## What changed in rev 6
+
+- **In-tree audit pass (rounds 1-4)** shipped 21 fixes (C146-C165 plus
+  C170). Net diff was +696/-132 over 18 files, +2 new files
+  (`CoordParsing.kt` and `CoordParsingTest.kt`), +35 lines in the
+  extended `DirectBootStateSerializerTest`. CHANGELOG documents
+  every line.
+- **One rev-6 round-one finding retracted**:
+  - The round-one summary claimed
+    `DataStoreFactory.createInDeviceProtectedStorage(...)` did not exist
+    in any androidx-datastore release and treated this as a
+    compile-blocking bug. Cross-checked against the AndroidX DataStore
+    release notes (S287, also already cited as S95/S280 in earlier
+    revs) and confirmed the API has shipped since
+    `androidx.datastore:datastore:1.2.0-alpha01` (2025-03-26). The
+    project pins `1.2.1`, so the original call site was correct. The
+    code change was reverted; the matrix-sanitize gap fix (C146) and
+    the serializer try/catch on garbage bytes are kept because they
+    are real, independent improvements. The CHANGELOG entry was
+    also corrected.
+- **Four new follow-up candidates** that surfaced in the audit but
+  weren't fixed (full I/E/R in the rev 6 candidate table below):
+  - **C166** — KCAL: preserve user's existing `kcal_min` rather than
+    overwriting with the hardcoded literal `20`. Product decision.
+  - **C167** — Split `LumenService.kt` (now ~830 lines) into focused
+    subsystems (engine lifecycle, schedule alarm, light sensor,
+    widget bridge, ramp). Pure readability, low urgency.
+  - **C168** — `OverlayPermissionCard` re-evaluates
+    `Settings.canDrawOverlays` per recomposition. Single binder call,
+    not measurable today, but cleaner via a lifecycle-bound
+    `produceState`.
+  - **C169** — `PresetWidget` doesn't highlight the currently-active
+    favorite. Pure UX polish.
+- **No tier shifts on rev-5 candidates.** The audit pass touched
+  implementation, not the forward plan.
+
+### Rev 6 candidate additions
+
+| ID | Candidate | Category | Tier | I/E/R | Concrete action | Sources |
+|---|---|---|---|---|---|---|
+| C146 | DirectBoot mirror CVD-coefficient sanitize gap | correctness/security | Shipped 2026-05-17 | 3/1/1 | `DirectBootStateStore.sanitizeDirectBootMatrix` clamps `hasColorMatrix` + all 9 CVD coefficients to the same bounds `PreferencesStore.sanitizeMatrix` uses. Serializer also now decodes garbage to safe default. | S00, S00s |
+| C147 | OverlayEngine stale-hostView after FGS process kill | reliability | Shipped 2026-05-17 | 4/2/2 | `View.isAttachedToWindow` check on every install/apply; `discardStaleHostLocked` reinstalls fresh; `lastAppliedArgb` cache skips redundant paints. | S00, S288 |
+| C148 | OverlayEngine `onDestroy` Main-thread deadlock | reliability | Shipped 2026-05-17 | 4/2/2 | `private suspend inline onMain {}` helper detects current thread is Main via `Looper.myLooper() == Looper.getMainLooper()` and runs inline; `LumenService.onDestroy` keeps default `runBlocking` dispatcher so root engines' `Dispatchers.IO` switch still works. | S00, S289 |
+| C149 | LocationEntryDialog locale-decimal Catch-22 | UX / i18n | Shipped 2026-05-17 | 4/2/1 | New `CoordParsing` object: `format(Double)` uses `Locale.ROOT`, `parse(String)` tolerates single comma as decimal separator, rejects mixed `.`/`,` and NaN/Inf. New `CoordParsingTest` covers 7 cases. | S00, S290 |
+| C150 | DiagnosticsLog append+trim concurrency | concurrency | Shipped 2026-05-17 | 3/1/1 | Append + size check + trim wrapped in one `synchronized(writeLock)`; trim rewritten with `RandomAccessFile.seek`+`readFully` so it never heap-allocates the whole file. | S00 |
+| C151 | CrashLogger append+trim concurrency | concurrency | Shipped 2026-05-17 | 3/1/1 | Same pattern as C150; `install` also double-checks `installed` under `writeLock`. | S00 |
+| C152 | Diagnostics/Crash read-during-trim torn read | concurrency | Shipped 2026-05-17 | 2/1/1 | `read()` briefly acquires `writeLock` so the dialog never renders a half-trimmed file. | S00 |
+| C153 | Application `directBootAware` + safe channel registration | reliability/manifest | Shipped 2026-05-17 | 3/1/1 | `<application android:directBootAware="true">` so AOSP creates the Hilt Application before the locked-boot service starts; `createNotificationChannel` wrapped in `runCatching` for early-boot OEM quirks. | S00, S153 |
+| C154 | `Su.runCommandInternal` output cap | resource safety | Shipped 2026-05-17 | 2/1/1 | Capture cap at 16 KiB; extra bytes drained; one warn log on truncation. | S00 |
+| C155 | `Su.runShell` drainer cap | resource safety | Shipped 2026-05-17 | 2/1/1 | Drainer reads into a fixed 4 KiB byte buffer and discards; `BufferedReader.readText()` (unbounded `String` allocation) removed. | S00 |
+| C156 | OverlayPermissionCard relevance-aware visibility | UX | Shipped 2026-05-17 | 3/1/1 | New `requiredByActiveEngine` flag; Home passes `false` for pinned root engines so root users no longer see a permanent overlay-permission nag. | S00 |
+| C157 | MainActivity notification-permission prompt cleanup | UX | Shipped 2026-05-17 | 2/1/1 | Migrated to `ActivityResultContracts.RequestPermission`; launcher as class field for config-change safety. | S00 |
+| C158 | Notification cycle no-op diagnostic breadcrumb | observability/UX | Shipped 2026-05-17 | 2/1/1 | `ACTION_CYCLE_PRESET` writes a single `DiagnosticsLog` line when favorites is empty and the cycle is a no-op. | S00 |
+| C159 | LumenTileService scope hygiene | reliability | Shipped 2026-05-17 | 2/1/1 | `onCreate` cancels prior scope's Job before swapping, so a missed-onDestroy OEM doesn't leak the previous scope's in-flight work. | S00 |
+| C160 | SurfaceFlingerEngine probe-cache short-circuit | performance | Shipped 2026-05-17 | 4/1/1 | `isAvailable` returns immediately when `workingCode` is cached; `probeLocked` extracted as the slow path. Eliminates up to 3 `su` spawns per conflated Auto-mode emission. | S00, S00d |
+| C161 | KcalEngine probe-cache short-circuit | performance | Shipped 2026-05-17 | 4/1/1 | Same pattern as C160 against `resolvedPaths`. Eliminates up to 6 `su` spawns (3 candidate roots × `test -e` calls) per conflated Auto-mode emission. | S00 |
+| C162 | SurfaceFlingerEngine apply() re-probe | reliability | Shipped 2026-05-17 | 3/1/1 | `apply` re-probes once when `workingCode` is null instead of silently no-op'ing; logs loudly if no code works. | S00 |
+| C163 | KcalEngine apply() re-probe | reliability | Shipped 2026-05-17 | 3/1/1 | Same defense as C162 for KCAL `resolvedPaths`. | S00 |
+| C164 | LumenService widget-broadcast diff | performance | Shipped 2026-05-17 | 3/1/1 | `WidgetSnapshot(enabled, activePresetKey, favoritePresetKeys)` diff gates `ToggleWidget.broadcastRefresh` + `PresetWidget.broadcastRefresh`. Slider drags no longer fan out to Glance recomposes. | S00 |
+| C165 | LumenService Auto-mode `pickBest` cache | performance | Shipped 2026-05-17 | 3/1/1 | `cachedAutoKind` holds the chosen `EngineKind` across emissions; invalidated only when `Preferences.engine` flips. | S00 |
+| C166 | KCAL preserve user's existing `kcal_min` | UX | Later | 3/2/2 | Read the current `kcal_min` value before first apply and restore on clear, instead of overwriting with the hardcoded literal `20`. Product question: do we ever want to lower it? | S00 |
+| C167 | LumenService subsystem split | maintainability | Later | 2/4/2 | Extract engine lifecycle, schedule alarm wiring, light-sensor subscription, widget bridge, and ramp coroutine into focused classes. The 830-line service is the largest file in the repo. | S00 |
+| C168 | OverlayPermissionCard memoize `canDrawOverlays` | performance | Later | 1/1/1 | `produceState`-bound poll on `onResume` instead of per-recompose binder calls. Not measurable today; cleaner pattern. | S00 |
+| C169 | PresetWidget highlight active favorite | UX | Later | 2/2/1 | Show a 2-dp border or fill tint on the chip whose `entry.key == prefs.activePresetKey`. Pure polish. | S00, S118 |
+| C170 | PreferencesStore decode-failure visibility log | observability | Shipped 2026-05-17 | 2/1/1 | `decodeOrDefault` logs the exception class + truncated message once per process via an `AtomicBoolean` latch when persisted JSON fails to decode; still falls back to defaults. | S00 |
+
+### Rev 6 sources
+
+Four new external citations (S287-S290) layered on top of the rev 1-5
+source appendix. All are primary developer.android.com / Oracle JDK
+references and double-cite already-present rev-5 sources where
+applicable.
+
+- **S287**: AndroidX DataStore release notes — confirms
+  `DataStoreFactory.createInDeviceProtectedStorage()` shipped in
+  `1.2.0-alpha01` (2026-03-26 per the same-day release-note text;
+  the public Maven listing is the canonical home) and was preserved
+  through `1.2.1`. Used to retract the round-one
+  "non-existent API" finding —
+  https://developer.android.com/jetpack/androidx/releases/datastore
+- **S288**: Android `View.isAttachedToWindow()` reference (added API
+  19; safe at minSdk 26 with no shim) — used by C147's stale-view
+  reinstall path —
+  https://developer.android.com/reference/android/view/View#isAttachedToWindow()
+- **S289**: Android `Looper.myLooper()` / `Looper.getMainLooper()`
+  reference — canonical "am I on the Main thread" check used by
+  C148's `onMain` helper —
+  https://developer.android.com/reference/android/os/Looper
+- **S290**: Java `Double.parseDouble` / Kotlin `String.toDoubleOrNull`
+  contract — only accepts `.` as the decimal separator regardless of
+  default locale. Used to justify the C149 `Locale.ROOT` lockdown —
+  https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html#parseDouble-java.lang.String-
 
 ## Implementation progress after rev 5
 
@@ -1461,3 +1697,43 @@ Compose BOM / Material 3 / AGP 9 migration targets:
   `DATASET_MODEL_INTEGRATION_REVIEW.md`, `CHANGESET_SUMMARY.md`.
   Canonical consolidated project memory lives at
   [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
+
+### Phase 5 self-audit (rev 6 additions)
+
+- **Traceability**: every C146-C169 entry cites at least one source
+  (S00 for in-tree audit evidence, plus S00d / S00s / S118 / S153 /
+  S287-S290 where the candidate borrows external primary references).
+  S287-S290 are new in rev 6 and trace to AndroidX DataStore release
+  notes, Android `View` reference, Android `Looper` reference, and
+  the Java `Double.parseDouble` contract.
+- **Tier consistency**: C146-C165 all land as `Shipped 2026-05-17`
+  because the audit pass merged them in the same session. C166-C169
+  are tiered `Later` because each has a small impact, a clear-but-
+  non-urgent path, or a product question that hasn't been answered.
+- **Required category coverage (rev 6 deltas)**:
+  - Concurrency: C148, C150, C151, C152, C159.
+  - Reliability: C147, C153, C159, C162, C163.
+  - Performance: C160, C161, C164, C165.
+  - UX / i18n: C149, C156, C157, C158, C169.
+  - Resource safety: C154, C155.
+  - Maintainability: C167.
+- **Hostile-review fixes applied in rev 6**:
+  - The round-one "non-existent API" finding was actively retracted
+    and the code reverted. A reviewer would have caught the false
+    claim by reading the AndroidX release notes; we caught it in the
+    rev 6 validation pass before it shipped to anyone.
+  - C148 is documented as a *latent* deadlock (the 2 s timeout
+    masked it in production), so the fix is justified even though no
+    user-facing incident existed. A reviewer would otherwise call the
+    fix speculative.
+  - C147 explicitly explains why singleton lifetime + service-process
+    kill is the failure mode, not "a Compose preview bug" — so a
+    reviewer asks "does this actually happen" and the answer is "yes,
+    every process restart with overlay engine."
+- **No duplicate items across tiers** (C166-C169 are new IDs; no
+  overlap with C01-C145). No silently resurrected rejects. No
+  contradictions with the no-INTERNET / GPL-3.0 / F-Droid-first
+  philosophy.
+- **Confirmed**: `ROADMAP.md` and `CHANGELOG.md` both updated; the
+  audit's CHANGELOG entry was corrected to remove the false
+  "non-existent API" claim.

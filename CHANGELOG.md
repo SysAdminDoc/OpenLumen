@@ -347,6 +347,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   presets, fixed schedules with identical start/end times, and default preference JSON
   serialization.
 
+### Hardening (2026-05-17 deep audit pass — second sweep)
+Second-sweep correctness, concurrency, performance, and UX fixes from the
+2026-05-17 deep audit. On disk on `main`; ships in v0.5.0 or v0.5.1.
+- `DirectBootStateStore` sanitizer now clamps the optional 3x3 CVD matrix
+  coefficients and `hasColorMatrix` flag mirrored to the device-protected
+  payload so a malformed mirror can't reach the engine on Locked Boot
+  restore. (The first sweep also briefly replaced the
+  `DataStoreFactory.createInDeviceProtectedStorage` call with a manual
+  `produceFile` form on the belief that the API didn't exist — that
+  was a misread; the API has shipped in `androidx.datastore` since
+  1.2.0-alpha01, and the project pins 1.2.1. The original positional
+  call site is preserved so existing Direct Boot mirror files keep
+  their on-disk path.) Also the serializer now decodes garbage bytes
+  into the safe default rather than throwing back into DataStore.
+- `OverlayEngine` detects stale `hostView` carry-over after a service-process
+  kill (singleton survives the kill while the WindowManager rips the token)
+  and reinstalls fresh instead of silently no-op'ing `apply()`. Also caches
+  `lastAppliedArgb` so widget-refresh broadcasts that re-emit the same color
+  don't trigger redundant repaints.
+- `OverlayEngine.apply/clear/isAvailable` now run inline when the caller is
+  already on the Main thread, avoiding the deadlock where
+  `LumenService.onDestroy`'s `runBlocking { engine.clear() }` would wait the
+  full 2 s timeout for a `withContext(Dispatchers.Main)` dispatch into the
+  parked Looper.
+- `LocationEntryDialog` is now locale-independent: coordinates always
+  format/parse against `Locale.ROOT`, but the parse path tolerates a single
+  comma as the user's decimal separator. Pre-fix, German / French / Spanish
+  locales hit a Catch-22 where the auto-fill wrote `52,5200` and the parser
+  rejected it, disabling Save permanently. Parse helper extracted to
+  `CoordParsing` for JVM testability.
+- `DiagnosticsLog` and `CrashLogger` append + size-check + trim is now one
+  synchronized critical section. Without that guard a concurrent trim+append
+  race could overwrite the survivor's append with the loser's trim. The
+  trim itself now uses `RandomAccessFile.seek+readFully` so it never
+  allocates the whole file on the heap. Reads also acquire the lock briefly
+  so the in-app log dialog never observes a torn mid-trim file.
+- `OpenLumenApp` is now declared `directBootAware="true"` in the manifest and
+  swallows OEM `NotificationManager` quirks in early boot.
+- `Su.runCommandInternal` caps captured output at 16 KiB so a misbehaving
+  `su` writing MBs inside the 4 s timeout can't OOM us. `Su.runShell` drainer
+  now discards bytes into a fixed buffer instead of `readText`'s unbounded
+  `String` allocation.
+- `OverlayPermissionCard` accepts a `requiredByActiveEngine` flag and the
+  Home screen passes false when the user pinned a root engine that doesn't
+  need overlay — the card was previously a permanent nag for root users.
+- `MainActivity.requestNotificationPermissionIfNeeded` migrated from the
+  legacy `ActivityCompat.requestPermissions` to
+  `ActivityResultContracts.RequestPermission`.
+- Notification "Next preset" action now writes a one-shot diagnostic line
+  when favorites is empty, so users troubleshooting via About → diagnostics
+  log see why the button does nothing.
+- `LumenTileService.onCreate` cancels the prior scope's Job before swapping,
+  so an OEM that skips `onDestroy` on rebind doesn't leak the previous
+  scope's in-flight work.
+- `SurfaceFlingerEngine.isAvailable` short-circuits when `workingCode` is
+  cached, and `apply()` re-probes once when the cache is empty so a pinned
+  engine doesn't silently no-op. Without this, every conflated prefs
+  emission for an `Auto`-mode user re-spawned up to 3 `su` subprocesses.
+- `KcalEngine.isAvailable` short-circuits when `resolvedPaths` is cached,
+  and `apply()` re-probes once when the cache is empty. Same `su`-storm
+  performance bug as SurfaceFlinger.
+- `LumenService.maybeBroadcastWidgetRefresh` diffs a `WidgetSnapshot`
+  (`enabled`, `activePresetKey`, `favoritePresetKeys`) against the last
+  broadcast and skips the refresh pair when none of those fields changed.
+  Pre-fix, a slider drag flooded both Glance widgets with recompose
+  requests for fields they don't render.
+- `LumenService.ensureEngine` caches the chosen `EngineKind` for
+  `Auto`-mode preferences across emissions, invalidated only when the
+  user changes `Preferences.engine`. `pickBest` was being called per
+  conflated emission even when the engine couldn't have changed.
+- `PreferencesStore.decodeOrDefault` logs once per process when the
+  persisted JSON fails to decode (still falls back to defaults), so a
+  contributor pulling a driver report has a breadcrumb instead of a
+  silent config reset.
+- New `CoordParsingTest` covers dot/comma decimals, mixed-separator
+  rejection, blank input, non-numeric input, NaN/Inf rejection, and
+  `Locale.ROOT` format invariance.
+- Extended `DirectBootStateSerializerTest` with regression coverage for
+  CVD matrix-coefficient clamping and for garbage-bytes decoding to the
+  safe default rather than throwing.
+
 ### Hardening (2026-05-17 in-tree audit pass)
 Correctness fixes from the 2026-05-17 audit pass (see ROADMAP.md rev 3 / rev 4
 "Hardening (post-rev-2 audit)"). On disk on `main`; ships in v0.5.0 or a v0.5.1
