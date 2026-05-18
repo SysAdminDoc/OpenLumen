@@ -132,4 +132,49 @@ class ProfilesTest {
 
         assertThat(dropped).containsExactly("evening")
     }
+
+    @Test fun `saveCurrentAs past MAX_PROFILES drops the oldest entry and keeps the new one`() {
+        // Regression: the cap is enforced via `takeLast(MAX_PROFILES)` so the
+        // newest entry is always preserved and the head of the list is the
+        // one that gets dropped. Without test coverage, a future refactor
+        // could silently switch to `take(MAX_PROFILES)` and start dropping
+        // the new profile instead of the oldest — a destructive UX bug.
+        var p = Preferences()
+        // Fill exactly to the cap with deterministic names.
+        repeat(Preferences.MAX_PROFILES) { i ->
+            p = Profiles.saveCurrentAs(p, "profile-%02d".format(i))
+        }
+        assertThat(p.savedProfiles).hasSize(Preferences.MAX_PROFILES)
+        assertThat(p.savedProfiles.first().name).isEqualTo("profile-00")
+        assertThat(p.savedProfiles.last().name).isEqualTo("profile-%02d".format(Preferences.MAX_PROFILES - 1))
+
+        // One more save should drop the oldest, not the newest.
+        val after = Profiles.saveCurrentAs(p, "the-newest")
+
+        assertThat(after.savedProfiles).hasSize(Preferences.MAX_PROFILES)
+        assertThat(after.savedProfiles.first().name).isEqualTo("profile-01")
+        assertThat(after.savedProfiles.last().name).isEqualTo("the-newest")
+    }
+
+    @Test fun `saveCurrentAs overwrites without growing past the cap`() {
+        // Saving an already-present name shouldn't both drop an old entry
+        // AND fail the cap — overwrite should be net-zero in size.
+        var p = Preferences()
+        repeat(Preferences.MAX_PROFILES) { i ->
+            p = Profiles.saveCurrentAs(p, "profile-%02d".format(i))
+        }
+        val sizeBeforeOverwrite = p.savedProfiles.size
+
+        // Update the active preset, then overwrite an existing profile name.
+        val updated = Profiles.saveCurrentAs(
+            p.copy(activePresetKey = "amber"),
+            "profile-00"
+        )
+
+        assertThat(updated.savedProfiles).hasSize(sizeBeforeOverwrite)
+        // The overwritten entry must now sit at the END (it was re-added
+        // after the filter-not), not at its original position.
+        assertThat(updated.savedProfiles.last().name).isEqualTo("profile-00")
+        assertThat(updated.savedProfiles.last().snapshot.activePresetKey).isEqualTo("amber")
+    }
 }

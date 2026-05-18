@@ -460,10 +460,16 @@ private fun copyToClipboardAbout(context: Context, label: String, text: String) 
  * (roadmap **C53 stretch**). The underlying log format is
  * `<instant> LEVEL CATEGORY <message>` so we can filter by checking
  * the second and third whitespace-separated tokens of each line.
+ *
  * Level chips default to WARN + ERROR (the maintainer-triage default);
- * category chips default to all-on. The chip rows persist across
- * dialog reopens via `rememberSaveable` — a user troubleshooting a
- * specific subsystem doesn't have to re-select on each open.
+ * category chips default to all-on. The selections persist across
+ * configuration changes (rotation) inside an open dialog via
+ * `rememberSaveable`, but reset to the defaults whenever the dialog
+ * is closed and reopened — the dialog composable enters a fresh
+ * remember scope each open and we deliberately don't hoist the
+ * selection state into the ViewModel because the diagnostics view
+ * is a one-shot triage surface, not part of the persistent app
+ * state model.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

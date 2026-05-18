@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Semver to release (e.g. 0.2.0)"
+        description: "Semver to release (e.g. 0.5.0)"
         required: true
         type: string
+      allow_unsigned:
+        description: "Allow building an unsigned release APK (dry-run only — never publish unsigned)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -16,8 +21,36 @@ permissions:
 # Actions pinned to current major-version tags. See .github/workflows/ci.yml
 # and docs/sbom-and-advisories.md for the pinning policy.
 jobs:
+  # Lint and tests are gating preconditions. The build/publish job won't run
+  # if either of these fail — preventing a green release on red tests, which
+  # the parallel-jobs structure of the previous workflow allowed.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: "17" }
+      - uses: gradle/actions/setup-gradle@v6
+      - run: ./gradlew :app:lint --stacktrace
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: "17" }
+      - uses: gradle/actions/setup-gradle@v6
+      - run: |
+          ./gradlew \
+            :app:testDebugUnitTest \
+            :core-engine:test \
+            :core-schedule:test \
+            :core-prefs:test \
+            --stacktrace
+
   build:
     runs-on: ubuntu-latest
+    needs: [lint, unit-tests]
     steps:
       - uses: actions/checkout@v6
 
@@ -37,8 +70,21 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 --decode > "$HOME/openlumen-release.jks"
             echo "OPENLUMEN_KEYSTORE=$HOME/openlumen-release.jks" >> "$GITHUB_ENV"
+            echo "OPENLUMEN_HAS_KEYSTORE=1" >> "$GITHUB_ENV"
           else
-            echo "No KEYSTORE_BASE64 secret — building unsigned release APK."
+            echo "No KEYSTORE_BASE64 secret available."
+            echo "OPENLUMEN_HAS_KEYSTORE=0" >> "$GITHUB_ENV"
+          fi
+
+      - name: Refuse to publish unsigned release
+        # Hard-fail before the build if we're missing a keystore and the
+        # `allow_unsigned` opt-in wasn't set. Previously the workflow would
+        # silently build an unsigned APK, stage it as the canonical release
+        # asset, and upload it to GitHub — a real release-trust hazard.
+        run: |
+          if [ "${OPENLUMEN_HAS_KEYSTORE}" != "1" ] && [ "${{ inputs.allow_unsigned }}" != "true" ]; then
+            echo "::error::No keystore secret configured. Either set the KEYSTORE_BASE64 secret or re-run with allow_unsigned=true for a dry-run only (the dry-run will refuse to publish)." >&2
+            exit 1
           fi
 
       - name: Build release APK
@@ -67,21 +113,90 @@ jobs:
       - name: Stage APK
         run: |
           mkdir -p dist
-          # Signed builds produce app-release.apk; unsigned produce app-release-unsigned.apk.
+          # Signed builds produce app-release.apk; unsigned dry-runs produce
+          # app-release-unsigned.apk. Keep the source filename so the artifact
+          # name signals its signed/unsigned status to a downstream reviewer.
           SRC=$(ls app/build/outputs/apk/release/app-release*.apk | head -n 1)
-          cp "$SRC" "dist/OpenLumen-v${{ inputs.version }}-release.apk"
+          case "$SRC" in
+            *unsigned*)
+              cp "$SRC" "dist/OpenLumen-v${{ inputs.version }}-release-unsigned.apk"
+              ;;
+            *)
+              cp "$SRC" "dist/OpenLumen-v${{ inputs.version }}-release.apk"
+              ;;
+          esac
 
-      - name: SHA-256
+      - name: Compute SHA-256 of release artifacts only
+        # Previously: `sha256sum * > SHA256SUMS` from inside dist/. Wildcard
+        # expansion happened AFTER the redirect created SHA256SUMS, so the
+        # empty SHA256SUMS file got its own hash recorded in itself. Now we
+        # explicitly enumerate the .apk + .idsig set and write SHA256SUMS
+        # in a way that can't include the manifest in its own input.
         run: |
           cd dist
-          sha256sum * > SHA256SUMS
+          rm -f SHA256SUMS
+          # Hash all release artifacts but not the manifest itself.
+          sha256sum *.apk *.idsig 2>/dev/null > SHA256SUMS || true
+          # Verify the manifest is non-empty (we should always have at least
+          # one .apk).
+          if [ ! -s SHA256SUMS ]; then
+            echo "::error::No release artifacts found to hash." >&2
+            exit 1
+          fi
+          cat SHA256SUMS
 
-      - name: Attest build provenance
+      - name: Attest build provenance (signed builds only)
+        # Provenance attestation only makes sense for the production-signed
+        # APK. Unsigned dry-runs don't get attested.
+        if: env.OPENLUMEN_HAS_KEYSTORE == '1'
         uses: actions/attest@v4
         with:
           subject-path: "dist/OpenLumen-v${{ inputs.version }}-release.apk"
 
-      - name: Create / update release
+      - name: Extract per-version release notes from CHANGELOG
+        # Previously: `--notes-file CHANGELOG.md` dumped the entire ~600-line
+        # changelog into the GitHub release body. Extract just the section
+        # matching this release's version so the GH release page reads cleanly.
+        # Falls back to a stub if the section header is missing.
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          NOTES_FILE="dist/release-notes.md"
+          if grep -qE "^## \[${VERSION}\]" CHANGELOG.md; then
+            awk -v ver="$VERSION" '
+              $0 ~ ("^## \\[" ver "\\]") { capture = 1; print; next }
+              capture && /^## \[/ { exit }
+              capture { print }
+            ' CHANGELOG.md > "$NOTES_FILE"
+          else
+            printf "OpenLumen v%s release.\n\nSee CHANGELOG.md in the repository for details.\n" "$VERSION" > "$NOTES_FILE"
+          fi
+          echo "--- Extracted release notes preview ---"
+          head -c 800 "$NOTES_FILE"
+          echo "---"
+
+      - name: Refuse to publish unsigned dry-run
+        # Even when allow_unsigned is true, the dry-run must NOT touch the
+        # GitHub Releases page. The artifacts stay as workflow artifacts only.
+        if: env.OPENLUMEN_HAS_KEYSTORE != '1'
+        run: |
+          echo "Unsigned dry-run completed. Staged artifacts:"
+          ls -la dist/
+          echo "Skipping GitHub Release creation. Re-run with a keystore to publish."
+
+      - name: Stage artifacts as workflow upload (always)
+        # Always upload as a workflow artifact so dry-runs are inspectable
+        # even when they don't create a GH release. The signed-path also
+        # benefits — a reviewer can grab the APK without needing the
+        # release tag yet.
+        uses: actions/upload-artifact@v7
+        with:
+          name: openlumen-release-v${{ inputs.version }}
+          path: dist/
+          retention-days: 90
+
+      - name: Create / update release (signed builds only)
+        if: env.OPENLUMEN_HAS_KEYSTORE == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -90,16 +205,9 @@ jobs:
           if ! gh release view "$tag" >/dev/null 2>&1; then
             gh release create "$tag" \
               --title "OpenLumen $tag" \
-              --notes-file CHANGELOG.md \
+              --notes-file dist/release-notes.md \
               --draft
           fi
-          gh release upload "$tag" dist/* --clobber
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with: { distribution: temurin, java-version: "17" }
-      - uses: gradle/actions/setup-gradle@v6
-      - run: ./gradlew :app:lint
+          # Upload everything except the per-version release-notes markdown
+          # (that lives in the release body, not as an attached asset).
+          gh release upload "$tag" dist/*.apk dist/*.idsig dist/SHA256SUMS --clobber

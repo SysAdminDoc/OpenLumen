@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
@@ -156,9 +157,16 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 ) {
                     val fineDecLabel = stringResource(R.string.home_dim_fine_decrease)
                     val fineIncLabel = stringResource(R.string.home_dim_fine_increase)
+                    // contentDescription (not stateDescription) is the right
+                    // semantics property for an action button — TalkBack reads
+                    // it as the button's accessible name instead of the
+                    // inner "−" / "+" glyph. Disabling at the bounds gives
+                    // visible feedback ("you can't go lower") instead of
+                    // silently swallowing taps.
                     IconButton(
                         onClick = { vm.setDim((prefs.dim - DIM_FINE_STEP).coerceAtLeast(0f)) },
-                        modifier = Modifier.semantics { stateDescription = fineDecLabel }
+                        enabled = prefs.dim > 0f,
+                        modifier = Modifier.semantics { contentDescription = fineDecLabel }
                     ) {
                         Text("−", style = MaterialTheme.typography.titleMedium)
                     }
@@ -170,7 +178,8 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     )
                     IconButton(
                         onClick = { vm.setDim((prefs.dim + DIM_FINE_STEP).coerceAtMost(0.95f)) },
-                        modifier = Modifier.semantics { stateDescription = fineIncLabel }
+                        enabled = prefs.dim < 0.95f,
+                        modifier = Modifier.semantics { contentDescription = fineIncLabel }
                     ) {
                         Text("+", style = MaterialTheme.typography.titleMedium)
                     }
