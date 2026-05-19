@@ -15,7 +15,7 @@ material3 = "1.4.0"
 core-ktx = "1.18.0"
 glance = "1.1.1"
 screenshot = "0.0.1-alpha14"
-roborazzi = "1.60.0"
+roborazzi = "1.61.0"
 robolectric = "4.16.1"
 
 junit = "4.13.2"
