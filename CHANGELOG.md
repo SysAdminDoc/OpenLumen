@@ -6,9 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(Nothing here yet — v0.5.0 cut on 2026-05-17 rolls up every prior
-`[Unreleased]` entry. Add new entries above this line, under
-`### Added` / `### Changed` / `### Fixed` headings.)
+### Fixed
+- App no longer crashes at launch on Android 10 (and other devices where
+  WorkManager's auto-init runs against a directBootAware Application
+  context that hasn't settled to credential-protected storage yet).
+  Glance pulls WorkManager in transitively; we disable its
+  `androidx.startup` auto-initializer and implement
+  `Configuration.Provider` on `OpenLumenApp`, letting WorkManager
+  lazy-initialize when Glance first enqueues widget work — which only
+  happens post-unlock when storage paths are fully resolved. Fixes #5.
 
 ## [0.5.0] — 2026-05-17
 

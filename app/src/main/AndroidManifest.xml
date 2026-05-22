@@ -102,6 +102,28 @@
             android:exported="false" />
 
         <!--
+            WorkManager (pulled in transitively by Glance) auto-initializes
+            via androidx.startup at process start. On a directBootAware
+            Application, that fires before the context's storage paths have
+            settled to credential-protected mode, and Room blows up
+            constructing WorkDatabase on some Android 10 devices (see
+            issue #5: Galaxy S9+ / Android 10). We disable the startup
+            initializer and let WorkManager lazy-init via our
+            Configuration.Provider when Glance first enqueues work, which
+            only happens post-unlock.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <!--
             1x1 toggle widget (roadmap C19/C123). Glance renders the
             widget; ACTION_REFRESH still lets LumenService nudge all
             instances after each prefs emission.

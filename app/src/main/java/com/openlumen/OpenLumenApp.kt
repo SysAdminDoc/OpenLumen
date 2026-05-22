@@ -7,6 +7,7 @@ import android.content.Context
 import android.os.Build
 import android.os.UserManager
 import android.util.Log
+import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 
 /**
@@ -27,9 +28,18 @@ import dagger.hilt.android.HiltAndroidApp
  *   the next Application.onCreate() (post-unlock).
  */
 @HiltAndroidApp
-class OpenLumenApp : Application() {
+class OpenLumenApp : Application(), Configuration.Provider {
 
     private val tag = "OpenLumen/App"
+
+    // WorkManager auto-init is disabled in the manifest (issue #5). Glance
+    // calls WorkManager.getInstance(context) on first widget enqueue and
+    // that triggers lazy init with this config. Keeping logging quiet to
+    // match the rest of the offline/no-telemetry posture.
+    override fun getWorkManagerConfiguration(): Configuration =
+        Configuration.Builder()
+            .setMinimumLoggingLevel(Log.WARN)
+            .build()
 
     override fun onCreate() {
         super.onCreate()
