@@ -138,6 +138,11 @@ class SurfaceFlingerEngine : ColorEngine {
                 "(exit=${res.exitCode}, stdout=${res.stdout.take(160)}); invalidating probe cache"
         )
         workingCode = null
+        // If the failure looks like the su binary itself is gone (exit 127 /
+        // -1 timeout), invalidate the process-wide su availability cache so
+        // the next probe re-checks rather than racing back to the same
+        // "su says it works but every command fails" state.
+        Su.resetCacheIfSuLikelyFailed(res.exitCode)
     }
 
     private companion object {

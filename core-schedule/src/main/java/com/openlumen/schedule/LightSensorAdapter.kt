@@ -5,12 +5,17 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.shareIn
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -26,9 +31,22 @@ import kotlin.math.max
  * the latest reading always wins. We never call `trySend` and silently drop —
  * `BufferOverflow.DROP_OLDEST` makes the buffer behave like the conflation
  * `callbackFlow` semantics for sensors.
+ *
+ * **Multiple collectors share one SensorManager registration.** The adapter
+ * is a `@Singleton` (see `AppModule`), and both [com.openlumen.viewmodel.OpenLumenViewModel]
+ * and the foreground service collect [lux]. Before this consolidation each
+ * collector triggered its own `callbackFlow` block and a separate
+ * `registerListener` call against the SensorManager — doubling the wake-up
+ * rate and roughly doubling the battery cost of the ambient-light feature
+ * for users who had it on. The shared flow uses `WhileSubscribed(5_000)`
+ * so the sensor unregisters after a 5-second tail when both collectors
+ * stop (e.g. while the app is backgrounded AND the filter is off).
  */
 class LightSensorAdapter(private val context: Context) {
-    fun lux(): Flow<Float> = callbackFlow {
+
+    private val shareScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    private val rawSensorFlow: Flow<Float> = callbackFlow {
         val sm = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
             ?: run { close(); return@callbackFlow }
         val sensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT)
@@ -57,4 +75,18 @@ class LightSensorAdapter(private val context: Context) {
         .distinctUntilChanged { a, b ->
             abs(a - b) < max(abs(a) * 0.05f, 0.5f)
         }
+
+    /**
+     * `replay = 0` — we don't want late subscribers to retroactively see a
+     * stale lux that's potentially hours old. They'll get the next live
+     * reading the smoothed EMA produces, which is the right floor for any
+     * decision logic.
+     */
+    private val sharedFlow: Flow<Float> = rawSensorFlow.shareIn(
+        scope = shareScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L),
+        replay = 0
+    )
+
+    fun lux(): Flow<Float> = sharedFlow
 }

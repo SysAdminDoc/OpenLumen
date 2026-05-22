@@ -200,17 +200,30 @@ class OverlayEngine : ColorEngine {
      * because `installView` is callable from non-suspend code (the service
      * call site is inside `applyMutex.withLock`, which doesn't switch
      * dispatchers).
+     *
+     * The result is published through an [AtomicBoolean] so the
+     * happens-before relationship between the Main-thread write and the
+     * caller's read is established by the latch + atomic, not just by the
+     * latch alone. A bare `var result = false` captured into the inline
+     * lambda would also work in practice (the CountDownLatch await/countDown
+     * pair carries a happens-before edge), but the explicit atomic makes
+     * the intent obvious to a future reader and survives any future
+     * refactor that drops the latch.
      */
     private inline fun runOnMain(crossinline block: () -> Boolean): Boolean {
         if (Looper.myLooper() == Looper.getMainLooper()) return block()
         val handler = Handler(Looper.getMainLooper())
-        val lock = java.util.concurrent.CountDownLatch(1)
-        var result = false
-        handler.post {
-            try { result = block() } finally { lock.countDown() }
+        val latch = java.util.concurrent.CountDownLatch(1)
+        val result = java.util.concurrent.atomic.AtomicBoolean(false)
+        val posted = handler.post {
+            try { result.set(block()) } finally { latch.countDown() }
+        }
+        if (!posted) {
+            Log.w(tag, "installView: Handler.post rejected (looper exiting?)")
+            return false
         }
         // Bounded wait so a wedged main thread can't pin the caller forever.
-        return if (lock.await(2, java.util.concurrent.TimeUnit.SECONDS)) result
+        return if (latch.await(2, java.util.concurrent.TimeUnit.SECONDS)) result.get()
                else { Log.w(tag, "installView: timed out waiting for main thread"); false }
     }
 }

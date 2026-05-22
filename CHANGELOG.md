@@ -6,7 +6,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-05-21
+
+Deep-audit hardening pass. No new user-facing features; everything below
+is correctness, reliability, performance, or UX polish surfaced by a
+principal-engineer-grade review of the v0.5.0 codebase.
+
 ### Fixed
+- Root engines no longer get stuck "available but silently no-op" after the
+  user revokes Magisk root mid-session. `SurfaceFlingerEngine` and
+  `KcalEngine` now invalidate the process-wide `Su` availability cache when
+  their write fails with the exit codes that indicate `su` itself is gone
+  (`127` = not on PATH, `-1` = forcibly destroyed on timeout). Other engine-
+  local failures (a single failed write, a permission-denied on a sysfs
+  node) still invalidate only the engine's own working state, not su-wide.
+- KCAL panels on kernel forks that don't expose `kcal_min` now get an
+  app-level safety floor on the per-channel RGB scalars (the same `SAFETY_MIN`
+  used by the C166 raise-and-restore path). Without it, an aggressive
+  preset could drive a subpixel to zero on those panels and produce
+  flicker / a black-frame artifact at the channel boundary. AMOLED-clamp
+  users opting into true zero are unaffected — they keep the through-path.
+- `OverlayEngine.installView`'s main-thread post no longer relies on a
+  bare captured `var` for the result; the value is published through an
+  `AtomicBoolean` and we now check `Handler.post`'s return value so a
+  Looper-exiting race returns a clean `false` instead of leaking a hang.
+- `LumenService.startInForeground` now registers the notification channel
+  defensively (idempotent if `OpenLumenApp.onCreate` already registered
+  it). Closes a race on the `LOCKED_BOOT_COMPLETED` → service-start path
+  where the channel could be missing if direct-boot started us before
+  `Application.onCreate` had a chance to set it up.
+- `LumenService` listens for `Intent.ACTION_USER_UNLOCKED` at runtime so a
+  service started pre-unlock (direct-boot restore) transitions to
+  observing credential-protected preferences immediately on unlock,
+  instead of waiting for a tile / widget / app interaction to nudge it.
+
+### Changed
+- `LightSensorAdapter.lux()` now backs a `shareIn(WhileSubscribed(5s))`
+  shared flow instead of returning a fresh `callbackFlow` per collector.
+  Both the ViewModel and the foreground service used to collect this
+  independently, registering two SensorManager listeners and roughly
+  doubling the battery cost of the ambient-light trigger.
+- `DriverProbe.probeAll` runs the four engine probes in parallel via
+  `async`/`coroutineScope` instead of serializing. CDM is reflection-only
+  and fast, but SurfaceFlinger and KCAL both spawn multiple `su`
+  subprocesses on first probe; on root devices first-launch is now
+  visibly snappier.
+- `OfflineCities.search` early-terminates via a sequence + `take(limit)`,
+  so a broad query no longer scans the full ~95-row catalog when 12 hits
+  would do. Defines clean behavior for `limit <= 0` (empty result).
+- Driver tab's "Auto" row now shows which engine Auto would actually pick
+  ("Auto picks: X") so the user can see at a glance what they're getting,
+  or get a one-line hint when no engine is available yet.
+- `MainActivity` notification-permission prompt now records a one-shot
+  flag in private SharedPreferences instead of relying on the system to
+  silently no-op repeated launches. The prompt still re-fires when the
+  system reports `shouldShowRequestPermissionRationale=true`, so a user
+  who denied once and changed their mind isn't punished.
+- `ScheduleAlarmReceiver` logs the FGS-blocked reason explicitly when a
+  schedule fire couldn't restart the service. Diagnostics field reports
+  on Android 12+ now have the right breadcrumb when the user is in a
+  restrictive app-standby bucket.
+
+### Added
+- Unit-test coverage for `Su.resetCacheIfSuLikelyFailed` (boundary
+  exit codes: `0`, `1`, `127`, `-1`, `255`) and for `OfflineCities.search`
+  edge cases (`limit = 0`, negative limit, broad-query cap, blank query
+  with cap).
+
+### Fixed (carried over from 0.5.0 / Unreleased)
 - App no longer crashes at launch on Android 10 (and other devices where
   WorkManager's auto-init runs against a directBootAware Application
   context that hasn't settled to credential-protected storage yet).

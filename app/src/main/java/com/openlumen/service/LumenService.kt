@@ -2,6 +2,8 @@ package com.openlumen.service
 
 import android.app.AlarmManager
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -103,11 +105,27 @@ class LumenService : LifecycleService() {
      * an hour later in a dark room. The OS already pauses the actual
      * sensor when the screen is off; this just makes sure we don't act on
      * stale data the next time `applyIfShouldBeActive` runs.
+     *
+     * Also handles `ACTION_USER_UNLOCKED` so a service that was started
+     * pre-unlock via `LockedBootReceiver` can transition to observing
+     * credential-protected preferences as soon as the user unlocks the
+     * device. Without this, the service would otherwise hold the
+     * direct-boot mirrored matrix until the user explicitly opened the app
+     * or interacted with the tile/widget.
      */
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_OFF) {
-                latestLux.set(-1f)
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> latestLux.set(-1f)
+                Intent.ACTION_USER_UNLOCKED -> {
+                    DiagnosticsLog.log(
+                        this@LumenService,
+                        DiagnosticsLog.Level.INFO,
+                        DiagnosticsLog.Category.SERVICE,
+                        "USER_UNLOCKED: transitioning to credential-protected prefs"
+                    )
+                    ensurePreferencesObserved()
+                }
             }
         }
     }
@@ -159,6 +177,11 @@ class LumenService : LifecycleService() {
         if (screenStateReceiverRegistered) return
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
+            // USER_UNLOCKED is a protected broadcast and (like SCREEN_OFF) is
+            // exempt from Android 8+ background-execution limits when received
+            // via a runtime registration. Manifest-registered receivers stopped
+            // getting it on modern Android, so we listen here from the service.
+            addAction(Intent.ACTION_USER_UNLOCKED)
         }
         // Implicit broadcast for ACTION_SCREEN_OFF is exempt from Android 8+
         // background-execution limits, so a runtime registration here is
@@ -275,7 +298,39 @@ class LumenService : LifecycleService() {
         return START_STICKY
     }
 
+    /**
+     * Defensive notification-channel registration. [OpenLumenApp] also
+     * registers the channel, but skips it pre-unlock (some OEM
+     * `NotificationManager` calls throw before credential storage is
+     * unlocked). On a `LOCKED_BOOT_COMPLETED` → service-start path the
+     * channel may not exist yet by the time we hit `startForeground` —
+     * Android creates a placeholder default channel which leaks a "default"
+     * label into the user's notification settings. Calling
+     * `createNotificationChannel` here is idempotent on the platform side
+     * (re-registering the same channel ID is a no-op), so the cheap call
+     * site is the right place to belt-and-suspenders the race.
+     */
+    private fun ensureNotificationChannelRegistered() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        runCatching {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return@runCatching
+            val channelId = getString(R.string.notif_channel_id)
+            if (nm.getNotificationChannel(channelId) != null) return@runCatching
+            val channel = NotificationChannel(
+                channelId,
+                getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.notif_channel_desc)
+                setShowBadge(false)
+            }
+            nm.createNotificationChannel(channel)
+        }.onFailure { Log.w(tag, "ensureNotificationChannel: ${it.message}") }
+    }
+
     private fun startInForeground() {
+        ensureNotificationChannelRegistered()
         val tapIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java),

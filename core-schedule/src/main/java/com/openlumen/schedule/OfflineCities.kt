@@ -147,12 +147,20 @@ object OfflineCities {
     /**
      * Substring filter, case-insensitive, on `displayName`. Returns the full
      * list when [query] is blank, capped at [limit] to keep the picker quick.
+     *
+     * For non-blank queries this uses an early-terminating sequence so we
+     * stop scanning the catalog as soon as [limit] matches have been
+     * collected — a query that matches the first 12 entries doesn't pay to
+     * walk all ~95 rows.
      */
     fun search(query: String, limit: Int = 50): List<City> {
+        if (limit <= 0) return emptyList()
         val q = query.trim()
-        val source = if (q.isEmpty()) ALL
-                     else ALL.filter { it.displayName.contains(q, ignoreCase = true) }
-        return if (source.size <= limit) source else source.take(limit)
+        if (q.isEmpty()) return if (ALL.size <= limit) ALL else ALL.take(limit)
+        return ALL.asSequence()
+            .filter { it.displayName.contains(q, ignoreCase = true) }
+            .take(limit)
+            .toList()
     }
 
     /**

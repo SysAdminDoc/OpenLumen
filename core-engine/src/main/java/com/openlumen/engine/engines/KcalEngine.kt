@@ -74,10 +74,23 @@ class KcalEngine : ColorEngine {
             Log.w(TAG, "apply: no resolved KCAL sysfs path; tint will not be visible")
             return@withContext
         }
+        // When the kernel doesn't expose `kcal_min`, OR our probe couldn't
+        // read the user's existing minimum, the C166 raise-and-restore
+        // path can't kick in. On those panels a per-channel write of 0
+        // can cause flicker or a black-frame artifact at the boundary
+        // (this is what `kcal_min` exists to prevent). Clamp the scaled
+        // channels at the app layer to the same SAFETY_MIN floor as a
+        // defensive fallback. AMOLED-clamp users opting into true zero
+        // already accept that risk and write through `LumenMatrix.scaledRgb`
+        // which can return 0; we only enforce this floor when AMOLED
+        // clamp is off so we don't surprise the opt-in workflow.
+        val needAppLevelFloor =
+            paths.min == null || paths.originalMin == null
+        val appFloor = if (needAppLevelFloor && !matrix.amoledClamp) SAFETY_MIN else 0
         val s = matrix.scaledRgb()
-        val r = (s[0] * 256f).toInt().coerceIn(0, 256)
-        val g = (s[1] * 256f).toInt().coerceIn(0, 256)
-        val b = (s[2] * 256f).toInt().coerceIn(0, 256)
+        val r = (s[0] * 256f).toInt().coerceIn(appFloor, 256)
+        val g = (s[1] * 256f).toInt().coerceIn(appFloor, 256)
+        val b = (s[2] * 256f).toInt().coerceIn(appFloor, 256)
 
         // C166: only touch kcal_min when the user's original value is
         // below our safety floor, and only once per probed session. The
@@ -140,6 +153,11 @@ class KcalEngine : ColorEngine {
         if (exitCode == 0) return
         Log.w(TAG, "$operation failed for KCAL at ${paths.base} (exit=$exitCode); invalidating probe cache")
         resolvedPaths = null
+        // 127 / -1 typically mean su itself is gone (Magisk denied or
+        // uninstalled while we were running). Drop the process-wide su
+        // cache too so the next driver probe re-checks instead of returning
+        // a stale "available" we can't actually use.
+        Su.resetCacheIfSuLikelyFailed(exitCode)
     }
 
     /**

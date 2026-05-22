@@ -1,0 +1,21 @@
+v0.5.1 — Deep-audit hardening pass.
+
+Fixed:
+- Root engines no longer get stuck "available but silently no-op" after Magisk root
+  is revoked mid-session; the su availability cache now invalidates when the engine
+  failure exit code indicates the su binary itself is gone.
+- KCAL panels that don't expose `kcal_min` get an app-level safety floor so an
+  aggressive preset can't drive a subpixel to zero and cause flicker.
+- Notification channel registered defensively in the service to close a race on
+  the direct-boot → service-start path.
+- Service listens for USER_UNLOCKED so a direct-boot-restored session transitions
+  to observing real preferences immediately on unlock.
+
+Changed:
+- Ambient-light sensor uses a shared flow — one SensorManager listener instead of
+  two, roughly halving the battery cost of the light-sensor trigger.
+- Driver probes run in parallel; first launch is faster on root devices.
+- Driver tab's "Auto" row now shows which engine Auto would pick.
+- City search early-terminates on broad queries.
+
+No new permissions. Still fully offline; no telemetry; F-Droid clean.

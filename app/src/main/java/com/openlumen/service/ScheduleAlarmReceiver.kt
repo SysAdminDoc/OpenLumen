@@ -19,7 +19,17 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
             .setAction(LumenService.ACTION_REEVALUATE)
         val result = LumenServiceStarter.start(context, svc, tag)
         if (!result.started) {
-            Log.w(tag, "Schedule fire could not start LumenService")
+            // FGS restrictions on Android 12+ can refuse a service start
+            // when the alarm fires while the device is in a restrictive
+            // app-standby bucket. We log here; the next time the user
+            // opens the app, `applyIfShouldBeActive` reschedules and
+            // applies the current matrix from scratch. Re-firing the alarm
+            // ourselves would just hit the same refusal.
+            Log.w(
+                tag,
+                "Schedule fire could not start LumenService " +
+                    "(fgsBlocked=${result.foregroundStartNotAllowed})"
+            )
         }
     }
 

@@ -1,6 +1,6 @@
 # OpenLumen
 
-[![Version](https://img.shields.io/badge/version-0.4.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
+[![Version](https://img.shields.io/badge/version-0.5.1-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE)
 [![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements)
 [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)
@@ -44,7 +44,7 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 The app falls back gracefully — if none of the root paths work, you still get the
 overlay driver. If you want to pin a specific driver, Settings → Driver lets you.
 
-## Features (v0.5.0 — in development)
+## Features (v0.5.1)
 
 **Color**
 

@@ -125,6 +125,8 @@
     <string name="driver_refresh">Re-probe</string>
     <string name="driver_available">Available</string>
     <string name="driver_not_available">Not available on this device</string>
+    <string name="driver_auto_resolved">Auto picks: %1$s</string>
+    <string name="driver_auto_resolved_none">Auto: no driver available — install the Overlay fallback by granting overlay permission.</string>
     <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_grant_status_granted">Granted on this device.</string>
     <string name="driver_grant_status_not_granted">Not granted. The ColorDisplayManager driver is unavailable until this is granted via the ADB command below.</string>

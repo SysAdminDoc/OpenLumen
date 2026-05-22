@@ -63,6 +63,17 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             EngineKindDto.Overlay to stringResource(R.string.driver_overlay)
         )
 
+        // Resolve which engine the "Auto" choice would pick right now.
+        // pickBest's rule: highest-rank engine whose probe came back
+        // available. Mirror it here so the Auto row tells the user which
+        // driver they're getting without having to dig through the per-
+        // engine rows for the available-marker. Returns null when no
+        // probe is available yet OR every probe failed.
+        val autoResolvedLabelRes: Int? = probes
+            .filter { it.available }
+            .maxByOrNull { it.engine.kind.rank }
+            ?.engine?.kind?.let(::engineKindLabelRes)
+
         choices.forEach { (kind, label) ->
             val availability = kind.toEngineKind()
                 ?.let { engineKind -> probes.firstOrNull { it.engine.kind == engineKind }?.available }
@@ -85,7 +96,27 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     )
                     Column(Modifier.weight(1f)) {
                         Text(label, style = MaterialTheme.typography.bodyLarge)
-                        if (kind != EngineKindDto.Auto && availability != null) {
+                        if (kind == EngineKindDto.Auto) {
+                            // Surface which engine Auto would pick so the
+                            // user knows what they're getting; on a device
+                            // with no available engines (no root, no
+                            // overlay permission, no CDM grant) we tell
+                            // them how to get the rootless fallback up.
+                            val hint = if (autoResolvedLabelRes != null && probes.isNotEmpty()) {
+                                stringResource(R.string.driver_auto_resolved, stringResource(autoResolvedLabelRes))
+                            } else if (probes.isNotEmpty()) {
+                                stringResource(R.string.driver_auto_resolved_none)
+                            } else {
+                                null
+                            }
+                            if (hint != null) {
+                                Text(
+                                    hint,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else if (availability != null) {
                             Text(
                                 if (availability) stringResource(R.string.driver_available)
                                 else stringResource(R.string.driver_not_available),
@@ -231,6 +262,18 @@ private fun EngineKindDto.toEngineKind(): EngineKind? = when (this) {
     EngineKindDto.SurfaceFlinger -> EngineKind.SURFACE_FLINGER
     EngineKindDto.Kcal -> EngineKind.KCAL
     EngineKindDto.Overlay -> EngineKind.OVERLAY
+}
+
+/**
+ * Map an [EngineKind] to the user-facing label resource used by the Driver
+ * rows so the "Auto picks: X" hint reuses the same translations and stays
+ * in sync across locales.
+ */
+private fun engineKindLabelRes(kind: EngineKind): Int = when (kind) {
+    EngineKind.COLOR_DISPLAY_MANAGER -> R.string.driver_color_display
+    EngineKind.SURFACE_FLINGER -> R.string.driver_surfaceflinger
+    EngineKind.KCAL -> R.string.driver_kcal
+    EngineKind.OVERLAY -> R.string.driver_overlay
 }
 
 private fun hasWriteSecureSettings(context: Context): Boolean =

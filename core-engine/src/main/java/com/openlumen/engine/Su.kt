@@ -44,6 +44,27 @@ object Su {
     /** Invalidate the cached availability — call when the user toggles drivers. */
     fun resetCache() { cachedAvailable = null }
 
+    /**
+     * Hook for engine `invalidateOnFailure` paths. If the failure looks like
+     * the `su` binary itself is gone — exit 127 (not on PATH) or -1 (timeout
+     * destroying the subprocess) — drop the cached availability so the next
+     * engine call re-probes. Without this, a user who loses Magisk root
+     * mid-session keeps a cached `available = true`, the engine's own probe
+     * fails, `apply` silently no-ops, and the engine still appears
+     * "available" in the Driver tab. Other exit codes (a single failed
+     * `service call` write, a permission-denied on a sysfs node, etc.) do
+     * NOT invalidate — those are engine-specific, not su-wide.
+     */
+    fun resetCacheIfSuLikelyFailed(exitCode: Int) {
+        if (exitCode == 127 || exitCode == -1) cachedAvailable = null
+    }
+
+    /** Test-only peek at the cache slot — null when not yet probed. */
+    internal fun peekCachedAvailable(): Boolean? = cachedAvailable
+
+    /** Test-only setter to seed the cache without going through a real su probe. */
+    internal fun setCachedAvailableForTest(value: Boolean?) { cachedAvailable = value }
+
     suspend fun runCommand(vararg cmd: String): SuResult =
         runCommandInternal(cmd.joinToString(" "), timeoutMs = CMD_TIMEOUT_MS)
 

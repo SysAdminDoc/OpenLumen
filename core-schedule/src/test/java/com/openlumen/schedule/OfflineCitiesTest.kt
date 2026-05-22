@@ -51,4 +51,30 @@ class OfflineCitiesTest {
         val d = OfflineCities.haversineKm(40.7, -74.0, 40.7, -74.0)
         assertThat(d).isWithin(1e-6).of(0.0)
     }
+
+    @Test fun `search with limit zero returns empty without scanning`() {
+        // Regression guard: an out-of-range limit should be a defined no-op,
+        // not a runtime error from `take(0)` semantics drifting.
+        val result = OfflineCities.search("london", limit = 0)
+        assertThat(result).isEmpty()
+    }
+
+    @Test fun `search with negative limit returns empty`() {
+        val result = OfflineCities.search("london", limit = -5)
+        assertThat(result).isEmpty()
+    }
+
+    @Test fun `search caps result count at limit even with broad query`() {
+        // 'a' matches almost every city; the limit must still hold so the
+        // picker dialog can't blow up rendering the entire catalog.
+        val result = OfflineCities.search("a", limit = 5)
+        assertThat(result.size).isAtMost(5)
+    }
+
+    @Test fun `search blank query trims to limit when ALL exceeds limit`() {
+        val all = OfflineCities.ALL
+        val result = OfflineCities.search("   ", limit = 3)
+        assertThat(result).hasSize(3)
+        assertThat(result).containsExactlyElementsIn(all.take(3)).inOrder()
+    }
 }
