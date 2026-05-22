@@ -65,7 +65,7 @@ toggles (UI + tile + boot) never race on read-modify-write.
 3. `LumenService.observePreferences()` collects, picks an engine via
    `DriverProbe`, applies the current `LumenMatrix`, and schedules the next
    transition alarm via `AlarmManager`. Auto mode picks the best available
-   non-root engine; root engines require an explicit Driver-tab selection.
+   root engine when root is present; otherwise it falls back to Overlay.
 4. When the alarm fires, `ScheduleAlarmReceiver` sends
    `ACTION_REEVALUATE` back to `LumenService`, which re-derives the matrix
    and reschedules.

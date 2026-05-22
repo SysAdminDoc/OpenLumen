@@ -14,9 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pinned display drivers that are no longer available now fall back to `Auto`
   instead of silently no-oping. The Driver tab also prevents selecting engines
   whose current probe result is "Not available".
-- Auto mode now prefers the best available non-root engine; root backends
-  remain available as explicit Driver-tab selections. This matches the safer
-  recovery posture used by overlay-first open-source filters.
+- Auto mode now detects root and prefers the best available root backend
+  (`SurfaceFlinger`, then `KCAL`). Non-root devices fall back to Overlay.
 - Emergency-off automation now goes through an exported broadcast receiver and
   hard-clears known SurfaceFlinger transaction codes plus KCAL sysfs paths,
   so ADB recovery works even when a fresh service process has no cached engine.
@@ -25,9 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`i32 0`) instead of trying to clear by re-applying identity. This fixes the
   blue-screen/stuck-transform failure on rooted devices.
 - Preference schema v2 resets upgraded installs that were pinned to
-  `SurfaceFlinger` or `KCAL` back to `Auto` once. Root drivers remain manually
-  selectable after migration, but old risky selections do not survive the
-  recovery hotfix by default.
+  `SurfaceFlinger` or `KCAL` back to `Auto` once, letting current root
+  detection choose the right default instead of preserving stale driver state.
 - The `Off` preset is treated as a true identity matrix in preview metrics, so
   Home no longer reports blue or brightness reduction while the active preset
   is Off.

@@ -15,10 +15,10 @@ When any of these go wrong, you can end up with a tinted screen that
 doesn't clear, a black screen, or kernel-cached panel state that survives
 reboots. This page covers prevention and recovery.
 
-Auto mode does not select root engines by default. It prefers the best
-available non-root path so the default failure mode stays recoverable. Pin
-`SurfaceFlinger` or `KCAL` only when you have confirmed the probe result and
-want the root backend explicitly.
+Auto mode selects a root engine by default when root is detected, preferring
+`SurfaceFlinger` and then `KCAL` by driver rank. Non-root devices use Overlay
+by default. If you want to avoid root writes on a rooted phone, pin `Overlay`
+from the Driver tab.
 
 ## Before you enable a root driver
 

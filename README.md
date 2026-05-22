@@ -19,7 +19,7 @@ runtime-selectable display drivers.
 
 ## Why OpenLumen?
 
-- **Four display drivers, runtime-detected** — Auto uses the safest rootless path; root drivers are opt-in.
+- **Four display drivers, runtime-detected** — Auto uses a root driver when root is available; non-root devices use Overlay.
 - **No INTERNET permission, ever.** Fully offline, F-Droid-clean.
 - **Catppuccin Mocha + AMOLED true-black** Compose UI. Dark by default.
 - **Quick Settings tile** for one-tap toggling. CF.Lumen never shipped a tile.
@@ -41,11 +41,11 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 ¹ Some builds require granting `WRITE_SECURE_SETTINGS` via:
 `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
 
-The app falls back gracefully — Auto prefers the best available non-root path
-(`ColorDisplayManager` when granted, otherwise Overlay). If you want the
-root-only `SurfaceFlinger` or `KCAL` paths, Settings → Driver lets you pin one;
-if that pinned driver later probes as unavailable, OpenLumen resets to Auto
-instead of leaving the filter enabled with no visible effect.
+The app falls back gracefully — Auto prefers the best available root path
+(`SurfaceFlinger`, then `KCAL`). Non-root devices use Overlay by default. If
+you want a specific driver such as `ColorDisplayManager`, Settings → Driver
+lets you pin one; if that pinned driver later probes as unavailable, OpenLumen
+resets to Auto instead of leaving the filter enabled with no visible effect.
 
 ## Features (v0.5.1)
 

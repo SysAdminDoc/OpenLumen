@@ -65,12 +65,14 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
         // Resolve which engine the "Auto" choice would pick right now.
         // Auto deliberately mirrors DriverProbe.pickBest: highest-rank
-        // available non-root engine. Root engines remain opt-in from their
-        // own rows because their failure modes can affect the whole display.
+        // available root engine first, otherwise Overlay.
         val autoResolvedLabelRes: Int? = probes
-            .filter { it.available && !it.engine.kind.requiresRoot }
+            .filter { it.available && it.engine.kind.requiresRoot }
             .maxByOrNull { it.engine.kind.rank }
             ?.engine?.kind?.let(::engineKindLabelRes)
+            ?: probes
+                .firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }
+                ?.engine?.kind?.let(::engineKindLabelRes)
 
         choices.forEach { (kind, label) ->
             val availability = kind.toEngineKind()
@@ -99,8 +101,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         if (kind == EngineKindDto.Auto) {
                             // Surface which engine Auto would pick so the
                             // user knows what they're getting; on a device
-                            // with no available engines (no root, no
-                            // overlay permission, no CDM grant) we tell
+                            // with no available root engine or overlay
+                            // permission, we tell
                             // them how to get the rootless fallback up.
                             val hint = if (autoResolvedLabelRes != null && probes.isNotEmpty()) {
                                 stringResource(R.string.driver_auto_resolved, stringResource(autoResolvedLabelRes))

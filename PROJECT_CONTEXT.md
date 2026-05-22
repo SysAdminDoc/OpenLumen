@@ -87,8 +87,8 @@ Why the split (from [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 Four `ColorEngine` implementations under
 [core-engine/.../engines/](core-engine/src/main/java/com/openlumen/engine/engines/),
 runtime-detected via `DriverProbe.pickBest()`. Auto picks the highest-rank
-available non-root path; root engines are opt-in through the Driver tab.
-Overlay is the universal fallback so the user always gets *something*.
+available root path first (`SurfaceFlinger`, then `KCAL`); non-root devices
+fall back to Overlay so the user always gets *something*.
 
 Pinned engines are still treated as user preference, but not as a promise to
 use a broken path. If the selected engine probes unavailable at runtime, the
