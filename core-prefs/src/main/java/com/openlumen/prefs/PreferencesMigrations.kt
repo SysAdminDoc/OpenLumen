@@ -49,6 +49,24 @@ object PreferencesMigrations {
         // this blob has already been seen.
         Migration(from = 0, to = 1) { p ->
             p.copy(schemaVersion = 1)
+        },
+        // v1 -> v2.
+        //
+        // Older builds could silently choose SurfaceFlinger in Auto mode and
+        // some affected installs ended up pinned to root backends while trying
+        // to recover. Reset only the root driver selections once; the Driver
+        // tab still allows a deliberate root opt-in after this migration.
+        Migration(from = 1, to = 2) { p ->
+            p.copy(
+                schemaVersion = 2,
+                engine = when (p.engine) {
+                    EngineKindDto.SurfaceFlinger,
+                    EngineKindDto.Kcal -> EngineKindDto.Auto
+                    EngineKindDto.Auto,
+                    EngineKindDto.ColorDisplayManager,
+                    EngineKindDto.Overlay -> p.engine
+                }
+            )
         }
         // Future migrations append here.
     )

@@ -44,6 +44,20 @@ class SurfaceFlingerEngineTest {
         assertThat(engine.candidatesFor(28).toList()).containsExactly(1015)
     }
 
+    @Test fun `apply service call writes enable flag and sixteen float slots`() {
+        val command = SurfaceFlingerEngine.buildServiceCallCommand(1015, LumenMatrix.IDENTITY)
+
+        assertThat(command).startsWith("service call SurfaceFlinger 1015 i32 1")
+        assertThat(Regex(" i32 ").findAll(command).count()).isEqualTo(17)
+        assertThat(command).contains("i32 1065353216")
+    }
+
+    @Test fun `disable service call writes only disable flag`() {
+        val command = SurfaceFlingerEngine.buildDisableServiceCallCommand(1015)
+
+        assertThat(command).isEqualTo("service call SurfaceFlinger 1015 i32 0")
+    }
+
     private companion object {
         val API_LADDER = listOf(26, 28, 29, 30, 31, 32, 33, 34, 35, 36)
     }

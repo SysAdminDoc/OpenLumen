@@ -77,4 +77,20 @@ class MatrixPreviewTest {
 
         assertThat(reduction).isWithin(0.0001f).of(0f)
     }
+
+    @Test fun `off preset remains identity even with aggressive controls`() {
+        val prefs = Preferences(
+            activePresetKey = Preferences.OFF_PRESET_KEY,
+            customMatrix = MatrixDto(gammaR = 0.5f, gammaG = 0.5f, gammaB = 0.5f),
+            presetIntensity = 1f,
+            dim = 0.75f,
+            contrast = Preferences.CONTRAST_MIN
+        )
+
+        val matrix = MatrixPreview.matrixFor(prefs)
+
+        assertThat(matrix).isEqualTo(com.openlumen.engine.LumenMatrix.IDENTITY)
+        assertThat(MatrixPreview.blueSuppression(prefs)).isWithin(0.0001f).of(0f)
+        assertThat(MatrixPreview.perceivedLuminanceReduction(prefs)).isWithin(0.0001f).of(0f)
+    }
 }

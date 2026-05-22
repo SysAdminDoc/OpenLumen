@@ -64,19 +64,18 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         )
 
         // Resolve which engine the "Auto" choice would pick right now.
-        // pickBest's rule: highest-rank engine whose probe came back
-        // available. Mirror it here so the Auto row tells the user which
-        // driver they're getting without having to dig through the per-
-        // engine rows for the available-marker. Returns null when no
-        // probe is available yet OR every probe failed.
+        // Auto deliberately mirrors DriverProbe.pickBest: highest-rank
+        // available non-root engine. Root engines remain opt-in from their
+        // own rows because their failure modes can affect the whole display.
         val autoResolvedLabelRes: Int? = probes
-            .filter { it.available }
+            .filter { it.available && !it.engine.kind.requiresRoot }
             .maxByOrNull { it.engine.kind.rank }
             ?.engine?.kind?.let(::engineKindLabelRes)
 
         choices.forEach { (kind, label) ->
             val availability = kind.toEngineKind()
                 ?.let { engineKind -> probes.firstOrNull { it.engine.kind == engineKind }?.available }
+            val selectable = kind == EngineKindDto.Auto || availability != false
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
@@ -84,7 +83,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth().clickable { vm.setEngine(kind) }
+                modifier = Modifier.fillMaxWidth().clickable(enabled = selectable) { vm.setEngine(kind) }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -92,7 +91,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 ) {
                     RadioButton(
                         selected = prefs.engine == kind,
-                        onClick = { vm.setEngine(kind) }
+                        onClick = { vm.setEngine(kind) },
+                        enabled = selectable
                     )
                     Column(Modifier.weight(1f)) {
                         Text(label, style = MaterialTheme.typography.bodyLarge)

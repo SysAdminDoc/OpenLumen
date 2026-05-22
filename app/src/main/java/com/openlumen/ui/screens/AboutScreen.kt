@@ -443,11 +443,12 @@ private fun formatDuration(context: Context, ms: Long): String = when {
 
 // Built around the runtime package name so the debug build prints the
 // `.debug`-suffixed package — same convention as the Driver-screen ADB grant.
-// Matches LumenService.ACTION_TURN_OFF, which writes enabled=false and stops
-// the service even if the foreground UI is completely obscured.
+// Matches LumenService.ACTION_TURN_OFF through AutomationReceiver, which
+// re-enters the non-exported service under OpenLumen's UID and hard-clears
+// root display backends even if the foreground UI is completely obscured.
 private fun emergencyOffCommand(packageName: String): String =
-    "adb shell am startservice -a com.openlumen.action.TURN_OFF " +
-        "-n $packageName/com.openlumen.service.LumenService"
+    "adb shell am broadcast -a com.openlumen.action.TURN_OFF " +
+        "-n $packageName/com.openlumen.service.AutomationReceiver"
 
 private fun copyToClipboardAbout(context: Context, label: String, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager

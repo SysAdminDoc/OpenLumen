@@ -98,6 +98,22 @@
             android:exported="false" />
 
         <receiver
+            android:name=".service.AutomationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.openlumen.action.TURN_OFF" />
+                <action android:name="com.openlumen.action.TURN_ON" />
+                <action android:name="com.openlumen.action.TOGGLE" />
+                <action android:name="com.openlumen.action.REEVALUATE" />
+                <action android:name="com.openlumen.action.CYCLE_PRESET" />
+                <action android:name="com.openlumen.action.SET_PRESET" />
+                <action android:name="com.openlumen.action.RESTORE_PREVIOUS" />
+                <action android:name="com.openlumen.action.SET_INTENSITY" />
+                <action android:name="com.openlumen.action.SET_DIM" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".widget.WidgetActionReceiver"
             android:exported="false" />
 

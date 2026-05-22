@@ -13,6 +13,8 @@ import com.openlumen.prefs.ImportSummary
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.prefs.normalizedEnabledFilterState
+import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
@@ -46,6 +48,7 @@ class OpenLumenViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1f)
 
     init {
+        normalizeEnabledFilterState()
         refreshProbes()
     }
 
@@ -57,7 +60,7 @@ class OpenLumenViewModel @Inject constructor(
             // rejected (very rare; usually ForegroundService restrictions
             // in unusual lifecycle states), roll the pref back so the
             // toggle UI reflects reality.
-            prefs.update { it.copy(enabled = enabled) }
+            prefs.update { it.withFilterEnabled(enabled) }
             if (enabled) {
                 if (!startService()) {
                     prefs.update { it.copy(enabled = false) }
@@ -109,7 +112,7 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
-        prefs.update { it.copy(engine = kind) }
+        prefs.update { it.copy(engine = availableEngineOrAuto(kind)) }
     }
 
     fun setIntensity(value: Float) = viewModelScope.launch {
@@ -209,7 +212,14 @@ class OpenLumenViewModel @Inject constructor(
         // a user who grants Magisk root after first launch should be able to
         // see root-only engines light up without restarting the app.
         com.openlumen.engine.Su.resetCache()
-        _probes.value = probe.probeAll(getApplication())
+        val results = probe.probeAll(getApplication())
+        _probes.value = results
+        val current = state.value.engine
+        if (current != EngineKindDto.Auto && results.isUnavailable(current)) {
+            prefs.update { prefs ->
+                if (prefs.engine == current) prefs.copy(engine = EngineKindDto.Auto) else prefs
+            }
+        }
     }
 
     /**
@@ -305,4 +315,24 @@ class OpenLumenViewModel @Inject constructor(
         runCatching { ctx.stopService(Intent(ctx, LumenService::class.java)) }
             .onFailure { Log.w(tag, "Failed to stop LumenService: ${it.message}", it) }
     }
+
+    private fun normalizeEnabledFilterState() = viewModelScope.launch {
+        prefs.update { it.normalizedEnabledFilterState() }
+    }
+}
+
+private fun List<DriverProbe.Probe>.isUnavailable(kind: EngineKindDto): Boolean {
+    val engineKind = kind.toEngineKind() ?: return false
+    return firstOrNull { it.engine.kind == engineKind }?.available == false
+}
+
+private fun OpenLumenViewModel.availableEngineOrAuto(kind: EngineKindDto): EngineKindDto =
+    if (probes.value.isUnavailable(kind)) EngineKindDto.Auto else kind
+
+private fun EngineKindDto.toEngineKind(): com.openlumen.engine.EngineKind? = when (this) {
+    EngineKindDto.Auto -> null
+    EngineKindDto.ColorDisplayManager -> com.openlumen.engine.EngineKind.COLOR_DISPLAY_MANAGER
+    EngineKindDto.SurfaceFlinger -> com.openlumen.engine.EngineKind.SURFACE_FLINGER
+    EngineKindDto.Kcal -> com.openlumen.engine.EngineKind.KCAL
+    EngineKindDto.Overlay -> com.openlumen.engine.EngineKind.OVERLAY
 }

@@ -60,16 +60,19 @@ toggles (UI + tile + boot) never race on read-modify-write.
 
 1. User flips the Switch on `HomeScreen` →
    `OpenLumenViewModel.setEnabled(true)` →
-   `prefs.update { it.copy(enabled = true) }`.
+   `prefs.update { it.withFilterEnabled(true) }`.
 2. `PreferencesStore` flow emits the new `Preferences` snapshot.
 3. `LumenService.observePreferences()` collects, picks an engine via
    `DriverProbe`, applies the current `LumenMatrix`, and schedules the next
-   transition alarm via `AlarmManager`.
+   transition alarm via `AlarmManager`. Auto mode picks the best available
+   non-root engine; root engines require an explicit Driver-tab selection.
 4. When the alarm fires, `ScheduleAlarmReceiver` sends
    `ACTION_REEVALUATE` back to `LumenService`, which re-derives the matrix
    and reschedules.
-5. When the user toggles off, the service clears the engine (identity matrix
-   or `clear()`) and calls `stopSelf()`.
+5. When the user toggles off, the service clears the engine (`clear()`),
+   hard-clears known SurfaceFlinger/KCAL root state, and calls
+   `stopSelf()`. External ADB / Tasker commands enter through
+   `AutomationReceiver`, not the non-exported service directly.
 
 ## Concurrency model
 
@@ -121,8 +124,8 @@ back to `OVERLAY` so the user always gets *something*.
   `android.hardware.display.ColorDisplayManager` AOSP API. Cached after first
   successful load. Gated on `WRITE_SECURE_SETTINGS` being granted.
 - **`SurfaceFlingerEngine`** — `service call SurfaceFlinger <code>` via `su`.
-  Probes a list of candidate transaction codes (1015, 1023, 1030) and caches
-  the working one for the device.
+  Probes a list of candidate transaction codes (1015, 1023, 1030, 1036) with
+  the disable transaction and caches the working one for the device.
 - **`KcalEngine`** — writes RGB values + enable flag to
   `/sys/devices/platform/kcal_ctrl.0/*` sysfs nodes via `su`. Requires a
   Qualcomm device with a kernel that exposes KCAL.
@@ -212,7 +215,7 @@ path or the AlarmManager.
   AOSP API. Future Android versions can rename methods; the `runCatching`
   ladder is defensive on purpose.
 - **`service call SurfaceFlinger` code drift.** Historically `1015` for
-  `setDisplayColorTransform`. We probe `1015`, `1023`, `1030`. If a new
+  `setDisplayColorTransform`. We probe `1015`, `1023`, `1030`, `1036`. If a new
   Android version drifts again, add it to `SurfaceFlingerEngine.candidates`.
 - **Overlay window token.** `TYPE_APPLICATION_OVERLAY` needs a Service or
   Activity context; `Application` context throws. `LumenService.ensureEngine()`

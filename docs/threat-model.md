@@ -170,8 +170,8 @@ service plus an overlay app plus a root-shell app.
 | **Overlay over sensitive system flows** (installer, fingerprint, lockscreen) | Med | Same OS protection. The Driver screen has an info card explaining the blocked-touch behavior. C12 plans an auto-pause hook. |
 | **Foreground service abuse** (running with no user value) | Med | `specialUse` type + manifest property documenting the use. The service stops itself the moment `enabled = false`. The notification's "Turn off" action lets the user kill it without entering the app. |
 | **Boot receiver auto-starts the service unwantedly** | Low | `BootReceiver` only re-applies if the user had `enabled = true` before reboot. First-launch default is `enabled = false`. |
-| **Root drivers black-screen the device** | High (impact), Low (likelihood) | Each engine catches throws and reverts to the lowest-rank fallback. `LumenService.onDestroy()` synchronously clears (with 2-second timeout). `docs/root-safety.md` documents recovery procedures. |
-| **`service call SurfaceFlinger` transaction-code drift** | Low | Probe iterates candidate codes (1015, 1023, 1030) and caches the winner per device. Unknown codes return `127` and fall back to a different engine. |
+| **Root drivers black-screen the device** | High (impact), Low (likelihood) | Auto mode does not select root engines by default; they require explicit Driver-tab selection. `TURN_OFF` hard-clears known SurfaceFlinger/KCAL state through `DisplayEmergencyReset`, and `docs/root-safety.md` documents recovery procedures. |
+| **`service call SurfaceFlinger` transaction-code drift** | Low | Probe iterates candidate codes (1015, 1023, 1030, 1036) and caches the winner per device. Failed writes invalidate the engine cache and emergency-off sends the disable transaction through the known code ladder. |
 
 ### MASVS-CODE — Code quality
 

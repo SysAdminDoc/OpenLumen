@@ -19,7 +19,7 @@ runtime-selectable display drivers.
 
 ## Why OpenLumen?
 
-- **Four display drivers, runtime-detected** — uses the highest-quality one the device supports.
+- **Four display drivers, runtime-detected** — Auto uses the safest rootless path; root drivers are opt-in.
 - **No INTERNET permission, ever.** Fully offline, F-Droid-clean.
 - **Catppuccin Mocha + AMOLED true-black** Compose UI. Dark by default.
 - **Quick Settings tile** for one-tap toggling. CF.Lumen never shipped a tile.
@@ -41,8 +41,11 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 ¹ Some builds require granting `WRITE_SECURE_SETTINGS` via:
 `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
 
-The app falls back gracefully — if none of the root paths work, you still get the
-overlay driver. If you want to pin a specific driver, Settings → Driver lets you.
+The app falls back gracefully — Auto prefers the best available non-root path
+(`ColorDisplayManager` when granted, otherwise Overlay). If you want the
+root-only `SurfaceFlinger` or `KCAL` paths, Settings → Driver lets you pin one;
+if that pinned driver later probes as unavailable, OpenLumen resets to Auto
+instead of leaving the filter enabled with no visible effect.
 
 ## Features (v0.5.1)
 
@@ -187,8 +190,8 @@ If a release goes wrong and the overlay or root driver leaves your screen
 in a bad state, the canonical escape hatch is:
 
 ```bash
-adb shell am startservice -a com.openlumen.action.TURN_OFF \
-    -n com.openlumen/.service.LumenService
+adb shell am broadcast -a com.openlumen.action.TURN_OFF \
+    -n com.openlumen/.service.AutomationReceiver
 ```
 
 See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.

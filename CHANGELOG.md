@@ -6,6 +6,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The master filter switch now repairs inert saved states when turning on:
+  `AlwaysOff` schedules become `AlwaysOn`, and the `Off` preset restores the
+  previous visible preset or falls back to `Night`. This prevents an installed
+  app from showing "Filter is on" while every control appears to do nothing.
+- Pinned display drivers that are no longer available now fall back to `Auto`
+  instead of silently no-oping. The Driver tab also prevents selecting engines
+  whose current probe result is "Not available".
+- Auto mode now prefers the best available non-root engine; root backends
+  remain available as explicit Driver-tab selections. This matches the safer
+  recovery posture used by overlay-first open-source filters.
+- Emergency-off automation now goes through an exported broadcast receiver and
+  hard-clears known SurfaceFlinger transaction codes plus KCAL sysfs paths,
+  so ADB recovery works even when a fresh service process has no cached engine.
+- SurfaceFlinger writes now use the required enable flag before the 16 matrix
+  slots, and every off/recovery path sends the real disable transaction
+  (`i32 0`) instead of trying to clear by re-applying identity. This fixes the
+  blue-screen/stuck-transform failure on rooted devices.
+- Preference schema v2 resets upgraded installs that were pinned to
+  `SurfaceFlinger` or `KCAL` back to `Auto` once. Root drivers remain manually
+  selectable after migration, but old risky selections do not survive the
+  recovery hotfix by default.
+- The `Off` preset is treated as a true identity matrix in preview metrics, so
+  Home no longer reports blue or brightness reduction while the active preset
+  is Off.
+- Fixed static percent strings rendering as `%%` in Home, Driver, and About.
+
 ## [0.5.1] — 2026-05-21
 
 Deep-audit hardening pass. No new user-facing features; everything below

@@ -239,7 +239,7 @@ class KcalEngine : ColorEngine {
 
     private class BoolHolder { @Volatile var value: Boolean = false }
 
-    private companion object {
+    companion object {
         const val TAG = "OpenLumen/KCAL"
 
         /**
@@ -268,5 +268,28 @@ class KcalEngine : ColorEngine {
             // Older AnyKernel ROMs (rare; included for completeness).
             "/sys/class/misc/kcal"
         )
+
+        suspend fun clearKnownPaths(): List<String> {
+            if (!Su.isAvailable()) return emptyList()
+            val cleared = mutableListOf<String>()
+            for (base in CANDIDATE_BASES) {
+                val rgbPath = "$base/kcal"
+                val enablePath = "$base/kcal_enable"
+                val test = Su.runCommand(
+                    "test -e '$rgbPath' && test -e '$enablePath' && echo ok"
+                )
+                if (test.exitCode != 0 || !test.stdout.contains("ok")) continue
+                val exit = Su.runShell(
+                    buildString {
+                        append("set -e\n")
+                        append("echo '256 256 256' > '").append(rgbPath).append("'\n")
+                        append("echo '0' > '").append(enablePath).append("'\n")
+                    }
+                )
+                Su.resetCacheIfSuLikelyFailed(exit)
+                if (exit == 0) cleared += base
+            }
+            return cleared
+        }
     }
 }

@@ -12,6 +12,7 @@ import com.openlumen.engine.Presets
 import com.openlumen.presetDisplayName
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
+import com.openlumen.prefs.toggledFilterEnabled
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +66,7 @@ class LumenTileService : TileService() {
                 var toggledTo = false
                 prefs.update { current ->
                     toggledTo = !current.enabled
-                    current.copy(enabled = toggledTo)
+                    current.toggledFilterEnabled()
                 }
                 if (toggledTo) {
                     val result = LumenServiceStarter.start(this@LumenTileService, logTag = tag)

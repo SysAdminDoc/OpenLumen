@@ -14,7 +14,7 @@
     <string name="home_intensity">Intensity</string>
     <string name="home_dim">Dim below minimum</string>
     <string name="home_dim_value_precise">%1$.1f%%</string>
-    <string name="home_dim_fine_hint">Fine adjust: ±0.5%%</string>
+    <string name="home_dim_fine_hint" formatted="false">Fine adjust: ±0.5%</string>
     <string name="home_dim_fine_decrease">Decrease dim by half a percent</string>
     <string name="home_dim_fine_increase">Increase dim by half a percent</string>
     <string name="home_contrast">Contrast</string>
@@ -141,13 +141,13 @@
     <string name="clipboard_driver_report">OpenLumen driver report</string>
     <string name="clipboard_emergency_off">OpenLumen emergency off</string>
     <string name="overlay_caveats_title">About the Overlay driver</string>
-    <string name="overlay_alpha_cap_explanation">Overlay alpha is capped at ~80%% by Android 12+ untrusted-touch rules. For deeper dim, use ColorDisplayManager or a root driver.</string>
+    <string name="overlay_alpha_cap_explanation" formatted="false">Overlay alpha is capped at ~80% by Android 12+ untrusted-touch rules. For deeper dim, use ColorDisplayManager or a root driver.</string>
     <string name="overlay_touch_pass_explanation">While the overlay is on, Android may block taps on system installer / permission dialogs. This is the platform\'s tapjacking protection, not an OpenLumen bug — disable the filter via tile or notification before installing apps.</string>
 
     <string name="about_version">Version</string>
     <string name="about_license">License: GPL-3.0-or-later</string>
     <string name="about_source">Source: github.com/SysAdminDoc/OpenLumen</string>
-    <string name="about_offline">100%% offline — no INTERNET permission requested.</string>
+    <string name="about_offline" formatted="false">100% offline — no INTERNET permission requested.</string>
     <string name="about_backup_title">Backup</string>
     <string name="about_backup_body">Save or restore your preferences as a JSON file. Useful for moving between devices or sharing presets.</string>
     <string name="about_export_profile">Export profile</string>

@@ -24,6 +24,29 @@ class PreferencesMigrationsTest {
         assertThat(migrated).isSameInstanceAs(current)
     }
 
+    @Test fun `v1 root driver selection resets to auto`() {
+        val surfaceFlinger = Preferences(
+            schemaVersion = 1,
+            engine = EngineKindDto.SurfaceFlinger
+        )
+        val kcal = Preferences(
+            schemaVersion = 1,
+            engine = EngineKindDto.Kcal
+        )
+
+        assertThat(PreferencesMigrations.migrate(surfaceFlinger).engine).isEqualTo(EngineKindDto.Auto)
+        assertThat(PreferencesMigrations.migrate(kcal).engine).isEqualTo(EngineKindDto.Auto)
+    }
+
+    @Test fun `v1 rootless driver selection is preserved`() {
+        val overlay = Preferences(
+            schemaVersion = 1,
+            engine = EngineKindDto.Overlay
+        )
+
+        assertThat(PreferencesMigrations.migrate(overlay).engine).isEqualTo(EngineKindDto.Overlay)
+    }
+
     @Test fun `future-version blob is returned unchanged`() {
         // Simulates a downgrade scenario: a newer build wrote schemaVersion = 99,
         // an older build is now reading it. We don't know how to migrate forward

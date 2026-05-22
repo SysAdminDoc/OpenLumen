@@ -13,6 +13,7 @@ If your issue isn't here, file one with the in-app driver report from
 | Toggle moves to On briefly, then back to Off | `startForeground()` rejected by the OS (Android 12+) | The QS tile/widget path now opens the app automatically when Android blocks the background start; use the Home permission card if overlay permission is missing |
 | Toggle stays On, notification missing | Notification channel disabled by user | Long-press the app icon → App info → Notifications → enable "Filter status" |
 | Tint applies but is invisible | You picked a tint-only preset (Amber/Red/etc) with overlay engine + `dim=0` on Android 12+ | This was a bug fixed in v0.4.0+. Update; the overlay alpha now derives from tint strength too |
+| Toggle stays On, controls move, screen does not change | Older build saved an unavailable pinned driver, `AlwaysOff` schedule, or `Off` preset | Update to the current build. The app now resets unavailable pinned drivers to Auto and makes the master switch restore a visible preset/schedule. |
 
 ## "I get a black screen / wrong color and can't recover"
 
@@ -24,17 +25,18 @@ This is the worst case. Try in order:
    visible.
 3. **`adb` emergency off**:
    ```bash
-   adb shell am startservice -a com.openlumen.action.TURN_OFF \
-       -n com.openlumen/.service.LumenService
+   adb shell am broadcast -a com.openlumen.action.TURN_OFF \
+       -n com.openlumen/.service.AutomationReceiver
    ```
-4. **For SurfaceFlinger / KCAL stuck states**, reboot. Both drivers' state
-   is volatile and a reboot returns the framebuffer to identity.
+4. **For SurfaceFlinger / KCAL stuck states**, run the ADB emergency-off
+   command above first. Current builds use it to hard-clear known
+   SurfaceFlinger transaction codes and KCAL sysfs paths.
 5. **If a reboot doesn't fix it**, you're on KCAL and the kernel cached the
    bad values. Boot to recovery if you have it, or use ADB to clear KCAL
    sysfs:
    ```bash
    adb shell su -c \
-     "echo 256 > /sys/devices/platform/kcal_ctrl.0/kcal && \
+     "echo 256 256 256 > /sys/devices/platform/kcal_ctrl.0/kcal && \
       echo 0 > /sys/devices/platform/kcal_ctrl.0/kcal_enable"
    ```
 6. **Last resort**: uninstall.

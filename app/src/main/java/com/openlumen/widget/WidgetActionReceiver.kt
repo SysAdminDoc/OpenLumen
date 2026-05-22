@@ -7,6 +7,7 @@ import android.util.Log
 import com.openlumen.engine.Presets
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.PresetCycle
+import com.openlumen.prefs.toggledFilterEnabled
 import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,7 +43,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
         var toggledTo = false
         prefs.update { current ->
             toggledTo = !current.enabled
-            current.copy(enabled = toggledTo)
+            current.toggledFilterEnabled()
         }
 
         if (toggledTo) {

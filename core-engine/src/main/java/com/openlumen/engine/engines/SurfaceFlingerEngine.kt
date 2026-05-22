@@ -19,8 +19,10 @@ import java.nio.ByteOrder
  * Historically 1015 on most builds, but some OEM forks renumber. We probe a small set
  * of known codes at isAvailable() time and cache the winner.
  *
- * Each float is written as a 32-bit value in the Parcel; the wire format `service call`
- * expects is `i32 <value>` per int slot, with floats reinterpreted to their IEEE-754 bits.
+ * SurfaceFlinger's transaction expects an enable flag followed by the 16 matrix slots.
+ * Disable is a bare `i32 0`. Each float is written as a 32-bit value in the Parcel;
+ * the wire format `service call` expects is `i32 <value>` per int slot, with floats
+ * reinterpreted to their IEEE-754 bits.
  *
  * Tied to roadmap candidate **C03** (SurfaceFlinger code registry). The candidate-code
  * list below is the canonical home of known working codes; add a new tuple when a
@@ -72,13 +74,13 @@ class SurfaceFlingerEngine : ColorEngine {
 
     override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
         val code = workingCode ?: return@withContext
-        val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
+        val res = Su.runCommand(buildDisableServiceCallCommand(code))
         invalidateOnFailure(res, code, "clear")
         Unit
     }
 
     /**
-     * Try the identity matrix with each candidate code; the first one that
+     * Try the disable transaction with each candidate code; the first one that
      * returns 0 without "Service: SurfaceFlinger not found" is the winner.
      * Sets [workingCode] on success.
      */
@@ -86,8 +88,8 @@ class SurfaceFlingerEngine : ColorEngine {
         if (!Su.isAvailable()) return false
         val candidates = candidatesFor(Build.VERSION.SDK_INT)
         for (code in candidates) {
-            val res = Su.runCommand(buildServiceCall(code, LumenMatrix.IDENTITY))
-            if (res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) {
+            val res = Su.runCommand(buildDisableServiceCallCommand(code))
+            if (isSuccessfulServiceCall(res)) {
                 Log.d(TAG, "probe: code $code worked (api ${Build.VERSION.SDK_INT})")
                 workingCode = code
                 return true
@@ -97,16 +99,8 @@ class SurfaceFlingerEngine : ColorEngine {
         return false
     }
 
-    private fun buildServiceCall(code: Int, matrix: LumenMatrix): String {
-        val m = matrix.toSurfaceFlinger16()
-        val sb = StringBuilder("service call SurfaceFlinger ").append(code)
-        for (f in m) {
-            // Reinterpret IEEE 754 bits to int, since `service call` wants i32 slots.
-            val bits = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(f).getInt(0)
-            sb.append(" i32 ").append(bits)
-        }
-        return sb.toString()
-    }
+    private fun buildServiceCall(code: Int, matrix: LumenMatrix): String =
+        buildServiceCallCommand(code, matrix)
 
     /**
      * Per-API candidate list for SurfaceFlinger's `setDisplayColorTransform` code.
@@ -131,7 +125,7 @@ class SurfaceFlingerEngine : ColorEngine {
     }
 
     private fun invalidateOnFailure(res: Su.SuResult, code: Int, operation: String) {
-        if (res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)) return
+        if (isSuccessfulServiceCall(res)) return
         Log.w(
             TAG,
             "$operation failed for SurfaceFlinger code $code " +
@@ -145,7 +139,35 @@ class SurfaceFlingerEngine : ColorEngine {
         Su.resetCacheIfSuLikelyFailed(res.exitCode)
     }
 
-    private companion object {
+    companion object {
         const val TAG = "OpenLumen/SurfaceFlinger"
+
+        internal fun buildServiceCallCommand(code: Int, matrix: LumenMatrix): String {
+            val m = matrix.toSurfaceFlinger16()
+            val sb = StringBuilder("service call SurfaceFlinger ").append(code).append(" i32 1")
+            for (f in m) {
+                // Reinterpret IEEE 754 bits to int, since `service call` wants i32 slots.
+                val bits = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(f).getInt(0)
+                sb.append(" i32 ").append(bits)
+            }
+            return sb.toString()
+        }
+
+        internal fun buildDisableServiceCallCommand(code: Int): String =
+            "service call SurfaceFlinger $code i32 0"
+
+        internal fun isSuccessfulServiceCall(res: Su.SuResult): Boolean =
+            res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)
+
+        suspend fun clearKnownColorTransforms(api: Int = Build.VERSION.SDK_INT): List<Int> {
+            if (!Su.isAvailable()) return emptyList()
+            val cleared = mutableListOf<Int>()
+            for (code in SurfaceFlingerEngine().candidatesFor(api)) {
+                val res = Su.runCommand(buildDisableServiceCallCommand(code))
+                Su.resetCacheIfSuLikelyFailed(res.exitCode)
+                if (isSuccessfulServiceCall(res)) cleared += code
+            }
+            return cleared
+        }
     }
 }

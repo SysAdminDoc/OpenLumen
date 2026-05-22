@@ -27,6 +27,7 @@ object MatrixPreview {
      * bias, AMOLED clamp pass-through.
      */
     fun matrixFor(p: Preferences): LumenMatrix {
+        if (p.activePresetKey == Preferences.OFF_PRESET_KEY) return LumenMatrix.IDENTITY
         val preset = Presets.byKey(p.activePresetKey)?.matrix
         val raw = preset ?: LumenMatrix(
             r = p.customMatrix.r,

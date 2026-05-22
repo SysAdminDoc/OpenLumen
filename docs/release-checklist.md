@@ -151,8 +151,8 @@ regression:
 Document in release notes when a bad release is identified:
 
 ```bash
-adb shell am startservice -a com.openlumen.action.TURN_OFF \
-    -n com.openlumen/.service.LumenService
+adb shell am broadcast -a com.openlumen.action.TURN_OFF \
+    -n com.openlumen/.service.AutomationReceiver
 ```
 
 Or boot into safe mode and uninstall the affected version.

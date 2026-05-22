@@ -15,6 +15,11 @@ When any of these go wrong, you can end up with a tinted screen that
 doesn't clear, a black screen, or kernel-cached panel state that survives
 reboots. This page covers prevention and recovery.
 
+Auto mode does not select root engines by default. It prefers the best
+available non-root path so the default failure mode stays recoverable. Pin
+`SurfaceFlinger` or `KCAL` only when you have confirmed the probe result and
+want the root backend explicitly.
+
 ## Before you enable a root driver
 
 1. **Make sure you have a working `su` binary.** Open a terminal app and
@@ -25,7 +30,8 @@ reboots. This page covers prevention and recovery.
 
 2. **Confirm the engine is available before applying.**
    Driver tab → re-probe → confirm a green "Available" badge. If a probe
-   says "Not available," do not pin that engine.
+   says "Not available," current builds disable that row and older saved
+   selections reset to Auto.
 
 3. **Test with a mild preset first.** Start with `Amber` or `Night`, not
    `Deep Sleep`. If something goes wrong with a mild tint, you can still
@@ -89,13 +95,14 @@ If both the tile and the notification are unreachable (e.g. the overlay
 is opaque enough that you can't read the screen):
 
 ```bash
-adb shell am startservice -a com.openlumen.action.TURN_OFF \
-    -n com.openlumen/.service.LumenService
+adb shell am broadcast -a com.openlumen.action.TURN_OFF \
+    -n com.openlumen/.service.AutomationReceiver
 ```
 
-This routes through the same `ACTION_TURN_OFF` handler the notification
-uses. The service writes `enabled=false`, the engine clears, and the
-service stops.
+This routes through the exported automation receiver into the same
+`ACTION_TURN_OFF` handler the notification uses. The service writes
+`enabled=false`, clears the active engine, hard-clears known
+SurfaceFlinger/KCAL root state, and stops.
 
 ### 4. Reboot
 
@@ -153,7 +160,7 @@ find a case that violates one of these, it's a bug — file it.
   device rows still need to record SF/KCAL smoke results.
 - **The service synchronously clears on `onDestroy()`.** When the
   service is killed (system, ADB, user), it blocks for up to 2 seconds
-  trying to send the identity matrix.
+  trying to send root display disable transactions.
 - **The service rolls back `enabled=true`** if `startForeground()`
   fails. You don't end up with a permanent "supposed to be on but isn't"
   state.

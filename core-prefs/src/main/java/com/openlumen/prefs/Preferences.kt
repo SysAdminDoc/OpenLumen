@@ -99,7 +99,7 @@ enum class EngineKindDto { Auto, ColorDisplayManager, SurfaceFlinger, Kcal, Over
 data class Preferences(
     val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
     val enabled: Boolean = false,
-    val activePresetKey: String = "night",
+    val activePresetKey: String = DEFAULT_ACTIVE_PRESET_KEY,
     val customMatrix: MatrixDto = MatrixDto(r = 1f, g = 0.78f, b = 0.55f),
     /** 0.0 = identity (no shift), 1.0 = full preset strength. Lerps RGB toward 1.0. */
     val presetIntensity: Float = 1f,
@@ -158,11 +158,21 @@ data class Preferences(
          * - v0 (implicit, before C29): no `schemaVersion` field. All shipped
          *   v0.1.0–v0.4.0 builds wrote pre-v1 blobs. The migration runner
          *   treats any decoded `schemaVersion == 0` as a pre-history blob.
-         * - v1 (current, v0.5.0+): introduced `schemaVersion` and
+         * - v1 (v0.5.0+): introduced `schemaVersion` and
          *   `favoritePresetKeys`. Both have defaults, so v0 blobs upgrade
          *   transparently on the next read.
+         * - v2 (current): root driver selections from pre-recovery builds
+         *   reset to Auto once so upgraded installs do not keep silently using
+         *   a risky display backend. Users can still pin root drivers manually
+         *   after the migration.
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 1
+        const val CURRENT_SCHEMA_VERSION: Int = 2
+
+        /** Canonical no-op preset key from the engine preset catalog. */
+        const val OFF_PRESET_KEY: String = "off"
+
+        /** Safe visible preset when a user turns the master switch on from Off. */
+        const val DEFAULT_ACTIVE_PRESET_KEY: String = "night"
 
         /**
          * Default favorites for new installs: the four most-commonly-used
@@ -198,3 +208,35 @@ data class Preferences(
         const val MAX_PROFILE_NAME_LENGTH: Int = 48
     }
 }
+
+/**
+ * Apply the user-facing master switch semantics.
+ *
+ * Turning the filter on should produce a visible effect immediately. Older
+ * builds could leave the service enabled while `ScheduleModeDto.AlwaysOff`
+ * or the `off` preset kept the actual matrix at identity, which made the
+ * Home sliders look broken. This helper is shared by the app, tile, widget,
+ * and intent command surfaces so every "turn on" path behaves the same.
+ */
+fun Preferences.withFilterEnabled(enabled: Boolean): Preferences {
+    if (!enabled) return copy(enabled = false)
+
+    val restoredPreset = when {
+        activePresetKey != Preferences.OFF_PRESET_KEY -> activePresetKey
+        previousPresetKey != null && previousPresetKey != Preferences.OFF_PRESET_KEY -> previousPresetKey
+        else -> Preferences.DEFAULT_ACTIVE_PRESET_KEY
+    }
+    return copy(
+        enabled = true,
+        activePresetKey = restoredPreset,
+        schedule = schedule.activatingForManualOn()
+    )
+}
+
+fun Preferences.toggledFilterEnabled(): Preferences = withFilterEnabled(!enabled)
+
+fun Preferences.normalizedEnabledFilterState(): Preferences =
+    if (enabled) withFilterEnabled(true) else this
+
+private fun ScheduleDto.activatingForManualOn(): ScheduleDto =
+    if (mode == ScheduleModeDto.AlwaysOff) copy(mode = ScheduleModeDto.AlwaysOn) else this

@@ -21,6 +21,7 @@ import com.openlumen.CrashLogger
 import com.openlumen.MainActivity
 import com.openlumen.R
 import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.DisplayEmergencyReset
 import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
@@ -32,6 +33,9 @@ import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
+import com.openlumen.prefs.normalizedEnabledFilterState
+import com.openlumen.prefs.toggledFilterEnabled
+import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
@@ -224,19 +228,13 @@ class LumenService : LifecycleService() {
                 restoreDirectBootState()
             }
             ACTION_TURN_OFF -> lifecycleScope.launch {
-                if (isUserUnlocked()) {
-                    prefs.update { it.copy(enabled = false) }
-                } else {
-                    directBootState.update { it.copy(enabled = false, active = false) }
-                    clearAndStop()
-                }
-                // observePreferences will see enabled=false next emit, clear + stopSelf.
+                turnOffImmediately("intent")
             }
             ACTION_TURN_ON -> lifecycleScope.launch {
-                if (isUserUnlocked()) prefs.update { it.copy(enabled = true) }
+                if (isUserUnlocked()) prefs.update { it.withFilterEnabled(true) }
             }
             ACTION_TOGGLE -> lifecycleScope.launch {
-                if (isUserUnlocked()) prefs.update { it.copy(enabled = !it.enabled) }
+                if (isUserUnlocked()) prefs.update { it.toggledFilterEnabled() }
             }
             ACTION_REEVALUATE -> lifecycleScope.launch {
                 if (isUserUnlocked()) latestPrefs.get()?.let { applyIfShouldBeActive(it) }
@@ -412,6 +410,11 @@ class LumenService : LifecycleService() {
 
     private suspend fun handlePreferenceEmission(p: Preferences) {
         latestPrefs.set(p)
+        val normalized = p.normalizedEnabledFilterState()
+        if (normalized != p && isUserUnlocked()) {
+            prefs.update { it.normalizedEnabledFilterState() }
+            return
+        }
         updateLightSensorSubscription(p.enabled && p.lightSensorEnabled)
         // Nudge installed widget instances only when fields they actually
         // render have changed. A slider drag (intensity / dim / gamma /
@@ -453,12 +456,45 @@ class LumenService : LifecycleService() {
     )
 
     private suspend fun clearAndStop() {
+        hardClearOutputs("filter disabled")
+        stopSelf()
+    }
+
+    private suspend fun turnOffImmediately(source: String) {
+        if (isUserUnlocked()) {
+            prefs.update { it.copy(enabled = false) }
+        } else {
+            directBootState.update { it.copy(enabled = false, active = false) }
+        }
+        hardClearOutputs("turn off from $source")
+        latestPrefs.get()
+            ?.let { mirrorDirectBootState(it.copy(enabled = false), active = false, matrix = LumenMatrix.IDENTITY) }
+        stopSelf()
+    }
+
+    private suspend fun hardClearOutputs(reason: String) {
         cancelTransition()
         applyMutex.withLock {
             runCatching { engine?.clear(this@LumenService) }
-                .onFailure { Log.w(tag, "engine.clear() failed: ${it.message}") }
+                .onFailure { Log.w(tag, "engine.clear() during hard clear failed: ${it.message}") }
+            runCatching { (probe.engineOf(EngineKind.OVERLAY) as? OverlayEngine)?.clear(this@LumenService) }
+                .onFailure { Log.w(tag, "overlay hard clear failed: ${it.message}") }
+            runCatching { DisplayEmergencyReset.clearRootTransforms() }
+                .onSuccess { result ->
+                    DiagnosticsLog.log(
+                        this@LumenService,
+                        DiagnosticsLog.Level.INFO,
+                        DiagnosticsLog.Category.ENGINE,
+                        "$reason: hard reset SF=${result.surfaceFlingerCodes.joinToString().ifBlank { "none" }} " +
+                            "KCAL=${result.kcalPaths.joinToString().ifBlank { "none" }}"
+                    )
+                }
+                .onFailure { Log.w(tag, "root hard clear failed: ${it.message}") }
+            engine = null
+            lastApplied = null
+            applyGate.reset()
+            cachedAutoKind = null
         }
-        stopSelf()
     }
 
     private suspend fun ensureEngine(p: Preferences) {
@@ -470,15 +506,7 @@ class LumenService : LifecycleService() {
             cachedAutoKind = null
             lastEngineSelection = p.engine
         }
-        val want = when (p.engine) {
-            EngineKindDto.Auto ->
-                cachedAutoKind
-                    ?: probe.pickBest(this).kind.also { cachedAutoKind = it }
-            EngineKindDto.ColorDisplayManager -> EngineKind.COLOR_DISPLAY_MANAGER
-            EngineKindDto.SurfaceFlinger -> EngineKind.SURFACE_FLINGER
-            EngineKindDto.Kcal -> EngineKind.KCAL
-            EngineKindDto.Overlay -> EngineKind.OVERLAY
-        }
+        val want = resolveDesiredEngineKind(p)
         val current = engine
         if (current?.kind == want) return
         // Cancel any in-flight ramp BEFORE acquiring applyMutex so the
@@ -506,6 +534,44 @@ class LumenService : LifecycleService() {
                 "switched to engine ${next.kind.name}"
             )
         }
+    }
+
+    private suspend fun resolveDesiredEngineKind(p: Preferences): EngineKind {
+        if (p.engine == EngineKindDto.Auto) return resolveAutoEngineKind()
+
+        val requested = p.engine.toEngineKind()
+        val requestedAvailable = (
+            probe.engineOf(requested)
+                ?.let { engine -> runCatching { engine.isAvailable(this) }.getOrDefault(false) }
+            ) == true
+        if (requestedAvailable) return requested
+
+        val fallback = resolveAutoEngineKind()
+        val message = "selected engine ${requested.name} unavailable; using Auto (${fallback.name})"
+        Log.w(tag, message)
+        DiagnosticsLog.log(
+            this,
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.ENGINE,
+            message
+        )
+        if (isUserUnlocked()) {
+            prefs.update { current ->
+                if (current.engine == p.engine) current.copy(engine = EngineKindDto.Auto) else current
+            }
+        }
+        return fallback
+    }
+
+    private suspend fun resolveAutoEngineKind(): EngineKind =
+        cachedAutoKind ?: probe.pickBest(this).kind.also { cachedAutoKind = it }
+
+    private fun EngineKindDto.toEngineKind(): EngineKind = when (this) {
+        EngineKindDto.Auto -> EngineKind.OVERLAY
+        EngineKindDto.ColorDisplayManager -> EngineKind.COLOR_DISPLAY_MANAGER
+        EngineKindDto.SurfaceFlinger -> EngineKind.SURFACE_FLINGER
+        EngineKindDto.Kcal -> EngineKind.KCAL
+        EngineKindDto.Overlay -> EngineKind.OVERLAY
     }
 
     /**
@@ -898,6 +964,13 @@ class LumenService : LifecycleService() {
                     withTimeoutOrNull(2_000L) {
                         runCatching { e.clear(this@LumenService) }
                     }
+                }
+            }
+        }
+        runBlocking {
+            withContext(NonCancellable) {
+                withTimeoutOrNull(2_000L) {
+                    runCatching { DisplayEmergencyReset.clearRootTransforms() }
                 }
             }
         }

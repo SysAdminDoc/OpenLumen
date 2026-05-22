@@ -12,8 +12,10 @@ import kotlinx.coroutines.coroutineScope
  * Runs each ColorEngine's cheap isAvailable() probe and returns the engines that work,
  * ranked from best to worst (rank descending).
  *
- * Callers (LumenService / driver settings screen) pick the top one unless the user
- * has pinned a specific [EngineKind] in preferences.
+ * Auto mode deliberately picks the best available non-root engine. Root paths can
+ * be pinned by the user from the Driver tab, but they are not selected silently:
+ * a bad SurfaceFlinger/KCAL write can affect the whole display until explicitly
+ * cleared, while the rootless overlay path remains easy to recover.
  */
 class DriverProbe(
     private val engines: List<ColorEngine> = defaultEngines()
@@ -38,10 +40,14 @@ class DriverProbe(
             .sortedByDescending { it.engine.kind.rank }
     }
 
-    /** Pick the highest-rank available engine, or [OverlayEngine] if every probe failed. */
+    /**
+     * Pick the highest-rank available non-root engine, or [OverlayEngine] if
+     * every rootless probe failed. Root engines are opt-in via pinned driver
+     * selection rather than the automatic default.
+     */
     suspend fun pickBest(context: Context): ColorEngine {
         val probes = probeAll(context)
-        return probes.firstOrNull { it.available }?.engine
+        return probes.firstOrNull { it.available && !it.engine.kind.requiresRoot }?.engine
             ?: engines.first { it.kind == EngineKind.OVERLAY }
     }
 

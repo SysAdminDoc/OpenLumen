@@ -86,9 +86,19 @@ Why the split (from [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 Four `ColorEngine` implementations under
 [core-engine/.../engines/](core-engine/src/main/java/com/openlumen/engine/engines/),
-runtime-detected via `DriverProbe.pickBest()`. Ranks pick the highest-
-quality available path; overlay is the universal fallback so the user
-always gets *something*.
+runtime-detected via `DriverProbe.pickBest()`. Auto picks the highest-rank
+available non-root path; root engines are opt-in through the Driver tab.
+Overlay is the universal fallback so the user always gets *something*.
+
+Pinned engines are still treated as user preference, but not as a promise to
+use a broken path. If the selected engine probes unavailable at runtime, the
+service logs the problem, falls back through Auto, and persists `Auto` so
+future emissions do not silently no-op.
+
+Emergency-off is intentionally harder than a normal engine clear:
+`DisplayEmergencyReset` sends the disable transaction through every known
+SurfaceFlinger transaction code for the current API and resets known KCAL sysfs roots, even
+when a fresh service process has no cached active engine.
 
 | Engine | Class | Rank | Root? | SoC | Quality |
 |---|---|---:|---|---|---|
@@ -154,8 +164,11 @@ walks pre-`schemaVersion` blobs forward.
 ## Runtime flow
 
 1. User flips Switch on `HomeScreen` → `OpenLumenViewModel.setEnabled(true)`
-   → `prefs.update { it.copy(enabled = true) }`.
-2. `PreferencesStore` flow emits the new `Preferences` snapshot.
+   → `prefs.update { it.withFilterEnabled(true) }`.
+2. `PreferencesStore` flow emits the new `Preferences` snapshot. User-facing
+   "turn on" paths normalize inert states: `AlwaysOff` becomes `AlwaysOn`, and
+   the `Off` preset restores the previous visible preset or falls back to
+   `Night`.
 3. `LumenService.observePreferences()` collects (with `.conflate()`), picks
    an engine via `DriverProbe`, applies the matrix, and schedules the next
    transition alarm via `AlarmManager.setExactAndAllowWhileIdle` (or
@@ -164,6 +177,10 @@ walks pre-`schemaVersion` blobs forward.
    back to `LumenService`, which re-derives the matrix and reschedules.
 5. Tile / boot receiver / widget receivers also write to DataStore — single
    source of truth.
+
+External ADB / Tasker / Termux commands enter through exported
+`AutomationReceiver`, which forwards only documented actions into the
+non-exported `LumenService`. `TURN_OFF` uses the hard-clear path above.
 
 Foreground-service starts go through
 [LumenServiceStarter](app/src/main/java/com/openlumen/service/LumenServiceStarter.kt).
@@ -332,6 +349,10 @@ window.
 - **CDM engine needs `WRITE_SECURE_SETTINGS`.** Without it,
   `setNightDisplayActivated(true)` silently no-ops. The Driver screen
   surfaces the ADB grant command with copy-to-clipboard.
+- **Pinned unavailable engines must not be trusted.** Older builds could keep
+  `KCAL` or another pinned engine after the device reported it unavailable,
+  making sliders appear broken. Current builds reset those selections to Auto
+  from both the Driver tab and service fallback path.
 - **`service call SurfaceFlinger` code drift.** Historically 1015 for
   `setDisplayColorTransform`. We probe `1015 → 1023 → 1030 → 1036` per API
   ladder and cache the winner. If a new Android version drifts again, add
