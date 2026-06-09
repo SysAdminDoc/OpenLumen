@@ -46,3 +46,7 @@ CODEX_CHANGELOG.md
 *.bak
 *.log
 *.tmp
+
+# Markdown files local-only (except README)
+*.md
+!README.md
