@@ -1,0 +1,10 @@
+OpenLumen licensing note
+
+OpenLumen is licensed under GPL-3.0-or-later.
+
+Why GPL-3.0-or-later:
+- Aligns with Red Moon (LibreShift/red-moon), which OpenLumen draws lineage from.
+- Strong copyleft means any derivative that ships a binary must publish source, which matters for a system-level app that touches root drivers.
+- Compatible with F-Droid inclusion policies.
+
+If you want a permissive license carve-out for a specific module, open an issue.
