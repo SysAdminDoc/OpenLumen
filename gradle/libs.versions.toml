@@ -12,7 +12,7 @@ datastore = "1.2.1"
 kotlinx-serialization = "1.7.3"
 kotlinx-coroutines = "1.9.0"
 material3 = "1.4.0"
-core-ktx = "1.18.0"
+core = "1.19.0"
 glance = "1.1.1"
 work = "2.7.1"
 screenshot = "0.0.1-alpha14"
@@ -26,7 +26,7 @@ truth = "1.4.4"
 junit = { module = "junit:junit", version.ref = "junit" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 
-androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
+androidx-core = { module = "androidx.core:core", version.ref = "core" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
