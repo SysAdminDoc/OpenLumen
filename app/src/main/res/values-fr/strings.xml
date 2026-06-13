@@ -64,6 +64,10 @@
     <string name="preset_favorite">Ajouter aux favoris</string>
     <string name="preset_unfavorite">Retirer des favoris</string>
     <string name="preset_restore_previous">Restaurer</string>
+    <string name="preset_detail_active">Actif</string>
+    <string name="preset_detail_dim">Atténuation : %1$d%%</string>
+    <string name="preset_detail_cvd">Ajustement de la vision des couleurs</string>
+    <string name="preset_detail_empty">Sélectionnez un filtre pour voir les détails</string>
     <string name="import_preview_title">Apercu du profil importe</string>
     <string name="import_preview_apply">Appliquer</string>
     <string name="import_preview_cancel">Annuler</string>

@@ -64,6 +64,10 @@
     <string name="preset_favorite">お気に入りに追加</string>
     <string name="preset_unfavorite">お気に入りから削除</string>
     <string name="preset_restore_previous">復元</string>
+    <string name="preset_detail_active">有効</string>
+    <string name="preset_detail_dim">減光: %1$d%%</string>
+    <string name="preset_detail_cvd">色覚補正</string>
+    <string name="preset_detail_empty">プリセットを選択して詳細を表示</string>
     <string name="import_preview_title">インポートしたプロファイルのプレビュー</string>
     <string name="import_preview_apply">適用</string>
     <string name="import_preview_cancel">キャンセル</string>

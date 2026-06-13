@@ -1,15 +1,21 @@
 package com.openlumen.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,10 +25,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,21 +47,76 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.Presets
 import com.openlumen.presetLabel
+import com.openlumen.prefs.Preferences
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenViewModel
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val prefs by vm.state.collectAsState()
     val favorites = prefs.favoritePresetKeys.toSet()
+    val scope = rememberCoroutineScope()
+    val navigator = rememberListDetailPaneScaffoldNavigator<String>()
 
+    BackHandler(navigator.canNavigateBack()) {
+        scope.launch { navigator.navigateBack() }
+    }
+
+    ListDetailPaneScaffold(
+        directive = navigator.scaffoldDirective,
+        scaffoldState = navigator.scaffoldState,
+        listPane = {
+            AnimatedPane(modifier = Modifier.preferredWidth(320.dp)) {
+                PresetListPane(
+                    prefs = prefs,
+                    favorites = favorites,
+                    onPresetClick = { key ->
+                        vm.selectPreset(key)
+                        scope.launch {
+                            navigator.navigateTo(
+                                ListDetailPaneScaffoldRole.Detail,
+                                key
+                            )
+                        }
+                    },
+                    onFavoriteToggle = vm::toggleFavorite,
+                    onRestorePrevious = vm::restorePreviousPreset
+                )
+            }
+        },
+        detailPane = {
+            AnimatedPane {
+                val key = navigator.currentDestination?.contentKey
+                val entry = key?.let(Presets::byKey)
+                if (entry != null) {
+                    PresetDetailPane(
+                        entry = entry,
+                        isSelected = key == prefs.activePresetKey,
+                        isFavorite = key in favorites,
+                        onFavoriteToggle = { vm.toggleFavorite(key) }
+                    )
+                } else {
+                    PresetDetailEmpty()
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun PresetListPane(
+    prefs: Preferences,
+    favorites: Set<String>,
+    onPresetClick: (String) -> Unit,
+    onFavoriteToggle: (String) -> Unit,
+    onRestorePrevious: () -> Unit
+) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Undo affordance (C14). Shown only when there's something to restore
-        // and the previous key resolves to a real preset — guards against a
-        // stale `previousPresetKey` after a preset is renamed or removed.
         val previousEntry = prefs.previousPresetKey
             ?.takeIf { it != prefs.activePresetKey }
             ?.let(Presets::byKey)
@@ -73,7 +141,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )
-                        LumenTextButton(onClick = { vm.restorePreviousPreset() }) {
+                        LumenTextButton(onClick = onRestorePrevious) {
                             Text(stringResource(R.string.preset_restore_previous))
                         }
                     }
@@ -91,7 +159,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
                                      else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth().clickable { vm.selectPreset(entry.key) }
+                modifier = Modifier.fillMaxWidth().clickable { onPresetClick(entry.key) }
             ) {
                 Row(
                     modifier = Modifier
@@ -114,11 +182,7 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.weight(1f)
                     )
-                    // Favorite toggle (C15). Independent of selection — a
-                    // user can favorite presets they don't currently have
-                    // active so the notification/widget cycle (C16/C20) has
-                    // a useful list to walk.
-                    IconButton(onClick = { vm.toggleFavorite(entry.key) }) {
+                    IconButton(onClick = { onFavoriteToggle(entry.key) }) {
                         Icon(
                             painter = painterResource(
                                 if (isFavorite) R.drawable.ic_favorite_filled
@@ -132,11 +196,174 @@ fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     }
                     RadioButton(
                         selected = selected,
-                        onClick = { vm.selectPreset(entry.key) }
+                        onClick = { onPresetClick(entry.key) }
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PresetDetailPane(
+    entry: Presets.Entry,
+    isSelected: Boolean,
+    isFavorite: Boolean,
+    onFavoriteToggle: () -> Unit
+) {
+    val label = presetLabel(entry.key, entry.displayName)
+    val m = entry.matrix
+
+    LazyColumn(
+        contentPadding = PaddingValues(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        color = swatchOf(m.r, m.g, m.b),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            )
+        }
+
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                if (isSelected) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.preset_detail_active),
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.size(8.dp))
+                IconButton(onClick = onFavoriteToggle) {
+                    Icon(
+                        painter = painterResource(
+                            if (isFavorite) R.drawable.ic_favorite_filled
+                            else R.drawable.ic_favorite_border
+                        ),
+                        contentDescription = stringResource(
+                            if (isFavorite) R.string.preset_unfavorite
+                            else R.string.preset_favorite
+                        )
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ChannelRow(stringResource(R.string.channel_red_short), m.r, Color(0xFFFF6B6B))
+                    ChannelRow(stringResource(R.string.channel_green_short), m.g, Color(0xFF51CF66))
+                    ChannelRow(stringResource(R.string.channel_blue_short), m.b, Color(0xFF339AF0))
+                }
+            }
+        }
+
+        if (m.dim > 0f) {
+            item {
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.preset_detail_dim, (m.dim * 100).toInt()),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+            }
+        }
+
+        if (m.hasColorMatrix) {
+            item {
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.preset_detail_cvd),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChannelRow(label: String, value: Float, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.width(24.dp)
+        )
+        Spacer(Modifier.size(8.dp))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(8.dp)
+                .background(color.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(value.coerceIn(0f, 1f))
+                    .background(color, RoundedCornerShape(4.dp))
+            )
+        }
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = "${(value * 100).toInt()}%",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.width(40.dp)
+        )
+    }
+}
+
+@Composable
+private fun PresetDetailEmpty() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.preset_detail_empty),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

@@ -64,6 +64,10 @@
     <string name="preset_favorite">Añadir a favoritos</string>
     <string name="preset_unfavorite">Quitar de favoritos</string>
     <string name="preset_restore_previous">Restaurar</string>
+    <string name="preset_detail_active">Activo</string>
+    <string name="preset_detail_dim">Atenuación: %1$d%%</string>
+    <string name="preset_detail_cvd">Ajuste de daltonismo</string>
+    <string name="preset_detail_empty">Selecciona un filtro para ver los detalles</string>
     <string name="import_preview_title">Vista previa del perfil importado</string>
     <string name="import_preview_apply">Aplicar</string>
     <string name="import_preview_cancel">Cancelar</string>
