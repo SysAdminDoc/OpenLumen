@@ -424,11 +424,13 @@ class LumenService : LifecycleService() {
         maybeBroadcastWidgetRefresh(p)
         if (!p.enabled) {
             mirrorDirectBootState(p, active = false, matrix = LumenMatrix.IDENTITY)
+            maybeBroadcastFilterStateChanged(p)
             clearAndStop()
             return
         }
         ensureEngine(p)
         applyIfShouldBeActive(p)
+        maybeBroadcastFilterStateChanged(p)
     }
 
     private fun maybeBroadcastWidgetRefresh(p: Preferences) {
@@ -454,6 +456,35 @@ class LumenService : LifecycleService() {
         val activePresetKey: String,
         val favoritePresetKeys: List<String>
     )
+
+    private data class FilterBroadcastState(
+        val enabled: Boolean,
+        val activePresetKey: String,
+        val intensity: Float,
+        val dim: Float
+    )
+    private val lastFilterBroadcast = AtomicReference<FilterBroadcastState?>(null)
+
+    private fun maybeBroadcastFilterStateChanged(p: Preferences) {
+        val state = FilterBroadcastState(
+            enabled = p.enabled,
+            activePresetKey = p.activePresetKey,
+            intensity = p.presetIntensity,
+            dim = p.dim
+        )
+        if (lastFilterBroadcast.getAndSet(state) == state) return
+        runCatching {
+            sendBroadcast(
+                Intent(EVENT_FILTER_STATE_CHANGED).apply {
+                    putExtra(EXTRA_ENABLED, state.enabled)
+                    putExtra(EXTRA_ACTIVE_PRESET_KEY, state.activePresetKey)
+                    putExtra(EXTRA_INTENSITY, state.intensity)
+                    putExtra(EXTRA_DIM, state.dim)
+                    setPackage(null)
+                }
+            )
+        }.onFailure { Log.w(tag, "filter state broadcast failed: ${it.message}") }
+    }
 
     private suspend fun clearAndStop() {
         hardClearOutputs("filter disabled")
@@ -999,6 +1030,12 @@ class LumenService : LifecycleService() {
 
         const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
         const val EXTRA_VALUE = "com.openlumen.extra.VALUE"
+
+        const val EVENT_FILTER_STATE_CHANGED = "com.openlumen.event.FILTER_STATE_CHANGED"
+        const val EXTRA_ENABLED = "com.openlumen.extra.ENABLED"
+        const val EXTRA_ACTIVE_PRESET_KEY = "com.openlumen.extra.ACTIVE_PRESET_KEY"
+        const val EXTRA_INTENSITY = "com.openlumen.extra.INTENSITY"
+        const val EXTRA_DIM = "com.openlumen.extra.DIM"
 
         /** Floor on a single ramp step to avoid hammering slow su engines. */
         private const val MIN_RAMP_STEP_MS = 200L

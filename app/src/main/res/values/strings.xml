@@ -54,6 +54,7 @@
     <string name="preset_name_sepia">Sepia</string>
     <string name="preset_name_gray">Grayscale</string>
     <string name="preset_name_deep">Deep Sleep</string>
+    <string name="preset_name_pwm">PWM Comfort</string>
     <string name="preset_name_protan">Protan</string>
     <string name="preset_name_deutan">Deutan</string>
     <string name="preset_name_tritan">Tritan</string>

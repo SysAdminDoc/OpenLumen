@@ -12,6 +12,7 @@ object Presets {
     val GRAY     = LumenMatrix(r = 0.55f, g = 0.55f, b = 0.55f)
     val NIGHT    = LumenMatrix(r = 1.00f, g = 0.78f, b = 0.55f) // ~3200K
     val DEEP     = LumenMatrix(r = 1.00f, g = 0.45f, b = 0.20f, dim = 0.30f) // pre-bedtime
+    val PWM      = LumenMatrix(r = 1.00f, g = 0.82f, b = 0.60f, dim = 0.20f) // warm tint + overlay dim at high backlight
     val OFF      = LumenMatrix.IDENTITY
 
     /**
@@ -79,6 +80,7 @@ object Presets {
         Entry("sepia",    "Sepia",       SEPIA),
         Entry("gray",     "Grayscale",   GRAY),
         Entry("deep",     "Deep Sleep",  DEEP),
+        Entry("pwm",      "PWM Comfort", PWM),
         Entry("protan",   "Protan",      PROTAN),
         Entry("deutan",   "Deutan",      DEUTAN),
         Entry("tritan",   "Tritan",      TRITAN)

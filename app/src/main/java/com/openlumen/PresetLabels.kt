@@ -15,6 +15,7 @@ fun presetNameRes(key: String): Int? = when (key) {
     "sepia" -> R.string.preset_name_sepia
     "gray" -> R.string.preset_name_gray
     "deep" -> R.string.preset_name_deep
+    "pwm" -> R.string.preset_name_pwm
     "protan" -> R.string.preset_name_protan
     "deutan" -> R.string.preset_name_deutan
     "tritan" -> R.string.preset_name_tritan
