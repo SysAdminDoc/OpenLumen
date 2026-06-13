@@ -149,7 +149,7 @@ private fun PresetListPane(
             }
         }
 
-        items(Presets.ALL) { entry ->
+        items(Presets.ALL, key = { it.key }) { entry ->
             val selected = entry.key == prefs.activePresetKey
             val isFavorite = entry.key in favorites
             val entryLabel = presetLabel(entry.key, entry.displayName)

@@ -205,6 +205,9 @@
     <string name="tile_subtitle_on">%1$s</string>
     <string name="widget_preset_hint">Mark favorites in Presets to fill these slots</string>
 
+    <string name="perm_automation_label">OpenLumen automation</string>
+    <string name="perm_automation_description">Send automation commands to OpenLumen (toggle filter, change preset, set intensity).</string>
+
     <string name="perm_overlay_title">Allow display over other apps</string>
     <string name="perm_overlay_rationale">Required for the rootless overlay driver. Skip if you only use root drivers.</string>
     <string name="perm_overlay_grant">Open settings</string>

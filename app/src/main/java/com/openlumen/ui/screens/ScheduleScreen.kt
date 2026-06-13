@@ -38,6 +38,7 @@ import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
 import java.time.ZoneId
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
@@ -144,7 +145,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                             if (lat == null || lng == null)
                                 stringResource(R.string.schedule_set_location)
                             else
-                                "%.3f, %.3f".format(lat, lng)
+                                String.format(Locale.ROOT, "%.3f, %.3f", lat, lng)
                         )
                     }
 

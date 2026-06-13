@@ -281,9 +281,11 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    val amoledLabel = stringResource(R.string.home_amoled_clamp_title)
                     Switch(
                         checked = prefs.amoledBlackClamp,
-                        onCheckedChange = vm::setAmoledBlackClamp
+                        onCheckedChange = vm::setAmoledBlackClamp,
+                        modifier = Modifier.semantics { contentDescription = amoledLabel }
                     )
                 }
             }
@@ -317,9 +319,11 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.home_preview), style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.size(8.dp))
+                    val previewLabel = stringResource(R.string.home_preview)
                     Box(
                         modifier = Modifier
                             .size(28.dp)
+                            .semantics { contentDescription = previewLabel }
                             .background(
                                 color = Color(
                                     red = prefs.customMatrix.r.coerceIn(0f, 1f),

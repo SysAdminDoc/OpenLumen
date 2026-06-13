@@ -22,6 +22,12 @@
 
     <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
 
+    <permission
+        android:name="com.openlumen.permission.AUTOMATION"
+        android:protectionLevel="normal"
+        android:label="@string/perm_automation_label"
+        android:description="@string/perm_automation_description" />
+
     <application
         android:name=".OpenLumenApp"
         android:allowBackup="true"
@@ -100,7 +106,8 @@
 
         <receiver
             android:name=".service.AutomationReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="com.openlumen.permission.AUTOMATION">
             <intent-filter>
                 <action android:name="com.openlumen.action.TURN_OFF" />
                 <action android:name="com.openlumen.action.TURN_ON" />

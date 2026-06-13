@@ -531,8 +531,8 @@ class LumenService : LifecycleService() {
                     putExtra(EXTRA_ACTIVE_PRESET_KEY, state.activePresetKey)
                     putExtra(EXTRA_INTENSITY, state.intensity)
                     putExtra(EXTRA_DIM, state.dim)
-                    setPackage(null)
-                }
+                },
+                "com.openlumen.permission.AUTOMATION"
             )
         }.onFailure { Log.w(tag, "filter state broadcast failed: ${it.message}") }
     }
