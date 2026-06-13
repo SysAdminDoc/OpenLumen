@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.openlumen"
-    compileSdk = 36
+    compileSdk = 37
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
