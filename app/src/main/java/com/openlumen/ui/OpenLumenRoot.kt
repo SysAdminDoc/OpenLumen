@@ -1,12 +1,9 @@
 package com.openlumen.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -44,35 +41,33 @@ fun OpenLumenRoot() {
         val backStack by nav.currentBackStackEntryAsState()
         val currentRoute = backStack?.destination?.route
 
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    Dest.all.forEach { dest ->
-                        NavigationBarItem(
-                            selected = currentRoute == dest.route,
-                            onClick = {
-                                nav.navigate(dest.route) {
-                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(dest.iconRes),
-                                    contentDescription = stringResource(dest.labelRes)
-                                )
-                            },
-                            label = { Text(stringResource(dest.labelRes)) }
-                        )
-                    }
+        NavigationSuiteScaffold(
+            navigationSuiteItems = {
+                Dest.all.forEach { dest ->
+                    item(
+                        selected = currentRoute == dest.route,
+                        onClick = {
+                            nav.navigate(dest.route) {
+                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                painter = painterResource(dest.iconRes),
+                                contentDescription = stringResource(dest.labelRes)
+                            )
+                        },
+                        label = { Text(stringResource(dest.labelRes)) }
+                    )
                 }
             }
-        ) { inner ->
+        ) {
             NavHost(
                 navController = nav,
                 startDestination = Dest.Home.route,
-                modifier = Modifier.fillMaxSize().padding(inner)
+                modifier = Modifier.fillMaxSize()
             ) {
                 composable(Dest.Home.route)     { HomeScreen() }
                 composable(Dest.Schedule.route) { ScheduleScreen() }
