@@ -1,5 +1,11 @@
 package com.openlumen.ui.screens
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,8 +40,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.R
 import com.openlumen.diagnostics.MatrixPreview
 import com.openlumen.engine.Kelvin
@@ -62,6 +72,33 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val activePresetLabel = preset?.let { presetLabel(it.key, it.displayName) }
         ?: prefs.activePresetKey
 
+    val context = LocalContext.current
+    val notifPromptPrefs = remember {
+        context.getSharedPreferences("openlumen-prompts", Context.MODE_PRIVATE)
+    }
+    val notifLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        notifPromptPrefs.edit().putBoolean("notification_permission_asked", true).apply()
+        if (!granted) {
+            DiagnosticsLog.log(
+                context, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE,
+                "notification permission denied on first enable"
+            )
+        }
+    }
+    val requestNotifIfNeeded: () -> Unit = remember {
+        {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED &&
+                !notifPromptPrefs.getBoolean("notification_permission_asked", false)
+            ) {
+                notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,7 +122,11 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             shape = MaterialTheme.shapes.large,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { vm.setEnabled(!prefs.enabled) }
+                .clickable {
+                    val enabling = !prefs.enabled
+                    vm.setEnabled(enabling)
+                    if (enabling) requestNotifIfNeeded()
+                }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -106,7 +147,13 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Switch(checked = prefs.enabled, onCheckedChange = vm::setEnabled)
+                Switch(
+                    checked = prefs.enabled,
+                    onCheckedChange = { enabled ->
+                        vm.setEnabled(enabled)
+                        if (enabled) requestNotifIfNeeded()
+                    }
+                )
             }
         }
 

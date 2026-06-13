@@ -7,8 +7,7 @@
 
 # Compose / Material 3 — handled by AGP defaults
 
-# Hilt
--keep class dagger.hilt.** { *; }
+# Hilt — consumer rules handle framework classes; keep generated components only
 -keep class * extends dagger.hilt.android.internal.GeneratedComponent { *; }
 
 # kotlinx.serialization — keep serializer classes

@@ -376,6 +376,56 @@ class LumenService : LifecycleService() {
         }
     }
 
+    private fun updateNotificationSubtitle(p: Preferences) {
+        if (!p.enabled) return
+        val subtitle: String? = if (
+            p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm
+        ) {
+            nextAlarmClockAt()?.let { alarmAt ->
+                val nowMs = System.currentTimeMillis()
+                val remainMs = alarmAt.toInstant().toEpochMilli() - nowMs
+                if (remainMs > 0) {
+                    val h = (remainMs / 3_600_000L).toInt()
+                    val m = ((remainMs % 3_600_000L) / 60_000L).toInt()
+                    getString(R.string.notif_alarm_countdown, h, m)
+                } else null
+            }
+        } else null
+
+        runCatching {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return
+            val tapIntent = PendingIntent.getActivity(
+                this, 0,
+                Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val offIntent = PendingIntent.getService(
+                this, 1,
+                Intent(this, LumenService::class.java).setAction(ACTION_TURN_OFF),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val cycleIntent = PendingIntent.getService(
+                this, 2,
+                Intent(this, LumenService::class.java).setAction(ACTION_CYCLE_PRESET),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val notification = NotificationCompat.Builder(this, getString(R.string.notif_channel_id))
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(getString(R.string.notif_title))
+                .apply { if (subtitle != null) setContentText(subtitle) }
+                .setContentIntent(tapIntent)
+                .setOngoing(true)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .addAction(0, getString(R.string.notif_action_cycle), cycleIntent)
+                .addAction(0, getString(R.string.notif_action_off), offIntent)
+                .build()
+            nm.notify(NOTIFICATION_ID, notification)
+        }.onFailure { Log.w(tag, "notification update failed: ${it.message}") }
+    }
+
     /**
      * Single long-lived collector on the prefs flow. `.conflate()` drops intermediate
      * emissions while the current apply is in flight, so slider drags can't queue up
@@ -430,6 +480,7 @@ class LumenService : LifecycleService() {
         }
         ensureEngine(p)
         applyIfShouldBeActive(p)
+        updateNotificationSubtitle(p)
         maybeBroadcastFilterStateChanged(p)
     }
 
