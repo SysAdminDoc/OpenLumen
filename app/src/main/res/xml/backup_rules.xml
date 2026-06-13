@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android Auto Backup scope (pre-Android 12).
+    Include-only list: ONLY these paths are backed up.
+
+    Included:
+      datastore/  — user preferences (filter, schedule, profiles)
+      sharedpref/ — notification-prompt one-shot flags
+
+    Excluded by omission:
+      crash.log        — device-local crash log, per privacy policy
+      diagnostics.log  — device-local event log, per privacy policy
+
+    Note: ScheduleDto.latitude/longitude (user-entered approximate city
+    coordinates from the ~95-city picker) are part of the DataStore
+    preferences blob and are intentionally included so solar schedule
+    survives restore.
+-->
 <full-backup-content>
     <include domain="file" path="datastore/" />
     <include domain="sharedpref" path="." />
-    <include domain="database" path="." />
 </full-backup-content>
