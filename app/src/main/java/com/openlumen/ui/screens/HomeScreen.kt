@@ -52,6 +52,7 @@ import com.openlumen.engine.Presets
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.presetLabel
 import com.openlumen.ui.components.OverlayPermissionCard
+import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenViewModel
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -292,6 +293,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         }
 
         // Custom RGB picker — three slider rows in fixed R/G/B order.
+        val channels = lumenChannelColors()
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text(stringResource(R.string.presets_custom), style = MaterialTheme.typography.titleMedium)
@@ -299,19 +301,19 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 RgbSlider(
                     label = stringResource(R.string.channel_red_short),
                     value = prefs.customMatrix.r,
-                    track = Color(0xFFF38BA8),
+                    track = channels.red,
                     onChange = { vm.setCustomRgb(it, prefs.customMatrix.g, prefs.customMatrix.b) }
                 )
                 RgbSlider(
                     label = stringResource(R.string.channel_green_short),
                     value = prefs.customMatrix.g,
-                    track = Color(0xFFA6E3A1),
+                    track = channels.green,
                     onChange = { vm.setCustomRgb(prefs.customMatrix.r, it, prefs.customMatrix.b) }
                 )
                 RgbSlider(
                     label = stringResource(R.string.channel_blue_short),
                     value = prefs.customMatrix.b,
-                    track = Color(0xFF89B4FA),
+                    track = channels.blue,
                     onChange = { vm.setCustomRgb(prefs.customMatrix.r, prefs.customMatrix.g, it) }
                 )
 
@@ -385,19 +387,19 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 GammaSlider(
                     label = stringResource(R.string.gamma_red_short),
                     value = prefs.customMatrix.gammaR,
-                    track = Color(0xFFF38BA8),
+                    track = channels.red,
                     onChange = { vm.setGamma(it, prefs.customMatrix.gammaG, prefs.customMatrix.gammaB) }
                 )
                 GammaSlider(
                     label = stringResource(R.string.gamma_green_short),
                     value = prefs.customMatrix.gammaG,
-                    track = Color(0xFFA6E3A1),
+                    track = channels.green,
                     onChange = { vm.setGamma(prefs.customMatrix.gammaR, it, prefs.customMatrix.gammaB) }
                 )
                 GammaSlider(
                     label = stringResource(R.string.gamma_blue_short),
                     value = prefs.customMatrix.gammaB,
-                    track = Color(0xFF89B4FA),
+                    track = channels.blue,
                     onChange = { vm.setGamma(prefs.customMatrix.gammaR, prefs.customMatrix.gammaG, it) }
                 )
             }
