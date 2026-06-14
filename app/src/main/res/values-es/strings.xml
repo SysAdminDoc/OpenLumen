@@ -214,7 +214,15 @@
     <string name="location_decimal_degrees_help">Grados decimales. La latitud debe estar entre -90 y 90, la longitud entre -180 y 180.</string>
     <string name="location_latitude">Latitud</string>
     <string name="location_longitude">Longitud</string>
+    <string name="location_latitude_range">Introduce un valor entre -90 y 90</string>
+    <string name="location_longitude_range">Introduce un valor entre -180 y 180</string>
     <string name="location_pick_city">O elija una ciudad cercana:</string>
     <string name="location_search_cities">Buscar ciudades</string>
     <string name="location_use_city">Usar</string>
+    <string name="backup_exported">Exportado</string>
+    <string name="backup_export_failed">Error al exportar: %1$s</string>
+    <string name="backup_imported">Importado</string>
+    <string name="backup_imported_skipped_duplicates">Importado; perfiles duplicados omitidos: %1$s</string>
+    <string name="backup_import_failed">Error al importar: %1$s</string>
+    <string name="error_unknown">Error desconocido</string>
 </resources>

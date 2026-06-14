@@ -214,7 +214,15 @@
     <string name="location_decimal_degrees_help">10進度数で入力してください。緯度は -90 から 90、経度は -180 から 180 です。</string>
     <string name="location_latitude">緯度</string>
     <string name="location_longitude">経度</string>
+    <string name="location_latitude_range">-90〜90 の値を入力してください</string>
+    <string name="location_longitude_range">-180〜180 の値を入力してください</string>
     <string name="location_pick_city">または近くの都市を選択:</string>
     <string name="location_search_cities">都市を検索</string>
     <string name="location_use_city">使用</string>
+    <string name="backup_exported">エクスポートしました</string>
+    <string name="backup_export_failed">エクスポートに失敗しました: %1$s</string>
+    <string name="backup_imported">インポートしました</string>
+    <string name="backup_imported_skipped_duplicates">インポートしました。重複したプロファイルをスキップしました: %1$s</string>
+    <string name="backup_import_failed">インポートに失敗しました: %1$s</string>
+    <string name="error_unknown">不明なエラー</string>
 </resources>

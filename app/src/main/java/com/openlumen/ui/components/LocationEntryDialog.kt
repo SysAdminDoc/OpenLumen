@@ -64,8 +64,13 @@ fun LocationEntryDialog(
 
     val latVal = parseCoord(latText)
     val lngVal = parseCoord(lngText)
-    val canSave = latVal != null && lngVal != null &&
-        latVal in -90.0..90.0 && lngVal in -180.0..180.0
+    val latInRange = latVal != null && latVal in -90.0..90.0
+    val lngInRange = lngVal != null && lngVal in -180.0..180.0
+    // Only flag a field as in-error once the user has typed something; an
+    // empty field is "incomplete", not "wrong", so it stays neutral.
+    val latError = latText.isNotEmpty() && !latInRange
+    val lngError = lngText.isNotEmpty() && !lngInRange
+    val canSave = latInRange && lngInRange
 
     // The matched list is bounded to 12 in the picker so the dialog body
     // doesn't grow unboundedly. The user can refine with the query box.
@@ -89,7 +94,10 @@ fun LocationEntryDialog(
                     label = { Text(stringResource(R.string.location_latitude)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    isError = latText.isNotEmpty() && (latVal == null || latVal !in -90.0..90.0),
+                    isError = latError,
+                    supportingText = if (latError) {
+                        { Text(stringResource(R.string.location_latitude_range)) }
+                    } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -98,7 +106,10 @@ fun LocationEntryDialog(
                     label = { Text(stringResource(R.string.location_longitude)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    isError = lngText.isNotEmpty() && (lngVal == null || lngVal !in -180.0..180.0),
+                    isError = lngError,
+                    supportingText = if (lngError) {
+                        { Text(stringResource(R.string.location_longitude_range)) }
+                    } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
 

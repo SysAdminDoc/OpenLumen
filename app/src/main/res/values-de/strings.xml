@@ -214,7 +214,15 @@
     <string name="location_decimal_degrees_help">Dezimalgrad. Breitengrad muss zwischen -90 und 90 liegen, Längengrad zwischen -180 und 180.</string>
     <string name="location_latitude">Breitengrad</string>
     <string name="location_longitude">Längengrad</string>
+    <string name="location_latitude_range">Geben Sie einen Wert zwischen -90 und 90 ein</string>
+    <string name="location_longitude_range">Geben Sie einen Wert zwischen -180 und 180 ein</string>
     <string name="location_pick_city">Oder wählen Sie eine Stadt in der Nähe:</string>
     <string name="location_search_cities">Städte suchen</string>
     <string name="location_use_city">Verwenden</string>
+    <string name="backup_exported">Exportiert</string>
+    <string name="backup_export_failed">Export fehlgeschlagen: %1$s</string>
+    <string name="backup_imported">Importiert</string>
+    <string name="backup_imported_skipped_duplicates">Importiert; doppelte Profile übersprungen: %1$s</string>
+    <string name="backup_import_failed">Import fehlgeschlagen: %1$s</string>
+    <string name="error_unknown">Unbekannter Fehler</string>
 </resources>

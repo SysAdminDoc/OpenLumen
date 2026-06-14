@@ -74,6 +74,12 @@
     <string name="import_preview_cancel">Cancel</string>
     <string name="import_preview_unchanged">No changes</string>
     <string name="import_preview_duplicate_profiles">Duplicate profile names skipped: %1$s</string>
+    <string name="backup_exported">Exported</string>
+    <string name="backup_export_failed">Export failed: %1$s</string>
+    <string name="backup_imported">Imported</string>
+    <string name="backup_imported_skipped_duplicates">Imported; skipped duplicate profiles: %1$s</string>
+    <string name="backup_import_failed">Import failed: %1$s</string>
+    <string name="error_unknown">Unknown error</string>
     <string name="diff_line">%1$s: %2$s -> %3$s</string>
     <string name="diff_active_preset">Active preset</string>
     <string name="diff_engine">Engine</string>
@@ -223,6 +229,8 @@
     <string name="location_decimal_degrees_help">Decimal degrees. Latitude must be -90 to 90, longitude -180 to 180.</string>
     <string name="location_latitude">Latitude</string>
     <string name="location_longitude">Longitude</string>
+    <string name="location_latitude_range">Enter a value between -90 and 90</string>
+    <string name="location_longitude_range">Enter a value between -180 and 180</string>
     <string name="location_pick_city">Or pick a nearby city:</string>
     <string name="location_search_cities">Search cities</string>
     <string name="location_use_city">Use</string>

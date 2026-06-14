@@ -214,7 +214,15 @@
     <string name="location_decimal_degrees_help">Degres decimaux. La latitude doit etre comprise entre -90 et 90, la longitude entre -180 et 180.</string>
     <string name="location_latitude">Latitude</string>
     <string name="location_longitude">Longitude</string>
+    <string name="location_latitude_range">Saisissez une valeur entre -90 et 90</string>
+    <string name="location_longitude_range">Saisissez une valeur entre -180 et 180</string>
     <string name="location_pick_city">Ou choisissez une ville proche :</string>
     <string name="location_search_cities">Rechercher des villes</string>
     <string name="location_use_city">Utiliser</string>
+    <string name="backup_exported">Exporté</string>
+    <string name="backup_export_failed">Échec de l\'exportation : %1$s</string>
+    <string name="backup_imported">Importé</string>
+    <string name="backup_imported_skipped_duplicates">Importé ; profils en double ignorés : %1$s</string>
+    <string name="backup_import_failed">Échec de l\'importation : %1$s</string>
+    <string name="error_unknown">Erreur inconnue</string>
 </resources>

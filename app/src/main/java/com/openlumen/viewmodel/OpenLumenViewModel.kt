@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.openlumen.R
 import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
 import com.openlumen.prefs.EngineKindDto
@@ -237,7 +238,11 @@ class OpenLumenViewModel @Inject constructor(
 
     fun exportTo(uri: Uri) = viewModelScope.launch {
         val result = prefs.exportTo(uri)
-        _exportResult.value = if (result.isSuccess) "Exported" else "Export failed: ${result.exceptionOrNull()?.message}"
+        _exportResult.value = if (result.isSuccess) {
+            getString(R.string.backup_exported)
+        } else {
+            getString(R.string.backup_export_failed, result.errorText())
+        }
     }
 
     fun importFrom(uri: Uri) = viewModelScope.launch {
@@ -245,16 +250,28 @@ class OpenLumenViewModel @Inject constructor(
         _exportResult.value = if (result.isSuccess) {
             importMessage(result.getOrThrow())
         } else {
-            "Import failed: ${result.exceptionOrNull()?.message}"
+            getString(R.string.backup_import_failed, result.errorText())
         }
     }
 
     private fun importMessage(summary: ImportSummary): String =
         if (summary.droppedDuplicateNames.isEmpty()) {
-            "Imported"
+            getString(R.string.backup_imported)
         } else {
-            "Imported; skipped duplicate profiles: ${summary.droppedDuplicateNames.joinToString(", ")}"
+            getString(
+                R.string.backup_imported_skipped_duplicates,
+                summary.droppedDuplicateNames.joinToString(", ")
+            )
         }
+
+    private fun getString(resId: Int, vararg args: Any): String =
+        getApplication<Application>().getString(resId, *args)
+
+    /** Human-readable failure text for a failed [Result], never null. */
+    private fun Result<*>.errorText(): String =
+        exceptionOrNull()?.localizedMessage
+            ?: exceptionOrNull()?.javaClass?.simpleName
+            ?: getApplication<Application>().getString(R.string.error_unknown)
 
     fun consumeExportResult() { _exportResult.value = null }
 
@@ -276,7 +293,7 @@ class OpenLumenViewModel @Inject constructor(
         if (result.isSuccess) {
             _pendingImport.value = PendingImport(uri, result.getOrThrow())
         } else {
-            _exportResult.value = "Import failed: ${result.exceptionOrNull()?.message}"
+            _exportResult.value = getString(R.string.backup_import_failed, result.errorText())
         }
     }
 
