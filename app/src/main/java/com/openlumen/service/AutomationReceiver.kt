@@ -42,13 +42,24 @@ class AutomationReceiver : BroadcastReceiver() {
         }
         lastForwardedMs[action] = now
 
-        val result = LumenServiceStarter.start(
-            context,
-            Intent(context, LumenService::class.java)
-                .setAction(action)
-                .replaceExtras(intent),
-            tag
-        )
+        // Forward ONLY the two documented extras rather than replaceExtras(intent).
+        // This receiver is exported, so the inbound bundle is untrusted: a hostile
+        // local app could attach arbitrary or oversized extras that we would
+        // otherwise copy verbatim into the service intent. The service itself
+        // still validates the values (preset key existence, NaN/range on VALUE);
+        // this just bounds the surface to what we actually consume.
+        val forward = Intent(context, LumenService::class.java).setAction(action)
+        intent.getStringExtra(LumenService.EXTRA_PRESET_KEY)?.let {
+            forward.putExtra(LumenService.EXTRA_PRESET_KEY, it)
+        }
+        if (intent.hasExtra(LumenService.EXTRA_VALUE)) {
+            forward.putExtra(
+                LumenService.EXTRA_VALUE,
+                intent.getFloatExtra(LumenService.EXTRA_VALUE, Float.NaN)
+            )
+        }
+
+        val result = LumenServiceStarter.start(context, forward, tag)
         if (!result.started) {
             Log.w(tag, "automation service start failed: ${result.error?.message ?: "unknown"}")
         }
