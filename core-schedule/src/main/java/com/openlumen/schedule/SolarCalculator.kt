@@ -68,9 +68,22 @@ object SolarCalculator {
         val sinDec = 0.39782 * sin(Math.toRadians(l))
         val cosDec = cos(asin(sinDec))
         val denom = cosDec * cos(Math.toRadians(latitude))
-        if (denom == 0.0) return Polar.NONE
-        val cosH = (cos(Math.toRadians(OFFICIAL_ZENITH))
-            - sinDec * sin(Math.toRadians(latitude))) / denom
+        val numerator = cos(Math.toRadians(OFFICIAL_ZENITH)) - sinDec * sin(Math.toRadians(latitude))
+        // Exact pole (lat = ±90°). `cos(lat)` is exactly 0, so `denom` is 0
+        // and the division below is undefined. The limit as latitude → ±90°
+        // is still well-defined: `cosDec` is always > 0 (declination is in
+        // ±23.5°) and `cos(lat)` approaches 0 from the positive side, so
+        // `cosH` diverges to ±∞ with the sign of the numerator. A positive
+        // numerator means the sun never reaches the horizon (polar night);
+        // a negative numerator means it never sinks below it (polar day).
+        if (denom == 0.0) {
+            return when {
+                numerator > 0.0 -> Polar.NIGHT
+                numerator < 0.0 -> Polar.DAY
+                else -> Polar.NONE
+            }
+        }
+        val cosH = numerator / denom
         return when {
             cosH > 1.0 -> Polar.NIGHT  // sun never rises
             cosH < -1.0 -> Polar.DAY   // sun never sets
@@ -115,7 +128,9 @@ object SolarCalculator {
         // The Polar field in [Times] is the authoritative signal for
         // callers; the [ZonedDateTime] returned here keeps the type
         // non-null so downstream `.plusMinutes(...)` calls don't NPE.
-        if (cosH > 1.0 || cosH < -1.0) {
+        // `cosH.isNaN()` covers the exact-pole 0/0 case (lat ±90° with a
+        // zero numerator) so acos(NaN) never propagates an invalid time.
+        if (cosH.isNaN() || cosH > 1.0 || cosH < -1.0) {
             return date.atTime(12, 0).atZone(zoneId)
         }
 

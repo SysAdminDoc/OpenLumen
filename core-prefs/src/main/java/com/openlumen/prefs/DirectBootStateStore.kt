@@ -110,16 +110,16 @@ internal fun sanitizeDirectBootState(state: DirectBootState): DirectBootState =
  * [PreferencesStore.sanitizeMatrix].
  */
 private fun sanitizeDirectBootMatrix(matrix: MatrixDto): MatrixDto = matrix.copy(
-    r = matrix.r.finiteIn(0f, 2f, default = 1f),
-    g = matrix.g.finiteIn(0f, 2f, default = 1f),
-    b = matrix.b.finiteIn(0f, 2f, default = 1f),
+    r = matrix.r.finiteIn(0f, 1f, default = 1f),
+    g = matrix.g.finiteIn(0f, 1f, default = 1f),
+    b = matrix.b.finiteIn(0f, 1f, default = 1f),
     biasR = matrix.biasR.finiteIn(-1f, 1f, default = 0f),
     biasG = matrix.biasG.finiteIn(-1f, 1f, default = 0f),
     biasB = matrix.biasB.finiteIn(-1f, 1f, default = 0f),
     dim = matrix.dim.finiteIn(0f, 0.95f, default = 0f),
-    gammaR = matrix.gammaR.finiteIn(0.05f, 5f, default = 1f),
-    gammaG = matrix.gammaG.finiteIn(0.05f, 5f, default = 1f),
-    gammaB = matrix.gammaB.finiteIn(0.05f, 5f, default = 1f),
+    gammaR = matrix.gammaR.finiteIn(0.1f, 5f, default = 1f),
+    gammaG = matrix.gammaG.finiteIn(0.1f, 5f, default = 1f),
+    gammaB = matrix.gammaB.finiteIn(0.1f, 5f, default = 1f),
     matrixRr = matrix.matrixRr.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f),
     matrixRg = matrix.matrixRg.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
     matrixRb = matrix.matrixRb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),

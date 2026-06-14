@@ -59,6 +59,28 @@ class SolarCalculatorTest {
         assertThat(times.polar).isEqualTo(SolarCalculator.Polar.NIGHT)
     }
 
+    @Test fun `exact north pole classifies polar day in summer and polar night in winter`() {
+        // Regression (C192): at lat +90 the denominator (cosDec*cos(lat)) is
+        // exactly 0, which previously collapsed to Polar.NONE. The pole is
+        // unambiguously midnight-sun in June and polar night in December.
+        val zone = ZoneId.of("UTC")
+        val summer = SolarCalculator.computeTimes(LocalDate.of(2026, 6, 21), 90.0, 0.0, zone)
+        val winter = SolarCalculator.computeTimes(LocalDate.of(2026, 12, 21), 90.0, 0.0, zone)
+        assertThat(summer.polar).isEqualTo(SolarCalculator.Polar.DAY)
+        assertThat(winter.polar).isEqualTo(SolarCalculator.Polar.NIGHT)
+        // compute() must not leak NaN into the returned wall-clock time.
+        assertThat(summer.sunrise.hour).isIn(0..23)
+        assertThat(winter.sunset.hour).isIn(0..23)
+    }
+
+    @Test fun `exact south pole inverts the seasons`() {
+        val zone = ZoneId.of("UTC")
+        val summer = SolarCalculator.computeTimes(LocalDate.of(2026, 6, 21), -90.0, 0.0, zone)
+        val winter = SolarCalculator.computeTimes(LocalDate.of(2026, 12, 21), -90.0, 0.0, zone)
+        assertThat(summer.polar).isEqualTo(SolarCalculator.Polar.NIGHT)
+        assertThat(winter.polar).isEqualTo(SolarCalculator.Polar.DAY)
+    }
+
     @Test fun `returned sunrise and sunset land on the requested local date`() {
         // Regression: pre-fix the western-hemisphere sunset stamped on the
         // input UTC date converted to the previous local-zone date,

@@ -32,6 +32,9 @@ class DirectBootStateSerializerTest {
     }
 
     @Test fun `direct boot matrix values are clamped before persist`() = runBlocking {
+        // C193: r/g/b channels clamp to 0..1 (matching PreferencesStore), not
+        // the prior 0..2 drift that let a restored tint exceed the canonical
+        // range the engine and main store agree on.
         val state = DirectBootState(
             enabled = true,
             active = true,
@@ -48,11 +51,30 @@ class DirectBootStateSerializerTest {
         DirectBootStateSerializer.writeTo(state, out)
         val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(out.toByteArray()))
 
-        assertThat(decoded.matrix.r).isEqualTo(2f)
+        assertThat(decoded.matrix.r).isEqualTo(1f)
         assertThat(decoded.matrix.g).isEqualTo(1f)
         assertThat(decoded.matrix.b).isEqualTo(0f)
         assertThat(decoded.matrix.biasR).isEqualTo(1f)
         assertThat(decoded.matrix.gammaB).isEqualTo(5f)
+    }
+
+    @Test fun `direct boot in-range channel that exceeds canonical store is clamped`() = runBlocking {
+        // 1.5 is a value that never occurs through normal app interaction
+        // (PreferencesStore caps at 1.0) but previously survived the mirror's
+        // looser 0..2 clamp. Both stores must agree on the visual result.
+        val state = DirectBootState(
+            enabled = true,
+            active = true,
+            matrix = MatrixDto(r = 1.5f, g = 1.5f, b = 1.5f)
+        )
+
+        val out = ByteArrayOutputStream()
+        DirectBootStateSerializer.writeTo(state, out)
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(out.toByteArray()))
+
+        assertThat(decoded.matrix.r).isEqualTo(1f)
+        assertThat(decoded.matrix.g).isEqualTo(1f)
+        assertThat(decoded.matrix.b).isEqualTo(1f)
     }
 
     @Test fun `direct boot matrix CVD coefficients are clamped and NaN-defaulted`() = runBlocking {
