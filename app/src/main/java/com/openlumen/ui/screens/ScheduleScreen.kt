@@ -1,6 +1,8 @@
 package com.openlumen.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -84,15 +86,24 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth().clickable { vm.setScheduleMode(mode) }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = prefs.schedule.mode == mode,
+                        onClick = { vm.setScheduleMode(mode) },
+                        role = Role.RadioButton
+                    )
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // onClick = null: the Card's selectable() is the single
+                    // accessibility node, so TalkBack announces the label plus
+                    // "selected/not selected" and the RadioButton role once.
                     RadioButton(
                         selected = prefs.schedule.mode == mode,
-                        onClick = { vm.setScheduleMode(mode) }
+                        onClick = null
                     )
                     Text(label, style = MaterialTheme.typography.bodyLarge)
                 }
@@ -257,13 +268,17 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { vm.setTransitionDuration(durationMs) }
+                            .selectable(
+                                selected = prefs.transitionDurationMs == durationMs,
+                                onClick = { vm.setTransitionDuration(durationMs) },
+                                role = Role.RadioButton
+                            )
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = prefs.transitionDurationMs == durationMs,
-                            onClick = { vm.setTransitionDuration(durationMs) }
+                            onClick = null
                         )
                         Text(label, style = MaterialTheme.typography.bodyMedium)
                     }

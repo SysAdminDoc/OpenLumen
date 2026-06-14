@@ -3,6 +3,8 @@ package com.openlumen.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +51,7 @@ import com.openlumen.engine.Presets
 import com.openlumen.presetLabel
 import com.openlumen.prefs.Preferences
 import com.openlumen.ui.components.LumenTextButton
+import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenViewModel
 import kotlinx.coroutines.launch
 
@@ -159,7 +162,13 @@ private fun PresetListPane(
                     containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
                                      else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth().clickable { onPresetClick(entry.key) }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = selected,
+                        onClick = { onPresetClick(entry.key) },
+                        role = Role.RadioButton
+                    )
             ) {
                 Row(
                     modifier = Modifier
@@ -194,9 +203,12 @@ private fun PresetListPane(
                             )
                         )
                     }
+                    // onClick = null: the Card's selectable() owns the
+                    // selection semantics; the favorite IconButton above stays
+                    // a separate accessible action.
                     RadioButton(
                         selected = selected,
-                        onClick = { onPresetClick(entry.key) }
+                        onClick = null
                     )
                 }
             }
@@ -277,9 +289,10 @@ private fun PresetDetailPane(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    ChannelRow(stringResource(R.string.channel_red_short), m.r, Color(0xFFFF6B6B))
-                    ChannelRow(stringResource(R.string.channel_green_short), m.g, Color(0xFF51CF66))
-                    ChannelRow(stringResource(R.string.channel_blue_short), m.b, Color(0xFF339AF0))
+                    val channels = lumenChannelColors()
+                    ChannelRow(stringResource(R.string.channel_red_short), m.r, channels.red)
+                    ChannelRow(stringResource(R.string.channel_green_short), m.g, channels.green)
+                    ChannelRow(stringResource(R.string.channel_blue_short), m.b, channels.blue)
                 }
             }
         }

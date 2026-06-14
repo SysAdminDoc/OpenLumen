@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -85,7 +87,14 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
-                modifier = Modifier.fillMaxWidth().clickable(enabled = selectable) { vm.setEngine(kind) }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = prefs.engine == kind,
+                        enabled = selectable,
+                        onClick = { vm.setEngine(kind) },
+                        role = Role.RadioButton
+                    )
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -93,7 +102,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 ) {
                     RadioButton(
                         selected = prefs.engine == kind,
-                        onClick = { vm.setEngine(kind) },
+                        onClick = null,
                         enabled = selectable
                     )
                     Column(Modifier.weight(1f)) {
