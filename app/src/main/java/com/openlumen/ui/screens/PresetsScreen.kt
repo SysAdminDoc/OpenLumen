@@ -7,7 +7,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -118,7 +117,7 @@ private fun PresetListPane(
     onRestorePrevious: () -> Unit
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = topLevelScrollPadding(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val previousEntry = prefs.previousPresetKey
@@ -232,7 +231,7 @@ private fun PresetDetailPane(
     val m = entry.matrix
 
     LazyColumn(
-        contentPadding = PaddingValues(24.dp),
+        contentPadding = topLevelScrollPadding(horizontal = 24.dp, top = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {

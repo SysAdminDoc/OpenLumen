@@ -100,7 +100,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(16.dp),
+                .padding(topLevelScrollPadding()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)

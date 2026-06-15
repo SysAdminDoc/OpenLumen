@@ -12,7 +12,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,7 +51,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(PaddingValues(16.dp)),
+            .padding(topLevelScrollPadding()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.driver_title), style = MaterialTheme.typography.titleMedium)
