@@ -27,7 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +54,7 @@ import com.openlumen.viewmodel.OpenLumenViewModel
 @Composable
 fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
-    val result by vm.exportResult.collectAsState()
+    val result by vm.exportResult.collectAsStateWithLifecycle()
     var showCrashLog by rememberSaveable { mutableStateOf(false) }
     var showDiagLog by rememberSaveable { mutableStateOf(false) }
     var showSaveProfileDialog by rememberSaveable { mutableStateOf(false) }
@@ -68,8 +68,8 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         contract = ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(vm::beginImportPreview) }
 
-    val pendingImport by vm.pendingImport.collectAsState()
-    val currentPrefs by vm.state.collectAsState()
+    val pendingImport by vm.pendingImport.collectAsStateWithLifecycle()
+    val currentPrefs by vm.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(result) {
         val msg = result ?: return@LaunchedEffect

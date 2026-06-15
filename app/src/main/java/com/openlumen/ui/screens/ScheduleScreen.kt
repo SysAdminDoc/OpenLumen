@@ -19,7 +19,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,8 +45,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
-    val prefs by vm.state.collectAsState()
-    val lux by vm.lux.collectAsState()
+    val prefs by vm.state.collectAsStateWithLifecycle()
+    val lux by vm.lux.collectAsStateWithLifecycle()
 
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }

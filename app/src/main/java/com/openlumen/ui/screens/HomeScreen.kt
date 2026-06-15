@@ -30,7 +30,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -68,7 +68,7 @@ private const val DIM_FINE_STEP: Float = 0.005f
 
 @Composable
 fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
-    val prefs by vm.state.collectAsState()
+    val prefs by vm.state.collectAsStateWithLifecycle()
     val preset = Presets.byKey(prefs.activePresetKey)
     val activePresetLabel = preset?.let { presetLabel(it.key, it.displayName) }
         ?: prefs.activePresetKey
