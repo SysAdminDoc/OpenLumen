@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -43,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,6 +63,8 @@ import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
+
+private val DialogLogMaxHeight = 420.dp
 
 @Composable
 fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
@@ -188,34 +192,56 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         )
                     } else {
                         currentPrefs.savedProfiles.forEach { profile ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
                                     profile.name,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                LumenTextButton(onClick = { vm.loadProfile(profile.name) }) {
-                                    Text(stringResource(R.string.about_profiles_load))
-                                }
-                                LumenTextButton(onClick = {
-                                    vm.deleteProfile(profile.name)
-                                    scope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = profileDeletedMessage,
-                                            actionLabel = undoActionLabel,
-                                            withDismissAction = true
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    LumenTextButton(
+                                        onClick = { vm.loadProfile(profile.name) },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.about_profiles_load),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            vm.restoreDeletedProfile(profile)
-                                        }
                                     }
-                                }) {
-                                    Text(stringResource(R.string.about_profiles_delete))
+                                    LumenTextButton(
+                                        onClick = {
+                                            vm.deleteProfile(profile.name)
+                                            scope.launch {
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = profileDeletedMessage,
+                                                    actionLabel = undoActionLabel,
+                                                    withDismissAction = true
+                                                )
+                                                if (result == SnackbarResult.ActionPerformed) {
+                                                    vm.restoreDeletedProfile(profile)
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.about_profiles_delete),
+                                            color = MaterialTheme.colorScheme.error,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -329,10 +355,21 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             onDismissRequest = { showCrashLog = false },
             title = { Text(stringResource(R.string.about_crash_log_title)) },
             text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = DialogLogMaxHeight)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Text(
                         if (log.isBlank()) stringResource(R.string.about_crash_log_empty) else log,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        fontFamily = if (log.isBlank()) null else FontFamily.Monospace,
+                        softWrap = log.isBlank(),
+                        modifier = if (log.isBlank()) {
+                            Modifier
+                        } else {
+                            Modifier.horizontalScroll(rememberScrollState())
+                        }
                     )
                 }
             },
@@ -358,7 +395,11 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             onDismissRequest = { vm.cancelPendingImport() },
             title = { Text(stringResource(R.string.import_preview_title)) },
             text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = DialogLogMaxHeight)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     if (pending.summary.droppedDuplicateNames.isNotEmpty()) {
                         Text(
                             text = stringResource(
@@ -565,7 +606,11 @@ private fun DiagnosticsLogDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.about_diag_log_title)) },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = DialogLogMaxHeight)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 if (rawLines.isEmpty()) {
                     Text(
                         stringResource(R.string.about_diag_log_empty),
@@ -633,7 +678,10 @@ private fun DiagnosticsLogDialog(
                     } else {
                         Text(
                             filteredLines.joinToString("\n"),
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            softWrap = false,
+                            modifier = Modifier.horizontalScroll(rememberScrollState())
                         )
                     }
                 }

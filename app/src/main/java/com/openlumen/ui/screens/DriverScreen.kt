@@ -230,9 +230,9 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         // Driver report (C02). One button copies, one shares — pick whichever
         // fits the reporter's workflow. The report itself is built lazily on
         // click so it always reflects the latest prefs + probe state.
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val clipboardDriverReport = stringResource(R.string.clipboard_driver_report)
             val reportCopied = stringResource(R.string.report_copied)
@@ -252,7 +252,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         Toast.LENGTH_SHORT
                     ).show()
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(R.string.driver_copy_report)) }
 
             LumenButton(
@@ -267,7 +267,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         Intent.createChooser(send, driverShareReport)
                     )
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(R.string.driver_share_report)) }
         }
     }

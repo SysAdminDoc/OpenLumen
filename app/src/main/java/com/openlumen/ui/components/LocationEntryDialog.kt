@@ -163,6 +163,7 @@ fun LocationEntryDialog(
                                 .clickable(role = Role.Button) {
                                     latText = formatCoord(city.latitude)
                                     lngText = formatCoord(city.longitude)
+                                    focusManager.clearFocus()
                                 }
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
