@@ -177,6 +177,7 @@
     <string name="about_profiles_save">現在の設定を保存…</string>
     <string name="about_profiles_save_title">プロファイルを保存</string>
     <string name="about_profiles_name_label">プロファイル名</string>
+    <string name="about_profiles_name_count">長さ %1$d/%2$d</string>
     <string name="about_profiles_load">読み込み</string>
     <string name="about_profiles_delete">削除</string>
     <string name="about_profiles_deleted">プロファイルを削除しました</string>

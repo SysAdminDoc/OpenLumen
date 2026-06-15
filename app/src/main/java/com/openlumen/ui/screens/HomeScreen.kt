@@ -7,7 +7,6 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -37,10 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
@@ -126,18 +130,21 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             shape = MaterialTheme.shapes.large,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    val enabling = !prefs.enabled
-                    vm.setEnabled(enabling)
-                    if (enabling) requestNotifIfNeeded()
-                }
+                .toggleable(
+                    value = prefs.enabled,
+                    role = Role.Switch,
+                    onValueChange = { enabled ->
+                        vm.setEnabled(enabled)
+                        if (enabled) requestNotifIfNeeded()
+                    }
+                )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (prefs.enabled)
                             stringResource(R.string.home_filter_on)
@@ -148,15 +155,14 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     Text(
                         text = activePresetLabel,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Switch(
                     checked = prefs.enabled,
-                    onCheckedChange = { enabled ->
-                        vm.setEnabled(enabled)
-                        if (enabled) requestNotifIfNeeded()
-                    }
+                    onCheckedChange = null
                 )
             }
         }
@@ -425,7 +431,7 @@ private fun GammaSlider(
                 .background(color = track, shape = RoundedCornerShape(4.dp))
         )
         Spacer(Modifier.size(8.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
         Slider(
             value = value,
             onValueChange = onChange,
@@ -435,7 +441,13 @@ private fun GammaSlider(
                 .padding(horizontal = 8.dp)
                 .semantics { stateDescription = gammaState }
         )
-        Text(stringResource(R.string.home_gamma_value, value), style = MaterialTheme.typography.bodySmall)
+        Text(
+            stringResource(R.string.home_gamma_value, value),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.widthIn(min = 44.dp),
+            textAlign = TextAlign.End,
+            maxLines = 1
+        )
     }
 }
 
@@ -455,7 +467,7 @@ private fun RgbSlider(
                 .background(color = track, shape = RoundedCornerShape(4.dp))
         )
         Spacer(Modifier.size(8.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
         Slider(
             value = value,
             onValueChange = onChange,
@@ -465,6 +477,12 @@ private fun RgbSlider(
                 .padding(horizontal = 8.dp)
                 .semantics { stateDescription = rgbState }
         )
-        Text(stringResource(R.string.home_rgb_value, percent), style = MaterialTheme.typography.bodySmall)
+        Text(
+            stringResource(R.string.home_rgb_value, percent),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.widthIn(min = 32.dp),
+            textAlign = TextAlign.End,
+            maxLines = 1
+        )
     }
 }

@@ -177,6 +177,7 @@
     <string name="about_profiles_save">Salvar atual como…</string>
     <string name="about_profiles_save_title">Salvar perfil</string>
     <string name="about_profiles_name_label">Nome do perfil</string>
+    <string name="about_profiles_name_count">Comprimento %1$d/%2$d</string>
     <string name="about_profiles_load">Carregar</string>
     <string name="about_profiles_delete">Excluir</string>
     <string name="about_profiles_deleted">Perfil excluído</string>

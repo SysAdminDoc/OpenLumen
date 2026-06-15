@@ -177,6 +177,7 @@
     <string name="about_profiles_save">Enregistrer sous…</string>
     <string name="about_profiles_save_title">Enregistrer le profil</string>
     <string name="about_profiles_name_label">Nom du profil</string>
+    <string name="about_profiles_name_count">Longueur %1$d/%2$d</string>
     <string name="about_profiles_load">Charger</string>
     <string name="about_profiles_delete">Supprimer</string>
     <string name="about_profiles_deleted">Profil supprimé</string>

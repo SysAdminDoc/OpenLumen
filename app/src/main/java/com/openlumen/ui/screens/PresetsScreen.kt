@@ -2,7 +2,6 @@ package com.openlumen.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +43,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
@@ -142,7 +143,9 @@ private fun PresetListPane(
                         Text(
                             text = stringResource(R.string.preset_previous, previousLabel),
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         LumenTextButton(onClick = onRestorePrevious) {
                             Text(stringResource(R.string.preset_restore_previous))
@@ -189,7 +192,9 @@ private fun PresetListPane(
                         text = entryLabel,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     IconButton(onClick = { onFavoriteToggle(entry.key) }) {
                         Icon(
@@ -247,7 +252,9 @@ private fun PresetDetailPane(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (isSelected) {
                     Surface(
@@ -361,7 +368,9 @@ private fun ChannelRow(label: String, value: Float, color: Color) {
         Text(
             text = "${(value * 100).toInt()}%",
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(40.dp),
+            textAlign = TextAlign.End,
+            maxLines = 1
         )
     }
 }

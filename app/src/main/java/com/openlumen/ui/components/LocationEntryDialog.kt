@@ -22,8 +22,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.openlumen.R
@@ -54,6 +59,7 @@ fun LocationEntryDialog(
     onDismiss: () -> Unit,
     onSave: (lat: Double, lng: Double) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     var latText by rememberSaveable {
         mutableStateOf(initialLat?.let { formatCoord(it) } ?: "")
     }
@@ -92,7 +98,13 @@ fun LocationEntryDialog(
                     value = latText,
                     onValueChange = { latText = it },
                     label = { Text(stringResource(R.string.location_latitude)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
                     singleLine = true,
                     isError = latError,
                     supportingText = if (latError) {
@@ -104,7 +116,17 @@ fun LocationEntryDialog(
                     value = lngText,
                     onValueChange = { lngText = it },
                     label = { Text(stringResource(R.string.location_longitude)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            val lat = latVal
+                            val lng = lngVal
+                            if (lat != null && lng != null && canSave) onSave(lat, lng)
+                        }
+                    ),
                     singleLine = true,
                     isError = lngError,
                     supportingText = if (lngError) {
@@ -134,7 +156,7 @@ fun LocationEntryDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                .clickable(role = Role.Button) {
                                     latText = formatCoord(city.latitude)
                                     lngText = formatCoord(city.longitude)
                                 }

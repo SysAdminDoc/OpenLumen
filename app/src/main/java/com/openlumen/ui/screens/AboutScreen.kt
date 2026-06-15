@@ -6,6 +6,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -40,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.BuildConfig
@@ -190,7 +195,9 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                                 Text(
                                     profile.name,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 LumenTextButton(onClick = { vm.loadProfile(profile.name) }) {
                                     Text(stringResource(R.string.about_profiles_load))
@@ -234,7 +241,15 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     val command = emergencyOffCommand(ctx.packageName)
                     val clipboardEmergencyOff = stringResource(R.string.clipboard_emergency_off)
                     val emergencyOffCopied = stringResource(R.string.about_emergency_off_copied)
-                    Text(command, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        command,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                    )
                     LumenOutlinedButton(
                         onClick = {
                             copyToClipboardAbout(ctx, clipboardEmergencyOff, command)
@@ -252,14 +267,34 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     }
 
     if (showSaveProfileDialog) {
+        val cleanProfileName = saveProfileName.trim()
+        val maxProfileNameLength = Preferences.MAX_PROFILE_NAME_LENGTH
         AlertDialog(
             onDismissRequest = { showSaveProfileDialog = false },
             title = { Text(stringResource(R.string.about_profiles_save_title)) },
             text = {
                 OutlinedTextField(
                     value = saveProfileName,
-                    onValueChange = { saveProfileName = it },
+                    onValueChange = { saveProfileName = it.take(maxProfileNameLength) },
                     label = { Text(stringResource(R.string.about_profiles_name_label)) },
+                    supportingText = {
+                        Text(
+                            stringResource(
+                                R.string.about_profiles_name_count,
+                                saveProfileName.length,
+                                maxProfileNameLength
+                            )
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (cleanProfileName.isNotEmpty()) {
+                                vm.saveProfileAs(cleanProfileName)
+                                showSaveProfileDialog = false
+                            }
+                        }
+                    ),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -267,10 +302,10 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             confirmButton = {
                 LumenTextButton(
                     onClick = {
-                        vm.saveProfileAs(saveProfileName)
+                        vm.saveProfileAs(cleanProfileName)
                         showSaveProfileDialog = false
                     },
-                    enabled = saveProfileName.trim().isNotEmpty()
+                    enabled = cleanProfileName.isNotEmpty()
                 ) { Text(stringResource(R.string.about_profiles_save)) }
             },
             dismissButton = {
