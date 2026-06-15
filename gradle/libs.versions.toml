@@ -21,7 +21,7 @@ roborazzi = "1.60.0"
 robolectric = "4.16.1"
 
 junit = "4.13.2"
-truth = "1.4.4"
+truth = "1.4.5"
 
 [libraries]
 junit = { module = "junit:junit", version.ref = "junit" }
