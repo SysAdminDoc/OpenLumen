@@ -33,9 +33,9 @@ class ColorDisplayManagerEngine : ColorEngine {
     private val tag = "OpenLumen/CDM"
 
     /** Lazy-loaded reflected handles. Reset to null on isAvailable() failure. */
-    private var cdm: Any? = null
-    private var setActivated: Method? = null
-    private var setTemperature: Method? = null
+    @Volatile private var cdm: Any? = null
+    @Volatile private var setActivated: Method? = null
+    @Volatile private var setTemperature: Method? = null
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT < 28) return@withContext false

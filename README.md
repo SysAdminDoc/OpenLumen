@@ -199,12 +199,12 @@ See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for the source-backed release plan and the
-candidate inventory. The `Now: v0.5.0` section is largely shipped; the
-deferred items have design sketches in
+candidate inventory. The `Now` candidates through v0.6.0 are largely
+shipped; deferred items have design sketches in
 [docs/deferred-candidates.md](docs/deferred-candidates.md) and
 [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md).
 
-Post-v0.5.0 work clusters around:
+Post-v0.6.0 work clusters around:
 
 - A Shizuku-backed privileged path for per-app behavior (C06)
 - Broader screenshot screen coverage beyond the initial Compose Preview /

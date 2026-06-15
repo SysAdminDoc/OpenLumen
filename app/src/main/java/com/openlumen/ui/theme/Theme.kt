@@ -24,7 +24,9 @@ private val DarkColors = darkColorScheme(
     outline = Catppuccin.Overlay1,
     outlineVariant = Catppuccin.Surface2,
     error = Catppuccin.Red,
-    onError = Catppuccin.Crust
+    onError = Catppuccin.Crust,
+    errorContainer = Catppuccin.Surface0,
+    onErrorContainer = Catppuccin.Red
 )
 
 // Full Catppuccin Latte mapping. Previously only primary/secondary/tertiary

@@ -82,6 +82,7 @@ fun LightSensorCard(
                 onValueChange = onThresholdChange,
                 valueRange = 0f..200f,
                 steps = 39,
+                enabled = enabled,
                 modifier = Modifier.semantics {
                     stateDescription = thresholdState
                 }
@@ -89,7 +90,7 @@ fun LightSensorCard(
 
             LumenOutlinedButton(
                 onClick = onUseCurrent,
-                enabled = currentLux >= 0,
+                enabled = enabled && currentLux >= 0,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.light_sensor_calibrate))

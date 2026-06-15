@@ -39,7 +39,11 @@ class DriverProbe(
             .sortedByDescending { it.engine.kind.rank }
     }
 
-    /** Pick the highest-rank available root engine, or [OverlayEngine] on non-root devices. */
+    /**
+     * Pick the best available engine: root engines first (by rank), then CDM
+     * (requires WRITE_SECURE_SETTINGS but produces framebuffer-level output),
+     * then Overlay as the universal fallback.
+     */
     suspend fun pickBest(context: Context): ColorEngine {
         val probes = probeAll(context)
         return pickBestFrom(probes)
@@ -47,6 +51,7 @@ class DriverProbe(
 
     internal fun pickBestFrom(probes: List<Probe>): ColorEngine =
         probes.firstOrNull { it.available && it.engine.kind.requiresRoot }?.engine
+            ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER }?.engine
             ?: engines.first { it.kind == EngineKind.OVERLAY }
 
     /** Look up an engine by kind. Used when the user pins a specific driver. */

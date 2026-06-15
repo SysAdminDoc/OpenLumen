@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
 import com.openlumen.diagnostics.DiagnosticsLog
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Exported entrypoint for ADB and automation tools.
@@ -28,14 +30,14 @@ class AutomationReceiver : BroadcastReceiver() {
         val now = SystemClock.elapsedRealtime()
         val lastForwarded = lastForwardedMs.getOrDefault(action, 0L)
         if (now - lastForwarded < THROTTLE_MS) {
-            throttleCount++
-            if (throttleCount % 20 == 1L) {
-                Log.d(tag, "throttled $action (${throttleCount} total)")
+            val count = throttleCount.incrementAndGet()
+            if (count % 20 == 1L) {
+                Log.d(tag, "throttled $action ($count total)")
                 DiagnosticsLog.log(
                     context,
                     DiagnosticsLog.Level.INFO,
                     DiagnosticsLog.Category.SERVICE,
-                    "automation throttled: $throttleCount intents dropped"
+                    "automation throttled: $count intents dropped"
                 )
             }
             return
@@ -81,7 +83,7 @@ class AutomationReceiver : BroadcastReceiver() {
             LumenService.ACTION_SET_DIM
         )
 
-        val lastForwardedMs = HashMap<String, Long>()
-        var throttleCount = 0L
+        val lastForwardedMs = ConcurrentHashMap<String, Long>()
+        val throttleCount = AtomicLong()
     }
 }

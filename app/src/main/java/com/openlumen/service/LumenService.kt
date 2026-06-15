@@ -762,7 +762,10 @@ class LumenService : LifecycleService() {
             } else {
                 runCatching { e.apply(this@LumenService, matrix) }
                     .onSuccess { lastApplied = matrix }
-                    .onFailure { Log.w(tag, "engine.apply() failed: ${it.message}") }
+                    .onFailure {
+                        Log.w(tag, "engine.apply() failed: ${it.message}")
+                        cachedAutoKind = null
+                    }
             }
         }
     }

@@ -56,7 +56,7 @@ fun OpenLumenRoot() {
                         icon = {
                             Icon(
                                 painter = painterResource(dest.iconRes),
-                                contentDescription = null
+                                contentDescription = stringResource(dest.labelRes)
                             )
                         },
                         label = { Text(stringResource(dest.labelRes)) }

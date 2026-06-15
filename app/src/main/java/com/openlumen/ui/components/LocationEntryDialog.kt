@@ -155,7 +155,7 @@ fun LocationEntryDialog(
                         .heightIn(min = 0.dp, max = 200.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    items(matches, key = { it.displayName }) { city ->
+                    items(matches, key = { "${it.displayName}|${it.latitude},${it.longitude}" }) { city ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

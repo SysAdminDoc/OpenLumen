@@ -182,7 +182,14 @@ data class LumenMatrix(
         val scalar = copy(
             r = 1f + (r - 1f) * u,
             g = 1f + (g - 1f) * u,
-            b = 1f + (b - 1f) * u
+            b = 1f + (b - 1f) * u,
+            dim = dim * u,
+            biasR = biasR * u,
+            biasG = biasG * u,
+            biasB = biasB * u,
+            gammaR = 1f + (gammaR - 1f) * u,
+            gammaG = 1f + (gammaG - 1f) * u,
+            gammaB = 1f + (gammaB - 1f) * u
         )
         if (!hasColorMatrix) return scalar
         return scalar.copy(

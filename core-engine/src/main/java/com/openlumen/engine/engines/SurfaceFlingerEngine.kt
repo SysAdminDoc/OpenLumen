@@ -9,8 +9,6 @@ import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 /**
  * Applies a 4x4 color matrix at the SurfaceFlinger level via `service call SurfaceFlinger`.
@@ -146,8 +144,7 @@ class SurfaceFlingerEngine : ColorEngine {
             val m = matrix.toSurfaceFlinger16()
             val sb = StringBuilder("service call SurfaceFlinger ").append(code).append(" i32 1")
             for (f in m) {
-                // Reinterpret IEEE 754 bits to int, since `service call` wants i32 slots.
-                val bits = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(f).getInt(0)
+                val bits = f.toRawBits()
                 sb.append(" i32 ").append(bits)
             }
             return sb.toString()

@@ -23,7 +23,7 @@ class DriverProbeTest {
         ).isEqualTo(EngineKind.SURFACE_FLINGER)
     }
 
-    @Test fun `auto falls back to overlay when no root engine is available`() {
+    @Test fun `auto falls back to CDM when no root engine is available but CDM is`() {
         val engines = engines()
         val probe = DriverProbe(engines)
 
@@ -32,6 +32,23 @@ class DriverProbeTest {
                 probes(
                     engines,
                     EngineKind.COLOR_DISPLAY_MANAGER to true,
+                    EngineKind.SURFACE_FLINGER to false,
+                    EngineKind.KCAL to false,
+                    EngineKind.OVERLAY to true
+                )
+            ).kind
+        ).isEqualTo(EngineKind.COLOR_DISPLAY_MANAGER)
+    }
+
+    @Test fun `auto falls back to overlay when neither root nor CDM is available`() {
+        val engines = engines()
+        val probe = DriverProbe(engines)
+
+        assertThat(
+            probe.pickBestFrom(
+                probes(
+                    engines,
+                    EngineKind.COLOR_DISPLAY_MANAGER to false,
                     EngineKind.SURFACE_FLINGER to false,
                     EngineKind.KCAL to false,
                     EngineKind.OVERLAY to true

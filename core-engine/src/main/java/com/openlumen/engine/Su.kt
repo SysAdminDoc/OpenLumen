@@ -105,6 +105,8 @@ object Su {
                 }
             } catch (e: IOException) {
                 Log.d(TAG, "runShell: stdin write failed (${e.message})")
+                proc.destroyForcibly()
+                return@withTimeoutOrNull -1
             }
             proc.waitFor()
         } ?: run {
