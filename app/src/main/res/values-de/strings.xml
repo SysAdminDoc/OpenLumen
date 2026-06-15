@@ -179,12 +179,14 @@
     <string name="about_profiles_name_label">Profilname</string>
     <string name="about_profiles_load">Laden</string>
     <string name="about_profiles_delete">Löschen</string>
+    <string name="about_profiles_deleted">Profil gelöscht</string>
     <string name="about_profiles_empty">Noch keine Profile gespeichert.</string>
     <string name="action_ok">OK</string>
     <string name="action_save">Speichern</string>
     <string name="action_cancel">Abbrechen</string>
     <string name="action_close">Schließen</string>
     <string name="action_clear">Löschen</string>
+    <string name="action_undo">Rückgängig</string>
 
     <string name="notif_channel_name">Filterstatus</string>
     <string name="notif_channel_desc">Zeigt an, dass OpenLumen derzeit das Display einfärbt.</string>
@@ -198,6 +200,9 @@
     <string name="tile_subtitle_off">Filter aus</string>
     <string name="tile_subtitle_on">%1$s</string>
     <string name="widget_preset_hint">Markieren Sie Favoriten unter Vorlagen, um diese Plätze zu füllen</string>
+
+    <string name="perm_automation_label">OpenLumen-Automatisierung</string>
+    <string name="perm_automation_description">Automatisierungsbefehle an OpenLumen senden (Filter umschalten, Preset ändern, Intensität festlegen).</string>
 
     <string name="perm_overlay_title">Anzeige über anderen Apps erlauben</string>
     <string name="perm_overlay_rationale">Erforderlich für den rootlosen Overlay-Treiber. Überspringen, wenn Sie nur Root-Treiber verwenden.</string>

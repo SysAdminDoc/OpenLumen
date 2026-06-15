@@ -17,6 +17,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:baselineAligned="false"
         android:orientation="horizontal"
         android:gravity="center"
         android:weightSum="4">
@@ -37,11 +38,13 @@
                 android:src="@drawable/widget_swatch_circle" />
             <TextView
                 android:id="@+id/widget_preset_label0"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:gravity="center"
                 android:singleLine="true"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:text="" />
         </LinearLayout>
 
@@ -61,11 +64,13 @@
                 android:src="@drawable/widget_swatch_circle" />
             <TextView
                 android:id="@+id/widget_preset_label1"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:gravity="center"
                 android:singleLine="true"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:text="" />
         </LinearLayout>
 
@@ -85,11 +90,13 @@
                 android:src="@drawable/widget_swatch_circle" />
             <TextView
                 android:id="@+id/widget_preset_label2"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:gravity="center"
                 android:singleLine="true"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:text="" />
         </LinearLayout>
 
@@ -109,11 +116,13 @@
                 android:src="@drawable/widget_swatch_circle" />
             <TextView
                 android:id="@+id/widget_preset_label3"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:gravity="center"
                 android:singleLine="true"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:text="" />
         </LinearLayout>
 
@@ -125,6 +134,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
+        android:ellipsize="end"
         android:padding="8dp"
         android:textSize="11sp"
         android:singleLine="true"

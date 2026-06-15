@@ -152,6 +152,7 @@ fun LocationEntryDialog(
                                     lngText = formatCoord(city.longitude)
                                 },
                                 label = { Text(stringResource(R.string.location_use_city)) },
+                                shape = MaterialTheme.shapes.small,
                                 colors = AssistChipDefaults.assistChipColors()
                             )
                         }

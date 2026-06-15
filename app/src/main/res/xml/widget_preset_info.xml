@@ -5,6 +5,7 @@
     picker preview surface.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:minWidth="180dp"
     android:minHeight="40dp"
     android:minResizeWidth="180dp"
@@ -17,4 +18,5 @@
     android:previewLayout="@layout/widget_preset"
     android:resizeMode="horizontal"
     android:widgetCategory="home_screen"
-    android:configure="" />
+    android:configure=""
+    tools:targetApi="s" />

@@ -11,6 +11,7 @@ import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.ImportSummary
+import com.openlumen.prefs.NamedProfile
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
@@ -94,6 +95,10 @@ class OpenLumenViewModel @Inject constructor(
 
     fun deleteProfile(name: String) = viewModelScope.launch {
         prefs.update { com.openlumen.prefs.Profiles.delete(it, name) }
+    }
+
+    fun restoreDeletedProfile(profile: NamedProfile) = viewModelScope.launch {
+        prefs.update { com.openlumen.prefs.Profiles.restoreDeleted(it, profile) }
     }
 
     fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {

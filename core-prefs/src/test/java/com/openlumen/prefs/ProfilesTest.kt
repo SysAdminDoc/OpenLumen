@@ -123,6 +123,19 @@ class ProfilesTest {
         assertThat(after.savedProfiles.map { it.name }).containsExactly("b")
     }
 
+    @Test fun `restoreDeleted reinstates deleted profile without duplicating names`() {
+        var p = Preferences(activePresetKey = "night")
+        p = Profiles.saveCurrentAs(p, "evening")
+        val deleted = p.savedProfiles.single()
+
+        val afterDelete = Profiles.delete(p, "evening")
+        val restored = Profiles.restoreDeleted(afterDelete, deleted)
+        val restoredAgain = Profiles.restoreDeleted(restored, deleted)
+
+        assertThat(restored.savedProfiles).containsExactly(deleted)
+        assertThat(restoredAgain.savedProfiles).containsExactly(deleted)
+    }
+
     @Test fun `import duplicate summary reports profile names dropped by last-write-wins`() {
         val first = NamedProfile("evening", Profiles.snapshot(Preferences(activePresetKey = "night")))
         val second = NamedProfile("  evening  ", Profiles.snapshot(Preferences(activePresetKey = "amber")))

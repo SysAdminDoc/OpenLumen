@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OpenLumen</string>
+    <string name="app_name" translatable="false">OpenLumen</string>
 
     <string name="nav_home">Home</string>
     <string name="nav_schedule">Schedule</string>
@@ -187,11 +187,13 @@
     <string name="about_profiles_load">Load</string>
     <string name="about_profiles_delete">Delete</string>
     <string name="about_profiles_empty">No profiles saved yet.</string>
+    <string name="about_profiles_deleted">Profile deleted</string>
     <string name="action_ok">OK</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_close">Close</string>
     <string name="action_clear">Clear</string>
+    <string name="action_undo">Undo</string>
 
     <!-- Notification channel ID — must NOT be translated. Used as an
          identifier by Android's NotificationManager; translating it

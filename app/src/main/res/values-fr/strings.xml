@@ -179,12 +179,14 @@
     <string name="about_profiles_name_label">Nom du profil</string>
     <string name="about_profiles_load">Charger</string>
     <string name="about_profiles_delete">Supprimer</string>
+    <string name="about_profiles_deleted">Profil supprimé</string>
     <string name="about_profiles_empty">Aucun profil enregistre.</string>
     <string name="action_ok">OK</string>
     <string name="action_save">Enregistrer</string>
     <string name="action_cancel">Annuler</string>
     <string name="action_close">Fermer</string>
     <string name="action_clear">Effacer</string>
+    <string name="action_undo">Annuler</string>
 
     <string name="notif_channel_name">Etat du filtre</string>
     <string name="notif_channel_desc">Indique qu\'OpenLumen applique actuellement une teinte a l\'ecran.</string>
@@ -198,6 +200,9 @@
     <string name="tile_subtitle_off">Filtre desactive</string>
     <string name="tile_subtitle_on">%1$s</string>
     <string name="widget_preset_hint">Marquez des favoris dans Presets pour remplir ces emplacements</string>
+
+    <string name="perm_automation_label">Automatisation OpenLumen</string>
+    <string name="perm_automation_description">Envoyer des commandes d\'automatisation à OpenLumen (activer le filtre, changer de préréglage, régler l\'intensité).</string>
 
     <string name="perm_overlay_title">Autoriser l\'affichage par-dessus les autres applications</string>
     <string name="perm_overlay_rationale">Requis pour le pilote overlay sans root. Ignorez si vous n\'utilisez que des pilotes root.</string>

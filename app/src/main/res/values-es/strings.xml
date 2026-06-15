@@ -179,12 +179,14 @@
     <string name="about_profiles_name_label">Nombre del perfil</string>
     <string name="about_profiles_load">Cargar</string>
     <string name="about_profiles_delete">Eliminar</string>
+    <string name="about_profiles_deleted">Perfil eliminado</string>
     <string name="about_profiles_empty">Aún no hay perfiles guardados.</string>
     <string name="action_ok">Aceptar</string>
     <string name="action_save">Guardar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_close">Cerrar</string>
     <string name="action_clear">Borrar</string>
+    <string name="action_undo">Deshacer</string>
 
     <string name="notif_channel_name">Estado del filtro</string>
     <string name="notif_channel_desc">Indica que OpenLumen está aplicando un filtro de color a la pantalla.</string>
@@ -198,6 +200,9 @@
     <string name="tile_subtitle_off">Filtro desactivado</string>
     <string name="tile_subtitle_on">%1$s</string>
     <string name="widget_preset_hint">Marque favoritos en Ajustes predefinidos para llenar estos espacios</string>
+
+    <string name="perm_automation_label">Automatización de OpenLumen</string>
+    <string name="perm_automation_description">Enviar comandos de automatización a OpenLumen (alternar filtro, cambiar ajuste, definir intensidad).</string>
 
     <string name="perm_overlay_title">Permitir mostrar sobre otras aplicaciones</string>
     <string name="perm_overlay_rationale">Necesario para el controlador overlay sin root. Omita si solo utiliza controladores con root.</string>

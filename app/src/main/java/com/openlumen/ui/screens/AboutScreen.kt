@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +23,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -50,6 +54,8 @@ import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenViewModel
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
@@ -59,6 +65,8 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     var showDiagLog by rememberSaveable { mutableStateOf(false) }
     var showSaveProfileDialog by rememberSaveable { mutableStateOf(false) }
     var saveProfileName by rememberSaveable { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -70,6 +78,8 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
     val pendingImport by vm.pendingImport.collectAsStateWithLifecycle()
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
+    val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
+    val undoActionLabel = stringResource(R.string.action_undo)
 
     LaunchedEffect(result) {
         val msg = result ?: return@LaunchedEffect
@@ -77,149 +87,166 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         vm.consumeExportResult()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(PaddingValues(16.dp)),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Text(stringResource(R.string.about_license), style = MaterialTheme.typography.bodyMedium)
-        Text(stringResource(R.string.about_source), style = MaterialTheme.typography.bodyMedium)
-        Text(
-            stringResource(R.string.about_offline),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(stringResource(R.string.about_license), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.about_source), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                stringResource(R.string.about_offline),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-        Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.about_backup_title), style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(R.string.about_backup_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                LumenButton(
-                    onClick = {
-                        exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json")
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.about_export_profile)) }
-                LumenOutlinedButton(
-                    onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.about_import_profile)) }
-            }
-        }
-
-        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.about_diagnostics_title), style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(R.string.about_diagnostics_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                LumenOutlinedButton(
-                    onClick = { showCrashLog = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.about_view_crash_log)) }
-                LumenOutlinedButton(
-                    onClick = { showDiagLog = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.about_view_diag_log)) }
-            }
-        }
-
-        // Named profile library (C31). Save the current configuration under a
-        // name; load it back later. Loading also records the previous active
-        // preset so the C14 restore path round-trips with profile loading.
-        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.about_profiles_title),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    stringResource(R.string.about_profiles_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                LumenOutlinedButton(
-                    onClick = {
-                        saveProfileName = ""
-                        showSaveProfileDialog = true
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.about_profiles_save)) }
-
-                if (currentPrefs.savedProfiles.isEmpty()) {
+            Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.about_backup_title), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        stringResource(R.string.about_profiles_empty),
+                        stringResource(R.string.about_backup_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
-                    currentPrefs.savedProfiles.forEach { profile ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                        ) {
-                            Text(
-                                profile.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            LumenTextButton(onClick = { vm.loadProfile(profile.name) }) {
-                                Text(stringResource(R.string.about_profiles_load))
-                            }
-                            LumenTextButton(onClick = { vm.deleteProfile(profile.name) }) {
-                                Text(stringResource(R.string.about_profiles_delete))
+                    LumenButton(
+                        onClick = {
+                            exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_export_profile)) }
+                    LumenOutlinedButton(
+                        onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_import_profile)) }
+                }
+            }
+
+            Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.about_diagnostics_title), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.about_diagnostics_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LumenOutlinedButton(
+                        onClick = { showCrashLog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_view_crash_log)) }
+                    LumenOutlinedButton(
+                        onClick = { showDiagLog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_view_diag_log)) }
+                }
+            }
+
+            // Named profile library (C31). Save the current configuration under a
+            // name; load it back later. Loading also records the previous active
+            // preset so the C14 restore path round-trips with profile loading.
+            Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.about_profiles_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        stringResource(R.string.about_profiles_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LumenOutlinedButton(
+                        onClick = {
+                            saveProfileName = ""
+                            showSaveProfileDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_profiles_save)) }
+
+                    if (currentPrefs.savedProfiles.isEmpty()) {
+                        Text(
+                            stringResource(R.string.about_profiles_empty),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        currentPrefs.savedProfiles.forEach { profile ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    profile.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                LumenTextButton(onClick = { vm.loadProfile(profile.name) }) {
+                                    Text(stringResource(R.string.about_profiles_load))
+                                }
+                                LumenTextButton(onClick = {
+                                    vm.deleteProfile(profile.name)
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = profileDeletedMessage,
+                                            actionLabel = undoActionLabel,
+                                            withDismissAction = true
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            vm.restoreDeletedProfile(profile)
+                                        }
+                                    }
+                                }) {
+                                    Text(stringResource(R.string.about_profiles_delete))
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // Emergency-off ADB command (C13). Surfaced in About so the command
-        // is discoverable even when the on-screen tint is too strong to read
-        // the rest of the UI — users learn it exists, can stash it in a
-        // password manager, and can reach it from a paired computer.
-        Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.about_emergency_off_title),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    stringResource(R.string.about_emergency_off_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                val command = emergencyOffCommand(ctx.packageName)
-                val clipboardEmergencyOff = stringResource(R.string.clipboard_emergency_off)
-                val emergencyOffCopied = stringResource(R.string.about_emergency_off_copied)
-                Text(command, style = MaterialTheme.typography.bodySmall)
-                LumenOutlinedButton(
-                    onClick = {
-                        copyToClipboardAbout(ctx, clipboardEmergencyOff, command)
-                        Toast.makeText(
-                            ctx,
-                            emergencyOffCopied,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.about_emergency_off_copy)) }
+            // Emergency-off ADB command (C13). Surfaced in About so the command
+            // is discoverable even when the on-screen tint is too strong to read
+            // the rest of the UI — users learn it exists, can stash it in a
+            // password manager, and can reach it from a paired computer.
+            Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.about_emergency_off_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        stringResource(R.string.about_emergency_off_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    val command = emergencyOffCommand(ctx.packageName)
+                    val clipboardEmergencyOff = stringResource(R.string.clipboard_emergency_off)
+                    val emergencyOffCopied = stringResource(R.string.about_emergency_off_copied)
+                    Text(command, style = MaterialTheme.typography.bodySmall)
+                    LumenOutlinedButton(
+                        onClick = {
+                            copyToClipboardAbout(ctx, clipboardEmergencyOff, command)
+                            Toast.makeText(
+                                ctx,
+                                emergencyOffCopied,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_emergency_off_copy)) }
+                }
             }
         }
     }
@@ -361,25 +388,25 @@ private fun describeDiff(
     )
     diff(
         R.string.diff_schedule_start,
-        "%02d:%02d".format(current.schedule.startHour, current.schedule.startMinute),
-        "%02d:%02d".format(next.schedule.startHour, next.schedule.startMinute)
+        String.format(Locale.ROOT, "%02d:%02d", current.schedule.startHour, current.schedule.startMinute),
+        String.format(Locale.ROOT, "%02d:%02d", next.schedule.startHour, next.schedule.startMinute)
     )
     diff(
         R.string.diff_schedule_end,
-        "%02d:%02d".format(current.schedule.endHour, current.schedule.endMinute),
-        "%02d:%02d".format(next.schedule.endHour, next.schedule.endMinute)
+        String.format(Locale.ROOT, "%02d:%02d", current.schedule.endHour, current.schedule.endMinute),
+        String.format(Locale.ROOT, "%02d:%02d", next.schedule.endHour, next.schedule.endMinute)
     )
     val unset = context.getString(R.string.value_unset)
     val currentCoords = current.schedule.latitude?.let {
-        "%.2f,%.2f".format(it, current.schedule.longitude ?: 0.0)
+        String.format(Locale.ROOT, "%.2f,%.2f", it, current.schedule.longitude ?: 0.0)
     } ?: unset
     val nextCoords = next.schedule.latitude?.let {
-        "%.2f,%.2f".format(it, next.schedule.longitude ?: 0.0)
+        String.format(Locale.ROOT, "%.2f,%.2f", it, next.schedule.longitude ?: 0.0)
     } ?: unset
     diff(R.string.diff_location, currentCoords, nextCoords)
-    diff(R.string.diff_intensity, "%.2f".format(current.presetIntensity), "%.2f".format(next.presetIntensity))
-    diff(R.string.diff_dim, "%.2f".format(current.dim), "%.2f".format(next.dim))
-    diff(R.string.diff_contrast, "%.2f".format(current.contrast), "%.2f".format(next.contrast))
+    diff(R.string.diff_intensity, String.format(Locale.ROOT, "%.2f", current.presetIntensity), String.format(Locale.ROOT, "%.2f", next.presetIntensity))
+    diff(R.string.diff_dim, String.format(Locale.ROOT, "%.2f", current.dim), String.format(Locale.ROOT, "%.2f", next.dim))
+    diff(R.string.diff_contrast, String.format(Locale.ROOT, "%.2f", current.contrast), String.format(Locale.ROOT, "%.2f", next.contrast))
     diff(
         R.string.diff_amoled_clamp,
         enabledLabel(context, current.amoledBlackClamp),
@@ -389,19 +416,19 @@ private fun describeDiff(
     if (current.lightSensorEnabled || next.lightSensorEnabled) {
         diff(
             R.string.diff_light_sensor_threshold,
-            "%d".format(current.lightSensorLuxThreshold.toInt()),
-            "%d".format(next.lightSensorLuxThreshold.toInt())
+            String.format(Locale.ROOT, "%d", current.lightSensorLuxThreshold.toInt()),
+            String.format(Locale.ROOT, "%d", next.lightSensorLuxThreshold.toInt())
         )
     }
     diff(
         R.string.diff_sunset_offset,
-        "%d".format(current.schedule.sunsetOffsetMin),
-        "%d".format(next.schedule.sunsetOffsetMin)
+        String.format(Locale.ROOT, "%d", current.schedule.sunsetOffsetMin),
+        String.format(Locale.ROOT, "%d", next.schedule.sunsetOffsetMin)
     )
     diff(
         R.string.diff_sunrise_offset,
-        "%d".format(current.schedule.sunriseOffsetMin),
-        "%d".format(next.schedule.sunriseOffsetMin)
+        String.format(Locale.ROOT, "%d", current.schedule.sunriseOffsetMin),
+        String.format(Locale.ROOT, "%d", next.schedule.sunriseOffsetMin)
     )
     diff(
         R.string.diff_favorites,
@@ -525,6 +552,7 @@ private fun DiagnosticsLogDialog(
                                     selectedLevels = if (lvl.name in selectedLevels) selectedLevels - lvl.name
                                                      else selectedLevels + lvl.name
                                 },
+                                shape = MaterialTheme.shapes.small,
                                 label = { Text(lvl.name) }
                             )
                         }
@@ -545,6 +573,7 @@ private fun DiagnosticsLogDialog(
                                     selectedCategories = if (cat.name in selectedCategories) selectedCategories - cat.name
                                                          else selectedCategories + cat.name
                                 },
+                                shape = MaterialTheme.shapes.small,
                                 label = { Text(cat.name) }
                             )
                         }

@@ -23,11 +23,7 @@ object LumenServiceStarter {
         logTag: String = "OpenLumen/ServiceStart"
     ): Result {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            context.startForegroundService(intent)
             Result(started = true)
         } catch (t: Throwable) {
             val fgsBlocked = isForegroundStartNotAllowed(t)

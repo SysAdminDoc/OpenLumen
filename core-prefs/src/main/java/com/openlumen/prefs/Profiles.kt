@@ -100,4 +100,18 @@ object Profiles {
             savedProfiles = current.savedProfiles.filterNot { it.name == name }
         )
     }
+
+    /**
+     * Restore a previously-deleted profile snapshot. Used by the UI undo path:
+     * the original profile is reinserted at the tail, matching save overwrite
+     * ordering, and duplicate names are replaced rather than duplicated.
+     */
+    fun restoreDeleted(current: Preferences, profile: NamedProfile): Preferences {
+        val cleanName = profile.name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
+        if (cleanName.isBlank()) return current
+        val withoutDuplicate = current.savedProfiles.filterNot { it.name == cleanName }
+        val updated = (withoutDuplicate + profile.copy(name = cleanName))
+            .takeLast(Preferences.MAX_PROFILES)
+        return current.copy(savedProfiles = updated)
+    }
 }

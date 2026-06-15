@@ -309,7 +309,6 @@ class LumenService : LifecycleService() {
      * site is the right place to belt-and-suspenders the race.
      */
     private fun ensureNotificationChannelRegistered() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         runCatching {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 ?: return@runCatching

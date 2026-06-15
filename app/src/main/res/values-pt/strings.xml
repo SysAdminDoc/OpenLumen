@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="nav_home">Inicio</string>
+    <string name="nav_home">Início</string>
     <string name="nav_schedule">Agenda</string>
     <string name="nav_presets">Predefinidos</string>
     <string name="nav_driver">Driver</string>
@@ -11,7 +11,7 @@
     <string name="home_filter_on">Filtro ligado</string>
     <string name="home_toggle">Alternar filtro</string>
     <string name="home_intensity">Intensidade</string>
-    <string name="home_dim">Escurecer abaixo do minimo</string>
+    <string name="home_dim">Escurecer abaixo do mínimo</string>
     <string name="home_dim_value_precise">%1$.1f%%</string>
     <string name="home_dim_fine_hint" formatted="false">Ajuste fino: ±0.5%</string>
     <string name="home_dim_fine_decrease">Reduzir escurecimento em meio porcento</string>
@@ -77,7 +77,7 @@
     <string name="diff_active_preset">Predefinido ativo</string>
     <string name="diff_engine">Motor</string>
     <string name="diff_schedule_mode">Modo de agendamento</string>
-    <string name="diff_schedule_start">Inicio do agendamento</string>
+    <string name="diff_schedule_start">Início do agendamento</string>
     <string name="diff_schedule_end">Fim do agendamento</string>
     <string name="diff_location">Localizacao</string>
     <string name="diff_intensity">Intensidade</string>
@@ -90,7 +90,7 @@
     <string name="diff_sunrise_offset">Deslocamento do nascer do sol (m)</string>
     <string name="diff_favorites">Favoritos</string>
     <string name="diff_transition">Transicao</string>
-    <string name="value_unset">nao definido</string>
+    <string name="value_unset">não definido</string>
     <string name="value_enabled">ativado</string>
     <string name="value_disabled">desativado</string>
     <string name="duration_instant">instantaneo</string>
@@ -100,11 +100,11 @@
     <string name="schedule_title">Quando deve funcionar?</string>
     <string name="schedule_off">Desligado</string>
     <string name="schedule_always">Sempre</string>
-    <string name="schedule_fixed">Horario fixo</string>
+    <string name="schedule_fixed">Horário fixo</string>
     <string name="schedule_solar">Por do sol → nascer do sol</string>
-    <string name="schedule_until_next_alarm">Ate meu proximo alarme</string>
-    <string name="schedule_until_alarm_hint">Ativa no horario de inicio e desliga quando o proximo alarme tocar. Se nao houver alarme, desativa 12 horas apos o inicio.</string>
-    <string name="schedule_start">Inicio</string>
+    <string name="schedule_until_next_alarm">Até meu próximo alarme</string>
+    <string name="schedule_until_alarm_hint">Ativa no horário de início e desliga quando o próximo alarme tocar. Se não houver alarme, desativa 12 horas após o início.</string>
+    <string name="schedule_start">Início</string>
     <string name="schedule_end">Fim</string>
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_timezone">Os agendamentos seguem o relogio do dispositivo (%1$s).</string>
@@ -121,42 +121,42 @@
     <string name="transition_30m">30 minutos</string>
 
     <string name="driver_title">Driver de exibicao</string>
-    <string name="driver_auto">Automatico (melhor disponivel)</string>
+    <string name="driver_auto">Automático (melhor disponível)</string>
     <string name="driver_color_display">AOSP ColorDisplayManager</string>
     <string name="driver_surfaceflinger">SurfaceFlinger (root)</string>
     <string name="driver_kcal">KCAL kernel (root, Qualcomm)</string>
     <string name="driver_overlay">Overlay (sem root)</string>
     <string name="driver_refresh">Verificar novamente</string>
-    <string name="driver_available">Disponivel</string>
-    <string name="driver_not_available">Indisponivel neste dispositivo</string>
-    <string name="driver_auto_resolved">Automatico escolheu: %1$s</string>
-    <string name="driver_auto_resolved_none">Automatico: nenhum driver disponivel — instale o Overlay concedendo a permissao de sobreposicao.</string>
+    <string name="driver_available">Disponível</string>
+    <string name="driver_not_available">Indisponível neste dispositivo</string>
+    <string name="driver_auto_resolved">Automático escolheu: %1$s</string>
+    <string name="driver_auto_resolved_none">Automático: nenhum driver disponível — instale o Overlay concedendo a permissão de sobreposição.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_grant_status_granted">Concedido neste dispositivo.</string>
-    <string name="driver_grant_status_not_granted">Nao concedido. O driver ColorDisplayManager fica indisponivel ate que seja concedido pelo comando ADB abaixo.</string>
+    <string name="driver_grant_status_not_granted">Não concedido. O driver ColorDisplayManager fica indisponível até que seja concedido pelo comando ADB abaixo.</string>
     <string name="driver_copy_command">Copiar comando</string>
     <string name="driver_copy_report">Copiar relatorio</string>
     <string name="driver_share_report">Compartilhar relatorio</string>
     <string name="driver_report_subject">Relatorio de driver do OpenLumen</string>
     <string name="command_copied">Comando copiado</string>
     <string name="report_copied">Relatorio copiado</string>
-    <string name="toast_service_start_failed">Nao foi possivel iniciar o servico do OpenLumen. Verifique se a permissao de sobreposicao foi concedida ou escolha um driver diferente nas Configuracoes.</string>
+    <string name="toast_service_start_failed">Não foi possível iniciar o serviço do OpenLumen. Verifique se a permissão de sobreposição foi concedida ou escolha um driver diferente nas Configurações.</string>
     <string name="clipboard_adb_grant">Concessao ADB do OpenLumen</string>
     <string name="clipboard_driver_report">Relatorio de driver do OpenLumen</string>
     <string name="clipboard_emergency_off">Desligamento de emergencia do OpenLumen</string>
     <string name="overlay_caveats_title">Sobre o driver Overlay</string>
-    <string name="overlay_alpha_cap_explanation" formatted="false">O alfa do overlay e limitado a ~80% pelas regras de toque nao confiavel do Android 12+. Para escurecimento mais profundo, use o ColorDisplayManager ou um driver com root.</string>
-    <string name="overlay_touch_pass_explanation">Enquanto o overlay estiver ativo, o Android pode bloquear toques em dialogos do instalador do sistema ou de permissoes. Essa e a protecao contra tapjacking da plataforma, nao um bug do OpenLumen — desative o filtro pelo tile ou notificacao antes de instalar aplicativos.</string>
+    <string name="overlay_alpha_cap_explanation" formatted="false">O alfa do overlay é limitado a ~80% pelas regras de toque não confiável do Android 12+. Para escurecimento mais profundo, use o ColorDisplayManager ou um driver com root.</string>
+    <string name="overlay_touch_pass_explanation">Enquanto o overlay estiver ativo, o Android pode bloquear toques em diálogos do instalador do sistema ou de permissões. Essa é a proteção contra tapjacking da plataforma, não um bug do OpenLumen — desative o filtro pelo tile ou notificação antes de instalar aplicativos.</string>
 
-    <string name="about_version">Versao</string>
-    <string name="about_license">Licenca: GPL-3.0-or-later</string>
-    <string name="about_source">Codigo-fonte: github.com/SysAdminDoc/OpenLumen</string>
-    <string name="about_offline" formatted="false">100% offline — nenhuma permissao de INTERNET solicitada.</string>
+    <string name="about_version">Versão</string>
+    <string name="about_license">Licença: GPL-3.0-or-later</string>
+    <string name="about_source">Código-fonte: github.com/SysAdminDoc/OpenLumen</string>
+    <string name="about_offline" formatted="false">100% offline — nenhuma permissão de INTERNET solicitada.</string>
     <string name="about_backup_title">Backup</string>
-    <string name="about_backup_body">Salve ou restaure suas preferencias como um arquivo JSON. Util para transferir entre dispositivos ou compartilhar predefinidos.</string>
+    <string name="about_backup_body">Salve ou restaure suas preferências como um arquivo JSON. Útil para transferir entre dispositivos ou compartilhar predefinidos.</string>
     <string name="about_export_profile">Exportar perfil</string>
     <string name="about_import_profile">Importar perfil</string>
-    <string name="about_diagnostics_title">Diagnosticos</string>
+    <string name="about_diagnostics_title">Diagnósticos</string>
     <string name="about_diagnostics_body">O OpenLumen mantem um registro local de falhas no armazenamento privado do aplicativo. Ele nunca sai do dispositivo.</string>
     <string name="about_view_crash_log">Ver registro de falhas</string>
     <string name="about_crash_log_title">Registro de falhas</string>
@@ -165,10 +165,10 @@
     <string name="about_emergency_off_body">Se o filtro ficar preso e o tile ou a notificacao estiver inacessivel, voce pode forcar a limpeza pelo computador via ADB:</string>
     <string name="about_emergency_off_copy">Copiar comando ADB</string>
     <string name="about_emergency_off_copied">Comando de emergencia copiado</string>
-    <string name="about_view_diag_log">Ver registro de diagnosticos</string>
-    <string name="about_diag_log_title">Registro de diagnosticos</string>
+    <string name="about_view_diag_log">Ver registro de diagnósticos</string>
+    <string name="about_diag_log_title">Registro de diagnósticos</string>
     <string name="about_diag_log_empty">Nenhum evento registrado ainda.</string>
-    <string name="about_diag_log_filter_level">Niveis</string>
+    <string name="about_diag_log_filter_level">Níveis</string>
     <string name="about_diag_log_filter_category">Categorias</string>
     <string name="about_diag_log_count">Exibindo %1$d de %2$d linhas</string>
     <string name="about_diag_log_no_matches">Nenhuma linha corresponde ao filtro atual.</string>
@@ -179,25 +179,30 @@
     <string name="about_profiles_name_label">Nome do perfil</string>
     <string name="about_profiles_load">Carregar</string>
     <string name="about_profiles_delete">Excluir</string>
+    <string name="about_profiles_deleted">Perfil excluído</string>
     <string name="about_profiles_empty">Nenhum perfil salvo ainda.</string>
     <string name="action_ok">OK</string>
     <string name="action_save">Salvar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_close">Fechar</string>
     <string name="action_clear">Limpar</string>
+    <string name="action_undo">Desfazer</string>
 
     <string name="notif_channel_name">Status do filtro</string>
-    <string name="notif_channel_desc">Indica que o OpenLumen esta tingindo a tela no momento.</string>
+    <string name="notif_channel_desc">Indica que o OpenLumen está tingindo a tela no momento.</string>
     <string name="notif_title">OpenLumen ativo</string>
     <string name="notif_action_off">Desligar</string>
-    <string name="notif_action_cycle">Proximo predefinido</string>
-    <string name="notif_alarm_countdown">%1$d h %2$d m ate o alarme</string>
+    <string name="notif_action_cycle">Próximo predefinido</string>
+    <string name="notif_alarm_countdown">%1$d h %2$d m até o alarme</string>
 
     <string name="tile_off">Desligado</string>
     <string name="tile_on">Ligado</string>
     <string name="tile_subtitle_off">Filtro desligado</string>
     <string name="tile_subtitle_on">%1$s</string>
     <string name="widget_preset_hint">Marque favoritos em Predefinidos para preencher estes espacos</string>
+
+    <string name="perm_automation_label">Automação do OpenLumen</string>
+    <string name="perm_automation_description">Enviar comandos de automação para o OpenLumen (alternar filtro, trocar predefinição, definir intensidade).</string>
 
     <string name="perm_overlay_title">Permitir exibicao sobre outros aplicativos</string>
     <string name="perm_overlay_rationale">Necessario para o driver overlay sem root. Pule se usar apenas drivers com root.</string>
@@ -216,7 +221,7 @@
     <string name="location_longitude">Longitude</string>
     <string name="location_latitude_range">Insira um valor entre -90 e 90</string>
     <string name="location_longitude_range">Insira um valor entre -180 e 180</string>
-    <string name="location_pick_city">Ou escolha uma cidade proxima:</string>
+    <string name="location_pick_city">Ou escolha uma cidade próxima:</string>
     <string name="location_search_cities">Buscar cidades</string>
     <string name="location_use_city">Usar</string>
     <string name="backup_exported">Exportado</string>

@@ -1,8 +1,6 @@
 package com.openlumen.ui.components
 
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.openlumen.R
@@ -54,17 +53,11 @@ fun OverlayPermissionCard(
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Cache the canDrawOverlays result. Pre-Android-6 the API treated overlay
-    // permission as granted at install time, so the cached value stays true
-    // and we never refresh on those builds.
+    // Cache the canDrawOverlays result and refresh only on lifecycle edges.
     var canDrawOverlays by remember {
-        mutableStateOf(Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(ctx))
+        mutableStateOf(Settings.canDrawOverlays(ctx))
     }
     DisposableEffect(lifecycleOwner, ctx) {
-        if (Build.VERSION.SDK_INT < 23) {
-            // No refresh path needed; the initial true sticks.
-            return@DisposableEffect onDispose { /* nothing to do */ }
-        }
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
                 canDrawOverlays = Settings.canDrawOverlays(ctx)
@@ -78,9 +71,7 @@ fun OverlayPermissionCard(
     // the first time, so a screen rotation or navigation back here doesn't
     // wait for the next ON_RESUME tick.
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= 23) {
-            canDrawOverlays = Settings.canDrawOverlays(ctx)
-        }
+        canDrawOverlays = Settings.canDrawOverlays(ctx)
     }
 
     if (canDrawOverlays) return
@@ -107,7 +98,7 @@ fun OverlayPermissionCard(
             LumenButton(onClick = {
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + ctx.packageName)
+                    ("package:" + ctx.packageName).toUri()
                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 ctx.startActivity(intent)
             }) {

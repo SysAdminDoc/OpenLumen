@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.R
@@ -80,7 +81,9 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val notifLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        notifPromptPrefs.edit().putBoolean("notification_permission_asked", true).apply()
+        notifPromptPrefs.edit {
+            putBoolean("notification_permission_asked", true)
+        }
         if (!granted) {
             DiagnosticsLog.log(
                 context, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE,

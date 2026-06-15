@@ -179,12 +179,14 @@
     <string name="about_profiles_name_label">プロファイル名</string>
     <string name="about_profiles_load">読み込み</string>
     <string name="about_profiles_delete">削除</string>
+    <string name="about_profiles_deleted">プロファイルを削除しました</string>
     <string name="about_profiles_empty">保存されたプロファイルはありません。</string>
     <string name="action_ok">OK</string>
     <string name="action_save">保存</string>
     <string name="action_cancel">キャンセル</string>
     <string name="action_close">閉じる</string>
     <string name="action_clear">クリア</string>
+    <string name="action_undo">元に戻す</string>
 
     <string name="notif_channel_name">フィルター状態</string>
     <string name="notif_channel_desc">OpenLumen がディスプレイにカラーフィルターを適用中であることを示します。</string>
@@ -198,6 +200,9 @@
     <string name="tile_subtitle_off">フィルターオフ</string>
     <string name="tile_subtitle_on">%1$s</string>
     <string name="widget_preset_hint">お気に入りをプリセットでマークすると、ここに表示されます</string>
+
+    <string name="perm_automation_label">OpenLumen 自動化</string>
+    <string name="perm_automation_description">OpenLumen に自動化コマンドを送信します（フィルター切り替え、プリセット変更、強度設定）。</string>
 
     <string name="perm_overlay_title">他のアプリの上に表示を許可</string>
     <string name="perm_overlay_rationale">rootレスのオーバーレイドライバーに必要です。rootドライバーのみ使用する場合はスキップできます。</string>

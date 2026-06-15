@@ -2,9 +2,9 @@ package com.openlumen.widget
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.Action
@@ -108,7 +108,7 @@ private class PresetGlanceWidget : GlanceAppWidget() {
                         Intent(context, WidgetActionReceiver::class.java)
                             .setAction(WidgetActionReceiver.ACTION_SET_PRESET)
                             .putExtra(LumenService.EXTRA_PRESET_KEY, entry.key)
-                            .setData(Uri.parse("openlumen-preset://${entry.key}"))
+                            .setData("openlumen-preset://${entry.key}".toUri())
                     )
                 )
             }
