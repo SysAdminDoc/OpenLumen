@@ -16,7 +16,7 @@ material3-adaptive = "1.1.0"
 core = "1.19.0"
 glance = "1.1.1"
 work = "2.7.1"
-screenshot = "0.0.1-alpha14"
+screenshot = "0.0.1-alpha15"
 roborazzi = "1.60.0"
 robolectric = "4.16.1"
 
