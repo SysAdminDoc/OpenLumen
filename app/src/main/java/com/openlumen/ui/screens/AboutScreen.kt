@@ -98,8 +98,8 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(topLevelScrollPadding()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

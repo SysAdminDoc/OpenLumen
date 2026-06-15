@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.openlumen.R
@@ -143,6 +142,10 @@ fun LocationEntryDialog(
                     value = query,
                     onValueChange = { query = it },
                     label = { Text(stringResource(R.string.location_search_cities)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -156,26 +159,26 @@ fun LocationEntryDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clickable(role = Role.Button) {
                                     latText = formatCoord(city.latitude)
                                     lngText = formatCoord(city.longitude)
                                 }
-                                .padding(vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
                             Text(
                                 city.displayName,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            AssistChip(
-                                onClick = {
-                                    latText = formatCoord(city.latitude)
-                                    lngText = formatCoord(city.longitude)
-                                },
-                                label = { Text(stringResource(R.string.location_use_city)) },
-                                shape = MaterialTheme.shapes.small,
-                                colors = AssistChipDefaults.assistChipColors()
+                            Text(
+                                text = stringResource(R.string.location_use_city),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 12.dp)
                             )
                         }
                     }

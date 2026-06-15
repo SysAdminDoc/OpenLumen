@@ -98,7 +98,7 @@ private class ToggleGlanceWidget : GlanceAppWidget() {
                     provider = ImageProvider(R.drawable.ic_lumen_tile),
                     contentDescription = contentDescription,
                     modifier = GlanceModifier
-                        .size(32.dp)
+                        .size(48.dp)
                         .clickable(toggleAction)
                 )
                 Spacer(modifier = GlanceModifier.height(2.dp))
