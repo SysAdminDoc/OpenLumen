@@ -350,7 +350,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     }
 
     if (showCrashLog) {
-        val log = remember { CrashLogger.read(ctx) }
+        val log = CrashLogger.read(ctx)
         AlertDialog(
             onDismissRequest = { showCrashLog = false },
             title = { Text(stringResource(R.string.about_crash_log_title)) },
@@ -506,10 +506,11 @@ private fun describeDiff(
         String.format(Locale.ROOT, "%d", current.schedule.sunriseOffsetMin),
         String.format(Locale.ROOT, "%d", next.schedule.sunriseOffsetMin)
     )
+    val noneLabel = context.getString(R.string.value_unset)
     diff(
         R.string.diff_favorites,
-        current.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) },
-        next.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) }
+        current.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) }.ifEmpty { noneLabel },
+        next.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) }.ifEmpty { noneLabel }
     )
     diff(
         R.string.diff_transition,

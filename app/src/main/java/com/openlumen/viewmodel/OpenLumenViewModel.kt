@@ -206,11 +206,14 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     /**
-     * Smooth-transition duration (C23/C24). Sanitization clamps the value
-     * into 0..TRANSITION_MAX_MS; 0 disables the ramp entirely.
+     * Smooth-transition duration (C23/C24). The DataStore sanitizer
+     * clamps the persisted value into 0..TRANSITION_MAX_MS; 0 disables
+     * the ramp entirely.
      */
     fun setTransitionDuration(durationMs: Long) = viewModelScope.launch {
-        prefs.update { it.copy(transitionDurationMs = durationMs) }
+        prefs.update {
+            it.copy(transitionDurationMs = durationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS))
+        }
     }
 
     fun refreshProbes() = viewModelScope.launch {

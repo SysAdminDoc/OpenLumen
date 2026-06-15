@@ -1,8 +1,5 @@
 package com.openlumen.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,9 +50,7 @@ fun TimePickerDialog(
             }
         },
         dismissButton = {
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                LumenTextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-            }
+            LumenTextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }
