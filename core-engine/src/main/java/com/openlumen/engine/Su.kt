@@ -65,8 +65,15 @@ object Su {
     /** Test-only setter to seed the cache without going through a real su probe. */
     internal fun setCachedAvailableForTest(value: Boolean?) { cachedAvailable = value }
 
-    suspend fun runCommand(vararg cmd: String): SuResult =
-        runCommandInternal(cmd.joinToString(" "), timeoutMs = CMD_TIMEOUT_MS)
+    /**
+     * Run one raw shell command line via `su -c`.
+     *
+     * This is intentionally not an argv-style API: callers must pass a complete,
+     * already-quoted shell command string. Keeping the contract in the type avoids
+     * implying that multiple arguments would be escaped safely.
+     */
+    suspend fun runCommand(commandLine: String): SuResult =
+        runCommandInternal(commandLine, timeoutMs = CMD_TIMEOUT_MS)
 
     /** Pipe [stdinText] into `su -c sh` and return the exit code. */
     suspend fun runShell(stdinText: String): Int = withContext(Dispatchers.IO) {
