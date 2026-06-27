@@ -7,6 +7,8 @@ import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -46,6 +48,7 @@ class KcalEngine : ColorEngine {
     override val kind = EngineKind.KCAL
 
     @Volatile private var resolvedPaths: Paths? = null
+    private val probeMutex = Mutex()
 
     /**
      * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
@@ -60,17 +63,11 @@ class KcalEngine : ColorEngine {
         // su subprocess per candidate root. `invalidateOnFailure` resets
         // the cache when an apply/clear fails (e.g. the kernel module was
         // unloaded), so a stale path gets re-probed the next time around.
-        resolvedPaths?.let { return@withContext true }
-        probeLocked()
+        ensureResolvedPaths() != null
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
-        val paths = resolvedPaths ?: run {
-            // Same defense as SurfaceFlingerEngine.apply — re-probe once
-            // before silently no-op'ing. A user who pinned KCAL otherwise
-            // sees an "available" engine that does nothing.
-            if (probeLocked()) resolvedPaths else null
-        } ?: run {
+        val paths = ensureResolvedPaths() ?: run {
             Log.w(TAG, "apply: no resolved KCAL sysfs path; tint will not be visible")
             return@withContext
         }
@@ -147,6 +144,13 @@ class KcalEngine : ColorEngine {
         }
         invalidateOnFailure(exit, paths, "clear")
         Unit
+    }
+
+    private suspend fun ensureResolvedPaths(): Paths? {
+        resolvedPaths?.let { return it }
+        return probeMutex.withLock {
+            resolvedPaths ?: if (probeLocked()) resolvedPaths else null
+        }
     }
 
     private fun invalidateOnFailure(exitCode: Int, paths: Paths, operation: String) {

@@ -8,6 +8,8 @@ import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -32,6 +34,7 @@ class SurfaceFlingerEngine : ColorEngine {
     override val kind = EngineKind.SURFACE_FLINGER
 
     @Volatile private var workingCode: Int? = null
+    private val probeMutex = Mutex()
 
     /**
      * Diagnostic: which transaction code is the engine currently using? Exposed so
@@ -49,8 +52,7 @@ class SurfaceFlingerEngine : ColorEngine {
         // emission — a real performance bug. The cache is invalidated by
         // apply/clear when a write fails (see invalidateOnFailure), so a code
         // that's gone stale gets re-probed naturally on next call.
-        workingCode?.let { return@withContext true }
-        probeLocked()
+        ensureWorkingCode() != null
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
@@ -59,9 +61,7 @@ class SurfaceFlingerEngine : ColorEngine {
         // silently no-op'ing. Without this, a user who pinned SurfaceFlinger
         // can land in a state where the engine claims to be active but
         // every apply() is a no-op because no code was probed yet.
-        val code = workingCode ?: run {
-            if (probeLocked()) workingCode else null
-        } ?: run {
+        val code = ensureWorkingCode() ?: run {
             Log.w(TAG, "apply: no working SurfaceFlinger transaction code; tint will not be visible")
             return@withContext
         }
@@ -75,6 +75,13 @@ class SurfaceFlingerEngine : ColorEngine {
         val res = Su.runCommand(buildDisableServiceCallCommand(code))
         invalidateOnFailure(res, code, "clear")
         Unit
+    }
+
+    private suspend fun ensureWorkingCode(): Int? {
+        workingCode?.let { return it }
+        return probeMutex.withLock {
+            workingCode ?: if (probeLocked()) workingCode else null
+        }
     }
 
     /**
