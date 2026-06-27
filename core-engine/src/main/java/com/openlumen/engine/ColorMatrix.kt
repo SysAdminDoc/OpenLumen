@@ -125,13 +125,15 @@ data class LumenMatrix(
     /** ARGB color for the rootless overlay fallback. */
     fun toOverlayArgb(): Int {
         val s = scaledRgb()
-        val tintStrength = maxOf(1f - s[0], 1f - s[1], 1f - s[2]).coerceIn(0f, 1f)
-        val overlayAlpha = maxOf(effectiveDim * 0.80f, tintStrength * 0.70f)
-            .coerceIn(0f, 0.80f)
+        val deficitR = (1f - s[0].coerceIn(0f, 1f)).coerceIn(0f, 1f)
+        val deficitG = (1f - s[1].coerceIn(0f, 1f)).coerceIn(0f, 1f)
+        val deficitB = (1f - s[2].coerceIn(0f, 1f)).coerceIn(0f, 1f)
+        val overlayAlpha = maxOf(deficitR, deficitG, deficitB).coerceIn(0f, MAX_OVERLAY_ALPHA)
+        if (overlayAlpha <= 0f) return 0
         val a = (overlayAlpha * 255f).toInt().coerceIn(0, 204)
-        val rr = (s[0] * 255f).toInt().coerceIn(0, 255)
-        val gg = (s[1] * 255f).toInt().coerceIn(0, 255)
-        val bb = (s[2] * 255f).toInt().coerceIn(0, 255)
+        val rr = overlayChannel(deficitR, overlayAlpha)
+        val gg = overlayChannel(deficitG, overlayAlpha)
+        val bb = overlayChannel(deficitB, overlayAlpha)
         return (a shl 24) or (rr shl 16) or (gg shl 8) or bb
     }
 
@@ -236,6 +238,9 @@ data class LumenMatrix(
     private fun Float.matrixCoeff(default: Float): Float =
         finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = default)
 
+    private fun overlayChannel(deficit: Float, alpha: Float): Int =
+        ((1f - (deficit / alpha)).coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
+
     companion object {
         val IDENTITY = LumenMatrix()
 
@@ -250,5 +255,6 @@ data class LumenMatrix(
 
         private const val MATRIX_COEFF_MIN: Float = -4f
         private const val MATRIX_COEFF_MAX: Float = 4f
+        private const val MAX_OVERLAY_ALPHA: Float = 0.80f
     }
 }

@@ -81,12 +81,36 @@ class LumenMatrixTest {
         assertThat(alpha).isGreaterThan(0)
     }
 
+    @Test fun `overlay ARGB uses complementary source color for tint`() {
+        val argb = LumenMatrix(r = 1f, g = 0.78f, b = 0.55f, dim = 0f).toOverlayArgb()
+        val alpha = (argb ushr 24) and 0xFF
+        val red = (argb ushr 16) and 0xFF
+        val green = (argb ushr 8) and 0xFF
+        val blue = argb and 0xFF
+
+        assertThat(alpha).isWithin(1).of(114)
+        assertThat(red).isEqualTo(255)
+        assertThat(green).isWithin(1).of(130)
+        assertThat(blue).isEqualTo(0)
+    }
+
+    @Test fun `overlay ARGB uses black source color for pure dim`() {
+        val argb = LumenMatrix(r = 1f, g = 1f, b = 1f, dim = 0.5f).toOverlayArgb()
+        val alpha = (argb ushr 24) and 0xFF
+        val red = (argb ushr 16) and 0xFF
+        val green = (argb ushr 8) and 0xFF
+        val blue = argb and 0xFF
+
+        assertThat(alpha).isWithin(1).of(127)
+        assertThat(red).isEqualTo(0)
+        assertThat(green).isEqualTo(0)
+        assertThat(blue).isEqualTo(0)
+    }
+
     @Test fun `overlay ARGB packs dim into alpha at 80 percent ceiling`() {
         val argb = LumenMatrix(r = 1f, g = 0f, b = 0f, dim = 1f).toOverlayArgb()
         val alpha = (argb ushr 24) and 0xFF
-        // 0.95 effective dim * 0.80 cap = 0.76 -> ~194/255
-        assertThat(alpha).isAtLeast(190)
-        assertThat(alpha).isAtMost(204)
+        assertThat(alpha).isEqualTo(204)
     }
 
     @Test fun `lerp at t equals zero returns the receiver`() {

@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
  *   - a custom kernel that exposes a KCAL sysfs surface
  *
  * KCAL is a scalar-per-channel driver (no cross-channel matrix). We map LumenMatrix to
- * RGB triplets in 0–256 and combine the dim factor into the per-channel scalar.
+ * RGB triplets in 0–255 and combine the dim factor into the per-channel scalar.
  *
  * Tied to roadmap candidate **C04** (KCAL variant probing). Different kernel forks
  * place the KCAL surface in different directories — most commonly
@@ -88,9 +88,9 @@ class KcalEngine : ColorEngine {
             paths.min == null || paths.originalMin == null
         val appFloor = if (needAppLevelFloor && !matrix.amoledClamp) SAFETY_MIN else 0
         val s = matrix.scaledRgb()
-        val r = (s[0] * 256f).toInt().coerceIn(appFloor, 256)
-        val g = (s[1] * 256f).toInt().coerceIn(appFloor, 256)
-        val b = (s[2] * 256f).toInt().coerceIn(appFloor, 256)
+        val r = toKcalScalar(s[0], appFloor)
+        val g = toKcalScalar(s[1], appFloor)
+        val b = toKcalScalar(s[2], appFloor)
 
         // C166: only touch kcal_min when the user's original value is
         // below our safety floor, and only once per probed session. The
@@ -137,7 +137,7 @@ class KcalEngine : ColorEngine {
         val exit = Su.runShell(
             buildString {
                 append("set -e\n")
-                append("echo '256 256 256' > '").append(paths.rgb).append("'\n")
+                append("echo '$MAX_SCALAR $MAX_SCALAR $MAX_SCALAR' > '").append(paths.rgb).append("'\n")
                 append("echo '0' > '").append(paths.enable).append("'\n")
                 append(minRestoreScript)
             }
@@ -249,11 +249,20 @@ class KcalEngine : ColorEngine {
          * `(r=10, g=0, b=0)` can drive subpixels fully off, which on
          * some panels produces flicker. 20/256 ≈ 8% — visually
          * imperceptible in normal use but enough to keep the panel
-         * stable. The value was inherited from the original CF.Lumen
+         * stable. 20/255 is visually subtle but enough to keep the panel
+         * away from zero on kernels without a readable `kcal_min`. The
+         * value was inherited from the original CF.Lumen
          * reference; revisit if device reports show a different
          * threshold is required for a given panel.
          */
         const val SAFETY_MIN: Int = 20
+        const val MAX_SCALAR: Int = 255
+
+        internal fun toKcalScalar(scale: Float, floor: Int): Int {
+            val clampedFloor = floor.coerceIn(0, MAX_SCALAR)
+            val clampedScale = if (scale.isNaN() || scale.isInfinite()) 1f else scale.coerceIn(0f, 1f)
+            return (clampedScale * MAX_SCALAR).toInt().coerceIn(clampedFloor, MAX_SCALAR)
+        }
 
         /**
          * Known KCAL sysfs roots, most-common first. New forks land here when a
@@ -282,7 +291,7 @@ class KcalEngine : ColorEngine {
                 val exit = Su.runShell(
                     buildString {
                         append("set -e\n")
-                        append("echo '256 256 256' > '").append(rgbPath).append("'\n")
+                        append("echo '$MAX_SCALAR $MAX_SCALAR $MAX_SCALAR' > '").append(rgbPath).append("'\n")
                         append("echo '0' > '").append(enablePath).append("'\n")
                     }
                 )
