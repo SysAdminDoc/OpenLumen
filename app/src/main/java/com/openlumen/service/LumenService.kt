@@ -543,13 +543,13 @@ class LumenService : LifecycleService() {
 
     private suspend fun turnOffImmediately(source: String) {
         if (isUserUnlocked()) {
+            val disabledPrefs = (latestPrefs.get() ?: Preferences()).copy(enabled = false)
+            mirrorDirectBootState(disabledPrefs, active = false, matrix = LumenMatrix.IDENTITY)
             prefs.update { it.copy(enabled = false) }
         } else {
             directBootState.update { it.copy(enabled = false, active = false) }
         }
         hardClearOutputs("turn off from $source")
-        latestPrefs.get()
-            ?.let { mirrorDirectBootState(it.copy(enabled = false), active = false, matrix = LumenMatrix.IDENTITY) }
         stopSelf()
     }
 
