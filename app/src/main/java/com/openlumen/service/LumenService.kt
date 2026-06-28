@@ -560,13 +560,14 @@ class LumenService : LifecycleService() {
                 .onFailure { Log.w(tag, "engine.clear() during hard clear failed: ${it.message}") }
             runCatching { (probe.engineOf(EngineKind.OVERLAY) as? OverlayEngine)?.clear(this@LumenService) }
                 .onFailure { Log.w(tag, "overlay hard clear failed: ${it.message}") }
-            runCatching { DisplayEmergencyReset.clearRootTransforms() }
+            runCatching { DisplayEmergencyReset.clearRootTransforms(this@LumenService) }
                 .onSuccess { result ->
                     DiagnosticsLog.log(
                         this@LumenService,
                         DiagnosticsLog.Level.INFO,
                         DiagnosticsLog.Category.ENGINE,
-                        "$reason: hard reset SF=${result.surfaceFlingerCodes.joinToString().ifBlank { "none" }} " +
+                        "$reason: hard reset CDM=${if (result.colorDisplayManagerAttempted) "attempted" else "skipped"} " +
+                            "SF=${result.surfaceFlingerCodes.joinToString().ifBlank { "none" }} " +
                             "KCAL=${result.kcalPaths.joinToString().ifBlank { "none" }}"
                     )
                 }
@@ -1054,7 +1055,7 @@ class LumenService : LifecycleService() {
         runBlocking {
             withContext(NonCancellable) {
                 withTimeoutOrNull(2_000L) {
-                    runCatching { DisplayEmergencyReset.clearRootTransforms() }
+                    runCatching { DisplayEmergencyReset.clearRootTransforms(this@LumenService) }
                 }
             }
         }
