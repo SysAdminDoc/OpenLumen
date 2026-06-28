@@ -29,7 +29,6 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.openlumen.MainActivity
 import com.openlumen.R
-import com.openlumen.prefs.PreferencesStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -73,7 +72,7 @@ private class ToggleGlanceWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val enabled = runCatching {
             withTimeoutOrNull(WIDGET_READ_TIMEOUT_MS) {
-                PreferencesStore(context.applicationContext).flow.first().enabled
+                widgetPreferencesStore(context).flow.first().enabled
             } ?: false
         }.getOrDefault(false)
 

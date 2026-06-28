@@ -36,7 +36,6 @@ import com.openlumen.R
 import com.openlumen.engine.Presets
 import com.openlumen.presetDisplayName
 import com.openlumen.prefs.Preferences
-import com.openlumen.prefs.PreferencesStore
 import com.openlumen.service.LumenService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +77,7 @@ private class PresetGlanceWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val snapshot = runCatching {
             withTimeoutOrNull(WIDGET_READ_TIMEOUT_MS) {
-                PreferencesStore(context.applicationContext).flow.first()
+                widgetPreferencesStore(context).flow.first()
             }
         }.getOrNull() ?: Preferences()
 
