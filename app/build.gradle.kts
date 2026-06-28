@@ -99,9 +99,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.glance.appwidget)
-    // Pinned to the version Glance 1.1.1 already pulls in transitively, so
-    // the dependency-verification metadata stays valid. We need direct API
-    // access for Configuration.Provider in OpenLumenApp (see issue #5).
+    // Keep WorkManager explicit because OpenLumenApp supplies its lazy-init
+    // Configuration.Provider while the startup initializer stays disabled.
     implementation(libs.androidx.work.runtime)
 
     implementation(platform(libs.compose.bom))

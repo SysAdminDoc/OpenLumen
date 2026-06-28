@@ -1827,13 +1827,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P1 - Reliability and release trust
 
-- [ ] P1 - Modernize WorkManager while preserving Glance direct-boot lazy init
-  Why: `work-runtime` is pinned to 2.7.1 while the app depends on a manifest initializer removal and `Configuration.Provider` to avoid the Android 10 Glance/directBootAware crash path.
-  Evidence: `gradle/libs.versions.toml:18`, `app/build.gradle.kts:104`, `app/src/main/AndroidManifest.xml:129`, `app/src/main/java/com/openlumen/OpenLumenApp.kt:30`, AndroidX WorkManager releases.
-  Touches: `gradle/libs.versions.toml`, `gradle/verification-metadata.xml`, `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml`, `app/src/main/java/com/openlumen/OpenLumenApp.kt`, app unit/manifest tests.
-  Acceptance: WorkManager is on the current stable AndroidX line, verification metadata is refreshed, the startup initializer remains removed from the merged manifest, widget refresh still works, and an Android 10/direct-boot regression note or test proves issue #5 stays fixed.
-  Complexity: M
-
 - [ ] P1 - Surface exact-alarm degraded scheduling in Schedule UI
   Why: When exact alarms are denied, OpenLumen silently falls back to inexact alarms; users can see late schedule transitions without knowing the device revoked precision.
   Evidence: `app/src/main/java/com/openlumen/service/ScheduleAlarmOrchestrator.kt:48`, `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt:131`, Android exact-alarm behavior docs.

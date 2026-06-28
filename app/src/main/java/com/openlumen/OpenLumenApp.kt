@@ -35,8 +35,8 @@ class OpenLumenApp : Application(), Configuration.Provider {
     // calls WorkManager.getInstance(context) on first widget enqueue and
     // that triggers lazy init with this config. Keeping logging quiet to
     // match the rest of the offline/no-telemetry posture.
-    override fun getWorkManagerConfiguration(): Configuration =
-        Configuration.Builder()
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
             .setMinimumLoggingLevel(Log.WARN)
             .build()
 
