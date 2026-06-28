@@ -94,8 +94,8 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 
 **Trust + privacy**
 
-- No INTERNET permission, ever (CI rejects builds that contain one)
-- No Play Services / Firebase / Google APIs (CI rejects builds that pull them in)
+- No INTERNET permission, ever (local release checks reject builds that contain one)
+- No Play Services / Firebase / Google APIs (local release checks reject builds that pull them in)
 - No accessibility service, no usage-stats permission, no foreground-app detection
 - Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
 - In-app driver report (Copy or Share) with zero PII — captures device, build,
@@ -172,7 +172,7 @@ OpenLumen/
 ### Security and supply chain
 
 - [Threat model](docs/threat-model.md) — MASVS-lite categories with mitigations
-- [SBOM and advisory scan](docs/sbom-and-advisories.md) — CI workflow and triage policy
+- [SBOM and advisory scan](docs/sbom-and-advisories.md) — local scan and triage policy
 - [Dependency verification](docs/dependency-verification.md) — Gradle metadata procedure (opt-in)
 - [Wake / alarm / battery audit](docs/wake-and-vitals.md) — what wakes the device and why
 
