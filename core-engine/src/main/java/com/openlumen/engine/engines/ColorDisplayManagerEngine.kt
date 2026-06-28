@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.EngineKind
+import com.openlumen.engine.Kelvin
 import com.openlumen.engine.LumenMatrix
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -135,12 +136,39 @@ class ColorDisplayManagerEngine : ColorEngine {
     /**
      * Approximate inverse: given a user-tuned (r,g,b) scale on [0,1], pick the closest
      * Kelvin value in the range AOSP supports (typically 1000-10000 K).
-     * Pure heuristic; the framebuffer matrix is the more accurate path.
+     * CDM is still scalar-only compared with the framebuffer matrix path, but searching
+     * against the same forward model used by the Kelvin picker keeps warm presets close
+     * to their intended temperature and accounts for green-channel shape.
      */
-    private fun kelvinFromRgbScale(r: Float, g: Float, b: Float): Int {
-        val redness = (r - b).coerceIn(0f, 1f)
-        return (6500 - redness * 3500).toInt().coerceIn(1000, 10000)
+    internal fun kelvinFromRgbScale(r: Float, g: Float, b: Float): Int {
+        val targetR = r.unitOr(default = 1f)
+        val targetG = g.unitOr(default = 1f)
+        val targetB = b.unitOr(default = 1f)
+        var low = Kelvin.MIN_K
+        var high = Kelvin.MAX_K
+        while (low < high) {
+            val mid = low + (high - low) / 2
+            if (rgbDistance(mid, targetR, targetG, targetB) <=
+                rgbDistance(mid + 1, targetR, targetG, targetB)
+            ) {
+                high = mid
+            } else {
+                low = mid + 1
+            }
+        }
+        return low
     }
+
+    private fun rgbDistance(kelvin: Int, targetR: Float, targetG: Float, targetB: Float): Float {
+        val rgb = Kelvin.toRgb(kelvin)
+        val dr = rgb.r - targetR
+        val dg = rgb.g - targetG
+        val db = rgb.b - targetB
+        return dr * dr + dg * dg + db * db
+    }
+
+    private fun Float.unitOr(default: Float): Float =
+        if (isFinite()) coerceIn(0f, 1f) else default
 
     private data class Handles(val cdm: Any, val setActivated: Method, val setTemperature: Method?)
 }
