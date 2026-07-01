@@ -1,0 +1,30 @@
+OpenLumen e um filtro de cor da tela offline para Android. Ele roda como servico em primeiro plano, aplica transformacoes de cor da tela e troca de driver conforme o que o dispositivo suporta:
+
+* AOSP ColorDisplayManager (sem root, transformacao no framebuffer)
+* matriz de cor SurfaceFlinger (root)
+* driver de kernel KCAL (root, paineis Qualcomm compativeis)
+* Overlay (sem root, fallback universal limitado pelas regras do Android 12+)
+
+OpenLumen nao solicita INTERNET. Nao ha telemetria, relatorio remoto de falhas, configuracao remota nem analitica. O manifesto nao contem permissao de rede e as verificacoes locais de lancamento rejeitam acesso a rede antes da publicacao.
+
+Recursos:
+
+* Predefinidos: Night, Amber, Red, Salmon, Sepia, Grayscale, Deep Sleep, PWM Comfort e tres ajustes de visao de cores
+* Seletor RGB personalizado com gama por canal
+* Controles de intensidade, escurecimento, contraste e temperatura de cor
+* Agendas fixas e solares (por do sol/nascer do sol, algoritmo NOAA) com deslocamentos configuraveis
+* Ativacao por sensor de luz ambiente
+* Tile de Configuracoes rapidas, widgets, notificacao do servico e acoes locais de automacao
+* Transicoes via AlarmManager, sem varredura em segundo plano
+* Restauracao apos reinicio, exportacao/importacao de perfis JSON e registro local de falhas em armazenamento privado
+
+Privacidade e confianca:
+
+* GPL-3.0-or-later
+* Distribuicao F-Droid em primeiro lugar; builds reproduziveis sao meta de lancamento
+* Sem contas, anuncios ou paywall
+* Sem afirmacoes de melhora do sono; consulte a nota Health Evidence no repositorio
+
+OpenLumen nao solicita permissao de localizacao. Agendas solares usam coordenadas inseridas manualmente.
+
+Codigo-fonte: https://github.com/SysAdminDoc/OpenLumen

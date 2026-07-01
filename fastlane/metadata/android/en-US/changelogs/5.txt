@@ -11,4 +11,4 @@ Profile import range-clamps every numeric field on read.
 
 First JVM unit tests for matrix, schedule, and solar math.
 
-No INTERNET permission. CI enforces.
+No INTERNET permission. Local release checks enforce this before shipping.

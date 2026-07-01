@@ -1,0 +1,30 @@
+OpenLumen ist ein Offline-Farbfilter fuer Android-Displays. Die App laeuft als Vordergrunddienst, steuert die Display-Farbtransformation und wechselt je nach Geraet auf den passenden Treiber:
+
+* AOSP ColorDisplayManager (ohne Root, Framebuffer-Transformation)
+* SurfaceFlinger-Farbmatrix (Root)
+* KCAL-Kernel-Treiber (Root, kompatible Qualcomm-Panels)
+* Overlay (ohne Root, universeller Fallback mit Android-12+-Grenzen)
+
+OpenLumen fordert kein INTERNET an. Es gibt keine Telemetrie, keine entfernten Absturzberichte, keine Remote-Konfiguration und keine Analysefunktionen. Das Manifest enthaelt keine Netzwerkberechtigung; lokale Release-Pruefungen lehnen Netzwerkzugriff vor der Auslieferung ab.
+
+Funktionen:
+
+* Vorlagen: Night, Amber, Red, Salmon, Sepia, Grayscale, Deep Sleep, PWM Comfort und drei Farbseh-Anpassungen
+* Benutzerdefinierter RGB-Waehler mit Gamma pro Kanal
+* Regler fuer Intensitaet, Abdunklung, Kontrast und Farbtemperatur
+* Feste und solare Zeitplaene (Sonnenuntergang/Sonnenaufgang, NOAA-Algorithmus) mit konfigurierbaren Versatzwerten
+* Aktivierung ueber Umgebungslichtsensor
+* Schnelleinstellungen-Kachel, Widgets, Dienstbenachrichtigung und lokale Automationsaktionen
+* Uebergaenge mit AlarmManager, kein Hintergrund-Polling
+* Wiederherstellung nach Neustart, JSON-Profil-Export/Import und lokales Absturzprotokoll im privaten Speicher
+
+Datenschutz und Vertrauen:
+
+* GPL-3.0-or-later
+* F-Droid zuerst; reproduzierbare Builds sind ein Release-Ziel
+* Keine Konten, keine Werbung, keine Bezahlschranke
+* Keine Versprechen zur Schlafverbesserung; siehe Health-Evidence-Notiz im Repository
+
+OpenLumen fordert keine Standortberechtigung an. Solare Zeitplaene nutzen Koordinaten, die du selbst eingibst.
+
+Quellcode: https://github.com/SysAdminDoc/OpenLumen

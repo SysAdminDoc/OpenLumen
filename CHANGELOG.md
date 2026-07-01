@@ -78,6 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   captures active Overlay evidence across system bars, one-handed state,
   `FLAG_SECURE`, IME open/close, permission settings, and installer surfaces,
   with an issue-template field for preserving REVIEW lines.
+- Fastlane/F-Droid metadata now ships localized title, short description,
+  full description, and current changelog copy for Spanish, Portuguese,
+  German, French, and Japanese, with metadata length checks covering all
+  locales.
 - Schedule now warns API 31+ users when Android denies exact alarms for
   timed schedule modes, links to the app's exact-alarm settings, and records
   degraded inexact scheduling in diagnostics.

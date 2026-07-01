@@ -1,0 +1,1 @@
+Servico em primeiro plano refatorado em colaboradores focados para motor, agenda, sensor de luz, widgets e Direct Boot, preservando o comportamento do filtro. Nova cobertura unitaria para diferencas de atualizacao dos widgets e restauracao da matriz no Direct Boot.

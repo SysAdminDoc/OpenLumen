@@ -1,26 +1,7 @@
-v0.6.0 — Adaptive UI, localization, and a polish pass.
+v0.6.0 - Adaptive UI, localization, and polish.
 
-Added:
-- Spanish, Portuguese, German, French, and Japanese translations.
-- Adaptive navigation: bottom bar on phones, navigation rail on tablets and
-  foldables; the Presets screen gains a side-by-side list/detail layout on
-  large screens.
-- Sleep-countdown notification when an alarm-based schedule is active.
-- Automation broadcast so Tasker/Termux can react to filter-state changes,
-  plus a "PWM Comfort" preset for OLED users who keep backlight high.
+Added five UI translations, adaptive phone/tablet navigation, a large-screen Presets detail pane, sleep-countdown notification, filter-state automation broadcast, and PWM Comfort preset.
 
-Fixed:
-- Light theme is now fully defined (Catppuccin Latte) with readable contrast
-  in every screen, instead of falling back to washed-out defaults.
-- Backup/restore status messages are now translated, and a corrupt import
-  reports a real error instead of "null".
-- Location entry shows an inline range hint when a coordinate is out of range.
-- Screen readers now announce the selected state of schedule, driver, and
-  preset options correctly.
-- Solar schedule handles the exact geographic poles correctly.
+Fixed light-theme coverage, translated backup/import messages, coordinate range hints, screen-reader selection states, polar solar scheduling, and bounded automation extras.
 
-Security:
-- The automation entry point now forwards only its two documented extras
-  instead of relaying an untrusted caller's entire intent bundle.
-
-No new permissions. Still fully offline; no telemetry; F-Droid clean.
+No new permissions. Offline; no telemetry; F-Droid clean.

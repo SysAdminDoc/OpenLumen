@@ -11,7 +11,8 @@ gracefully across four drivers depending on what your device supports:
 
 OpenLumen does not request INTERNET. It has no telemetry, no remote crash
 reporting, no remote config, and no analytics. The manifest does not
-contain a network permission and CI enforces this on every build.
+contain a network permission and local release checks reject network access
+before shipping.
 
 Features:
 

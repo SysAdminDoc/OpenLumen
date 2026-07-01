@@ -1828,10 +1828,3 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 ### P1 - Reliability and release trust
 
 ### P2 - UX and platform edge cases
-
-- [ ] P2 - Localize F-Droid/Fastlane metadata for shipped app locales
-  Why: The app ships Spanish, Portuguese, German, French, and Japanese strings, but store metadata is English-only, leaving F-Droid listing quality behind the app UI.
-  Evidence: `app/src/main/res/values-es/strings.xml`, `values-pt/strings.xml`, `values-de/strings.xml`, `values-fr/strings.xml`, `values-ja/strings.xml`, `fastlane/metadata/android/en-US/`, F-Droid localization docs.
-  Touches: `fastlane/metadata/android/<locale>/title.txt`, `short_description.txt`, `full_description.txt`, changelog copy, release checklist.
-  Acceptance: Existing five app locales have localized Fastlane metadata within F-Droid length limits, no medical claims or network-feature claims are introduced, and English remains the fallback.
-  Complexity: M
