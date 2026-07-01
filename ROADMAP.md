@@ -1828,3 +1828,37 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 ### P1 - Reliability and release trust
 
 ### P2 - UX and platform edge cases
+
+## Research-Driven Additions
+
+### P1 - Release trust and local verification
+
+- [ ] P1 — Fail unsigned release builds by default
+  Why: `:app:assembleRelease` can silently emit an unsigned artifact when `OPENLUMEN_KEYSTORE` is absent, while the release docs require signed APKs.
+  Evidence: `app/build.gradle.kts`; `docs/release-checklist.md`; Android app-signing docs.
+  Touches: `app/build.gradle.kts`, `README.md`, `docs/release-checklist.md`, release verification tooling.
+  Acceptance: `./gradlew :app:assembleRelease` fails with a clear message unless all required `OPENLUMEN_*` signing variables are present or an explicit documented unsigned-release override is passed; release verification runs `apksigner verify -v` and checks v1/v2/v3 signatures.
+  Complexity: M
+
+- [ ] P1 — Convert stale workflow-based release controls to local release gates
+  Why: The repo has no `.github/workflows`, but current docs still cite CI, Dependabot, release, permissions-audit, SBOM, and attestation workflows as active controls.
+  Evidence: `.github/` tree; `CONTRIBUTING.md`; `SECURITY.md`; `PROJECT_CONTEXT.md`; `docs/dependency-verification.md`; `docs/sbom-and-advisories.md`; `docs/release-checklist.md`; F-Droid reproducible-build guidance.
+  Touches: `tools/`, `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `PROJECT_CONTEXT.md`, `docs/dependency-verification.md`, `docs/sbom-and-advisories.md`, `docs/release-checklist.md`, `fastlane/README.md`.
+  Acceptance: A single local release command performs merged-manifest banned-permission checks, release-classpath GMS/Firebase checks, strict dependency verification, lint/tests/screenshot checks, SBOM/advisory output, signed APK verification, and SHA-256 output; docs no longer describe non-existent workflows or Dependabot as active controls.
+  Complexity: L
+
+### P2 - Maintainability and copy guardrails
+
+- [ ] P2 — Replace the missing dependency-update review command
+  Why: `docs/release-checklist.md` tells maintainers to run `./gradlew dependencyUpdates`, but no Gradle Versions plugin or equivalent task is configured.
+  Evidence: `docs/release-checklist.md`; `gradle/libs.versions.toml`; AndroidX release notes; Kotlin/KSP release notes.
+  Touches: `build.gradle.kts`, `settings.gradle.kts`, `gradle/libs.versions.toml`, `gradle/verification-metadata.xml`, `docs/release-checklist.md`.
+  Acceptance: Either `./gradlew dependencyUpdates` or a documented local tool works in a clean checkout and compares catalog versions against stable AndroidX/Kotlin/KSP/AGP sources; the release checklist references only commands that exist.
+  Complexity: M
+
+- [ ] P2 — Add health-claim lint for strings, metadata, and docs
+  Why: OpenLumen's evidence policy forbids medical/sleep/eye-strain claims, and competitor marketing plus current Cochrane evidence make copy drift a recurring risk.
+  Evidence: `docs/health-evidence.md`; `README.md`; `fastlane/metadata/android/`; Cochrane blue-light-filtering review; Twilight/CF.lumen marketing pages.
+  Touches: `tools/`, `app/src/main/res/values*`, `fastlane/metadata/android/`, `README.md`, `docs/health-evidence.md`, release-check tooling.
+  Acceptance: A local lint command fails on banned phrases from `docs/health-evidence.md` outside approved evidence/disclaimer contexts; it scans English and localized strings plus Fastlane metadata; release checks run it.
+  Complexity: S
