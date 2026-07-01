@@ -74,6 +74,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local driver-report matrix helper: `tools/driver_report_matrix.py` drafts a
   review-only `docs/device-matrix.md` row from pasted driver reports or GitHub
   issue JSON, with confidence flags and no automatic pass/fail engine marks.
+- Debug-only overlay viewport smoke coverage: `tools/overlay_viewport_smoke.ps1`
+  captures active Overlay evidence across system bars, one-handed state,
+  `FLAG_SECURE`, IME open/close, permission settings, and installer surfaces,
+  with an issue-template field for preserving REVIEW lines.
 - Schedule now warns API 31+ users when Android denies exact alarms for
   timed schedule modes, links to the app's exact-alarm settings, and records
   degraded inexact scheduling in diagnostics.

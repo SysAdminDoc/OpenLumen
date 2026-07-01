@@ -163,6 +163,7 @@ OpenLumen/
 - [Translations and localization](docs/translations.md) — how to contribute a translation
 - [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
 - Driver report matrix helper: `py -3.12 tools/driver_report_matrix.py report.txt`
+- Overlay viewport smoke: `rtk powershell -NoProfile -ExecutionPolicy Bypass -File tools\overlay_viewport_smoke.ps1 -Serial emulator-5554 -Package com.openlumen.debug`
 - [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
 
 ### For distributors and packagers

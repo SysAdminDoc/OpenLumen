@@ -1829,13 +1829,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P2 - UX and platform edge cases
 
-- [ ] P2 - Audit overlay viewport behavior across one-handed, IME, system-bar, and secure surfaces
-  Why: Overlay is the universal fallback; competitor issues show real edge cases around one-handed top gaps, nav bars, keyboards, and global redraw/secure-surface behavior.
-  Evidence: `core-engine/src/main/java/com/openlumen/engine/engines/OverlayEngine.kt`, Red Moon issues #351 and #244, Grayscaler issues #8/#4/#2, OWASP overlay/tapjacking guidance.
-  Touches: `OverlayEngine.kt`, `OverlayPermissionCard.kt`, troubleshooting/root-safety docs, screenshot or instrumentation smoke fixtures.
-  Acceptance: Emulator/device smoke notes cover one-handed mode, soft nav bars, IME open/close, `FLAG_SECURE`/DRM surfaces, and installer/permission dialogs; any confirmed behavior is either fixed, exposed as a setting/caveat, or documented in the overlay issue template.
-  Complexity: L
-
 - [ ] P2 - Localize F-Droid/Fastlane metadata for shipped app locales
   Why: The app ships Spanish, Portuguese, German, French, and Japanese strings, but store metadata is English-only, leaving F-Droid listing quality behind the app UI.
   Evidence: `app/src/main/res/values-es/strings.xml`, `values-pt/strings.xml`, `values-de/strings.xml`, `values-fr/strings.xml`, `values-ja/strings.xml`, `fastlane/metadata/android/en-US/`, F-Droid localization docs.
