@@ -1827,13 +1827,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P1 - Reliability and release trust
 
-- [ ] P1 - Add driver-report-to-device-matrix review tooling
-  Why: The repo already asks users for structured driver reports, but C01 device validation still requires hand-transcribing compatibility rows.
-  Evidence: `.github/ISSUE_TEMPLATE/driver_report.yml`, `docs/device-matrix.md`, `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt`, Red Moon and ColorBlendr issue queues showing device/OEM variance.
-  Touches: local tooling under a non-markdown path, `DriverReport.kt` format tests, `docs/device-matrix.md` update flow.
-  Acceptance: A local command accepts pasted driver-report text or exported issue JSON and prints a proposed matrix row plus confidence flags; it never marks pass/fail without explicit maintainer review, and malformed reports are rejected with useful errors.
-  Complexity: M
-
 ### P2 - UX and platform edge cases
 
 - [ ] P2 - Audit overlay viewport behavior across one-handed, IME, system-bar, and secure surfaces

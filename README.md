@@ -162,6 +162,7 @@ OpenLumen/
 - [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
 - [Translations and localization](docs/translations.md) — how to contribute a translation
 - [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
+- Driver report matrix helper: `py -3.12 tools/driver_report_matrix.py report.txt`
 - [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
 
 ### For distributors and packagers

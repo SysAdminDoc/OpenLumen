@@ -71,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README roadmap section updated from stale v0.5.0 references to v0.6.0.
 
 ### Added
+- Local driver-report matrix helper: `tools/driver_report_matrix.py` drafts a
+  review-only `docs/device-matrix.md` row from pasted driver reports or GitHub
+  issue JSON, with confidence flags and no automatic pass/fail engine marks.
 - Schedule now warns API 31+ users when Android denies exact alarms for
   timed schedule modes, links to the app's exact-alarm settings, and records
   degraded inexact scheduling in diagnostics.
