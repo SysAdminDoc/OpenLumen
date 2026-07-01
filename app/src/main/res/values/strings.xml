@@ -115,6 +115,9 @@
     <string name="schedule_end">End</string>
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_timezone">Schedules fire against your device clock (%1$s).</string>
+    <string name="schedule_exact_alarm_warning_title">Exact alarms are off</string>
+    <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>
+    <string name="schedule_exact_alarm_warning_action">Open exact alarm settings</string>
     <string name="schedule_set_location">Set location</string>
     <string name="schedule_sunset_offset">Sunset offset: %1$d m</string>
     <string name="schedule_sunrise_offset">Sunrise offset: %1$d m</string>

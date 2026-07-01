@@ -1827,13 +1827,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P1 - Reliability and release trust
 
-- [ ] P1 - Surface exact-alarm degraded scheduling in Schedule UI
-  Why: When exact alarms are denied, OpenLumen silently falls back to inexact alarms; users can see late schedule transitions without knowing the device revoked precision.
-  Evidence: `app/src/main/java/com/openlumen/service/ScheduleAlarmOrchestrator.kt:48`, `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt:131`, Android exact-alarm behavior docs.
-  Touches: `ScheduleAlarmOrchestrator.kt`, `ScheduleScreen.kt`, `DriverReport.kt`, `strings.xml` and locale files, schedule/service tests.
-  Acceptance: On API 31+ with `canScheduleExactAlarms() == false`, Schedule shows a localized warning with a settings action, diagnostics logs the degraded path once per scheduling attempt, and tests cover allowed, denied, and `SecurityException` fallback behavior.
-  Complexity: M
-
 - [ ] P1 - Add driver-report-to-device-matrix review tooling
   Why: The repo already asks users for structured driver reports, but C01 device validation still requires hand-transcribing compatibility rows.
   Evidence: `.github/ISSUE_TEMPLATE/driver_report.yml`, `docs/device-matrix.md`, `app/src/main/java/com/openlumen/diagnostics/DriverReport.kt`, Red Moon and ColorBlendr issue queues showing device/OEM variance.

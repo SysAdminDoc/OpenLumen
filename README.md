@@ -65,6 +65,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Solar-position schedule (NOAA algorithm, hand-rolled, no external library)
 - Sunset / sunrise offset sliders (±180 minutes)
 - Fixed-time schedule with Material 3 24-hour time pickers
+- Exact-alarm warning with a settings action when Android downgrades timed transitions to inexact alarms
 - "Until my next alarm" mode driven by the system alarm clock
 - Manual location entry with bundled offline city picker (~95 cities, no Play Services)
 - No runtime location permission; solar scheduling uses coordinates the user enters

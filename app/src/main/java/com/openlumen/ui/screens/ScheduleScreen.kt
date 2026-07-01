@@ -18,22 +18,30 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlumen.R
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.service.ExactAlarmAccess
 import com.openlumen.ui.components.LightSensorCard
+import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
@@ -44,12 +52,30 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
+    val ctx = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val prefs by vm.state.collectAsStateWithLifecycle()
     val lux by vm.lux.collectAsStateWithLifecycle()
 
+    var canScheduleExactAlarms by remember(ctx) {
+        mutableStateOf(ExactAlarmAccess.canScheduleExactAlarms(ctx))
+    }
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner, ctx) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
+                canScheduleExactAlarms = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(ctx) {
+        canScheduleExactAlarms = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+    }
 
     Column(
         modifier = Modifier
@@ -107,6 +133,18 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     Text(label, style = MaterialTheme.typography.bodyLarge)
                 }
             }
+        }
+
+        if (
+            ExactAlarmAccess.scheduleModeNeedsExactAlarm(prefs.schedule.mode) &&
+            !canScheduleExactAlarms
+        ) {
+            ExactAlarmWarningCard(
+                onOpenSettings = {
+                    ExactAlarmAccess.openExactAlarmSettings(ctx)
+                    canScheduleExactAlarms = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+                }
+            )
         }
 
         if (prefs.schedule.mode == ScheduleModeDto.FixedTime) {
@@ -320,5 +358,35 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 showLocationDialog = false
             }
         )
+    }
+}
+
+@Composable
+private fun ExactAlarmWarningCard(onOpenSettings: () -> Unit) {
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                stringResource(R.string.schedule_exact_alarm_warning_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Text(
+                stringResource(R.string.schedule_exact_alarm_warning_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            LumenButton(onClick = onOpenSettings) {
+                Text(stringResource(R.string.schedule_exact_alarm_warning_action))
+            }
+        }
     }
 }

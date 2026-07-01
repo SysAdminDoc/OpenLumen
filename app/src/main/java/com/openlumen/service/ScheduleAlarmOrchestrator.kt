@@ -16,17 +16,20 @@ import java.time.ZonedDateTime
  */
 internal class ScheduleAlarmOrchestrator(
     private val context: Context,
-    private val logTag: String
+    private val logTag: String,
+    private val alarmOpsProvider: (Context) -> ScheduleAlarmOps? = { ScheduleAlarmOps.from(it) },
+    private val nowMs: () -> Long = System::currentTimeMillis,
+    private val nextTransitionProvider: (ScheduleMode) -> ZonedDateTime? = { nextTransition(it) }
 ) {
     fun rescheduleNextTransition(mode: ScheduleMode) {
-        val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val alarms = alarmOpsProvider(context) ?: return
         val pi = schedulePendingIntent()
-        am.cancel(pi)
+        alarms.cancel(pi)
 
-        val next: ZonedDateTime = nextTransition(mode) ?: return
-        val nowMs = System.currentTimeMillis()
+        val next: ZonedDateTime = nextTransitionProvider(mode) ?: return
+        val currentMs = nowMs()
         var triggerMs = next.toInstant().toEpochMilli()
-        if (triggerMs <= nowMs) {
+        if (triggerMs <= currentMs) {
             Log.w(logTag, "nextTransition() returned a past time, deferring by 60s")
             DiagnosticsLog.log(
                 context,
@@ -34,41 +37,49 @@ internal class ScheduleAlarmOrchestrator(
                 DiagnosticsLog.Category.SCHEDULE,
                 "nextTransition returned past time; deferred 60s"
             )
-            triggerMs = nowMs + 60_000L
+            triggerMs = currentMs + 60_000L
         } else {
             DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.INFO,
                 DiagnosticsLog.Category.SCHEDULE,
-                "scheduled next transition in ${(triggerMs - nowMs) / 1000}s"
+                "scheduled next transition in ${(triggerMs - currentMs) / 1000}s"
             )
         }
 
         try {
-            if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
-                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+            if (!alarms.canScheduleExactAlarms()) {
+                logExactAlarmFallback("exact alarms unavailable; scheduled inexact transition")
+                alarms.setAndAllowWhileIdle(triggerMs, pi)
             } else {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+                alarms.setExactAndAllowWhileIdle(triggerMs, pi)
             }
         } catch (e: SecurityException) {
             Log.w(logTag, "SecurityException scheduling exact alarm, falling back: ${e.message}")
             try {
-                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+                logExactAlarmFallback("exact alarm rejected; scheduled inexact transition")
+                alarms.setAndAllowWhileIdle(triggerMs, pi)
             } catch (e2: SecurityException) {
                 Log.e(logTag, "Both exact and inexact scheduling rejected: ${e2.message}")
+                DiagnosticsLog.log(
+                    context,
+                    DiagnosticsLog.Level.ERROR,
+                    DiagnosticsLog.Category.SCHEDULE,
+                    "exact and inexact alarm scheduling rejected"
+                )
             }
         }
     }
 
     fun cancelAlarm() {
-        val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-        am.cancel(schedulePendingIntent())
+        val alarms = alarmOpsProvider(context) ?: return
+        alarms.cancel(schedulePendingIntent())
     }
 
     fun nextAlarmClockAt(): ZonedDateTime? {
-        val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return null
+        val alarms = alarmOpsProvider(context) ?: return null
         return runCatching {
-            am.nextAlarmClock?.triggerTime
+            alarms.nextAlarmClockTriggerTime()
                 ?.let { java.time.Instant.ofEpochMilli(it) }
                 ?.atZone(java.time.ZoneId.systemDefault())
         }.getOrNull()
@@ -81,4 +92,52 @@ internal class ScheduleAlarmOrchestrator(
             .setAction(ScheduleAlarmReceiver.ACTION_FIRE),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
+
+    private fun logExactAlarmFallback(message: String) {
+        DiagnosticsLog.log(
+            context,
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.SCHEDULE,
+            message
+        )
+    }
+}
+
+internal interface ScheduleAlarmOps {
+    fun canScheduleExactAlarms(): Boolean
+    fun setExactAndAllowWhileIdle(triggerMs: Long, pi: PendingIntent)
+    fun setAndAllowWhileIdle(triggerMs: Long, pi: PendingIntent)
+    fun cancel(pi: PendingIntent)
+    fun nextAlarmClockTriggerTime(): Long?
+
+    companion object {
+        fun from(context: Context): ScheduleAlarmOps? {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                ?: return null
+            return AlarmManagerScheduleAlarmOps(alarmManager)
+        }
+    }
+}
+
+private class AlarmManagerScheduleAlarmOps(
+    private val alarmManager: AlarmManager
+) : ScheduleAlarmOps {
+    override fun canScheduleExactAlarms(): Boolean =
+        Build.VERSION.SDK_INT < 31 ||
+            runCatching { alarmManager.canScheduleExactAlarms() }.getOrDefault(false)
+
+    override fun setExactAndAllowWhileIdle(triggerMs: Long, pi: PendingIntent) {
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+    }
+
+    override fun setAndAllowWhileIdle(triggerMs: Long, pi: PendingIntent) {
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMs, pi)
+    }
+
+    override fun cancel(pi: PendingIntent) {
+        alarmManager.cancel(pi)
+    }
+
+    override fun nextAlarmClockTriggerTime(): Long? =
+        alarmManager.nextAlarmClock?.triggerTime
 }

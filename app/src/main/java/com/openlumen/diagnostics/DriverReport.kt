@@ -1,7 +1,6 @@
 package com.openlumen.diagnostics
 
 import android.Manifest
-import android.app.AlarmManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -11,6 +10,7 @@ import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.engines.KcalEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
 import com.openlumen.prefs.Preferences
+import com.openlumen.service.ExactAlarmAccess
 import java.lang.reflect.InvocationTargetException
 import java.time.Instant
 
@@ -129,8 +129,7 @@ object DriverReport {
             appendLine("POST_NOTIFICATIONS: n/a (API <33)")
         }
         val exactAlarm = if (Build.VERSION.SDK_INT >= 31) {
-            val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            if (am?.canScheduleExactAlarms() == true) "allowed" else "not allowed"
+            if (ExactAlarmAccess.canScheduleExactAlarms(context)) "allowed" else "not allowed"
         } else {
             "implicit (API <31)"
         }

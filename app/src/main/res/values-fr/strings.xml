@@ -108,6 +108,9 @@
     <string name="schedule_end">Fin</string>
     <string name="schedule_time_value">%1$s : %2$02d:%3$02d</string>
     <string name="schedule_timezone">Les programmations suivent l\'horloge de votre appareil (%1$s).</string>
+    <string name="schedule_exact_alarm_warning_title">Les alarmes exactes sont désactivées</string>
+    <string name="schedule_exact_alarm_warning_body">Les changements programmés peuvent être en retard, car Android n\'autorise que des alarmes approximatives pour OpenLumen.</string>
+    <string name="schedule_exact_alarm_warning_action">Ouvrir les réglages des alarmes exactes</string>
     <string name="schedule_set_location">Definir la position</string>
     <string name="schedule_sunset_offset">Decalage coucher de soleil : %1$d m</string>
     <string name="schedule_sunrise_offset">Decalage lever de soleil : %1$d m</string>

@@ -108,6 +108,9 @@
     <string name="schedule_end">Ende</string>
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_timezone">Zeitpläne richten sich nach der Geräteuhr (%1$s).</string>
+    <string name="schedule_exact_alarm_warning_title">Exakte Alarme sind deaktiviert</string>
+    <string name="schedule_exact_alarm_warning_body">Zeitgesteuerte Wechsel können verspätet ausgeführt werden, weil Android für OpenLumen nur ungenaue Alarme zulässt.</string>
+    <string name="schedule_exact_alarm_warning_action">Einstellungen für exakte Alarme öffnen</string>
     <string name="schedule_set_location">Standort festlegen</string>
     <string name="schedule_sunset_offset">Sonnenuntergang-Versatz: %1$d Min.</string>
     <string name="schedule_sunrise_offset">Sonnenaufgang-Versatz: %1$d Min.</string>

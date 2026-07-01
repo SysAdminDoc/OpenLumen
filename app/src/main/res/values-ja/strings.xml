@@ -108,6 +108,9 @@
     <string name="schedule_end">終了</string>
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_timezone">スケジュールはデバイスの時計 (%1$s) に基づいて実行されます。</string>
+    <string name="schedule_exact_alarm_warning_title">正確なアラームがオフです</string>
+    <string name="schedule_exact_alarm_warning_body">Android が OpenLumen に不正確なアラームのみを許可しているため、時刻指定の切り替えが遅れることがあります。</string>
+    <string name="schedule_exact_alarm_warning_action">正確なアラーム設定を開く</string>
     <string name="schedule_set_location">位置情報を設定</string>
     <string name="schedule_sunset_offset">日没オフセット: %1$d分</string>
     <string name="schedule_sunrise_offset">日の出オフセット: %1$d分</string>
