@@ -83,6 +83,7 @@ fun LocationEntryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.large,
         title = { Text(stringResource(R.string.location_title)) },
         text = {
             Column(

@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no-results state in the offline city picker.
 - Replaced pill-shaped framework navigation indicators and switches with
   project-shaped adaptive navigation and binary controls.
+- Pinned every in-app dialog to the shared 12dp shape scale so backup,
+  diagnostics, schedule, and location modals match the rest of the interface.
 
 ## [0.6.3] - 2026-07-02
 

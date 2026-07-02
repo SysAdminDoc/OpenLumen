@@ -317,6 +317,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         val maxProfileNameLength = Preferences.MAX_PROFILE_NAME_LENGTH
         AlertDialog(
             onDismissRequest = { showSaveProfileDialog = false },
+            shape = MaterialTheme.shapes.large,
             title = { Text(stringResource(R.string.about_profiles_save_title)) },
             text = {
                 OutlinedTextField(
@@ -373,6 +374,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         val log = CrashLogger.read(ctx)
         AlertDialog(
             onDismissRequest = { showCrashLog = false },
+            shape = MaterialTheme.shapes.large,
             title = { Text(stringResource(R.string.about_crash_log_title)) },
             text = {
                 Column(
@@ -418,6 +420,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     pendingImport?.let { pending ->
         AlertDialog(
             onDismissRequest = { vm.cancelPendingImport() },
+            shape = MaterialTheme.shapes.large,
             title = { Text(stringResource(R.string.import_preview_title)) },
             text = {
                 Column(
@@ -630,6 +633,7 @@ private fun DiagnosticsLogDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.large,
         title = { Text(stringResource(R.string.about_diag_log_title)) },
         text = {
             Column(
