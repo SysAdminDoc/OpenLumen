@@ -1833,13 +1833,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P1 - Release trust and local verification
 
-- [ ] P1 — Fail unsigned release builds by default
-  Why: `:app:assembleRelease` can silently emit an unsigned artifact when `OPENLUMEN_KEYSTORE` is absent, while the release docs require signed APKs.
-  Evidence: `app/build.gradle.kts`; `docs/release-checklist.md`; Android app-signing docs.
-  Touches: `app/build.gradle.kts`, `README.md`, `docs/release-checklist.md`, release verification tooling.
-  Acceptance: `./gradlew :app:assembleRelease` fails with a clear message unless all required `OPENLUMEN_*` signing variables are present or an explicit documented unsigned-release override is passed; release verification runs `apksigner verify -v` and checks v1/v2/v3 signatures.
-  Complexity: M
-
 - [ ] P1 — Convert stale workflow-based release controls to local release gates
   Why: The repo has no `.github/workflows`, but current docs still cite CI, Dependabot, release, permissions-audit, SBOM, and attestation workflows as active controls.
   Evidence: `.github/` tree; `CONTRIBUTING.md`; `SECURITY.md`; `PROJECT_CONTEXT.md`; `docs/dependency-verification.md`; `docs/sbom-and-advisories.md`; `docs/release-checklist.md`; F-Droid reproducible-build guidance.

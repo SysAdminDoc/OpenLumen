@@ -124,6 +124,7 @@ aapt dump permissions OpenLumen-release.apk | grep INTERNET
 git clone https://github.com/SysAdminDoc/OpenLumen.git
 cd OpenLumen
 ./gradlew assembleRelease
+# Fails unless release signing env vars are present.
 ```
 
 Signed release builds require:
@@ -134,6 +135,12 @@ export OPENLUMEN_KEYSTORE_PASSWORD=...
 export OPENLUMEN_KEY_ALIAS=openlumen
 export OPENLUMEN_KEY_PASSWORD=...
 ./gradlew assembleRelease
+```
+
+Unsigned release output is only for local reproducibility or F-Droid rebuild checks:
+
+```bash
+./gradlew assembleRelease -Popenlumen.allowUnsignedRelease=true
 ```
 
 ## Module layout

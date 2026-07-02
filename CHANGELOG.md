@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Release builds now fail fast unless the full `OPENLUMEN_*` signing
+  environment is present or `-Popenlumen.allowUnsignedRelease=true` is
+  explicitly passed for local/F-Droid reproducibility checks.
+
 ### Fixed
 - KCAL writes now use the standard 0-255 scalar range, including clear and
   emergency-reset paths, so strict kernels no longer reject the prior 256

@@ -1,3 +1,11 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
+import java.io.File
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -7,6 +15,73 @@ plugins {
     alias(libs.plugins.compose.screenshot)
     alias(libs.plugins.roborazzi)
 }
+
+@DisableCachingByDefault(because = "Only validates local release signing inputs.")
+abstract class CheckReleaseSigningEnvironment : DefaultTask() {
+    @get:Input
+    abstract val allowUnsignedRelease: Property<Boolean>
+
+    @get:Input
+    abstract val openLumenKeystore: Property<String>
+
+    @get:Input
+    abstract val openLumenKeystorePassword: Property<String>
+
+    @get:Input
+    abstract val openLumenKeyAlias: Property<String>
+
+    @get:Input
+    abstract val openLumenKeyPassword: Property<String>
+
+    @TaskAction
+    fun check() {
+        if (allowUnsignedRelease.get()) {
+            logger.lifecycle(
+                "Unsigned release output explicitly allowed by -Popenlumen.allowUnsignedRelease=true"
+            )
+            return
+        }
+
+        val required = mapOf(
+            "OPENLUMEN_KEYSTORE" to openLumenKeystore.get(),
+            "OPENLUMEN_KEYSTORE_PASSWORD" to openLumenKeystorePassword.get(),
+            "OPENLUMEN_KEY_ALIAS" to openLumenKeyAlias.get(),
+            "OPENLUMEN_KEY_PASSWORD" to openLumenKeyPassword.get()
+        )
+        val missing = required.filterValues { it.isBlank() }.keys
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                "Signed release builds require ${missing.joinToString()}. " +
+                    "Set the full OPENLUMEN_* signing environment or pass " +
+                    "-Popenlumen.allowUnsignedRelease=true for local/F-Droid reproducibility builds."
+            )
+        }
+
+        val keystore = File(openLumenKeystore.get())
+        if (!keystore.isFile) {
+            throw GradleException(
+                "OPENLUMEN_KEYSTORE does not point to a readable file: ${keystore.absolutePath}"
+            )
+        }
+    }
+}
+
+val releaseSigningEnvVars = listOf(
+    "OPENLUMEN_KEYSTORE",
+    "OPENLUMEN_KEYSTORE_PASSWORD",
+    "OPENLUMEN_KEY_ALIAS",
+    "OPENLUMEN_KEY_PASSWORD"
+)
+
+val allowUnsignedReleaseBuild = providers.gradleProperty("openlumen.allowUnsignedRelease")
+    .map { it.equals("true", ignoreCase = true) }
+    .orElse(false)
+
+fun releaseSigningEnv(): Map<String, String?> =
+    releaseSigningEnvVars.associateWith { providers.environmentVariable(it).orNull }
+
+fun hasCompleteReleaseSigningEnv(): Boolean =
+    releaseSigningEnv().values.all { !it.isNullOrBlank() }
 
 android {
     namespace = "com.openlumen"
@@ -23,12 +98,13 @@ android {
 
     signingConfigs {
         create("release") {
-            val ksPath = System.getenv("OPENLUMEN_KEYSTORE")
-            if (ksPath != null) {
+            val signingEnv = releaseSigningEnv()
+            val ksPath = signingEnv["OPENLUMEN_KEYSTORE"]
+            if (hasCompleteReleaseSigningEnv() && ksPath != null) {
                 storeFile = file(ksPath)
-                storePassword = System.getenv("OPENLUMEN_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("OPENLUMEN_KEY_ALIAS")
-                keyPassword = System.getenv("OPENLUMEN_KEY_PASSWORD")
+                storePassword = signingEnv["OPENLUMEN_KEYSTORE_PASSWORD"]
+                keyAlias = signingEnv["OPENLUMEN_KEY_ALIAS"]
+                keyPassword = signingEnv["OPENLUMEN_KEY_PASSWORD"]
                 // v1 = legacy JAR; useful only for API < 24, but we keep it for any future
                 // minSdk lowering. v2 + v3 cover Android 7+ with key-rotation support.
                 enableV1Signing = true
@@ -51,7 +127,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (System.getenv("OPENLUMEN_KEYSTORE") != null) {
+            if (hasCompleteReleaseSigningEnv()) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
@@ -80,6 +156,20 @@ android {
             }
         }
     }
+}
+
+val checkReleaseSigningEnvironment = tasks.register<CheckReleaseSigningEnvironment>("checkReleaseSigningEnvironment") {
+    group = "verification"
+    description = "Fails release builds unless signing is configured or unsigned release output is explicitly allowed."
+    allowUnsignedRelease.set(allowUnsignedReleaseBuild)
+    openLumenKeystore.set(providers.environmentVariable("OPENLUMEN_KEYSTORE").orElse(""))
+    openLumenKeystorePassword.set(providers.environmentVariable("OPENLUMEN_KEYSTORE_PASSWORD").orElse(""))
+    openLumenKeyAlias.set(providers.environmentVariable("OPENLUMEN_KEY_ALIAS").orElse(""))
+    openLumenKeyPassword.set(providers.environmentVariable("OPENLUMEN_KEY_PASSWORD").orElse(""))
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(checkReleaseSigningEnvironment)
 }
 
 roborazzi {
