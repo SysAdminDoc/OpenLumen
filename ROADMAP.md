@@ -1833,13 +1833,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P1 - Release trust and local verification
 
-- [ ] P1 — Convert stale workflow-based release controls to local release gates
-  Why: The repo has no `.github/workflows`, but current docs still cite CI, Dependabot, release, permissions-audit, SBOM, and attestation workflows as active controls.
-  Evidence: `.github/` tree; `CONTRIBUTING.md`; `SECURITY.md`; `PROJECT_CONTEXT.md`; `docs/dependency-verification.md`; `docs/sbom-and-advisories.md`; `docs/release-checklist.md`; F-Droid reproducible-build guidance.
-  Touches: `tools/`, `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `PROJECT_CONTEXT.md`, `docs/dependency-verification.md`, `docs/sbom-and-advisories.md`, `docs/release-checklist.md`, `fastlane/README.md`.
-  Acceptance: A single local release command performs merged-manifest banned-permission checks, release-classpath GMS/Firebase checks, strict dependency verification, lint/tests/screenshot checks, SBOM/advisory output, signed APK verification, and SHA-256 output; docs no longer describe non-existent workflows or Dependabot as active controls.
-  Complexity: L
-
 ### P2 - Maintainability and copy guardrails
 
 - [ ] P2 — Replace the missing dependency-update review command

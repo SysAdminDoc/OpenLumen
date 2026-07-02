@@ -120,8 +120,8 @@ android {
             isShrinkResources = true
             // F-Droid rebuilds from the release tag; embedding the local Git
             // revision in META-INF/version-control-info.textproto can make
-            // reference APK comparisons drift. GitHub release provenance stays
-            // external via actions/attest.
+            // reference APK comparisons drift. Release provenance stays
+            // external via Git tags and local release-gate artifacts.
             vcsInfo.include = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

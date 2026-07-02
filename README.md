@@ -143,6 +143,21 @@ Unsigned release output is only for local reproducibility or F-Droid rebuild che
 ./gradlew assembleRelease -Popenlumen.allowUnsignedRelease=true
 ```
 
+Run the full local release gate before tagging:
+
+```bash
+py -3 tools/local_release_gate.py
+```
+
+For local reproducibility or F-Droid rebuild checks without signing keys:
+
+```bash
+py -3 tools/local_release_gate.py --allow-unsigned-release
+```
+
+Gate outputs are written to `build/reports/openlumen-release-gate/`:
+SBOM JSON, advisory report, release classpath, SHA-256 sums, and signature status.
+
 ## Module layout
 
 ```

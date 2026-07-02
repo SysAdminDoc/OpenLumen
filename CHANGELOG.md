@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release builds now fail fast unless the full `OPENLUMEN_*` signing
   environment is present or `-Popenlumen.allowUnsignedRelease=true` is
   explicitly passed for local/F-Droid reproducibility checks.
+- Added `tools/local_release_gate.py` as the workstation release gate for
+  strict Gradle verification, lint/tests/screenshot lanes, no-network manifest
+  checks, Google/Firebase classpath checks, SBOM/advisory output, SHA-256 sums,
+  and APK signature verification.
 
 ### Fixed
 - KCAL writes now use the standard 0-255 scalar range, including clear and
