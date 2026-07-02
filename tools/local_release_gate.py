@@ -79,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     report_dir.mkdir(parents=True, exist_ok=True)
 
     try:
+        run_health_claim_lint(root)
         run_gradle_validation(
             root,
             args.allow_unsigned_release,
@@ -171,6 +172,14 @@ def run_gradle_validation(
         run(cmd, root, timeout_seconds=timeout_seconds)
     except subprocess.CalledProcessError as exc:
         raise GateError(f"Gradle validation failed with exit code {exc.returncode}") from exc
+
+
+def run_health_claim_lint(root: Path) -> None:
+    cmd = [sys.executable, str(root / "tools" / "health_claim_lint.py")]
+    try:
+        run(cmd, root)
+    except subprocess.CalledProcessError as exc:
+        raise GateError(f"health-claim lint failed with exit code {exc.returncode}") from exc
 
 
 def collect_dependencies(root: Path, timeout_seconds: int) -> str:

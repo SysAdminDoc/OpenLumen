@@ -1,0 +1,1 @@
+Adicionadas verificacoes locais de lancamento para assinatura, permissoes offline, dependencias, SBOM, hashes do APK e lint de alegacoes de saude. Builds de release falham sem chaves de assinatura ou saida sem assinatura solicitada explicitamente.

@@ -1,0 +1,1 @@
+Added local release gates for signing, offline-permission checks, dependency review, SBOM/advisory output, APK hashes, and health-claim linting. Release builds now fail unless signing keys are configured or unsigned output is explicitly requested.

@@ -1834,10 +1834,3 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 ### P1 - Release trust and local verification
 
 ### P2 - Maintainability and copy guardrails
-
-- [ ] P2 — Add health-claim lint for strings, metadata, and docs
-  Why: OpenLumen's evidence policy forbids medical/sleep/eye-strain claims, and competitor marketing plus current Cochrane evidence make copy drift a recurring risk.
-  Evidence: `docs/health-evidence.md`; `README.md`; `fastlane/metadata/android/`; Cochrane blue-light-filtering review; Twilight/CF.lumen marketing pages.
-  Touches: `tools/`, `app/src/main/res/values*`, `fastlane/metadata/android/`, `README.md`, `docs/health-evidence.md`, release-check tooling.
-  Acceptance: A local lint command fails on banned phrases from `docs/health-evidence.md` outside approved evidence/disclaimer contexts; it scans English and localized strings plus Fastlane metadata; release checks run it.
-  Complexity: S

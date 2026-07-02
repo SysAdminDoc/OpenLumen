@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-07-02
+
 ### Changed
 - Release builds now fail fast unless the full `OPENLUMEN_*` signing
   environment is present or `-Popenlumen.allowUnsignedRelease=true` is
@@ -17,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `tools/dependency_update_review.py` to compare the version catalog
   against stable Maven metadata from Google, Maven Central, and the Gradle
   Plugin Portal without requiring a Gradle Versions plugin.
+- Added `tools/health_claim_lint.py` and release-gate integration to reject
+  unsupported sleep, eye-strain, medical, and clinical-proof claims across app
+  strings, Fastlane metadata, README copy, and local docs.
 
 ### Fixed
 - KCAL writes now use the standard 0-255 scalar range, including clear and

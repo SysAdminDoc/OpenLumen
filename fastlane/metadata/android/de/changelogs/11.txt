@@ -1,0 +1,1 @@
+Lokale Release-Pruefungen fuer Signatur, Offline-Berechtigungen, Abhaengigkeiten, SBOM, APK-Hashes und Health-Claim-Linting hinzugefuegt. Release-Builds scheitern jetzt ohne Signaturschluessel oder explizit angeforderte unsignierte Ausgabe.
