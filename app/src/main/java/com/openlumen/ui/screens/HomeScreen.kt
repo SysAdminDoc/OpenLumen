@@ -26,7 +26,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +56,7 @@ import com.openlumen.engine.Presets
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.presetLabel
 import com.openlumen.ui.components.LumenOutlinedButton
+import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -182,7 +182,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Switch(
+                LumenSwitch(
                     checked = prefs.enabled,
                     onCheckedChange = null
                 )
@@ -332,7 +332,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         )
                     }
                     val amoledLabel = stringResource(R.string.home_amoled_clamp_title)
-                    Switch(
+                    LumenSwitch(
                         checked = prefs.amoledBlackClamp,
                         onCheckedChange = vm::setAmoledBlackClamp,
                         modifier = Modifier.semantics { contentDescription = amoledLabel }

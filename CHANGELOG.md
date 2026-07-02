@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added stronger selected/disabled emphasis to schedule and driver choices,
   framed saved-profile rows and empty states, and surfaced a localized
   no-results state in the offline city picker.
+- Replaced pill-shaped framework navigation indicators and switches with
+  project-shaped adaptive navigation and binary controls.
 
 ## [0.6.3] - 2026-07-02
 

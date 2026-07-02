@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -67,7 +66,7 @@ fun LightSensorCard(
                     )
                 }
                 val sensorLabel = stringResource(R.string.light_sensor_title)
-                Switch(
+                LumenSwitch(
                     checked = enabled,
                     onCheckedChange = onToggle,
                     modifier = Modifier.semantics { contentDescription = sensorLabel }
