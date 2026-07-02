@@ -14,7 +14,7 @@ private val bottomNavigationClearance = 80.dp
 internal fun topLevelScrollPadding(
     horizontal: Dp = 16.dp,
     top: Dp = 16.dp,
-    bottom: Dp = 16.dp
+    bottom: Dp = 24.dp
 ): PaddingValues {
     val navigationSuiteType = NavigationSuiteScaffoldDefaults
         .calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())

@@ -1,7 +1,9 @@
 package com.openlumen.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
@@ -67,7 +69,9 @@ fun OpenLumenRoot() {
             NavHost(
                 navController = nav,
                 startDestination = Dest.Home.route,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
             ) {
                 composable(Dest.Home.route)     { HomeScreen() }
                 composable(Dest.Schedule.route) { ScheduleScreen() }

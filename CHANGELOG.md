@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Applied the adaptive navigation scaffold padding to every screen, tightened
+  top-level scroll clearance, raised shared button touch targets, and flattened
+  widget backplates/swatches to the project radius scale.
+
 ## [0.6.3] - 2026-07-02
 
 ### Changed

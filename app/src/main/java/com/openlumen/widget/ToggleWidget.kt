@@ -2,7 +2,6 @@ package com.openlumen.widget
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -29,6 +28,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.openlumen.MainActivity
 import com.openlumen.R
+import com.openlumen.ui.theme.Catppuccin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -115,12 +115,10 @@ private class ToggleGlanceWidget : GlanceAppWidget() {
 }
 
 internal object WidgetColors {
-    val Surface = ColorProvider(Color(0xFF1E1E2E))
-    val Text = ColorProvider(Color(0xFFCDD6F4))
-    val MutedText = ColorProvider(Color(0xFFA6ADC8))
-    // Catppuccin Mocha Surface1, used by PresetWidget as the contrast ring
-    // behind the active-favorite chip (C169).
-    val ActiveRing = ColorProvider(Color(0xFF45475A))
+    val Surface = ColorProvider(Catppuccin.Base)
+    val Text = ColorProvider(Catppuccin.Text)
+    val MutedText = ColorProvider(Catppuccin.Subtext0)
+    val ActiveRing = ColorProvider(Catppuccin.Surface1)
 }
 
 internal const val WIDGET_READ_TIMEOUT_MS = 1_000L

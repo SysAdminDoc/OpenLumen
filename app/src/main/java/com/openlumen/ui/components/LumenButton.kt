@@ -1,5 +1,6 @@
 package com.openlumen.ui.components
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -10,6 +11,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
+
+private val LumenButtonMinHeight = 48.dp
 
 /**
  * Project-wide button wrappers. Material 3's `ButtonDefaults.shape` is a fully-rounded
@@ -29,7 +33,7 @@ fun LumenButton(
     content: @Composable RowScope.() -> Unit
 ) = Button(
     onClick = onClick,
-    modifier = modifier,
+    modifier = modifier.heightIn(min = LumenButtonMinHeight),
     enabled = enabled,
     shape = shape,
     colors = colors,
@@ -45,7 +49,7 @@ fun LumenOutlinedButton(
     content: @Composable RowScope.() -> Unit
 ) = OutlinedButton(
     onClick = onClick,
-    modifier = modifier,
+    modifier = modifier.heightIn(min = LumenButtonMinHeight),
     enabled = enabled,
     shape = shape,
     content = content
@@ -60,7 +64,7 @@ fun LumenTextButton(
     content: @Composable RowScope.() -> Unit
 ) = TextButton(
     onClick = onClick,
-    modifier = modifier,
+    modifier = modifier.heightIn(min = LumenButtonMinHeight),
     enabled = enabled,
     shape = shape,
     content = content
