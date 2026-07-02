@@ -227,6 +227,7 @@
     <string name="location_longitude_range">-180〜180 の値を入力してください</string>
     <string name="location_pick_city">または近くの都市を選択:</string>
     <string name="location_search_cities">都市を検索</string>
+    <string name="location_no_city_matches">この検索に一致する都市はありません。</string>
     <string name="location_use_city">使用</string>
     <string name="backup_exported">エクスポートしました</string>
     <string name="backup_export_failed">エクスポートに失敗しました: %1$s</string>

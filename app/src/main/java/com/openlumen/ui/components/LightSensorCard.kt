@@ -76,7 +76,14 @@ fun LightSensorCard(
 
             val thresholdLux = threshold.toInt()
             val thresholdState = stringResource(R.string.light_sensor_threshold_state, thresholdLux)
-            Text(stringResource(R.string.light_sensor_threshold, thresholdLux))
+            Text(
+                stringResource(R.string.light_sensor_threshold, thresholdLux),
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
             Slider(
                 value = threshold,
                 onValueChange = onThresholdChange,

@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded dim fine-adjust controls, ADB command displays, warning-card tone,
   and destructive log-clear actions for clearer touch, recovery, and trust
   states.
+- Added stronger selected/disabled emphasis to schedule and driver choices,
+  framed saved-profile rows and empty states, and surfaced a localized
+  no-results state in the offline city picker.
 
 ## [0.6.3] - 2026-07-02
 

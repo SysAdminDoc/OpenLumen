@@ -239,5 +239,6 @@
     <string name="location_longitude_range">Enter a value between -180 and 180</string>
     <string name="location_pick_city">Or pick a nearby city:</string>
     <string name="location_search_cities">Search cities</string>
+    <string name="location_no_city_matches">No cities match this search.</string>
     <string name="location_use_city">Use</string>
 </resources>

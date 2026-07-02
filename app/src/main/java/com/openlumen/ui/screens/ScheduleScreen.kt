@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -130,7 +131,11 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         selected = prefs.schedule.mode == mode,
                         onClick = null
                     )
-                    Text(label, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (prefs.schedule.mode == mode) FontWeight.SemiBold else FontWeight.Normal
+                    )
                 }
             }
         }
@@ -317,7 +322,15 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                             selected = prefs.transitionDurationMs == durationMs,
                             onClick = null
                         )
-                        Text(label, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (prefs.transitionDurationMs == durationMs) {
+                                FontWeight.SemiBold
+                            } else {
+                                FontWeight.Normal
+                            }
+                        )
                     }
                 }
             }

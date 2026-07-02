@@ -227,6 +227,7 @@
     <string name="location_longitude_range">Saisissez une valeur entre -180 et 180</string>
     <string name="location_pick_city">Ou choisissez une ville proche :</string>
     <string name="location_search_cities">Rechercher des villes</string>
+    <string name="location_no_city_matches">Aucune ville ne correspond à cette recherche.</string>
     <string name="location_use_city">Utiliser</string>
     <string name="backup_exported">Exporté</string>
     <string name="backup_export_failed">Échec de l\'exportation : %1$s</string>

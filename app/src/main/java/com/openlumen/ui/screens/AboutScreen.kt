@@ -6,6 +6,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,9 +29,11 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -98,7 +101,14 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    shape = MaterialTheme.shapes.medium
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -186,62 +196,79 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     ) { Text(stringResource(R.string.about_profiles_save)) }
 
                     if (currentPrefs.savedProfiles.isEmpty()) {
-                        Text(
-                            stringResource(R.string.about_profiles_empty),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            Text(
+                                stringResource(R.string.about_profiles_empty),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
                     } else {
                         currentPrefs.savedProfiles.forEach { profile ->
-                            Column(
+                            Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
-                                Text(
-                                    profile.name,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    LumenTextButton(
-                                        onClick = { vm.loadProfile(profile.name) },
-                                        modifier = Modifier.weight(1f)
+                                    Text(
+                                        profile.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text(
-                                            stringResource(R.string.about_profiles_load),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                    LumenTextButton(
-                                        onClick = {
-                                            vm.deleteProfile(profile.name)
-                                            scope.launch {
-                                                val result = snackbarHostState.showSnackbar(
-                                                    message = profileDeletedMessage,
-                                                    actionLabel = undoActionLabel,
-                                                    withDismissAction = true
-                                                )
-                                                if (result == SnackbarResult.ActionPerformed) {
-                                                    vm.restoreDeletedProfile(profile)
+                                        LumenTextButton(
+                                            onClick = { vm.loadProfile(profile.name) },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.about_profiles_load),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        LumenTextButton(
+                                            onClick = {
+                                                vm.deleteProfile(profile.name)
+                                                scope.launch {
+                                                    val result = snackbarHostState.showSnackbar(
+                                                        message = profileDeletedMessage,
+                                                        actionLabel = undoActionLabel,
+                                                        withDismissAction = true
+                                                    )
+                                                    if (result == SnackbarResult.ActionPerformed) {
+                                                        vm.restoreDeletedProfile(profile)
+                                                    }
                                                 }
-                                            }
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.about_profiles_delete),
-                                            color = MaterialTheme.colorScheme.error,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.about_profiles_delete),
+                                                color = MaterialTheme.colorScheme.error,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
                                     }
                                 }
                             }

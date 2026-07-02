@@ -155,6 +155,18 @@ fun LocationEntryDialog(
                         .heightIn(min = 0.dp, max = 200.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
+                    if (matches.isEmpty()) {
+                        item {
+                            Text(
+                                stringResource(R.string.location_no_city_matches),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 10.dp)
+                            )
+                        }
+                    }
                     items(matches, key = { "${it.displayName}|${it.latitude},${it.longitude}" }) { city ->
                         Row(
                             modifier = Modifier

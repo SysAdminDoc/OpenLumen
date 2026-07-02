@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -107,7 +108,16 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         enabled = selectable
                     )
                     Column(Modifier.weight(1f)) {
-                        Text(label, style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (selectable) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            fontWeight = if (prefs.engine == kind) FontWeight.SemiBold else FontWeight.Normal
+                        )
                         if (kind == EngineKindDto.Auto) {
                             // Surface which engine Auto would pick so the
                             // user knows what they're getting; on a device
@@ -133,7 +143,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                                 if (availability) stringResource(R.string.driver_available)
                                 else stringResource(R.string.driver_not_available),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
