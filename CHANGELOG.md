@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   strict Gradle verification, lint/tests/screenshot lanes, no-network manifest
   checks, Google/Firebase classpath checks, SBOM/advisory output, SHA-256 sums,
   and APK signature verification.
+- Added `tools/dependency_update_review.py` to compare the version catalog
+  against stable Maven metadata from Google, Maven Central, and the Gradle
+  Plugin Portal without requiring a Gradle Versions plugin.
 
 ### Fixed
 - KCAL writes now use the standard 0-255 scalar range, including clear and

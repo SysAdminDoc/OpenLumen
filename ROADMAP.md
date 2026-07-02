@@ -1835,13 +1835,6 @@ Research date: 2026-06-28. This appends only net-new incomplete items; existing 
 
 ### P2 - Maintainability and copy guardrails
 
-- [ ] P2 — Replace the missing dependency-update review command
-  Why: `docs/release-checklist.md` tells maintainers to run `./gradlew dependencyUpdates`, but no Gradle Versions plugin or equivalent task is configured.
-  Evidence: `docs/release-checklist.md`; `gradle/libs.versions.toml`; AndroidX release notes; Kotlin/KSP release notes.
-  Touches: `build.gradle.kts`, `settings.gradle.kts`, `gradle/libs.versions.toml`, `gradle/verification-metadata.xml`, `docs/release-checklist.md`.
-  Acceptance: Either `./gradlew dependencyUpdates` or a documented local tool works in a clean checkout and compares catalog versions against stable AndroidX/Kotlin/KSP/AGP sources; the release checklist references only commands that exist.
-  Complexity: M
-
 - [ ] P2 — Add health-claim lint for strings, metadata, and docs
   Why: OpenLumen's evidence policy forbids medical/sleep/eye-strain claims, and competitor marketing plus current Cochrane evidence make copy drift a recurring risk.
   Evidence: `docs/health-evidence.md`; `README.md`; `fastlane/metadata/android/`; Cochrane blue-light-filtering review; Twilight/CF.lumen marketing pages.

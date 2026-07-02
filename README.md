@@ -149,6 +149,12 @@ Run the full local release gate before tagging:
 py -3 tools/local_release_gate.py
 ```
 
+Review stable version-catalog updates during release planning:
+
+```bash
+py -3 tools/dependency_update_review.py
+```
+
 For local reproducibility or F-Droid rebuild checks without signing keys:
 
 ```bash
