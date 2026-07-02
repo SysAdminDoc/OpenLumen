@@ -57,6 +57,7 @@ import com.openlumen.presetDisplayName
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenTextButton
@@ -267,15 +268,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     val command = emergencyOffCommand(ctx.packageName)
                     val clipboardEmergencyOff = stringResource(R.string.clipboard_emergency_off)
                     val emergencyOffCopied = stringResource(R.string.about_emergency_off_copied)
-                    Text(
-                        command,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Clip,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    )
+                    CommandBlock(text = command)
                     LumenOutlinedButton(
                         onClick = {
                             copyToClipboardAbout(ctx, clipboardEmergencyOff, command)
@@ -382,7 +375,12 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 LumenTextButton(onClick = {
                     CrashLogger.clear(ctx)
                     showCrashLog = false
-                }) { Text(stringResource(R.string.action_clear)) }
+                }) {
+                    Text(
+                        stringResource(R.string.action_clear),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         )
     }
@@ -697,7 +695,12 @@ private fun DiagnosticsLogDialog(
             LumenTextButton(onClick = {
                 DiagnosticsLog.clear(ctx)
                 onDismiss()
-            }) { Text(stringResource(R.string.action_clear)) }
+            }) {
+                Text(
+                    stringResource(R.string.action_clear),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     )
 }

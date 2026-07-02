@@ -8,7 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,6 +38,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.EngineKind
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -198,15 +198,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 val command = adbGrantCommand(ctx.packageName)
                 val clipboardAdbGrant = stringResource(R.string.clipboard_adb_grant)
                 val commandCopied = stringResource(R.string.command_copied)
-                Text(
-                    command,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Clip,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                )
+                CommandBlock(text = command)
                 LumenOutlinedButton(
                     onClick = {
                         copyToClipboard(

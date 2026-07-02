@@ -366,7 +366,7 @@ private fun ExactAlarmWarningCard(onOpenSettings: () -> Unit) {
     Card(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -377,12 +377,12 @@ private fun ExactAlarmWarningCard(onOpenSettings: () -> Unit) {
             Text(
                 stringResource(R.string.schedule_exact_alarm_warning_title),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Text(
                 stringResource(R.string.schedule_exact_alarm_warning_body),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             LumenButton(onClick = onOpenSettings) {
                 Text(stringResource(R.string.schedule_exact_alarm_warning_action))

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Applied the adaptive navigation scaffold padding to every screen, tightened
   top-level scroll clearance, raised shared button touch targets, and flattened
   widget backplates/swatches to the project radius scale.
+- Upgraded dim fine-adjust controls, ADB command displays, warning-card tone,
+  and destructive log-clear actions for clearer touch, recovery, and trust
+  states.
 
 ## [0.6.3] - 2026-07-02
 

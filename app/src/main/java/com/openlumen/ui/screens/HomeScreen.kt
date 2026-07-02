@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -57,6 +56,7 @@ import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.presetLabel
+import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -244,13 +244,15 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     // inner "−" / "+" glyph. Disabling at the bounds gives
                     // visible feedback ("you can't go lower") instead of
                     // silently swallowing taps.
-                    IconButton(
+                    LumenOutlinedButton(
                         onClick = {
                             dimDraft = (dimDraft - DIM_FINE_STEP).coerceAtLeast(0f)
                             vm.setDim(dimDraft)
                         },
                         enabled = dimDraft > 0f,
-                        modifier = Modifier.semantics { contentDescription = fineDecLabel }
+                        modifier = Modifier
+                            .widthIn(min = 56.dp)
+                            .semantics { contentDescription = fineDecLabel }
                     ) {
                         Text("−", style = MaterialTheme.typography.titleMedium)
                     }
@@ -260,13 +262,15 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(
+                    LumenOutlinedButton(
                         onClick = {
                             dimDraft = (dimDraft + DIM_FINE_STEP).coerceAtMost(0.95f)
                             vm.setDim(dimDraft)
                         },
                         enabled = dimDraft < 0.95f,
-                        modifier = Modifier.semantics { contentDescription = fineIncLabel }
+                        modifier = Modifier
+                            .widthIn(min = 56.dp)
+                            .semantics { contentDescription = fineIncLabel }
                     ) {
                         Text("+", style = MaterialTheme.typography.titleMedium)
                     }

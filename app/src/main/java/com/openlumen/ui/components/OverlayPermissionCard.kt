@@ -78,7 +78,7 @@ fun OverlayPermissionCard(
 
     Card(
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
@@ -88,12 +88,12 @@ fun OverlayPermissionCard(
             Text(
                 stringResource(R.string.perm_overlay_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Text(
                 stringResource(R.string.perm_overlay_rationale),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             LumenButton(onClick = {
                 val intent = Intent(
