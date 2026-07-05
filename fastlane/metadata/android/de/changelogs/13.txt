@@ -1,0 +1,1 @@
+Erweiterte Screenshot-Abdeckung mit Dark-Mode-Baselines fuer Home, Zeitplan, Presets, Treiber und Info, inklusive unterer Navigation und repraesentativer App-Zustaende.

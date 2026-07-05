@@ -1,0 +1,1 @@
+Cobertura de capturas ampliada con referencias en modo oscuro para Inicio, Programacion, Presets, Controlador y Acerca de, incluida la navegacion inferior y estados representativos.

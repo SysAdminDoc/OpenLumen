@@ -92,8 +92,8 @@ android {
         applicationId = "com.openlumen"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12
-        versionName = "0.6.4"
+        versionCode = 13
+        versionName = "0.6.5"
     }
 
     signingConfigs {

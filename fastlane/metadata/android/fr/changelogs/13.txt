@@ -1,0 +1,1 @@
+Couverture de captures etendue avec references en mode sombre pour Accueil, Planning, Presets, Pilote et A propos, avec navigation basse et etats representatifs.

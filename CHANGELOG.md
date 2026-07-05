@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-07-05
+
+### Added
+- Expanded Compose Preview Screenshot Testing beyond theme-token fixtures with
+  dark-mode tab-level baselines for Home, Schedule, Presets, Driver, and About,
+  including the bottom navigation chrome and representative fixed preference
+  snapshots.
+
 ## [0.6.4] - 2026-07-02
 
 ### Changed

@@ -1,0 +1,1 @@
+Cobertura de capturas ampliada com referencias em modo escuro para Inicio, Agenda, Presets, Driver e Sobre, incluindo navegacao inferior e estados representativos.
