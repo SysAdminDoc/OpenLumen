@@ -16,13 +16,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.theme.OpenLumenTheme
 
 @PreviewTest
@@ -77,7 +77,7 @@ private fun ThemeTokenFixture() {
                 progress = { 0.72f },
                 modifier = Modifier.fillMaxWidth()
             )
-            Switch(checked = true, onCheckedChange = {})
+            LumenSwitch(checked = true, onCheckedChange = {})
         }
     }
 }

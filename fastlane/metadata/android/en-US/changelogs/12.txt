@@ -1,0 +1,1 @@
+UI polish for v0.6.4: consistent dialog shapes, clearer warning and recovery surfaces, larger touch targets, stronger selected and disabled states, project-shaped navigation and switches, plus refreshed screenshot baselines.

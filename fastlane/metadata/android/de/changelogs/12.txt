@@ -1,0 +1,1 @@
+UI-Politur fuer v0.6.4: konsistentere Dialogformen, klarere Warn- und Wiederherstellungsflaechen, groessere Touch-Ziele, bessere Auswahl-/Deaktiviert-Zustaende, projektfoermige Navigation und Schalter sowie aktualisierte Screenshot-Baselines.
