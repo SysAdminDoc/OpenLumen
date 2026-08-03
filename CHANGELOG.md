@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.6] - 2026-08-03
+
+### Changed
+- Synchronized the maintenance-release metadata after the active roadmap
+  reached an empty actionable tail; the generated manifest and About tab now
+  report v0.6.6 consistently with the README and distribution metadata.
+
 ## [0.6.5] - 2026-07-05
 
 ### Added
