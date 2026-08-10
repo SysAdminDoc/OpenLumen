@@ -69,6 +69,16 @@ internal class LightSensorSubscription(
         job = null
     }
 
+    /** Restart collection after the platform pauses sensor delivery at screen-off. */
+    fun restart(enabled: Boolean) {
+        cancel()
+        if (enabled) {
+            update(true)
+        } else {
+            invalidate()
+        }
+    }
+
     private fun retryDelayMs(attempt: Int): Long = when (attempt) {
         1 -> 250L
         2 -> 1_000L

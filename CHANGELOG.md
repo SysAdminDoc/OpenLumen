@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widget and Quick Settings actions now have bounded preference operations, guaranteed broadcast completion, and retryable refresh behavior when storage is slow or unavailable.
 - Solar offset and ambient-light threshold sliders now edit local drafts during a gesture and persist only the final value.
 - Schedule alarm reconciliation now caches mode/permission/trigger signatures, avoids redundant AlarmManager work from lux samples, and queues diagnostic file writes off the service path.
+- Screen-off now clears only ambient-light-owned tint and immediately reapplies schedule state; screen-on restarts sensor collection and re-evaluates without waiting for a sample.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting

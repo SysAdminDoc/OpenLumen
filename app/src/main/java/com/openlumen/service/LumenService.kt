@@ -83,12 +83,11 @@ class LumenService : LifecycleService() {
 
     /**
      * Screen-state listener. Tied to roadmap candidate C99 (event-driven
-     * ambient sampling). On `ACTION_SCREEN_OFF` we invalidate the latest
-     * lux reading so a stale reading from the daylight half-hour can't
-     * accidentally trigger the filter when the user picks the device up
-     * an hour later in a dark room. The OS already pauses the actual
-     * sensor when the screen is off; this just makes sure we don't act on
-     * stale data the next time `applyIfShouldBeActive` runs.
+     * ambient sampling). Screen-off owns only the ambient trigger: invalidate
+     * the latest lux and immediately re-evaluate, which clears a light-only
+     * tint but leaves a schedule-owned tint unchanged. The OS pauses sensor
+     * delivery while the display is off, so screen-on restarts collection and
+     * re-evaluates the current schedule without waiting for a new sample.
      *
      * Also handles `ACTION_USER_UNLOCKED` so a service that was started
      * pre-unlock via `LockedBootReceiver` can transition to observing
@@ -100,7 +99,18 @@ class LumenService : LifecycleService() {
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
-                Intent.ACTION_SCREEN_OFF -> lightSubscription.invalidate()
+                Intent.ACTION_SCREEN_OFF -> {
+                    lightSubscription.invalidate()
+                    lifecycleScope.launch {
+                        latestPrefs.get()?.let { applyIfShouldBeActive(it) }
+                    }
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    latestPrefs.get()?.let { p ->
+                        lightSubscription.restart(p.enabled && p.lightSensorEnabled)
+                        lifecycleScope.launch { applyIfShouldBeActive(p) }
+                    }
+                }
                 Intent.ACTION_USER_UNLOCKED -> {
                     DiagnosticsLog.log(
                         this@LumenService,
@@ -154,6 +164,7 @@ class LumenService : LifecycleService() {
         if (screenStateReceiverRegistered) return
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
             // USER_UNLOCKED is a protected broadcast and (like SCREEN_OFF) is
             // exempt from Android 8+ background-execution limits when received
             // via a runtime registration. Manifest-registered receivers stopped
