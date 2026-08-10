@@ -83,9 +83,9 @@ internal object DirectBootStateSerializer : Serializer<DirectBootState> {
     }
 
     override suspend fun readFrom(input: InputStream): DirectBootState {
-        val raw = input.readBytes().toString(Charsets.UTF_8)
-        if (raw.isBlank()) return defaultValue
         return runCatching {
+            val raw = readImportBytes(input, MAX_DIRECT_BOOT_BYTES).toString(Charsets.UTF_8)
+            if (raw.isBlank()) return@runCatching defaultValue
             sanitizeDirectBootState(json.decodeFromString(DirectBootState.serializer(), raw))
         }.getOrDefault(defaultValue)
     }
@@ -95,6 +95,9 @@ internal object DirectBootStateSerializer : Serializer<DirectBootState> {
         output.write(body.toByteArray(Charsets.UTF_8))
     }
 }
+
+/** Maximum serialized size accepted from device-protected storage. */
+internal const val MAX_DIRECT_BOOT_BYTES: Int = 16 * 1024
 
 internal fun sanitizeDirectBootState(state: DirectBootState): DirectBootState =
     state.copy(

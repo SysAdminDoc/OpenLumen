@@ -31,6 +31,14 @@ class DirectBootStateSerializerTest {
         assertThat(decoded).isEqualTo(DirectBootState())
     }
 
+    @Test fun `oversized direct boot payload is rejected within the byte cap`() = runBlocking {
+        val oversized = ByteArray(MAX_DIRECT_BOOT_BYTES + 1) { 120.toByte() }
+
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(oversized))
+
+        assertThat(decoded).isEqualTo(DirectBootState())
+    }
+
     @Test fun `direct boot matrix values are clamped before persist`() = runBlocking {
         // C193: r/g/b channels clamp to 0..1 (matching PreferencesStore), not
         // the prior 0..2 drift that let a restored tint exceed the canonical
