@@ -46,19 +46,30 @@ class ScheduleAlarmOrchestratorTest {
         )
     }
 
-    @Test fun `security exception from exact alarm schedules inexact transition and logs degradation`() {
-        val alarms = FakeScheduleAlarmOps(
-            exactAllowed = true,
-            throwOnExact = true
-        )
+   @Test fun `security exception from exact alarm schedules inexact transition and logs degradation`() {
+       val alarms = FakeScheduleAlarmOps(
+           exactAllowed = true,
+           throwOnExact = true
+       )
 
-        orchestrator(alarms).rescheduleNextTransition(testMode)
+       orchestrator(alarms).rescheduleNextTransition(testMode)
 
-        assertThat(alarms.exactCalls).isEqualTo(1)
+       assertThat(alarms.exactCalls).isEqualTo(1)
+       assertThat(alarms.inexactCalls).isEqualTo(1)
+       assertThat(inexactFallbackLogs()).containsExactly(
+           "exact alarm rejected; scheduled inexact transition"
+       )
+   }
+
+    @Test fun `blocked start retry uses bounded inexact alarm`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true)
+
+        orchestrator(alarms).scheduleBlockedStartRetry(attempt = 2, delayMs = 5_000L)
+
+        assertThat(alarms.exactCalls).isEqualTo(0)
         assertThat(alarms.inexactCalls).isEqualTo(1)
-        assertThat(inexactFallbackLogs()).containsExactly(
-            "exact alarm rejected; scheduled inexact transition"
-        )
+        assertThat(alarms.cancelCalls).isEqualTo(1)
+        assertThat(logs.any { it.contains("scheduled blocked-service retry 2 in 5s") }).isTrue()
     }
 
     private fun orchestrator(alarms: FakeScheduleAlarmOps): ScheduleAlarmOrchestrator {

@@ -76,6 +76,30 @@ internal class ScheduleAlarmOrchestrator(
         alarms.cancel(schedulePendingIntent())
     }
 
+    fun scheduleBlockedStartRetry(attempt: Int, delayMs: Long) {
+        val alarms = alarmOpsProvider(context) ?: return
+        val pi = schedulePendingIntent(retryAttempt = attempt)
+        alarms.cancel(pi)
+        val triggerMs = nowMs() + delayMs.coerceAtLeast(1_000L)
+        runCatching {
+            alarms.setAndAllowWhileIdle(triggerMs, pi)
+            DiagnosticsLog.log(
+                context,
+                DiagnosticsLog.Level.WARN,
+                DiagnosticsLog.Category.SCHEDULE,
+                "scheduled blocked-service retry $attempt in ${delayMs / 1000}s"
+            )
+        }.onFailure {
+            Log.e(logTag, "could not schedule blocked-service retry: ${it.message}")
+            DiagnosticsLog.log(
+                context,
+                DiagnosticsLog.Level.ERROR,
+                DiagnosticsLog.Category.SCHEDULE,
+                "blocked-service retry scheduling rejected"
+            )
+        }
+    }
+
     fun nextAlarmClockAt(): ZonedDateTime? {
         val alarms = alarmOpsProvider(context) ?: return null
         return runCatching {
@@ -85,11 +109,12 @@ internal class ScheduleAlarmOrchestrator(
         }.getOrNull()
     }
 
-    private fun schedulePendingIntent(): PendingIntent = PendingIntent.getBroadcast(
+    private fun schedulePendingIntent(retryAttempt: Int = 0): PendingIntent = PendingIntent.getBroadcast(
         context,
         0,
         Intent(context, ScheduleAlarmReceiver::class.java)
-            .setAction(ScheduleAlarmReceiver.ACTION_FIRE),
+            .setAction(ScheduleAlarmReceiver.ACTION_FIRE)
+            .putExtra(ScheduleAlarmReceiver.EXTRA_RETRY_ATTEMPT, retryAttempt),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 

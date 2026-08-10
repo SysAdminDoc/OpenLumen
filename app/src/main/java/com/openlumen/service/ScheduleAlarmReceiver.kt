@@ -19,21 +19,37 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
             .setAction(LumenService.ACTION_REEVALUATE)
         val result = LumenServiceStarter.start(context, svc, tag)
         if (!result.started) {
-            // FGS restrictions on Android 12+ can refuse a service start
-            // when the alarm fires while the device is in a restrictive
-            // app-standby bucket. We log here; the next time the user
-            // opens the app, `applyIfShouldBeActive` reschedules and
-            // applies the current matrix from scratch. Re-firing the alarm
-            // ourselves would just hit the same refusal.
+            val attempt = intent.getIntExtra(EXTRA_RETRY_ATTEMPT, 0)
+            if (result.foregroundStartNotAllowed && attempt < MAX_BLOCKED_START_RETRIES) {
+                val nextAttempt = attempt + 1
+                ScheduleAlarmOrchestrator(context, tag).scheduleBlockedStartRetry(
+                    attempt = nextAttempt,
+                    delayMs = blockedStartRetryDelayMs(attempt)
+                )
+                Log.w(
+                    tag,
+                    "schedule fire blocked; retry $nextAttempt/$MAX_BLOCKED_START_RETRIES queued"
+                )
+            } else if (result.foregroundStartNotAllowed) {
+                Log.e(tag, "schedule fire remained blocked after retry budget; waiting for app entry")
+            }
             Log.w(
                 tag,
                 "Schedule fire could not start LumenService " +
-                    "(fgsBlocked=${result.foregroundStartNotAllowed})"
+                "(fgsBlocked=${result.foregroundStartNotAllowed})"
             )
         }
     }
 
     companion object {
         const val ACTION_FIRE = "com.openlumen.action.SCHEDULE_FIRE"
+        const val EXTRA_RETRY_ATTEMPT = "com.openlumen.extra.SCHEDULE_RETRY_ATTEMPT"
+        const val MAX_BLOCKED_START_RETRIES = 3
+
+        internal fun blockedStartRetryDelayMs(attempt: Int): Long = when (attempt) {
+            0 -> 60_000L
+            1 -> 5 * 60_000L
+            else -> 15 * 60_000L
+        }
     }
 }
