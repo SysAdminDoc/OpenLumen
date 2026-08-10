@@ -104,10 +104,53 @@ class LocalReleaseGateTest(unittest.TestCase):
                 gate.assert_backup_rules(root)
 
     def test_spdx_report_is_json_serializable(self):
-        report = gate.build_spdx(["androidx.core:core-ktx:1.19.0"])
+        report = gate.build_spdx(
+            ["androidx.core:core-ktx:1.19.0"],
+            metadata={
+                "androidx.core:core-ktx:1.19.0": {
+                    "license": "Apache-2.0",
+                    "source": "https://cs.android.com/androidx/platform/frameworks/support",
+                    "reason": "fixture metadata",
+                }
+            },
+        )
         encoded = json.dumps(report)
 
         self.assertIn("pkg:maven/androidx.core/core-ktx@1.19.0", encoded)
+        self.assertIn('"licenseDeclared": "Apache-2.0"', encoded)
+
+    def test_spdx_report_supports_multiple_declared_licenses(self):
+        report = gate.build_spdx(
+            ["example:dual:1.0"],
+            metadata={
+                "example:dual:1.0": {
+                    "license": "Apache-2.0 OR MIT",
+                    "source": "https://example.invalid/source",
+                    "reason": "fixture metadata",
+                }
+            },
+        )
+
+        self.assertEqual(report["packages"][0]["licenseDeclared"], "Apache-2.0 OR MIT")
+
+    def test_spdx_report_rejects_unknown_license(self):
+        with self.assertRaises(gate.GateError):
+            gate.build_spdx(
+                ["example:unknown:1.0"],
+                metadata={
+                    "example:unknown:1.0": {
+                        "license": "LicenseRef-Unknown",
+                        "source": "https://example.invalid/source",
+                        "reason": "fixture metadata",
+                    }
+                },
+            )
+
+    def test_license_override_is_exact_and_reviewed(self):
+        overrides = gate.load_license_overrides(Path(__file__).resolve().parents[1])
+
+        self.assertEqual(overrides["com.google.guava:listenablefuture:1.0"]["license"], "Apache-2.0")
+        self.assertTrue(overrides["com.google.guava:listenablefuture:1.0"]["reason"])
 
     def test_run_times_out_cleanly(self):
         with tempfile.TemporaryDirectory() as tmp:

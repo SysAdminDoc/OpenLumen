@@ -35,6 +35,41 @@ BANNED_DEPENDENCY_PATTERNS = (
 )
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 DEPENDENCY_RE = re.compile(r"([A-Za-z0-9_.-]+):([A-Za-z0-9_.-]+):([A-Za-z0-9_.+\-]+)")
+PERMITTED_SPDX_LICENSES = {
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "EPL-2.0",
+    "GPL-3.0-only",
+    "GPL-3.0-or-later",
+    "ISC",
+    "LGPL-2.1-only",
+    "LGPL-3.0-only",
+    "MIT",
+    "MPL-2.0",
+    "Zlib",
+}
+LICENSE_NAME_MAP = {
+    "apache 2 0": "Apache-2.0",
+    "the apache license version 2 0": "Apache-2.0",
+    "the apache software license version 2 0": "Apache-2.0",
+    "bsd 2 clause": "BSD-2-Clause",
+    "bsd 3 clause": "BSD-3-Clause",
+    "cc0 1 0": "CC0-1.0",
+    "eclipse public license version 2 0": "EPL-2.0",
+    "epl 2 0": "EPL-2.0",
+    "gpl 3 0": "GPL-3.0-only",
+    "gpl 3 0 or later": "GPL-3.0-or-later",
+    "isc license": "ISC",
+    "lgpl 2 1": "LGPL-2.1-only",
+    "lgpl 3 0": "LGPL-3.0-only",
+    "mit": "MIT",
+    "mit license": "MIT",
+    "mozilla public license version 2 0": "MPL-2.0",
+    "mpl 2 0": "MPL-2.0",
+    "zlib": "Zlib",
+}
 
 
 class GateError(RuntimeError):
@@ -89,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
         dependency_output = collect_dependencies(root, args.gradle_timeout_seconds)
         dependencies = parse_gradle_dependencies(dependency_output)
         write_text(report_dir / "releaseRuntimeClasspath.txt", dependency_output)
-        write_json(report_dir / "sbom.spdx.json", build_spdx(dependencies))
+        write_json(report_dir / "sbom.spdx.json", build_spdx(dependencies, root=root))
         write_json(report_dir / "advisory-report.json", build_advisory_report(dependencies, args.advisory_mode))
         assert_no_banned_dependencies(dependencies)
         manifest = find_release_manifest(root)
@@ -214,16 +249,33 @@ def parse_gradle_dependencies(output: str) -> list[str]:
     return sorted(coordinates)
 
 
-def build_spdx(dependencies: Iterable[str]) -> dict[str, object]:
+def build_spdx(
+    dependencies: Iterable[str],
+    root: Path | None = None,
+    metadata: dict[str, dict[str, str]] | None = None,
+) -> dict[str, object]:
+    root = root or Path(__file__).resolve().parents[1]
+    overrides = load_license_overrides(root)
     packages = []
     for coord in dependencies:
         group, name, version = coord.split(":", 2)
+        package_metadata = (
+            metadata[coord]
+            if metadata is not None and coord in metadata
+            else resolve_dependency_metadata(coord, root, overrides)
+        )
+        validate_package_metadata(coord, package_metadata)
         spdx_id = re.sub(r"[^A-Za-z0-9.-]", "-", f"SPDXRef-{group}-{name}-{version}")
         packages.append(
             {
                 "SPDXID": spdx_id,
                 "name": f"{group}:{name}",
                 "versionInfo": version,
+                "downloadLocation": package_metadata["source"],
+                "licenseConcluded": package_metadata["license"],
+                "licenseDeclared": package_metadata["license"],
+                "copyrightText": "NOASSERTION",
+                "packageComment": package_metadata.get("reason", "License and provenance read from the resolved Maven POM."),
                 "externalRefs": [
                     {
                         "referenceCategory": "PACKAGE-MANAGER",
@@ -244,6 +296,133 @@ def build_spdx(dependencies: Iterable[str]) -> dict[str, object]:
         },
         "packages": packages,
     }
+
+
+def load_license_overrides(root: Path) -> dict[str, dict[str, str]]:
+    path = root / "tools/sbom-license-overrides.json"
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GateError(f"SBOM license override file could not be read: {path}: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise GateError("SBOM license override file must contain an object keyed by exact coordinates")
+    overrides: dict[str, dict[str, str]] = {}
+    for coord, value in raw.items():
+        if not isinstance(coord, str) or not DEPENDENCY_RE.fullmatch(coord):
+            raise GateError(f"invalid SBOM license override coordinate: {coord!r}")
+        if not isinstance(value, dict):
+            raise GateError(f"SBOM license override must be an object: {coord}")
+        overrides[coord] = {str(key): str(item) for key, item in value.items()}
+    return overrides
+
+
+def resolve_dependency_metadata(
+    coord: str,
+    root: Path,
+    overrides: dict[str, dict[str, str]],
+) -> dict[str, str]:
+    override = overrides.get(coord)
+    if override is not None:
+        return override
+
+    group, name, version = coord.split(":", 2)
+    gradle_user_home = Path(os.environ.get("GRADLE_USER_HOME", Path.home() / ".gradle"))
+    module_dir = gradle_user_home / "caches/modules-2/files-2.1" / group / name / version
+    poms = sorted(module_dir.rglob("*.pom")) if module_dir.is_dir() else []
+    if not poms:
+        raise GateError(
+            f"no cached Maven POM for {coord}; resolve it before generating the SBOM "
+            "or add an exact reviewed entry to tools/sbom-license-overrides.json"
+        )
+
+    try:
+        pom = ET.parse(poms[0]).getroot()
+    except (OSError, ET.ParseError) as exc:
+        raise GateError(f"Maven POM could not be read for {coord}: {exc}") from exc
+
+    licenses = []
+    license_urls = []
+    for element in pom.iter():
+        if _xml_local_name(element.tag) != "license":
+            continue
+        name_text = _xml_child_text(element, "name")
+        if not name_text:
+            continue
+        license_id = normalize_spdx_license(name_text)
+        licenses.append(license_id)
+        url_text = _xml_child_text(element, "url")
+        if url_text:
+            license_urls.append(url_text)
+    if not licenses:
+        raise GateError(
+            f"Maven POM for {coord} declares no recognizable license; add an exact reviewed "
+            "entry to tools/sbom-license-overrides.json"
+        )
+
+    source = ""
+    for element in pom.iter():
+        if _xml_local_name(element.tag) == "scm":
+            source = _xml_child_text(element, "url")
+            if source:
+                break
+    if not source:
+        for element in pom:
+            if _xml_local_name(element.tag) == "url":
+                source = (element.text or "").strip()
+                if source:
+                    break
+    if not source:
+        raise GateError(
+            f"Maven POM for {coord} has no source URL; add an exact reviewed entry to "
+            "tools/sbom-license-overrides.json"
+        )
+
+    metadata_url = maven_pom_url(group, name, version)
+    return {
+        "license": " OR ".join(dict.fromkeys(licenses)),
+        "source": source,
+        "metadata_url": metadata_url,
+        "license_url": license_urls[0] if license_urls else "",
+        "reason": f"License and provenance read from {metadata_url}.",
+    }
+
+
+def normalize_spdx_license(name: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
+    license_id = LICENSE_NAME_MAP.get(normalized)
+    if license_id is None:
+        raise GateError(f"unrecognized Maven license name: {name}")
+    return license_id
+
+
+def validate_package_metadata(coord: str, metadata: dict[str, str]) -> None:
+    license_expression = metadata.get("license", "")
+    source = metadata.get("source", "")
+    reason = metadata.get("reason", "")
+    license_ids = [part.strip() for part in license_expression.split(" OR ") if part.strip()]
+    if not license_ids or any(item not in PERMITTED_SPDX_LICENSES for item in license_ids):
+        raise GateError(f"SBOM license is unknown or prohibited for {coord}: {license_expression!r}")
+    if not source.startswith(("https://", "http://")):
+        raise GateError(f"SBOM provenance source is missing or invalid for {coord}: {source!r}")
+    if not reason.strip():
+        raise GateError(f"SBOM license/provenance metadata has no review reason for {coord}")
+
+
+def maven_pom_url(group: str, name: str, version: str) -> str:
+    repository = "https://dl.google.com/dl/android/maven2" if group.startswith("androidx.") else "https://repo1.maven.org/maven2"
+    path = f"{group.replace('.', '/')}/{name}/{version}/{name}-{version}.pom"
+    return f"{repository}/{path}"
+
+
+def _xml_local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _xml_child_text(element: ET.Element, name: str) -> str:
+    for child in element:
+        if _xml_local_name(child.tag) == name:
+            return (child.text or "").strip()
+    return ""
 
 
 def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, object]:

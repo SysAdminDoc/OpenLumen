@@ -1,0 +1,8 @@
+{
+  "com.google.guava:listenablefuture:1.0": {
+    "license": "Apache-2.0",
+    "source": "https://github.com/google/guava",
+    "reason": "The artifact POM omits license metadata; reviewed against the upstream Guava Apache-2.0 license.",
+    "reviewed": "2026-08-10"
+  }
+}

@@ -150,6 +150,11 @@ Run the full local release gate before tagging:
 py -3 tools/local_release_gate.py
 ```
 
+The gate's SPDX SBOM includes a declared/concluded SPDX license and source
+provenance for every resolved release dependency. A dependency with missing or
+prohibited metadata fails the gate unless its exact coordinate has a reviewed
+entry in `tools/sbom-license-overrides.json`.
+
 Review stable version-catalog updates during release planning:
 
 ```bash

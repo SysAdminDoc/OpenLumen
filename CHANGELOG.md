@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened the exported automation receiver with caller-UID/package allowlisting
   and made the filter-state permission signature-protected; unknown local apps
   can no longer control the filter or observe its state broadcast.
+- Release SBOM generation now records SPDX license and source provenance for every resolved dependency and fails unknown or prohibited metadata unless an exact reviewed override exists.
 
 ### Fixed
 - Root command execution now uses hard process-level deadlines and guaranteed
