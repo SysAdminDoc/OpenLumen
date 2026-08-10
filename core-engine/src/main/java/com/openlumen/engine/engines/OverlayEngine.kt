@@ -12,6 +12,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.EngineResult
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import kotlinx.coroutines.Dispatchers
@@ -141,7 +142,7 @@ class OverlayEngine : ColorEngine {
         }
     }
 
-    override suspend fun apply(context: Context, matrix: LumenMatrix): Unit = onMain {
+    override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = onMain {
         val argb = matrix.toOverlayArgb()
         val installed = synchronized(viewLock) {
             val v = hostView
@@ -161,20 +162,29 @@ class OverlayEngine : ColorEngine {
         }
         if (!installed) {
             Log.w(tag, "apply: installView failed; tint will not be visible")
+            EngineResult.Failure("overlay view installation failed")
+        } else {
+            EngineResult.Success
         }
     }
 
-    override suspend fun clear(context: Context): Unit = onMain {
+    override suspend fun clear(context: Context): EngineResult = onMain {
         synchronized(viewLock) {
             val v = hostView
             val wm = hostWm
+            var failure: Throwable? = null
             if (v != null && wm != null) {
                 runCatching { wm.removeViewImmediate(v) }
-                    .onFailure { Log.w(tag, "removeViewImmediate failed: ${it.message}") }
+                    .onFailure {
+                        failure = it
+                        Log.w(tag, "removeViewImmediate failed: ${it.message}")
+                    }
             }
             hostView = null
             hostWm = null
             lastAppliedArgb = 0
+            failure?.let { return@synchronized EngineResult.Failure("overlay clear failed: ${it.message}") }
+            EngineResult.Success
         }
     }
 

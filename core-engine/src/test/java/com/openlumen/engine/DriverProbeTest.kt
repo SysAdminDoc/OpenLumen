@@ -11,15 +11,15 @@ class DriverProbeTest {
         val probe = DriverProbe(engines)
 
         assertThat(
-            probe.pickBestFrom(
-                probes(
-                    engines,
-                    EngineKind.COLOR_DISPLAY_MANAGER to true,
-                    EngineKind.SURFACE_FLINGER to true,
-                    EngineKind.KCAL to true,
-                    EngineKind.OVERLAY to true
-                )
-            ).kind
+            checkNotNull(probe.pickBestFrom(
+               probes(
+                   engines,
+                   EngineKind.COLOR_DISPLAY_MANAGER to true,
+                   EngineKind.SURFACE_FLINGER to true,
+                   EngineKind.KCAL to true,
+                   EngineKind.OVERLAY to true
+               )
+            )).kind
         ).isEqualTo(EngineKind.SURFACE_FLINGER)
     }
 
@@ -28,19 +28,36 @@ class DriverProbeTest {
         val probe = DriverProbe(engines)
 
         assertThat(
-            probe.pickBestFrom(
-                probes(
-                    engines,
-                    EngineKind.COLOR_DISPLAY_MANAGER to true,
-                    EngineKind.SURFACE_FLINGER to false,
-                    EngineKind.KCAL to false,
-                    EngineKind.OVERLAY to true
-                )
-            ).kind
+            checkNotNull(probe.pickBestFrom(
+               probes(
+                   engines,
+                   EngineKind.COLOR_DISPLAY_MANAGER to true,
+                   EngineKind.SURFACE_FLINGER to false,
+                   EngineKind.KCAL to false,
+                   EngineKind.OVERLAY to true
+               )
+            )).kind
         ).isEqualTo(EngineKind.COLOR_DISPLAY_MANAGER)
     }
 
     @Test fun `auto falls back to overlay when neither root nor CDM is available`() {
+        val engines = engines()
+        val probe = DriverProbe(engines)
+
+        assertThat(
+            checkNotNull(probe.pickBestFrom(
+                probes(
+                    engines,
+                    EngineKind.COLOR_DISPLAY_MANAGER to false,
+                    EngineKind.SURFACE_FLINGER to false,
+                    EngineKind.KCAL to false,
+                    EngineKind.OVERLAY to true
+                )
+            )).kind
+        ).isEqualTo(EngineKind.OVERLAY)
+    }
+
+    @Test fun `auto returns no engine when every probe is unavailable`() {
         val engines = engines()
         val probe = DriverProbe(engines)
 
@@ -51,10 +68,10 @@ class DriverProbeTest {
                     EngineKind.COLOR_DISPLAY_MANAGER to false,
                     EngineKind.SURFACE_FLINGER to false,
                     EngineKind.KCAL to false,
-                    EngineKind.OVERLAY to true
+                    EngineKind.OVERLAY to false
                 )
-            ).kind
-        ).isEqualTo(EngineKind.OVERLAY)
+            )
+        ).isNull()
     }
 
     private fun engines(): List<ColorEngine> = EngineKind.entries.map { FakeEngine(it) }
@@ -72,9 +89,9 @@ class DriverProbeTest {
     private class FakeEngine(
         override val kind: EngineKind,
         private val available: Boolean = false
-    ) : ColorEngine {
-        override suspend fun isAvailable(context: Context): Boolean = available
-        override suspend fun apply(context: Context, matrix: LumenMatrix) = Unit
-        override suspend fun clear(context: Context) = Unit
-    }
+   ) : ColorEngine {
+       override suspend fun isAvailable(context: Context): Boolean = available
+        override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = EngineResult.Success
+        override suspend fun clear(context: Context): EngineResult = EngineResult.Success
+   }
 }

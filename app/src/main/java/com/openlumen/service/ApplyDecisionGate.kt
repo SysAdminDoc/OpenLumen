@@ -32,8 +32,17 @@ internal class ApplyDecisionGate {
         }
 
         val isStateFlip = shouldBeActive != lastShouldBeActive
+        return ApplyDecision(matrix = matrix, isStateFlip = isStateFlip)
+    }
+
+    /**
+     * Commit a target only after the engine has reported a visible success.
+     * Failed operations deliberately leave the previous committed target in
+     * place so the same requested state can be retried.
+     */
+    @Synchronized
+    fun commit(shouldBeActive: Boolean, matrix: LumenMatrix) {
         lastTarget = matrix
         lastShouldBeActive = shouldBeActive
-        return ApplyDecision(matrix = matrix, isStateFlip = isStateFlip)
     }
 }

@@ -6,6 +6,7 @@ import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.DisplayEmergencyReset
 import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.EngineResult
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
@@ -50,17 +51,43 @@ internal class EngineController(
         }
         val want = resolveDesiredEngineKind(prefs)
         val current = engine
+        if (want == null) {
+            if (current != null) {
+                cancelTransition()
+                applyMutex.withLock {
+                    reportResult("engine.clear() while no driver is available", runCatching {
+                        current.clear(context)
+                    }.getOrElse { EngineResult.Failure(it.message ?: "exception") })
+                    engine = null
+                    lastApplied = null
+                    applyGate.reset()
+                }
+            }
+            cachedAutoKind = null
+            Log.w(logTag, "no available display driver; filter is in standby")
+            return
+        }
         if (current?.kind == want) return
         cancelTransition()
         applyMutex.withLock {
-            runCatching { current?.clear(context) }
-                .onFailure { Log.w(logTag, "engine.clear() during switch failed: ${it.message}") }
+            current?.let {
+                reportResult("engine.clear() during switch", runCatching {
+                    it.clear(context)
+                }.getOrElse { error -> EngineResult.Failure(error.message ?: "exception") })
+            }
             val next = probe.engineOf(want)
             if (next == null) {
                 Log.e(logTag, "DriverProbe returned null for $want - staying on previous engine")
                 return@withLock
             }
-            (next as? OverlayEngine)?.installView(context, Presets.OFF)
+            if (next is OverlayEngine && !next.installView(context, Presets.OFF)) {
+                Log.w(logTag, "overlay driver could not install its host view")
+                engine = null
+                lastApplied = null
+                applyGate.reset()
+                cachedAutoKind = null
+                return@withLock
+            }
             engine = next
             lastApplied = null
             applyGate.reset()
@@ -76,15 +103,18 @@ internal class EngineController(
     suspend fun applyIfNeeded(shouldBeActive: Boolean, matrix: LumenMatrix, transitionDurationMs: Long) {
         applyGate.next(shouldBeActive, matrix)?.let { decision ->
             val rampMs = if (decision.isStateFlip) transitionDurationMs.coerceAtLeast(0L) else 0L
-            applyMatrix(decision.matrix, rampMs)
+            applyMatrix(decision, shouldBeActive, rampMs)
         }
     }
 
     suspend fun hardClearOutputs(reason: String) {
         cancelTransition()
         applyMutex.withLock {
-            runCatching { engine?.clear(context) }
-                .onFailure { Log.w(logTag, "engine.clear() during hard clear failed: ${it.message}") }
+            engine?.let {
+                reportResult("engine.clear() during hard clear", runCatching {
+                    it.clear(context)
+                }.getOrElse { error -> EngineResult.Failure(error.message ?: "exception") })
+            }
             runCatching { (probe.engineOf(EngineKind.OVERLAY) as? OverlayEngine)?.clear(context) }
                 .onFailure { Log.w(logTag, "overlay hard clear failed: ${it.message}") }
             runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
@@ -110,13 +140,22 @@ internal class EngineController(
         val selected = directBootEngineFor(state.engine)
         val matrix = state.toLumenMatrix()
         applyMutex.withLock {
-            (selected as? OverlayEngine)?.installView(context, Presets.OFF)
+            if (selected is OverlayEngine && !selected.installView(context, Presets.OFF)) {
+                engine = null
+                lastApplied = null
+                applyGate.reset()
+                Log.w(logTag, "direct-boot overlay install failed")
+                return@withLock
+            }
             engine = selected
             lastApplied = null
             applyGate.reset()
-            runCatching { selected.apply(context, matrix) }
-                .onSuccess {
+            val result = runCatching { selected.apply(context, matrix) }
+                .getOrElse { EngineResult.Failure(it.message ?: "exception") }
+            when (result) {
+                EngineResult.Success -> {
                     lastApplied = matrix
+                    applyGate.commit(state.active, matrix)
                     DiagnosticsLog.log(
                         context,
                         DiagnosticsLog.Level.INFO,
@@ -124,7 +163,11 @@ internal class EngineController(
                         "direct-boot restore on ${selected.kind.name}"
                     )
                 }
-                .onFailure { Log.w(logTag, "direct-boot apply failed: ${it.message}") }
+                is EngineResult.Failure -> {
+                    Log.w(logTag, "direct-boot apply failed: ${result.message}")
+                    cachedAutoKind = null
+                }
+            }
         }
     }
 
@@ -142,7 +185,7 @@ internal class EngineController(
         runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
     }
 
-    private suspend fun resolveDesiredEngineKind(prefsSnapshot: Preferences): EngineKind {
+    private suspend fun resolveDesiredEngineKind(prefsSnapshot: Preferences): EngineKind? {
         if (prefsSnapshot.engine == EngineKindDto.Auto) return resolveAutoEngineKind()
 
         val requested = prefsSnapshot.engine.toEngineKind()
@@ -152,9 +195,25 @@ internal class EngineController(
             ) == true
         if (requestedAvailable) return requested
 
-        val fallback = resolveAutoEngineKind()
-        val message = "selected engine ${requested.name} unavailable; using Auto (${fallback.name})"
-        Log.w(logTag, message)
+       val fallback = resolveAutoEngineKind()
+        if (fallback == null) {
+            val message = "selected engine ${requested.name} unavailable and no fallback is available"
+            Log.w(logTag, message)
+            DiagnosticsLog.log(
+                context,
+                DiagnosticsLog.Level.WARN,
+                DiagnosticsLog.Category.ENGINE,
+                message
+            )
+            if (isUserUnlocked()) {
+                prefs.update { current ->
+                    if (current.engine == prefsSnapshot.engine) current.copy(engine = EngineKindDto.Auto) else current
+                }
+            }
+            return null
+        }
+       val message = "selected engine ${requested.name} unavailable; using Auto (${fallback.name})"
+       Log.w(logTag, message)
         DiagnosticsLog.log(
             context,
             DiagnosticsLog.Level.WARN,
@@ -169,8 +228,8 @@ internal class EngineController(
         return fallback
     }
 
-    private suspend fun resolveAutoEngineKind(): EngineKind =
-        cachedAutoKind ?: probe.pickBest(context).kind.also { cachedAutoKind = it }
+    private suspend fun resolveAutoEngineKind(): EngineKind? =
+        cachedAutoKind ?: probe.pickBest(context)?.kind?.also { cachedAutoKind = it }
 
     private fun EngineKindDto.toEngineKind(): EngineKind = when (this) {
         EngineKindDto.Auto -> EngineKind.OVERLAY
@@ -180,37 +239,58 @@ internal class EngineController(
         EngineKindDto.Overlay -> EngineKind.OVERLAY
     }
 
-    private suspend fun applyMatrix(target: LumenMatrix, durationMs: Long) {
+    private suspend fun applyMatrix(
+        decision: ApplyDecision,
+        shouldBeActive: Boolean,
+        durationMs: Long
+    ) {
         rampMutex.withLock {
             cancelTransitionLocked()
 
-            val previous = lastApplied
-            if (durationMs <= 0 || previous == null || previous == target) {
-                applyOnce(target)
-            } else {
-                val totalSteps = (durationMs / 1_000L).coerceAtLeast(2L).coerceAtMost(MAX_RAMP_STEPS.toLong())
-                val stepMs = (durationMs / totalSteps).coerceAtLeast(MIN_RAMP_STEP_MS)
-
-                transitionJob = scope.launch {
-                    try {
-                        val startNs = System.nanoTime()
-                        while (isActive) {
-                            val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
-                            val t = (elapsedMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
-                            val step = previous.lerp(target, t)
-                            applyOnce(step)
-                            if (t >= 1f) break
-                            delay(stepMs)
-                        }
-                    } catch (_: CancellationException) {
-                        // Expected when a newer target, engine switch, or manual off wins.
-                    } catch (t: Throwable) {
-                        Log.w(logTag, "transition ramp aborted: ${t.message}")
-                    }
+           val previous = lastApplied
+            if (durationMs <= 0 || previous == null || previous == decision.matrix) {
+                if (applyOnce(decision.matrix)) {
+                    applyGate.commit(shouldBeActive, decision.matrix)
+                } else {
+                    applyGate.reset()
                 }
-            }
-        }
-    }
+           } else {
+               val totalSteps = (durationMs / 1_000L).coerceAtLeast(2L).coerceAtMost(MAX_RAMP_STEPS.toLong())
+               val stepMs = (durationMs / totalSteps).coerceAtLeast(MIN_RAMP_STEP_MS)
+
+               transitionJob = scope.launch {
+                    var committed = false
+                    var completed = false
+                   try {
+                       val startNs = System.nanoTime()
+                       while (isActive) {
+                           val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
+                           val t = (elapsedMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                            val step = previous.lerp(decision.matrix, t)
+                            if (!applyOnce(step)) {
+                                applyGate.reset()
+                                return@launch
+                            }
+                            if (!committed) {
+                                applyGate.commit(shouldBeActive, decision.matrix)
+                                committed = true
+                            }
+                           if (t >= 1f) break
+                           delay(stepMs)
+                       }
+                        completed = true
+                   } catch (_: CancellationException) {
+                       // Expected when a newer target, engine switch, or manual off wins.
+                   } catch (t: Throwable) {
+                       Log.w(logTag, "transition ramp aborted: ${t.message}")
+                   }
+                    if (!completed && committed) {
+                        applyGate.reset()
+                    }
+               }
+           }
+       }
+   }
 
     private suspend fun cancelTransition() {
         rampMutex.withLock { cancelTransitionLocked() }
@@ -227,19 +307,33 @@ internal class EngineController(
         transitionJob = null
     }
 
-    private suspend fun applyOnce(matrix: LumenMatrix) {
-        applyMutex.withLock {
-            val current = engine
-            if (current == null) {
-                Log.w(logTag, "applyOnce: no engine yet, skipping")
-            } else {
-                runCatching { current.apply(context, matrix) }
-                    .onSuccess { lastApplied = matrix }
-                    .onFailure {
-                        Log.w(logTag, "engine.apply() failed: ${it.message}")
-                        cachedAutoKind = null
+    private suspend fun applyOnce(matrix: LumenMatrix): Boolean {
+        return applyMutex.withLock {
+           val current = engine
+           if (current == null) {
+               Log.w(logTag, "applyOnce: no engine yet, skipping")
+                return@withLock false
+           } else {
+                val result = runCatching { current.apply(context, matrix) }
+                    .getOrElse { EngineResult.Failure(it.message ?: "exception") }
+                when (result) {
+                    EngineResult.Success -> {
+                        lastApplied = matrix
+                        return@withLock true
                     }
-            }
+                    is EngineResult.Failure -> {
+                        Log.w(logTag, "engine.apply() failed: ${result.message}")
+                       cachedAutoKind = null
+                        return@withLock false
+                    }
+                   }
+           }
+       }
+   }
+
+    private fun reportResult(operation: String, result: EngineResult) {
+        if (result is EngineResult.Failure) {
+            Log.w(logTag, operation + " failed: " + result.message)
         }
     }
 

@@ -21,8 +21,9 @@ class ApplyDecisionGateTest {
     @Test fun `duplicate target does not dispatch until target changes`() {
         val gate = ApplyDecisionGate()
 
-        assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNotNull()
-        assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNull()
+       assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNotNull()
+        gate.commit(shouldBeActive = true, matrix = warmMatrix)
+       assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNull()
 
         val changed = gate.next(shouldBeActive = true, matrix = warmerMatrix)
 
@@ -34,8 +35,9 @@ class ApplyDecisionGateTest {
     @Test fun `reset dispatches same active target to a new engine`() {
         val gate = ApplyDecisionGate()
 
-        assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNotNull()
-        assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNull()
+       assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNotNull()
+        gate.commit(shouldBeActive = true, matrix = warmMatrix)
+       assertThat(gate.next(shouldBeActive = true, matrix = warmMatrix)).isNull()
 
         gate.reset()
 
@@ -47,8 +49,9 @@ class ApplyDecisionGateTest {
     @Test fun `reset dispatches identity for inactive first emission`() {
         val gate = ApplyDecisionGate()
 
-        assertThat(gate.next(shouldBeActive = false, matrix = LumenMatrix.IDENTITY)).isNotNull()
-        assertThat(gate.next(shouldBeActive = false, matrix = LumenMatrix.IDENTITY)).isNull()
+       assertThat(gate.next(shouldBeActive = false, matrix = LumenMatrix.IDENTITY)).isNotNull()
+        gate.commit(shouldBeActive = false, matrix = LumenMatrix.IDENTITY)
+       assertThat(gate.next(shouldBeActive = false, matrix = LumenMatrix.IDENTITY)).isNull()
 
         gate.reset()
 

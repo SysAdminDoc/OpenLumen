@@ -22,11 +22,26 @@ interface ColorEngine {
     /** Probe whether this engine can actually run on the current device, right now. Cheap. */
     suspend fun isAvailable(context: Context): Boolean
 
-    /** Apply [matrix] to the display. Idempotent; safe to call from any thread. */
-    suspend fun apply(context: Context, matrix: LumenMatrix)
+    /**
+     * Apply [matrix] to the display. Idempotent; safe to call from any thread.
+     *
+     * A failed/no-op operation must be returned as [EngineResult.Failure] rather
+     * than swallowed. The service uses this result to keep its deduplication
+     * state retryable and to invalidate a cached Auto selection.
+     */
+    suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult
 
-    /** Restore the identity transform. Engines must be safe to call clear() without prior apply(). */
-    suspend fun clear(context: Context)
+    /**
+     * Restore the identity transform. Engines must be safe to call clear()
+     * without prior apply().
+     */
+    suspend fun clear(context: Context): EngineResult
+}
+
+sealed interface EngineResult {
+    data object Success : EngineResult
+
+    data class Failure(val message: String) : EngineResult
 }
 
 enum class EngineKind(val displayName: String, val requiresRoot: Boolean, val rank: Int) {

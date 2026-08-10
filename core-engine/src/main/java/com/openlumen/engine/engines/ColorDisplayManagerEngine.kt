@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.EngineResult
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.LumenMatrix
@@ -47,14 +48,14 @@ class ColorDisplayManagerEngine : ColorEngine {
         load(context) != null
     }
 
-    override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
+    override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = withContext(Dispatchers.IO) {
         if (!hasSecureSettingsGrant(context)) {
             Log.w(tag, "apply: WRITE_SECURE_SETTINGS not granted")
-            return@withContext
+            return@withContext EngineResult.Failure("WRITE_SECURE_SETTINGS not granted")
         }
         val handles = load(context) ?: run {
             Log.w(tag, "apply: ColorDisplayManager not available")
-            return@withContext
+            return@withContext EngineResult.Failure("ColorDisplayManager unavailable")
         }
         val temperature = kelvinFromRgbScale(matrix.r, matrix.g, matrix.b)
         try {
@@ -62,17 +63,23 @@ class ColorDisplayManagerEngine : ColorEngine {
             handles.setActivated.invoke(handles.cdm, true)
         } catch (t: Throwable) {
             Log.w(tag, "CDM apply failed: ${t.message}")
+            return@withContext EngineResult.Failure("CDM apply failed: ${t.message ?: "unknown error"}")
         }
+        EngineResult.Success
     }
 
-    override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
-        if (!hasSecureSettingsGrant(context)) return@withContext
-        val handles = load(context) ?: return@withContext
+    override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
+        if (!hasSecureSettingsGrant(context)) {
+            return@withContext EngineResult.Failure("WRITE_SECURE_SETTINGS not granted")
+        }
+        val handles = load(context) ?: return@withContext EngineResult.Success
         try {
             handles.setActivated.invoke(handles.cdm, false)
         } catch (t: Throwable) {
             Log.w(tag, "CDM clear failed: ${t.message}")
+            return@withContext EngineResult.Failure("CDM clear failed: ${t.message ?: "unknown error"}")
         }
+        EngineResult.Success
     }
 
     private fun hasSecureSettingsGrant(context: Context): Boolean =

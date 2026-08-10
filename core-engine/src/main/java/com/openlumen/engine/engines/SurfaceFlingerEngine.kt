@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.EngineResult
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
@@ -55,7 +56,7 @@ class SurfaceFlingerEngine : ColorEngine {
         ensureWorkingCode() != null
     }
 
-    override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
+    override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = withContext(Dispatchers.IO) {
         // If the cache is empty — first call after construction or
         // invalidation from a failed apply/clear — re-probe once before
         // silently no-op'ing. Without this, a user who pinned SurfaceFlinger
@@ -63,18 +64,26 @@ class SurfaceFlingerEngine : ColorEngine {
         // every apply() is a no-op because no code was probed yet.
         val code = ensureWorkingCode() ?: run {
             Log.w(TAG, "apply: no working SurfaceFlinger transaction code; tint will not be visible")
-            return@withContext
+            return@withContext EngineResult.Failure("no working SurfaceFlinger transaction code")
         }
         val res = Su.runCommand(buildServiceCall(code, matrix))
         invalidateOnFailure(res, code, "apply")
-        Unit
+        if (isSuccessfulServiceCall(res)) {
+            EngineResult.Success
+        } else {
+            EngineResult.Failure("SurfaceFlinger apply failed for code $code")
+        }
     }
 
-    override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
-        val code = workingCode ?: return@withContext
+    override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
+        val code = workingCode ?: return@withContext EngineResult.Success
         val res = Su.runCommand(buildDisableServiceCallCommand(code))
         invalidateOnFailure(res, code, "clear")
-        Unit
+        if (isSuccessfulServiceCall(res)) {
+            EngineResult.Success
+        } else {
+            EngineResult.Failure("SurfaceFlinger clear failed for code $code")
+        }
     }
 
     private suspend fun ensureWorkingCode(): Int? {

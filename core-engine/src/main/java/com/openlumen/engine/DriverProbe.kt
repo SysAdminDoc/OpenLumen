@@ -12,9 +12,10 @@ import kotlinx.coroutines.coroutineScope
  * Runs each ColorEngine's cheap isAvailable() probe and returns the engines that work,
  * ranked from best to worst (rank descending).
  *
- * Auto mode picks the best available root engine first. On non-root devices it
- * falls back to the Overlay engine so first-run behavior is predictable: root
- * gets the framebuffer path, non-root gets the universal overlay path.
+ * Auto mode picks the best available root engine first, then CDM, then an
+ * available Overlay engine. If every engine is unavailable, Auto returns no
+ * selection so callers can expose a recoverable no-driver state instead of
+ * pretending that an unpermissioned overlay is active.
  */
 class DriverProbe(
     private val engines: List<ColorEngine> = defaultEngines()
@@ -44,15 +45,15 @@ class DriverProbe(
      * (requires WRITE_SECURE_SETTINGS but produces framebuffer-level output),
      * then Overlay as the universal fallback.
      */
-    suspend fun pickBest(context: Context): ColorEngine {
+    suspend fun pickBest(context: Context): ColorEngine? {
         val probes = probeAll(context)
         return pickBestFrom(probes)
     }
 
-    internal fun pickBestFrom(probes: List<Probe>): ColorEngine =
+    internal fun pickBestFrom(probes: List<Probe>): ColorEngine? =
         probes.firstOrNull { it.available && it.engine.kind.requiresRoot }?.engine
             ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER }?.engine
-            ?: engines.first { it.kind == EngineKind.OVERLAY }
+            ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }?.engine
 
     /** Look up an engine by kind. Used when the user pins a specific driver. */
     fun engineOf(kind: EngineKind): ColorEngine? = engines.firstOrNull { it.kind == kind }

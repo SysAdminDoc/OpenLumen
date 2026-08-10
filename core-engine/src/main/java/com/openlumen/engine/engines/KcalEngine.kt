@@ -3,6 +3,7 @@ package com.openlumen.engine.engines
 import android.content.Context
 import android.util.Log
 import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.EngineResult
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
@@ -66,10 +67,10 @@ class KcalEngine : ColorEngine {
         ensureResolvedPaths() != null
     }
 
-    override suspend fun apply(context: Context, matrix: LumenMatrix) = withContext(Dispatchers.IO) {
+    override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = withContext(Dispatchers.IO) {
         val paths = ensureResolvedPaths() ?: run {
             Log.w(TAG, "apply: no resolved KCAL sysfs path; tint will not be visible")
-            return@withContext
+            return@withContext EngineResult.Failure("no resolved KCAL sysfs path")
         }
         // When the kernel doesn't expose `kcal_min`, OR our probe couldn't
         // read the user's existing minimum, the C166 raise-and-restore
@@ -117,11 +118,15 @@ class KcalEngine : ColorEngine {
             paths.raisedMin.value = true
         }
         invalidateOnFailure(exit, paths, "apply")
-        Unit
+        if (exit == 0) {
+            EngineResult.Success
+        } else {
+            EngineResult.Failure("KCAL apply failed with exit code $exit")
+        }
     }
 
-    override suspend fun clear(context: Context) = withContext(Dispatchers.IO) {
-        val paths = resolvedPaths ?: return@withContext
+    override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
+        val paths = resolvedPaths ?: return@withContext EngineResult.Success
         // C166: only restore kcal_min if we actually raised it during this
         // probed session. If we never touched it, leave the user's kernel
         // configuration alone.
@@ -143,7 +148,11 @@ class KcalEngine : ColorEngine {
             paths.raisedMin.value = false
         }
         invalidateOnFailure(exit, paths, "clear")
-        Unit
+        if (exit == 0) {
+            EngineResult.Success
+        } else {
+            EngineResult.Failure("KCAL clear failed with exit code $exit")
+        }
     }
 
     private suspend fun ensureResolvedPaths(): Paths? {
