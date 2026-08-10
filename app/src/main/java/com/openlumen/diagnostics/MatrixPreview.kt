@@ -23,8 +23,8 @@ object MatrixPreview {
     /**
      * Compute the effective [LumenMatrix] for the given preferences.
      * Mirrors LumenService.matrixFor() — preset OR custom matrix, intensity
-     * lerp, gamma + dim from the custom matrix, contrast scaling + center
-     * bias, AMOLED clamp pass-through.
+     * lerp, gamma, the preset-owned dim combined with the user's additional
+     * dim control, contrast scaling + center bias, AMOLED clamp pass-through.
      */
     fun matrixFor(p: Preferences): LumenMatrix {
         if (p.activePresetKey == Preferences.OFF_PRESET_KEY) return LumenMatrix.IDENTITY
@@ -49,10 +49,21 @@ object MatrixPreview {
             gammaR = p.customMatrix.gammaR,
             gammaG = p.customMatrix.gammaG,
             gammaB = p.customMatrix.gammaB,
-            dim = p.dim,
+            // Presets such as Deep and PWM own a baseline dim. The preference
+            // is an additional dim control, so compose both reductions instead
+            // of replacing the preset value. Multiplicative composition keeps
+            // either control at zero neutral and prevents stacking beyond the
+            // same 0..0.95 Android overlay limit used by the slider.
+            dim = composeDim(raw.withIntensity(t).dim, p.dim),
             amoledClamp = p.amoledBlackClamp
         )
         return applyContrast(intensityScaled, p.contrast)
+    }
+
+    private fun composeDim(presetDim: Float, userDim: Float): Float {
+        val preset = presetDim.coerceIn(0f, MAX_DIM)
+        val user = userDim.coerceIn(0f, MAX_DIM)
+        return (1f - (1f - preset) * (1f - user)).coerceIn(0f, MAX_DIM)
     }
 
     private fun applyContrast(m: LumenMatrix, contrast: Float): LumenMatrix {
@@ -128,4 +139,5 @@ object MatrixPreview {
 
     private const val MATRIX_COEFF_MIN = -4f
     private const val MATRIX_COEFF_MAX = 4f
+    private const val MAX_DIM = 0.95f
 }

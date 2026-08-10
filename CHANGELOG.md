@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Concurrent root availability checks now share one bounded `su id` probe per cache generation, while invalidation during a probe remains effective.
 - Timed and solar schedules now re-evaluate after clock, date, timezone, and system next-alarm changes, including when the service process was not already running.
 - Cloud backup now requires Android client-side encryption before copying the coordinate-bearing preferences blob; device transfer remains complete.
+- Deep and PWM presets now retain their built-in dimming while composing it with the user's global dim control.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting

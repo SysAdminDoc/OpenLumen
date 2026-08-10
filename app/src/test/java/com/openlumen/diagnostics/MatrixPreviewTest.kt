@@ -65,6 +65,43 @@ class MatrixPreviewTest {
         assertThat(matrix.matrixGg).isWithin(0.0001f).of(0.94381f)
     }
 
+    @Test fun `deep preset keeps its built in dim when global dim is zero`() {
+        val prefs = Preferences(
+            activePresetKey = "deep",
+            presetIntensity = 1f,
+            dim = 0f
+        )
+
+        assertThat(MatrixPreview.matrixFor(prefs).dim)
+            .isWithin(0.0001f)
+            .of(0.30f)
+    }
+
+    @Test fun `pwm preset composes built in and global dim`() {
+        val prefs = Preferences(
+            activePresetKey = "pwm",
+            presetIntensity = 1f,
+            dim = 0.5f
+        )
+
+        // 1 - (1 - 0.20) * (1 - 0.50) = 0.60.
+        assertThat(MatrixPreview.matrixFor(prefs).dim)
+            .isWithin(0.0001f)
+            .of(0.60f)
+    }
+
+    @Test fun `preset intensity scales preset dim before global dim`() {
+        val prefs = Preferences(
+            activePresetKey = "deep",
+            presetIntensity = 0.5f,
+            dim = 0f
+        )
+
+        assertThat(MatrixPreview.matrixFor(prefs).dim)
+            .isWithin(0.0001f)
+            .of(0.15f)
+    }
+
     @Test fun `perceived luminance reduction treats CVD white point as white`() {
         val prefs = Preferences(
             activePresetKey = "deutan",
