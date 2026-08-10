@@ -21,8 +21,35 @@ internal class ScheduleAlarmOrchestrator(
     private val nowMs: () -> Long = System::currentTimeMillis,
     private val nextTransitionProvider: (ScheduleMode) -> ZonedDateTime? = { nextTransition(it) }
 ) {
+    private var lastExactAlarmPermission: Boolean? = null
+
+    @Synchronized
     fun rescheduleNextTransition(mode: ScheduleMode) {
         val alarms = alarmOpsProvider(context) ?: return
+        val exactAllowed = runCatching { alarms.canScheduleExactAlarms() }.getOrDefault(false)
+        rescheduleNextTransition(alarms, mode, exactAllowed)
+    }
+
+    /**
+     * Reconcile a permission-state change without duplicating the normal
+     * preference/alarm path when the system broadcast and the app lifecycle
+     * both report the same state.
+     */
+    @Synchronized
+    fun rescheduleIfExactAlarmPermissionChanged(mode: ScheduleMode): Boolean {
+        val alarms = alarmOpsProvider(context) ?: return false
+        val exactAllowed = runCatching { alarms.canScheduleExactAlarms() }.getOrDefault(false)
+        if (lastExactAlarmPermission == exactAllowed) return false
+        rescheduleNextTransition(alarms, mode, exactAllowed)
+        return true
+    }
+
+    private fun rescheduleNextTransition(
+        alarms: ScheduleAlarmOps,
+        mode: ScheduleMode,
+        exactAllowed: Boolean
+    ) {
+        lastExactAlarmPermission = exactAllowed
         val pi = schedulePendingIntent()
         alarms.cancel(pi)
 
@@ -48,7 +75,7 @@ internal class ScheduleAlarmOrchestrator(
         }
 
         try {
-            if (!alarms.canScheduleExactAlarms()) {
+            if (!exactAllowed) {
                 logExactAlarmFallback("exact alarms unavailable; scheduled inexact transition")
                 alarms.setAndAllowWhileIdle(triggerMs, pi)
             } else {
@@ -71,6 +98,7 @@ internal class ScheduleAlarmOrchestrator(
         }
     }
 
+    @Synchronized
     fun cancelAlarm() {
         val alarms = alarmOpsProvider(context) ?: return
         alarms.cancel(schedulePendingIntent())

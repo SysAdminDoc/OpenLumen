@@ -183,6 +183,11 @@ class LumenService : LifecycleService() {
             ACTION_REEVALUATE -> lifecycleScope.launch {
                 if (isUserUnlocked()) latestPrefs.get()?.let { applyIfShouldBeActive(it) }
             }
+            ACTION_RECONCILE_EXACT_ALARM -> lifecycleScope.launch {
+                if (isUserUnlocked()) {
+                    latestPrefs.get()?.let { applyIfShouldBeActive(it, reconcileExactAlarmPermission = true) }
+                }
+            }
             ACTION_CYCLE_PRESET -> lifecycleScope.launch {
                 if (!isUserUnlocked()) return@launch
                 // PresetCycle.next is a no-op when favorites is empty. The
@@ -484,7 +489,10 @@ class LumenService : LifecycleService() {
      * The light sensor acts as an "additional" trigger — it can engage the filter even
      * outside the user's schedule window, useful for dark-room sessions during the day.
      */
-    private suspend fun applyIfShouldBeActive(p: Preferences) {
+    private suspend fun applyIfShouldBeActive(
+        p: Preferences,
+        reconcileExactAlarmPermission: Boolean = false
+    ) {
         val mode = mapMode(p)
         val scheduleActive = isActive(mode)
         val luxNow = lightSubscription.currentLuxOrNegative()
@@ -496,7 +504,11 @@ class LumenService : LifecycleService() {
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
         engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs)
         // Always reschedule — the next transition time depends on the current mode and clock.
-        scheduleAlarms.rescheduleNextTransition(mode)
+        if (reconcileExactAlarmPermission) {
+            scheduleAlarms.rescheduleIfExactAlarmPermissionChanged(mode)
+        } else {
+            scheduleAlarms.rescheduleNextTransition(mode)
+        }
     }
 
     /**
@@ -621,6 +633,7 @@ class LumenService : LifecycleService() {
         const val ACTION_TURN_ON = "com.openlumen.action.TURN_ON"
         const val ACTION_TOGGLE = "com.openlumen.action.TOGGLE"
         const val ACTION_REEVALUATE = "com.openlumen.action.REEVALUATE"
+        const val ACTION_RECONCILE_EXACT_ALARM = "com.openlumen.action.RECONCILE_EXACT_ALARM"
         const val ACTION_CYCLE_PRESET = "com.openlumen.action.CYCLE_PRESET"
         const val ACTION_SET_PRESET = "com.openlumen.action.SET_PRESET"
         const val ACTION_RESTORE_PREVIOUS = "com.openlumen.action.RESTORE_PREVIOUS"

@@ -113,6 +113,15 @@
             android:name=".service.ScheduleAlarmReceiver"
             android:exported="false" />
 
+        <!-- Android 12+ exact-alarm grant/revocation reconciliation. -->
+        <receiver
+            android:name=".service.ExactAlarmPermissionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
        <receiver
            android:name=".service.AutomationReceiver"
             android:exported="true">

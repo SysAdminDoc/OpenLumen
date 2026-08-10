@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -205,6 +206,26 @@ class OpenLumenViewModel @Inject constructor(
                 sunsetOffsetMin = sunsetMin.coerceIn(-180, 180),
                 sunriseOffsetMin = sunriseMin.coerceIn(-180, 180)
             ))
+        }
+    }
+
+    /**
+     * Lifecycle fallback for exact-alarm permission changes. The system
+     * broadcast covers the background case; returning from Settings covers
+     * OEMs that omit or delay that broadcast, especially after revocation.
+     */
+    fun reconcileExactAlarmPermission() = viewModelScope.launch {
+        val current = prefs.flow.first()
+        if (!com.openlumen.service.ExactAlarmPermissionReceiver.shouldReconcile(current)) return@launch
+        val ctx = getApplication<Application>()
+        val result = LumenServiceStarter.start(
+            ctx,
+            Intent(ctx, LumenService::class.java)
+                .setAction(LumenService.ACTION_RECONCILE_EXACT_ALARM),
+            tag
+        )
+        if (!result.started) {
+            Log.w(tag, "Exact-alarm permission reconciliation could not start service: ${result.error?.message}")
         }
     }
 

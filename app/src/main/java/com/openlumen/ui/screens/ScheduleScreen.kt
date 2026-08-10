@@ -69,14 +69,22 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     DisposableEffect(lifecycleOwner, ctx) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
-                canScheduleExactAlarms = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+                val refreshed = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+                if (refreshed != canScheduleExactAlarms) {
+                    canScheduleExactAlarms = refreshed
+                    vm.reconcileExactAlarmPermission()
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     LaunchedEffect(ctx) {
-        canScheduleExactAlarms = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+        val refreshed = ExactAlarmAccess.canScheduleExactAlarms(ctx)
+        if (refreshed != canScheduleExactAlarms) {
+            canScheduleExactAlarms = refreshed
+            vm.reconcileExactAlarmPermission()
+        }
     }
 
     Column(

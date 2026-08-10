@@ -72,6 +72,31 @@ class ScheduleAlarmOrchestratorTest {
         assertThat(logs.any { it.contains("scheduled blocked-service retry 2 in 5s") }).isTrue()
     }
 
+    @Test fun `permission reconciliation rearms once per permission state`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true)
+        val alarmOrchestrator = orchestrator(alarms)
+
+        assertThat(alarmOrchestrator.rescheduleIfExactAlarmPermissionChanged(testMode)).isTrue()
+        assertThat(alarmOrchestrator.rescheduleIfExactAlarmPermissionChanged(testMode)).isFalse()
+
+        alarms.exactAllowed = false
+
+        assertThat(alarmOrchestrator.rescheduleIfExactAlarmPermissionChanged(testMode)).isTrue()
+        assertThat(alarmOrchestrator.rescheduleIfExactAlarmPermissionChanged(testMode)).isFalse()
+        assertThat(alarms.exactCalls).isEqualTo(1)
+        assertThat(alarms.inexactCalls).isEqualTo(1)
+    }
+
+    @Test fun `normal scheduling establishes permission state for reconciliation`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true)
+        val alarmOrchestrator = orchestrator(alarms)
+
+        alarmOrchestrator.rescheduleNextTransition(testMode)
+
+        assertThat(alarmOrchestrator.rescheduleIfExactAlarmPermissionChanged(testMode)).isFalse()
+        assertThat(alarms.exactCalls).isEqualTo(1)
+    }
+
     private fun orchestrator(alarms: FakeScheduleAlarmOps): ScheduleAlarmOrchestrator {
         DiagnosticsLog.installTestWriter { line -> logs += line }
         return ScheduleAlarmOrchestrator(
@@ -90,7 +115,7 @@ class ScheduleAlarmOrchestratorTest {
         }
 
     private class FakeScheduleAlarmOps(
-        private val exactAllowed: Boolean,
+        var exactAllowed: Boolean,
         private val throwOnExact: Boolean = false
     ) : ScheduleAlarmOps {
         var exactCalls = 0
