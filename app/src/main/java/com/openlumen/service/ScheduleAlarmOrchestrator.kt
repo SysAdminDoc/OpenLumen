@@ -22,6 +22,8 @@ internal class ScheduleAlarmOrchestrator(
     private val nextTransitionProvider: (ScheduleMode) -> ZonedDateTime? = { nextTransition(it) }
 ) {
     private var lastExactAlarmPermission: Boolean? = null
+    private var lastScheduleSignature: AlarmSignature? = null
+    private var lastScheduledTriggerMs: Long? = null
 
     @Synchronized
     fun rescheduleNextTransition(mode: ScheduleMode) {
@@ -49,16 +51,24 @@ internal class ScheduleAlarmOrchestrator(
         mode: ScheduleMode,
         exactAllowed: Boolean
     ) {
+        val next = nextTransitionProvider(mode)
+        val requestedTriggerMs = next?.toInstant()?.toEpochMilli()
+        val currentMs = nowMs()
+        val signature = AlarmSignature(mode, exactAllowed, requestedTriggerMs)
+        val previousTriggerExpired = lastScheduledTriggerMs?.let { it <= currentMs } == true
+        if (lastScheduleSignature == signature && !previousTriggerExpired) return
+
         lastExactAlarmPermission = exactAllowed
+        lastScheduleSignature = signature
+        lastScheduledTriggerMs = null
         val pi = schedulePendingIntent()
         alarms.cancel(pi)
 
-        val next: ZonedDateTime = nextTransitionProvider(mode) ?: return
-        val currentMs = nowMs()
-        var triggerMs = next.toInstant().toEpochMilli()
+        val nextTransition: ZonedDateTime = next ?: return
+        var triggerMs = nextTransition.toInstant().toEpochMilli()
         if (triggerMs <= currentMs) {
             Log.w(logTag, "nextTransition() returned a past time, deferring by 60s")
-            DiagnosticsLog.log(
+            DiagnosticsLog.logAsync(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -66,13 +76,14 @@ internal class ScheduleAlarmOrchestrator(
             )
             triggerMs = currentMs + 60_000L
         } else {
-            DiagnosticsLog.log(
+            DiagnosticsLog.logAsync(
                 context,
                 DiagnosticsLog.Level.INFO,
                 DiagnosticsLog.Category.SCHEDULE,
                 "scheduled next transition in ${(triggerMs - currentMs) / 1000}s"
             )
         }
+        lastScheduledTriggerMs = triggerMs
 
         try {
             if (!exactAllowed) {
@@ -88,7 +99,9 @@ internal class ScheduleAlarmOrchestrator(
                 alarms.setAndAllowWhileIdle(triggerMs, pi)
             } catch (e2: SecurityException) {
                 Log.e(logTag, "Both exact and inexact scheduling rejected: ${e2.message}")
-                DiagnosticsLog.log(
+                lastScheduleSignature = null
+                lastScheduledTriggerMs = null
+                DiagnosticsLog.logAsync(
                     context,
                     DiagnosticsLog.Level.ERROR,
                     DiagnosticsLog.Category.SCHEDULE,
@@ -100,18 +113,24 @@ internal class ScheduleAlarmOrchestrator(
 
     @Synchronized
     fun cancelAlarm() {
+        lastScheduleSignature = null
+        lastScheduledTriggerMs = null
+        lastExactAlarmPermission = null
         val alarms = alarmOpsProvider(context) ?: return
         alarms.cancel(schedulePendingIntent())
     }
 
+    @Synchronized
     fun scheduleBlockedStartRetry(attempt: Int, delayMs: Long) {
+        lastScheduleSignature = null
+        lastScheduledTriggerMs = null
         val alarms = alarmOpsProvider(context) ?: return
         val pi = schedulePendingIntent(retryAttempt = attempt)
         alarms.cancel(pi)
         val triggerMs = nowMs() + delayMs.coerceAtLeast(1_000L)
         runCatching {
             alarms.setAndAllowWhileIdle(triggerMs, pi)
-            DiagnosticsLog.log(
+            DiagnosticsLog.logAsync(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -119,7 +138,7 @@ internal class ScheduleAlarmOrchestrator(
             )
         }.onFailure {
             Log.e(logTag, "could not schedule blocked-service retry: ${it.message}")
-            DiagnosticsLog.log(
+            DiagnosticsLog.logAsync(
                 context,
                 DiagnosticsLog.Level.ERROR,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -147,13 +166,19 @@ internal class ScheduleAlarmOrchestrator(
     )
 
     private fun logExactAlarmFallback(message: String) {
-        DiagnosticsLog.log(
+        DiagnosticsLog.logAsync(
             context,
             DiagnosticsLog.Level.WARN,
             DiagnosticsLog.Category.SCHEDULE,
             message
         )
     }
+
+    private data class AlarmSignature(
+        val mode: ScheduleMode,
+        val exactAllowed: Boolean,
+        val requestedTriggerMs: Long?
+    )
 }
 
 internal interface ScheduleAlarmOps {

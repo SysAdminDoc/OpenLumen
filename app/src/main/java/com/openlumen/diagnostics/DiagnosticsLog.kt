@@ -6,6 +6,10 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Bounded, append-only local event log. Tied to roadmap candidate **C53**
@@ -45,6 +49,7 @@ object DiagnosticsLog {
 
     /** Bounded test-mode override so unit tests can run without a real Context. */
     private val testWriter = AtomicReference<((String) -> Unit)?>(null)
+    private val asyncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     enum class Level { DEBUG, INFO, WARN, ERROR }
 
@@ -72,6 +77,19 @@ object DiagnosticsLog {
                 if (f.length() > MAX_BYTES) trimHeadLocked(f)
             }
         }.onFailure { Log.w(TAG, "log write failed: ${it.message}") }
+    }
+
+    /**
+     * Queue a non-critical diagnostic write away from service/UI paths that
+     * must not block on file I/O. Test writers stay synchronous so deterministic
+     * unit tests can assert emitted lines without a scheduler race.
+     */
+    fun logAsync(context: Context, level: Level, category: Category, message: String) {
+        if (testWriter.get() != null) {
+            log(context, level, category, message)
+        } else {
+            asyncScope.launch { log(context, level, category, message) }
+        }
     }
 
     fun read(context: Context): String {

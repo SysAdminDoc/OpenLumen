@@ -97,6 +97,37 @@ class ScheduleAlarmOrchestratorTest {
         assertThat(alarms.exactCalls).isEqualTo(1)
     }
 
+    @Test fun `repeated scheduling with unchanged signature does not rearm`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true)
+        val alarmOrchestrator = orchestrator(alarms)
+
+        alarmOrchestrator.rescheduleNextTransition(testMode)
+        alarmOrchestrator.rescheduleNextTransition(testMode)
+
+        assertThat(alarms.cancelCalls).isEqualTo(1)
+        assertThat(alarms.exactCalls).isEqualTo(1)
+        assertThat(logs.count { it.contains("scheduled next transition") }).isEqualTo(1)
+    }
+
+    @Test fun `expired trigger permits the next transition check to rearm`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true)
+        var now = NOW_MS
+        val alarmOrchestrator = ScheduleAlarmOrchestrator(
+            context = RuntimeEnvironment.getApplication(),
+            logTag = "OpenLumen/Test",
+            alarmOpsProvider = { alarms },
+            nowMs = { now },
+            nextTransitionProvider = { transitionAt }
+        )
+
+        alarmOrchestrator.rescheduleNextTransition(testMode)
+        now = NOW_MS + 120_001L
+        alarmOrchestrator.rescheduleNextTransition(testMode)
+
+        assertThat(alarms.cancelCalls).isEqualTo(2)
+        assertThat(alarms.exactCalls).isEqualTo(2)
+    }
+
     private fun orchestrator(alarms: FakeScheduleAlarmOps): ScheduleAlarmOrchestrator {
         DiagnosticsLog.installTestWriter { line -> logs += line }
         return ScheduleAlarmOrchestrator(

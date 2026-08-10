@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ambient-light registration and collection now retry transient failures with bounded backoff and report a stable unavailable state after the retry budget.
 - Widget and Quick Settings actions now have bounded preference operations, guaranteed broadcast completion, and retryable refresh behavior when storage is slow or unavailable.
 - Solar offset and ambient-light threshold sliders now edit local drafts during a gesture and persist only the final value.
+- Schedule alarm reconciliation now caches mode/permission/trigger signatures, avoids redundant AlarmManager work from lux samples, and queues diagnostic file writes off the service path.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting
