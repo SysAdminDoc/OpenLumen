@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -26,9 +27,17 @@ class WidgetActionReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
             try {
-                when (intent.action) {
-                    ACTION_TOGGLE -> toggle(context)
-                    ACTION_SET_PRESET -> setPreset(context, intent.getStringExtra(LumenService.EXTRA_PRESET_KEY))
+                val completed = withTimeoutOrNull(ACTION_TIMEOUT_MS) {
+                    when (intent.action) {
+                        ACTION_TOGGLE -> toggle(context)
+                        ACTION_SET_PRESET -> setPreset(
+                            context,
+                            intent.getStringExtra(LumenService.EXTRA_PRESET_KEY)
+                        )
+                    }
+                } != null
+                if (!completed) {
+                    Log.w(TAG, "Widget action timed out; next refresh will retry")
                 }
             } catch (t: Throwable) {
                 Log.e(TAG, "Widget action failed: ${t.message}", t)
@@ -91,6 +100,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_TOGGLE = "com.openlumen.widget.action.TOGGLE"
         const val ACTION_SET_PRESET = "com.openlumen.widget.action.SET_PRESET"
+        private const val ACTION_TIMEOUT_MS = 8_000L
         private const val TAG = "OpenLumen/WidgetAction"
     }
 }

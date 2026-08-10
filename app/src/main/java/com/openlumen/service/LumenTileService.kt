@@ -14,12 +14,15 @@ import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.toggledFilterEnabled
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 /**
@@ -63,33 +66,42 @@ class LumenTileService : TileService() {
         super.onClick()
         scope.launch {
             try {
-                var toggledTo = false
-                prefs.update { current ->
-                    toggledTo = !current.enabled
-                    current.toggledFilterEnabled()
-                }
-                if (toggledTo) {
-                    val result = LumenServiceStarter.start(this@LumenTileService, logTag = tag)
-                    if (!result.started) {
-                        prefs.update { it.copy(enabled = false) }
-                        if (result.foregroundStartNotAllowed) {
-                            openAppAfterBlockedStart()
+                val completed = withTimeoutOrNull(ACTION_TIMEOUT_MS) {
+                    var toggledTo = false
+                    prefs.update { current ->
+                        toggledTo = !current.enabled
+                        current.toggledFilterEnabled()
+                    }
+                    if (toggledTo) {
+                        val result = LumenServiceStarter.start(this@LumenTileService, logTag = tag)
+                        if (!result.started) {
+                            prefs.update { it.copy(enabled = false) }
+                            if (result.foregroundStartNotAllowed) {
+                                openAppAfterBlockedStart()
+                            }
                         }
                     }
+                    true
+                } == true
+                if (!completed) {
+                    Log.w(tag, "Tile action timed out; retaining the previous tile state")
                 }
-                refreshTile()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 Log.e(tag, "tile onClick failed: ${t.message}", t)
+            } finally {
+                refreshTile()
             }
         }
     }
 
     private fun refreshTile() {
         scope.launch {
-            val snapshot: Preferences? = try { prefs.flow.first() } catch (_: Throwable) { null }
             try {
+                val snapshot: Preferences = withTimeout(PREF_READ_TIMEOUT_MS) { prefs.flow.first() }
                 qsTile?.apply {
-                    val enabled = snapshot?.enabled == true
+                    val enabled = snapshot.enabled
                     state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                     // Tile.subtitle landed in API 29. On older API it's silently
                     // ignored, so the version gate is for *intent*, not safety.
@@ -98,11 +110,14 @@ class LumenTileService : TileService() {
                     }
                     updateTile()
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (t: Throwable) {
                 // Calling updateTile() outside an active onStartListening
                 // window throws on some OEM forks; swallow rather than
-                // crashing the service process.
-                Log.w(tag, "qsTile update failed: ${t.message}")
+                // crashing the service process. Keep the previous tile state
+                // so a timeout/failure remains retryable on the next refresh.
+                Log.w(tag, "qsTile refresh failed: ${t.message}")
             }
         }
     }
@@ -144,6 +159,8 @@ class LumenTileService : TileService() {
     }
 
     private companion object {
+        const val ACTION_TIMEOUT_MS = 8_000L
+        const val PREF_READ_TIMEOUT_MS = 3_000L
         const val REQUEST_BLOCKED_START = 2101
     }
 }
