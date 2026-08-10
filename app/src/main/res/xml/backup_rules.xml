@@ -11,12 +11,12 @@
       crash.log        — device-local crash log, per privacy policy
       diagnostics.log  — device-local event log, per privacy policy
 
-    Note: ScheduleDto.latitude/longitude (user-entered approximate city
-    coordinates from the ~95-city picker) are part of the DataStore
-    preferences blob and are intentionally included so solar schedule
-    survives restore.
+    ScheduleDto.latitude/longitude (user-entered approximate city coordinates)
+    share the DataStore blob with the rest of preferences. Auto Backup only
+    includes that blob when Android reports client-side encryption; explicit
+    export remains available when encrypted backup is unavailable.
 -->
 <full-backup-content>
-    <include domain="file" path="datastore/" />
+    <include domain="file" path="datastore/" requireFlags="clientSideEncryption" />
     <include domain="sharedpref" path="." />
 </full-backup-content>

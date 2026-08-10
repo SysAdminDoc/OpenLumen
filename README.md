@@ -97,6 +97,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 
 - No INTERNET permission, ever (local release checks reject builds that contain one)
 - No Play Services / Firebase / Google APIs (local release checks reject builds that pull them in)
+- Cloud backup includes solar coordinates only when Android reports client-side encryption; device transfer and explicit profile export remain available without that capability
 - No accessibility service, no usage-stats permission, no foreground-app detection
 - Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
 - In-app driver report (Copy or Share) with zero PII — captures device, build,

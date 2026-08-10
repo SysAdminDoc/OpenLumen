@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrupt saved preferences now remain recoverable with bounded export/reset actions instead of being silently overwritten by defaults.
 - Direct-Boot state deserialization now rejects oversized device-protected payloads before parsing, preventing an unbounded boot-time allocation.
 - Exact-alarm permission grants and revocations now reconcile active schedules through the system broadcast and app-resume fallback without duplicate re-arms.
+- Cloud backup now requires Android client-side encryption before copying the coordinate-bearing preferences blob; device transfer remains complete.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting

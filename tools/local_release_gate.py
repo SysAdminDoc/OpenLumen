@@ -94,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         assert_no_banned_dependencies(dependencies)
         manifest = find_release_manifest(root)
         assert_no_banned_permissions(manifest)
+        assert_backup_rules(root)
         apk = find_release_apk(root, args.allow_unsigned_release)
         write_sha256(report_dir / "SHA256SUMS", apk)
         if args.allow_unsigned_release:
@@ -331,6 +332,46 @@ def assert_no_banned_permissions(manifest: Path) -> None:
             found.add(name)
     if found:
         raise GateError(f"banned release manifest permissions in {manifest}: {', '.join(sorted(found))}")
+
+
+def assert_backup_rules(root: Path) -> None:
+    """Require encryption for every cloud path containing user coordinates."""
+    data_rules_path = root / "app/src/main/res/xml/data_extraction_rules.xml"
+    legacy_rules_path = root / "app/src/main/res/xml/backup_rules.xml"
+    try:
+        data_rules = ET.parse(data_rules_path).getroot()
+        legacy_rules = ET.parse(legacy_rules_path).getroot()
+    except (OSError, ET.ParseError) as exc:
+        raise GateError(f"backup-rule parse failed: {exc}") from exc
+
+    cloud = data_rules.find("cloud-backup")
+    device_transfer = data_rules.find("device-transfer")
+    if cloud is None or device_transfer is None:
+        raise GateError("data extraction rules must define cloud-backup and device-transfer")
+
+    def includes_datastore(parent: ET.Element) -> list[ET.Element]:
+        return [
+            child
+            for child in parent.findall("include")
+            if child.attrib.get("domain") == "file"
+            and child.attrib.get("path") in {"datastore", "datastore/"}
+        ]
+
+    cloud_datastore = includes_datastore(cloud)
+    if len(cloud_datastore) != 1 or cloud_datastore[0].attrib.get("requireFlags") != "clientSideEncryption":
+        raise GateError(
+            "cloud backup must require clientSideEncryption for the coordinate-bearing datastore"
+        )
+
+    transfer_datastore = includes_datastore(device_transfer)
+    if len(transfer_datastore) != 1 or transfer_datastore[0].attrib.get("requireFlags"):
+        raise GateError("device-transfer must include the datastore without a cloud encryption flag")
+
+    legacy_datastore = includes_datastore(legacy_rules)
+    if len(legacy_datastore) != 1 or legacy_datastore[0].attrib.get("requireFlags") != "clientSideEncryption":
+        raise GateError(
+            "legacy Auto Backup must require clientSideEncryption for the coordinate-bearing datastore"
+        )
 
 
 def find_release_apk(root: Path, allow_unsigned_release: bool) -> Path:

@@ -16,6 +16,9 @@ releaseRuntimeClasspath - Runtime classpath of /main.
 
 
 class LocalReleaseGateTest(unittest.TestCase):
+    def test_repository_backup_rules_protect_coordinate_blob(self):
+        gate.assert_backup_rules(Path(__file__).resolve().parents[1])
+
     def test_parse_gradle_dependencies_uses_resolved_versions(self):
         deps = gate.parse_gradle_dependencies(DEPENDENCIES)
 
@@ -50,6 +53,55 @@ class LocalReleaseGateTest(unittest.TestCase):
 
             with self.assertRaises(gate.GateError):
                 gate.assert_no_banned_permissions(manifest)
+
+    def test_backup_rules_require_encryption_for_cloud_datastore(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rules = root / "app/src/main/res/xml"
+            rules.mkdir(parents=True)
+            (rules / "data_extraction_rules.xml").write_text(
+                """<data-extraction-rules>
+                <cloud-backup>
+                  <include domain="file" path="datastore/" requireFlags="clientSideEncryption" />
+                  <include domain="sharedpref" path="." />
+                </cloud-backup>
+                <device-transfer>
+                  <include domain="file" path="datastore/" />
+                  <include domain="sharedpref" path="." />
+                </device-transfer>
+                </data-extraction-rules>""",
+                encoding="utf-8",
+            )
+            (rules / "backup_rules.xml").write_text(
+                """<full-backup-content>
+                <include domain="file" path="datastore/" requireFlags="clientSideEncryption" />
+                </full-backup-content>""",
+                encoding="utf-8",
+            )
+
+            gate.assert_backup_rules(root)
+
+    def test_backup_rules_reject_unencrypted_cloud_datastore(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rules = root / "app/src/main/res/xml"
+            rules.mkdir(parents=True)
+            (rules / "data_extraction_rules.xml").write_text(
+                """<data-extraction-rules>
+                <cloud-backup><include domain="file" path="datastore/" /></cloud-backup>
+                <device-transfer><include domain="file" path="datastore/" /></device-transfer>
+                </data-extraction-rules>""",
+                encoding="utf-8",
+            )
+            (rules / "backup_rules.xml").write_text(
+                """<full-backup-content>
+                <include domain="file" path="datastore/" />
+                </full-backup-content>""",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(gate.GateError):
+                gate.assert_backup_rules(root)
 
     def test_spdx_report_is_json_serializable(self):
         report = gate.build_spdx(["androidx.core:core-ktx:1.19.0"])
