@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Timed and solar schedules now re-evaluate after clock, date, timezone, and system next-alarm changes, including when the service process was not already running.
 - Cloud backup now requires Android client-side encryption before copying the coordinate-bearing preferences blob; device transfer remains complete.
 - Deep and PWM presets now retain their built-in dimming while composing it with the user's global dim control.
+- Contrast now shares a documented white-endpoint projection across scalar drivers, while the Driver tab labels their black and midtone limitation.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting

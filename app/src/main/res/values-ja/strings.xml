@@ -137,6 +137,7 @@
     <string name="driver_not_available">このデバイスでは利用できません</string>
     <string name="driver_auto_resolved">自動選択: %1$s</string>
     <string name="driver_auto_resolved_none">自動: 利用可能なドライバーがありません — オーバーレイ権限を許可してオーバーレイフォールバックをインストールしてください。</string>
+    <string name="driver_color_contract">SurfaceFlinger は完全なカラーマトリクスを保持します。ColorDisplayManager、KCAL、Overlay はスカラー近似を使用するため、コントラストは変換後の白色点に一致しますが、黒と中間調は異なる場合があります。</string>
     <string name="driver_grant_secure_settings">ADB で WRITE_SECURE_SETTINGS を許可する</string>
     <string name="driver_grant_status_granted">このデバイスで許可済みです。</string>
     <string name="driver_grant_status_not_granted">未許可です。以下の ADB コマンドで許可するまで ColorDisplayManager ドライバーは利用できません。</string>

@@ -117,9 +117,9 @@ object MatrixPreview {
     fun perceivedLuminanceReduction(p: Preferences): Float {
         val matrix = matrixFor(p)
         val rgb = transformedWhiteRgb(matrix)
-        val r = (rgb.getOrNull(0) ?: 1f) + matrix.biasR
-        val g = (rgb.getOrNull(1) ?: 1f) + matrix.biasG
-        val b = (rgb.getOrNull(2) ?: 1f) + matrix.biasB
+        val r = rgb.getOrNull(0) ?: 1f
+        val g = rgb.getOrNull(1) ?: 1f
+        val b = rgb.getOrNull(2) ?: 1f
         val luminance =
             (0.2126f * r.coerceIn(0f, 1f)) +
                 (0.7152f * g.coerceIn(0f, 1f)) +
@@ -128,12 +128,12 @@ object MatrixPreview {
     }
 
     private fun transformedWhiteRgb(matrix: LumenMatrix): FloatArray {
-        if (!matrix.hasColorMatrix) return matrix.scaledRgb()
+        if (!matrix.hasColorMatrix) return matrix.scalarRgb()
         val m = matrix.surfaceRgbMatrix()
         return floatArrayOf(
-            (m[0] + m[1] + m[2]).coerceIn(0f, 1f),
-            (m[3] + m[4] + m[5]).coerceIn(0f, 1f),
-            (m[6] + m[7] + m[8]).coerceIn(0f, 1f)
+            (m[0] + m[1] + m[2] + matrix.biasR).coerceIn(0f, 1f),
+            (m[3] + m[4] + m[5] + matrix.biasG).coerceIn(0f, 1f),
+            (m[6] + m[7] + m[8] + matrix.biasB).coerceIn(0f, 1f)
         )
     }
 

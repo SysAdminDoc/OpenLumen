@@ -85,7 +85,7 @@ class KcalEngine : ColorEngine {
         val needAppLevelFloor =
             paths.min == null || paths.originalMin == null
         val appFloor = if (needAppLevelFloor && !matrix.amoledClamp) SAFETY_MIN else 0
-        val s = matrix.scaledRgb()
+        val s = matrix.scalarRgb()
         val r = toKcalScalar(s[0], appFloor)
         val g = toKcalScalar(s[1], appFloor)
         val b = toKcalScalar(s[2], appFloor)

@@ -71,7 +71,16 @@ class ColorDisplayManagerEngine : ColorEngine {
             Log.w(tag, "apply: ColorDisplayManager not available")
             return@withContext EngineResult.Failure("ColorDisplayManager unavailable")
         }
-        val temperature = kelvinFromRgbScale(matrix.r, matrix.g, matrix.b)
+        // CDM accepts only a color temperature, not an affine RGB transform.
+        // Preserve chromaticity from the scalar projection while removing a
+        // uniform dim factor that CDM cannot represent as temperature.
+        val scalar = matrix.scalarRgb()
+        val chromaticity = normalizeChromaticity(scalar)
+        val temperature = kelvinFromRgbScale(
+            chromaticity[0],
+            chromaticity[1],
+            chromaticity[2]
+        )
         try {
             if (ownership == null) {
                 ownership = Ownership(
@@ -225,6 +234,11 @@ class ColorDisplayManagerEngine : ColorEngine {
 
     private fun Float.unitOr(default: Float): Float =
         if (isFinite()) coerceIn(0f, 1f) else default
+
+    private fun normalizeChromaticity(rgb: FloatArray): FloatArray {
+        val peak = rgb.maxOrNull()?.takeIf { it > 0f } ?: return floatArrayOf(1f, 1f, 1f)
+        return FloatArray(3) { index -> (rgb[index] / peak).coerceIn(0f, 1f) }
+    }
 
     private data class Handles(
         val cdm: Any,

@@ -19,6 +19,35 @@ class LumenMatrixTest {
         assertThat(rgb[2]).isWithin(EPS).of(0.5f)
     }
 
+    @Test fun `scalar projection preserves affine white endpoint`() {
+        val rgb = LumenMatrix(
+            r = 0.5f,
+            g = 0.6f,
+            b = 0.7f,
+            biasR = 0.25f,
+            biasG = -0.1f,
+            biasB = 0.5f
+        ).scalarRgb()
+
+        assertThat(rgb[0]).isWithin(EPS).of(0.75f)
+        assertThat(rgb[1]).isWithin(EPS).of(0.5f)
+        assertThat(rgb[2]).isWithin(EPS).of(1f)
+    }
+
+    @Test fun `overlay uses scalar projection bias for contrast approximation`() {
+        val argb = LumenMatrix(
+            r = 0.5f,
+            g = 0.5f,
+            b = 0.5f,
+            biasR = 0.25f,
+            biasG = 0.25f,
+            biasB = 0.25f
+        ).toOverlayArgb()
+
+        val alpha = (argb ushr 24) and 0xFF
+        assertThat(alpha).isWithin(1).of(63)
+    }
+
     @Test fun `dim is clamped to 0_95 effective`() {
         // Even if user passes 0.99, effectiveDim caps at 0.95.
         val rgb = LumenMatrix(r = 1f, g = 1f, b = 1f, dim = 0.99f).scaledRgb()

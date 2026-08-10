@@ -49,6 +49,24 @@ class MatrixPreviewTest {
         assertThat(reduction).isWithin(0.0001f).of(0.4298f)
     }
 
+    @Test fun `contrast metrics use the same white endpoint as scalar projection`() {
+        val prefs = Preferences(
+            activePresetKey = "custom",
+            customMatrix = MatrixDto(),
+            presetIntensity = 1f,
+            dim = 0f,
+            contrast = Preferences.CONTRAST_MIN
+        )
+
+        val matrix = MatrixPreview.matrixFor(prefs)
+
+        assertThat(matrix.scalarRgb()[0]).isWithin(0.0001f).of(0.75f)
+        assertThat(MatrixPreview.blueSuppression(prefs)).isWithin(0.0001f).of(0.25f)
+        assertThat(MatrixPreview.perceivedLuminanceReduction(prefs))
+            .isWithin(0.0001f)
+            .of(0.25f)
+    }
+
     @Test fun `preset intensity applies to CVD matrix coefficients`() {
         val prefs = Preferences(
             activePresetKey = "protan",

@@ -137,6 +137,7 @@
     <string name="driver_not_available">Non disponible sur cet appareil</string>
     <string name="driver_auto_resolved">Auto selectionne : %1$s</string>
     <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Installez le mode Overlay en accordant la permission de superposition.</string>
+    <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. ColorDisplayManager, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_grant_status_granted">Accorde sur cet appareil.</string>
     <string name="driver_grant_status_not_granted">Non accorde. Le pilote ColorDisplayManager est indisponible tant que cette permission n\'est pas accordee via la commande ADB ci-dessous.</string>

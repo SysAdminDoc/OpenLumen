@@ -137,6 +137,7 @@
     <string name="driver_not_available">Auf diesem Gerät nicht verfügbar</string>
     <string name="driver_auto_resolved">Automatisch gewählt: %1$s</string>
     <string name="driver_auto_resolved_none">Automatisch: Kein Treiber verfügbar — installieren Sie den Overlay-Fallback, indem Sie die Overlay-Berechtigung erteilen.</string>
+    <string name="driver_color_contract">SurfaceFlinger erhält die vollständige Farbmatrix. ColorDisplayManager, KCAL und Overlay verwenden eine skalare Näherung: Der Kontrast entspricht dem transformierten Weißpunkt, während Schwarz- und Mitteltöne abweichen können.</string>
     <string name="driver_grant_secure_settings">WRITE_SECURE_SETTINGS über ADB erteilen</string>
     <string name="driver_grant_status_granted">Auf diesem Gerät erteilt.</string>
     <string name="driver_grant_status_not_granted">Nicht erteilt. Der ColorDisplayManager-Treiber ist erst verfügbar, wenn diese Berechtigung über den folgenden ADB-Befehl erteilt wird.</string>

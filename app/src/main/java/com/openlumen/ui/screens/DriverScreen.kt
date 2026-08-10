@@ -152,6 +152,21 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
 
+        Card(
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.driver_color_contract),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
+
         LumenButton(onClick = { vm.refreshProbes() }, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.driver_refresh))
         }

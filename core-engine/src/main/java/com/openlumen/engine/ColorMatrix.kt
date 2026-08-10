@@ -5,8 +5,9 @@ package com.openlumen.engine
  *
  * SurfaceFlinger's 1015 transaction code accepts a 16-element float[] representing
  * a 4x4 matrix (no translation column; that is what the per-channel `bias` provides).
- * We carry bias separately because most consumer engines only animate RGB scale +
- * a global darken term and skip cross-channel terms.
+ * We carry bias separately because SurfaceFlinger can consume the full affine
+ * transform, while scalar consumer engines need the documented [scalarRgb]
+ * projection below.
  */
 data class LumenMatrix(
     val r: Float = 1f,
@@ -78,6 +79,26 @@ data class LumenMatrix(
     }
 
     /**
+     * Best-effort per-channel projection for engines that cannot consume an
+     * additive bias or cross-channel matrix. The projection evaluates the
+     * affine transform at white (`scaled channel + bias`) and clamps it to the
+     * scalar engine's 0..1 range. This preserves the white endpoint of the
+     * centered contrast transform; black and midtones cannot be represented by
+     * a scalar multiplier and are intentionally an approximation.
+     *
+     * Matrix-capable engines must continue to use [toSurfaceFlinger16] so they
+     * retain the full cross-channel terms and bias.
+     */
+    fun scalarRgb(): FloatArray {
+        val scaled = scaledRgb()
+        return floatArrayOf(
+            (scaled[0] + biasR.finiteIn(-1f, 1f, default = 0f)).coerceIn(0f, 1f),
+            (scaled[1] + biasG.finiteIn(-1f, 1f, default = 0f)).coerceIn(0f, 1f),
+            (scaled[2] + biasB.finiteIn(-1f, 1f, default = 0f)).coerceIn(0f, 1f)
+        )
+    }
+
+    /**
      * Row-major 3x3 RGB transform for matrix-capable engines. Normal scalar
      * matrices are represented as a diagonal transform; CVD presets can supply
      * off-diagonal terms while still retaining scalar fallbacks.
@@ -124,7 +145,7 @@ data class LumenMatrix(
 
     /** ARGB color for the rootless overlay fallback. */
     fun toOverlayArgb(): Int {
-        val s = scaledRgb()
+        val s = scalarRgb()
         val deficitR = (1f - s[0].coerceIn(0f, 1f)).coerceIn(0f, 1f)
         val deficitG = (1f - s[1].coerceIn(0f, 1f)).coerceIn(0f, 1f)
         val deficitB = (1f - s[2].coerceIn(0f, 1f)).coerceIn(0f, 1f)
