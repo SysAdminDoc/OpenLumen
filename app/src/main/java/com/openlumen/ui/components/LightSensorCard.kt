@@ -38,6 +38,7 @@ fun LightSensorCard(
     enabled: Boolean,
     threshold: Float,
     currentLux: Float,
+    available: Boolean = true,
     onToggle: (Boolean) -> Unit,
     onThresholdChange: (Float) -> Unit,
     onUseCurrent: () -> Unit
@@ -65,7 +66,9 @@ fun LightSensorCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        if (currentLux < 0)
+                        if (!available)
+                            stringResource(R.string.light_sensor_no_hardware)
+                        else if (currentLux < 0)
                             stringResource(R.string.light_sensor_unavailable)
                         else
                             stringResource(R.string.light_sensor_now, currentLux.toInt()),
@@ -77,9 +80,10 @@ fun LightSensorCard(
                 }
                 val sensorLabel = stringResource(R.string.light_sensor_title)
                 LumenSwitch(
-                    checked = enabled,
+                    checked = enabled && available,
                     onCheckedChange = onToggle,
-                    modifier = Modifier.semantics { contentDescription = sensorLabel }
+                    modifier = Modifier.semantics { contentDescription = sensorLabel },
+                    enabled = available
                 )
             }
 
@@ -87,7 +91,7 @@ fun LightSensorCard(
             val thresholdState = stringResource(R.string.light_sensor_threshold_state, thresholdLux)
             Text(
                 stringResource(R.string.light_sensor_threshold, thresholdLux),
-                color = if (enabled) {
+                color = if (enabled && available) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -99,7 +103,7 @@ fun LightSensorCard(
                 onValueChangeFinished = { onThresholdChange(thresholdDraft) },
                 valueRange = 0f..200f,
                 steps = 39,
-                enabled = enabled,
+                enabled = enabled && available,
                 modifier = Modifier.semantics {
                     stateDescription = thresholdState
                 }
@@ -107,7 +111,7 @@ fun LightSensorCard(
 
             LumenOutlinedButton(
                 onClick = onUseCurrent,
-                enabled = enabled && currentLux >= 0,
+                enabled = enabled && available && currentLux >= 0,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.light_sensor_calibrate))

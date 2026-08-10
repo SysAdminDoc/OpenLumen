@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -65,6 +66,24 @@ class LightSensorSubscriptionTest {
         subscription.cancel()
 
         assertThat(attempts.get()).isEqualTo(1)
+        scope.cancel()
+    }
+
+    @Test fun `exhausted registration retries report unavailable`() = runBlocking {
+        val unavailable = CompletableDeferred<Unit>()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val subscription = LightSensorSubscription(
+            luxFlow = { emptyFlow() },
+            scope = scope,
+            onLuxChanged = {},
+            onUnavailable = { unavailable.complete(Unit) },
+            retryDelay = {}
+        )
+
+        subscription.update(true)
+
+        withTimeout(2_000L) { unavailable.await() }
+        subscription.cancel()
         scope.cancel()
     }
 }

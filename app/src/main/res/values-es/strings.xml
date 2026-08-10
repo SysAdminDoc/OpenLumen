@@ -229,6 +229,7 @@
     <string name="perm_overlay_grant">Abrir ajustes</string>
 
     <string name="light_sensor_title">Activación por luz ambiental</string>
+    <string name="light_sensor_no_hardware">Este dispositivo no tiene sensor de luz ambiental. El activador está desactivado.</string>
     <string name="light_sensor_unavailable">Sensor no disponible o sin lectura aún</string>
     <string name="light_sensor_now">Actual: %1$d lux</string>
     <string name="light_sensor_threshold">Umbral: %1$d lux</string>

@@ -229,6 +229,7 @@
     <string name="perm_overlay_grant">Ouvrir les parametres</string>
 
     <string name="light_sensor_title">Declenchement par luminosite ambiante</string>
+    <string name="light_sensor_no_hardware">Aucun capteur de lumière ambiante n’est disponible sur cet appareil. Le déclencheur est désactivé.</string>
     <string name="light_sensor_unavailable">Capteur indisponible ou aucune mesure disponible</string>
     <string name="light_sensor_now">Actuel : %1$d lux</string>
     <string name="light_sensor_threshold">Seuil : %1$d lux</string>

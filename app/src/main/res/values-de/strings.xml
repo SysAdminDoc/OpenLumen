@@ -229,6 +229,7 @@
     <string name="perm_overlay_grant">Einstellungen öffnen</string>
 
     <string name="light_sensor_title">Umgebungslicht-Auslöser</string>
+    <string name="light_sensor_no_hardware">Auf diesem Gerät ist kein Umgebungslichtsensor verfügbar. Der Auslöser ist deaktiviert.</string>
     <string name="light_sensor_unavailable">Sensor nicht verfügbar oder noch kein Messwert</string>
     <string name="light_sensor_now">Aktuell: %1$d Lux</string>
     <string name="light_sensor_threshold">Schwellenwert: %1$d Lux</string>

@@ -61,6 +61,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefs by vm.state.collectAsStateWithLifecycle()
     val lux by vm.lux.collectAsStateWithLifecycle()
+    val lightSensorAvailable by vm.lightSensorAvailable.collectAsStateWithLifecycle()
 
     var canScheduleExactAlarms by remember(ctx) {
         mutableStateOf(ExactAlarmAccess.canScheduleExactAlarms(ctx))
@@ -351,6 +352,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             enabled = prefs.lightSensorEnabled,
             threshold = prefs.lightSensorLuxThreshold,
             currentLux = lux,
+            available = lightSensorAvailable,
             onToggle = { vm.setLightSensor(it, prefs.lightSensorLuxThreshold) },
             onThresholdChange = { vm.setLightSensor(prefs.lightSensorEnabled, it) },
             onUseCurrent = { if (lux >= 0) vm.setLightSensor(prefs.lightSensorEnabled, lux) }

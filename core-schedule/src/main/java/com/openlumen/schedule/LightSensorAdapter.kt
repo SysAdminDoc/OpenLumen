@@ -12,7 +12,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -47,15 +50,19 @@ import kotlin.math.max
 class LightSensorAdapter(private val context: Context) {
 
     private val shareScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val _availability = MutableStateFlow(hasAmbientLightSensor())
+    val availability: StateFlow<Boolean> = _availability.asStateFlow()
 
     private val rawSensorFlow: Flow<Float> = callbackFlow {
         val sm = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
             ?: run {
+                _availability.value = false
                 close(SensorRegistrationException("SensorManager unavailable"))
                 return@callbackFlow
             }
         val sensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT)
             ?: run {
+                _availability.value = false
                 close(SensorRegistrationException("Ambient-light sensor unavailable"))
                 return@callbackFlow
             }
@@ -72,9 +79,11 @@ class LightSensorAdapter(private val context: Context) {
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
         if (!sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)) {
+            _availability.value = false
             close(SensorRegistrationException("Ambient-light sensor registration rejected"))
             return@callbackFlow
         }
+        _availability.value = true
         // unregisterListener is safe from any thread; the SensorManager
         // internally posts a removal to its own handler.
         awaitClose { sm.unregisterListener(listener) }
@@ -105,6 +114,11 @@ class LightSensorAdapter(private val context: Context) {
     )
 
     fun lux(): Flow<Float> = sharedFlow
+
+    /** Hardware capability, independent of whether a collector has a fresh reading yet. */
+    fun hasAmbientLightSensor(): Boolean =
+        (context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager)
+            ?.getDefaultSensor(Sensor.TYPE_LIGHT) != null
 
     private class SensorRegistrationException(message: String) : Exception(message)
 

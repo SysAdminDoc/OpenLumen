@@ -241,6 +241,7 @@
     <string name="perm_overlay_grant">Open settings</string>
 
     <string name="light_sensor_title">Ambient-light trigger</string>
+    <string name="light_sensor_no_hardware">No ambient-light sensor is available on this device. The trigger is disabled.</string>
     <string name="light_sensor_unavailable">Sensor unavailable or no reading yet</string>
     <string name="light_sensor_now">Now: %1$d lux</string>
     <string name="light_sensor_threshold">Threshold: %1$d lux</string>

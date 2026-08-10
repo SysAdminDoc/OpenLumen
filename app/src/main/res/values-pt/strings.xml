@@ -229,6 +229,7 @@
     <string name="perm_overlay_grant">Abrir configuracoes</string>
 
     <string name="light_sensor_title">Acionamento por luz ambiente</string>
+    <string name="light_sensor_no_hardware">Este dispositivo não tem sensor de luz ambiente. O acionamento está desativado.</string>
     <string name="light_sensor_unavailable">Sensor indisponivel ou sem leitura ainda</string>
     <string name="light_sensor_now">Atual: %1$d lux</string>
     <string name="light_sensor_threshold">Limiar: %1$d lux</string>

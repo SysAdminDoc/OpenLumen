@@ -153,6 +153,17 @@ class LumenService : LifecycleService() {
                     DiagnosticsLog.Category.SENSOR,
                     "ambient sensor unavailable after bounded retry budget"
                 )
+                try {
+                    prefs.update { current ->
+                        if (current.lightSensorEnabled) {
+                            current.copy(lightSensorEnabled = false)
+                        } else {
+                            current
+                        }
+                    }
+                } catch (t: Throwable) {
+                    Log.w(tag, "could not disable unavailable ambient sensor: ${t.message}")
+                }
             }
         )
         widgetBridge = WidgetBridge(this, tag)

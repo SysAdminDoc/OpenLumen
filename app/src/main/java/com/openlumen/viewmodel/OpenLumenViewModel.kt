@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -53,8 +54,23 @@ class OpenLumenViewModel @Inject constructor(
     /** Live ambient-light lux reading. -1 means no sensor / not yet emitted. */
     val lux: StateFlow<Float> = lightSensor.lux()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1f)
+    val lightSensorAvailable: StateFlow<Boolean> = lightSensor.availability
 
     init {
+        viewModelScope.launch {
+            lightSensor.availability
+                .collect { available ->
+                    if (!available) {
+                        prefs.update { current ->
+                            if (current.lightSensorEnabled) {
+                                current.copy(lightSensorEnabled = false)
+                            } else {
+                                current
+                            }
+                        }
+                    }
+                }
+        }
         normalizeEnabledFilterState()
         refreshProbes()
     }
@@ -243,6 +259,7 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun setLightSensor(enabled: Boolean, threshold: Float) = viewModelScope.launch {
+        if (enabled && !lightSensor.availability.value) return@launch
         prefs.update {
             it.copy(
                 lightSensorEnabled = enabled,
