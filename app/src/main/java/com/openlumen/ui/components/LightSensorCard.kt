@@ -10,6 +10,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -37,6 +42,11 @@ fun LightSensorCard(
     onThresholdChange: (Float) -> Unit,
     onUseCurrent: () -> Unit
 ) {
+    var thresholdDraft by remember { mutableFloatStateOf(threshold) }
+    LaunchedEffect(threshold) {
+        thresholdDraft = threshold
+    }
+
     Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(16.dp),
@@ -73,7 +83,7 @@ fun LightSensorCard(
                 )
             }
 
-            val thresholdLux = threshold.toInt()
+            val thresholdLux = thresholdDraft.toInt()
             val thresholdState = stringResource(R.string.light_sensor_threshold_state, thresholdLux)
             Text(
                 stringResource(R.string.light_sensor_threshold, thresholdLux),
@@ -84,8 +94,9 @@ fun LightSensorCard(
                 }
             )
             Slider(
-                value = threshold,
-                onValueChange = onThresholdChange,
+                value = thresholdDraft,
+                onValueChange = { thresholdDraft = it },
+                onValueChangeFinished = { onThresholdChange(thresholdDraft) },
                 valueRange = 0f..200f,
                 steps = 39,
                 enabled = enabled,

@@ -22,6 +22,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -65,6 +66,19 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    var sunsetOffsetDraft by remember {
+        mutableFloatStateOf(prefs.schedule.sunsetOffsetMin.toFloat())
+    }
+    var sunriseOffsetDraft by remember {
+        mutableFloatStateOf(prefs.schedule.sunriseOffsetMin.toFloat())
+    }
+
+    LaunchedEffect(prefs.schedule.sunsetOffsetMin) {
+        sunsetOffsetDraft = prefs.schedule.sunsetOffsetMin.toFloat()
+    }
+    LaunchedEffect(prefs.schedule.sunriseOffsetMin) {
+        sunriseOffsetDraft = prefs.schedule.sunriseOffsetMin.toFloat()
+    }
 
     DisposableEffect(lifecycleOwner, ctx) {
         val observer = LifecycleEventObserver { _, event ->
@@ -240,16 +254,20 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
                     val sunsetOffsetLabel = stringResource(
                         R.string.schedule_sunset_offset,
-                        prefs.schedule.sunsetOffsetMin
+                        sunsetOffsetDraft.roundToInt()
                     )
                     Text(
                         sunsetOffsetLabel,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Slider(
-                        value = prefs.schedule.sunsetOffsetMin.toFloat(),
-                        onValueChange = { v ->
-                            vm.setScheduleOffsets(v.roundToInt(), prefs.schedule.sunriseOffsetMin)
+                        value = sunsetOffsetDraft,
+                        onValueChange = { sunsetOffsetDraft = it },
+                        onValueChangeFinished = {
+                            vm.setScheduleOffsets(
+                                sunsetOffsetDraft.roundToInt(),
+                                prefs.schedule.sunriseOffsetMin
+                            )
                         },
                         valueRange = -180f..180f,
                         steps = 71,
@@ -260,16 +278,20 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 
                     val sunriseOffsetLabel = stringResource(
                         R.string.schedule_sunrise_offset,
-                        prefs.schedule.sunriseOffsetMin
+                        sunriseOffsetDraft.roundToInt()
                     )
                     Text(
                         sunriseOffsetLabel,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Slider(
-                        value = prefs.schedule.sunriseOffsetMin.toFloat(),
-                        onValueChange = { v ->
-                            vm.setScheduleOffsets(prefs.schedule.sunsetOffsetMin, v.roundToInt())
+                        value = sunriseOffsetDraft,
+                        onValueChange = { sunriseOffsetDraft = it },
+                        onValueChangeFinished = {
+                            vm.setScheduleOffsets(
+                                prefs.schedule.sunsetOffsetMin,
+                                sunriseOffsetDraft.roundToInt()
+                            )
                         },
                         valueRange = -180f..180f,
                         steps = 71,

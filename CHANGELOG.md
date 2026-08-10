@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Persisted and imported preset references now resolve through the live catalog, so removed keys cannot reappear through cycling or restore actions.
 - Ambient-light registration and collection now retry transient failures with bounded backoff and report a stable unavailable state after the retry budget.
 - Widget and Quick Settings actions now have bounded preference operations, guaranteed broadcast completion, and retryable refresh behavior when storage is slow or unavailable.
+- Solar offset and ambient-light threshold sliders now edit local drafts during a gesture and persist only the final value.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting
