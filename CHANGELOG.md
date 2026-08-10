@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deep and PWM presets now retain their built-in dimming while composing it with the user's global dim control.
 - Contrast now shares a documented white-endpoint projection across scalar drivers, while the Driver tab labels their black and midtone limitation.
 - Persisted and imported preset references now resolve through the live catalog, so removed keys cannot reappear through cycling or restore actions.
+- Ambient-light registration and collection now retry transient failures with bounded backoff and report a stable unavailable state after the retry budget.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting

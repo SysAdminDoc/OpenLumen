@@ -8,6 +8,7 @@ import android.hardware.SensorManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.shareIn
 import kotlin.math.abs
 import kotlin.math.max
@@ -48,9 +50,15 @@ class LightSensorAdapter(private val context: Context) {
 
     private val rawSensorFlow: Flow<Float> = callbackFlow {
         val sm = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-            ?: run { close(); return@callbackFlow }
+            ?: run {
+                close(SensorRegistrationException("SensorManager unavailable"))
+                return@callbackFlow
+            }
         val sensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT)
-            ?: run { close(); return@callbackFlow }
+            ?: run {
+                close(SensorRegistrationException("Ambient-light sensor unavailable"))
+                return@callbackFlow
+            }
 
         var ema = -1f
         val alpha = 0.2f
@@ -64,13 +72,21 @@ class LightSensorAdapter(private val context: Context) {
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
         if (!sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)) {
-            close()
+            close(SensorRegistrationException("Ambient-light sensor registration rejected"))
             return@callbackFlow
         }
         // unregisterListener is safe from any thread; the SensorManager
         // internally posts a removal to its own handler.
         awaitClose { sm.unregisterListener(listener) }
     }
+        .retryWhen { cause, attempt ->
+            if (cause !is SensorRegistrationException || attempt >= MAX_REGISTRATION_RETRIES) {
+                false
+            } else {
+                delay(registrationRetryDelayMs(attempt.toInt() + 1))
+                true
+            }
+        }
         .buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         .distinctUntilChanged { a, b ->
             abs(a - b) < max(abs(a) * 0.05f, 0.5f)
@@ -89,4 +105,16 @@ class LightSensorAdapter(private val context: Context) {
     )
 
     fun lux(): Flow<Float> = sharedFlow
+
+    private class SensorRegistrationException(message: String) : Exception(message)
+
+    private fun registrationRetryDelayMs(attempt: Int): Long = when (attempt) {
+        1 -> 250L
+        2 -> 1_000L
+        else -> 5_000L
+    }
+
+    private companion object {
+        const val MAX_REGISTRATION_RETRIES = 3L
+    }
 }

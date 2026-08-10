@@ -129,9 +129,21 @@ class LumenService : LifecycleService() {
             logTag = tag
         )
         scheduleAlarms = ScheduleAlarmOrchestrator(this, tag)
-        lightSubscription = LightSensorSubscription(lightSensor, lifecycleScope) {
-            latestPrefs.get()?.let { prefs -> applyIfShouldBeActive(prefs) }
-        }
+        lightSubscription = LightSensorSubscription(
+            luxFlow = lightSensor::lux,
+            scope = lifecycleScope,
+            onLuxChanged = {
+                latestPrefs.get()?.let { prefs -> applyIfShouldBeActive(prefs) }
+            },
+            onUnavailable = {
+                DiagnosticsLog.log(
+                    this@LumenService,
+                    DiagnosticsLog.Level.WARN,
+                    DiagnosticsLog.Category.SENSOR,
+                    "ambient sensor unavailable after bounded retry budget"
+                )
+            }
+        )
         widgetBridge = WidgetBridge(this, tag)
         startInForeground()
         registerScreenStateReceiver()
