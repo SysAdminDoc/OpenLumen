@@ -122,6 +122,19 @@
             </intent-filter>
         </receiver>
 
+        <!-- Recompute absolute schedule alarms after clock, timezone, date,
+             or the system's next-alarm-clock value changes. -->
+        <receiver
+            android:name=".service.ScheduleClockChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+            </intent-filter>
+        </receiver>
+
        <receiver
            android:name=".service.AutomationReceiver"
             android:exported="true">
