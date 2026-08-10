@@ -114,6 +114,7 @@
     <string name="schedule_start">Start</string>
     <string name="schedule_end">End</string>
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
+    <string name="schedule_equal_times_error">Start and end must be different. Choose Always for an all-day schedule.</string>
     <string name="schedule_timezone">Schedules fire against your device clock (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Exact alarms are off</string>
     <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>

@@ -107,6 +107,7 @@
     <string name="schedule_start">Debut</string>
     <string name="schedule_end">Fin</string>
     <string name="schedule_time_value">%1$s : %2$02d:%3$02d</string>
+    <string name="schedule_equal_times_error">Le début et la fin doivent être différents. Choisissez « Toujours » pour un programme actif toute la journée.</string>
     <string name="schedule_timezone">Les programmations suivent l\'horloge de votre appareil (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Les alarmes exactes sont désactivées</string>
     <string name="schedule_exact_alarm_warning_body">Les changements programmés peuvent être en retard, car Android n\'autorise que des alarmes approximatives pour OpenLumen.</string>

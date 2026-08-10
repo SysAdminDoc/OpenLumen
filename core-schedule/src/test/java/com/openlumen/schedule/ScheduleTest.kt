@@ -48,6 +48,11 @@ class ScheduleTest {
         assertThat(isActive(mode, at(0, 0), zone)).isFalse()
     }
 
+    @Test fun `fixed time requires distinct endpoints`() {
+        assertThat(isValidFixedTimeWindow(LocalTime.of(7, 0), LocalTime.of(7, 0))).isFalse()
+        assertThat(isValidFixedTimeWindow(LocalTime.of(7, 0), LocalTime.of(7, 1))).isTrue()
+    }
+
     @Test fun `nextTransition for AlwaysOn returns null`() {
         assertThat(nextTransition(ScheduleMode.AlwaysOn, at(12, 0), zone)).isNull()
         assertThat(nextTransition(ScheduleMode.AlwaysOff, at(12, 0), zone)).isNull()

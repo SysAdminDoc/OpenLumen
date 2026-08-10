@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlumen.R
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.ExactAlarmAccess
 import com.openlumen.ui.components.LightSensorCard
@@ -49,6 +50,7 @@ import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
+import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -66,6 +68,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    var equalFixedTimesError by rememberSaveable { mutableStateOf(false) }
     var sunsetOffsetDraft by remember {
         mutableFloatStateOf(prefs.schedule.sunsetOffsetMin.toFloat())
     }
@@ -78,6 +81,9 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     }
     LaunchedEffect(prefs.schedule.sunriseOffsetMin) {
         sunriseOffsetDraft = prefs.schedule.sunriseOffsetMin.toFloat()
+    }
+    LaunchedEffect(prefs.schedule.mode) {
+        equalFixedTimesError = false
     }
 
     DisposableEffect(lifecycleOwner, ctx) {
@@ -229,6 +235,13 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                                 prefs.schedule.endHour,
                                 prefs.schedule.endMinute
                             )
+                        )
+                    }
+                    if (equalFixedTimesError) {
+                        Text(
+                            stringResource(R.string.schedule_equal_times_error),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -402,7 +415,17 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             initialMinute = prefs.schedule.startMinute,
             onDismiss = { showStartPicker = false },
             onConfirm = { h, m ->
-                vm.setScheduleTimes(h, m, prefs.schedule.endHour, prefs.schedule.endMinute)
+                val valid = prefs.schedule.mode != ScheduleModeDto.FixedTime ||
+                    isValidFixedTimeWindow(
+                        LocalTime.of(h, m),
+                        LocalTime.of(prefs.schedule.endHour, prefs.schedule.endMinute)
+                    )
+                if (valid) {
+                    vm.setScheduleTimes(h, m, prefs.schedule.endHour, prefs.schedule.endMinute)
+                    equalFixedTimesError = false
+                } else {
+                    equalFixedTimesError = true
+                }
                 showStartPicker = false
             }
         )
@@ -414,7 +437,16 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             initialMinute = prefs.schedule.endMinute,
             onDismiss = { showEndPicker = false },
             onConfirm = { h, m ->
-                vm.setScheduleTimes(prefs.schedule.startHour, prefs.schedule.startMinute, h, m)
+                val valid = isValidFixedTimeWindow(
+                    LocalTime.of(prefs.schedule.startHour, prefs.schedule.startMinute),
+                    LocalTime.of(h, m)
+                )
+                if (valid) {
+                    vm.setScheduleTimes(prefs.schedule.startHour, prefs.schedule.startMinute, h, m)
+                    equalFixedTimesError = false
+                } else {
+                    equalFixedTimesError = true
+                }
                 showEndPicker = false
             }
         )

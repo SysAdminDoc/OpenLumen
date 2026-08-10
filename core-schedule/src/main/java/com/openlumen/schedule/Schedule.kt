@@ -8,7 +8,12 @@ sealed interface ScheduleMode {
     /** Always on; ignore time of day. */
     data object AlwaysOn : ScheduleMode
 
-    /** On between [start] and [end] each day (wraps midnight). */
+    /**
+     * On between [start] and [end] each day (wraps midnight).
+     *
+     * Equal endpoints are invalid rather than an all-day window. Callers should
+     * use [AlwaysOn] when the filter should run all day.
+     */
     data class FixedTime(val start: LocalTime, val end: LocalTime) : ScheduleMode
 
     /** On from sunset to sunrise; requires location. */
@@ -54,7 +59,9 @@ fun isActive(
 ): Boolean = when (mode) {
     is ScheduleMode.AlwaysOn -> true
     is ScheduleMode.AlwaysOff -> false
-    is ScheduleMode.FixedTime -> inWrappedWindow(now.toLocalTime(), mode.start, mode.end)
+    is ScheduleMode.FixedTime ->
+        isValidFixedTimeWindow(mode.start, mode.end) &&
+            inWrappedWindow(now.toLocalTime(), mode.start, mode.end)
     is ScheduleMode.Solar -> {
         val today = SolarCalculator.computeTimes(now.toLocalDate(), mode.latitude, mode.longitude, zoneId)
         // Polar-state short-circuit: the calculator returns a polar sentinel
@@ -104,6 +111,13 @@ private fun inWrappedWindow(now: LocalTime, start: LocalTime, end: LocalTime): B
 }
 
 /**
+ * Fixed schedules need two distinct endpoints. An equal pair has no active
+ * interval, so the explicit [ScheduleMode.AlwaysOn] mode is the only all-day
+ * representation.
+ */
+fun isValidFixedTimeWindow(start: LocalTime, end: LocalTime): Boolean = start != end
+
+/**
  * Returns the next moment at which the active state would flip, or null for modes that
  * never transition (AlwaysOn, AlwaysOff). Used by the AlarmManager-based scheduler to
  * avoid polling the schedule every minute.
@@ -114,7 +128,12 @@ fun nextTransition(
     zoneId: ZoneId = now.zone
 ): ZonedDateTime? = when (mode) {
     is ScheduleMode.AlwaysOn, is ScheduleMode.AlwaysOff -> null
-    is ScheduleMode.FixedTime -> if (mode.start == mode.end) null else nextFixedTransition(now, mode.start, mode.end)
+    is ScheduleMode.FixedTime ->
+        if (isValidFixedTimeWindow(mode.start, mode.end)) {
+            nextFixedTransition(now, mode.start, mode.end)
+        } else {
+            null
+        }
     is ScheduleMode.Solar -> nextSolarTransition(now, zoneId, mode)
     is ScheduleMode.UntilNextAlarm -> nextAlarmModeTransition(now, mode)
 }

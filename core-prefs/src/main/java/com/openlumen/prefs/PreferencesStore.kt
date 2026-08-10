@@ -322,7 +322,7 @@ class PreferencesStore(
         matrixBb = m.matrixBb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f)
     )
 
-    private fun sanitizeSchedule(s: ScheduleDto): ScheduleDto = s.copy(
+    private fun sanitizeSchedule(s: ScheduleDto): ScheduleDto = normalizeEqualFixedTimeSchedule(s.copy(
         startHour = s.startHour.coerceIn(0, 23),
         startMinute = s.startMinute.coerceIn(0, 59),
         endHour = s.endHour.coerceIn(0, 23),
@@ -331,7 +331,7 @@ class PreferencesStore(
         longitude = s.longitude.finiteInOrNull(-180.0, 180.0),
         sunsetOffsetMin = s.sunsetOffsetMin.coerceIn(-180, 180),
         sunriseOffsetMin = s.sunriseOffsetMin.coerceIn(-180, 180)
-    )
+    ))
 
     /**
      * Bounds: name non-blank + ≤ 48 chars; library size capped at 32
