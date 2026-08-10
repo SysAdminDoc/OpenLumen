@@ -76,6 +76,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val result by vm.exportResult.collectAsStateWithLifecycle()
     var showCrashLog by rememberSaveable { mutableStateOf(false) }
     var showDiagLog by rememberSaveable { mutableStateOf(false) }
+    var showRecoveryReset by rememberSaveable { mutableStateOf(false) }
     var showSaveProfileDialog by rememberSaveable { mutableStateOf(false) }
     var saveProfileName by rememberSaveable { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -88,8 +89,12 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(vm::beginImportPreview) }
+    val recoveryExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> uri?.let(vm::exportCorruptPreferencesTo) }
 
     val pendingImport by vm.pendingImport.collectAsStateWithLifecycle()
+    val preferenceRecovery by vm.preferenceRecovery.collectAsStateWithLifecycle()
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
     val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
     val undoActionLabel = stringResource(R.string.action_undo)
@@ -151,6 +156,43 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(stringResource(R.string.about_import_profile)) }
+                    preferenceRecovery?.let { recovery ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Column(
+                                Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    stringResource(R.string.backup_recovery_title),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Text(
+                                    stringResource(
+                                        R.string.backup_recovery_body,
+                                        recovery.rawCharacterCount,
+                                        recovery.quarantinedCharacterCount
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                LumenButton(
+                                    onClick = {
+                                        recoveryExportLauncher.launch("openlumen-corrupt-preferences.json")
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.backup_recovery_export)) }
+                                LumenOutlinedButton(
+                                    onClick = { showRecoveryReset = true },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.backup_recovery_reset_action)) }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -457,6 +499,33 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             dismissButton = {
                 LumenTextButton(onClick = { vm.cancelPendingImport() }) {
                     Text(stringResource(R.string.import_preview_cancel))
+                }
+            }
+        )
+    }
+
+    if (preferenceRecovery != null && showRecoveryReset) {
+        AlertDialog(
+            onDismissRequest = { showRecoveryReset = false },
+            shape = MaterialTheme.shapes.large,
+            title = { Text(stringResource(R.string.backup_recovery_reset_title)) },
+            text = { Text(stringResource(R.string.backup_recovery_reset_body)) },
+            confirmButton = {
+                LumenTextButton(
+                    onClick = {
+                        showRecoveryReset = false
+                        vm.resetCorruptPreferences()
+                    }
+                ) {
+                    Text(
+                        stringResource(R.string.backup_recovery_reset_confirm),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                LumenTextButton(onClick = { showRecoveryReset = false }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

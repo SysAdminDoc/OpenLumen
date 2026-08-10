@@ -162,6 +162,15 @@
     <string name="about_backup_body">設定をJSONファイルとして保存・復元できます。デバイス間の移行やプリセットの共有に便利です。</string>
     <string name="about_export_profile">プロファイルをエクスポート</string>
     <string name="about_import_profile">プロファイルをインポート</string>
+    <string name="backup_recovery_title">保存した設定の復旧が必要です</string>
+    <string name="backup_recovery_body">OpenLumenは保存した設定（%1$d文字）を読み込めませんでした。安全な初期値を使用しています。リセットする前に、制限付きの復旧コピー（%2$d文字）をエクスポートしてください。</string>
+    <string name="backup_recovery_export">復旧コピーをエクスポート</string>
+    <string name="backup_recovery_reset_action">初期値にリセット</string>
+    <string name="backup_recovery_reset_title">読み込めない設定をリセットしますか？</string>
+    <string name="backup_recovery_reset_body">アプリは使用できますが、読み込めない保存設定は破棄されます。必要になる可能性がある場合は、先に復旧コピーをエクスポートしてください。</string>
+    <string name="backup_recovery_reset_confirm">設定をリセット</string>
+    <string name="backup_recovery_exported">復旧コピーをエクスポートしました</string>
+    <string name="backup_recovery_reset">設定を初期値にリセットしました</string>
     <string name="about_diagnostics_title">診断</string>
     <string name="about_diagnostics_body">OpenLumen はアプリ専用ストレージにクラッシュログを保存します。デバイス外に送信されることはありません。</string>
     <string name="about_view_crash_log">クラッシュログを表示</string>

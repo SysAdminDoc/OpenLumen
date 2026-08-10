@@ -8,9 +8,13 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.io.OutputStreamWriter
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -22,6 +26,9 @@ import kotlinx.serialization.json.intOrNull
 private val Context.dataStore by preferencesDataStore(name = "openlumen-prefs")
 
 internal const val MAX_IMPORT_FILE_BYTES = 64 * 1024
+internal const val MAX_RECOVERY_CHARS = MAX_IMPORT_FILE_BYTES
+
+internal fun boundedRecoveryText(raw: String): String = raw.take(MAX_RECOVERY_CHARS)
 
 internal fun readImportBytes(input: InputStream, maxBytes: Int = MAX_IMPORT_FILE_BYTES): ByteArray {
     require(maxBytes >= 0) { "maxBytes must be non-negative" }
@@ -46,6 +53,12 @@ data class ImportSummary(
     val droppedDuplicateNames: List<String>
 )
 
+data class PreferencesRecovery(
+    val rawCharacterCount: Int,
+    val quarantinedCharacterCount: Int,
+    val errorType: String
+)
+
 /**
  * Single-blob preferences store. We keep the whole [Preferences] object as a JSON string
  * to avoid N separate DataStore keys; bumping the schema only requires adding a new
@@ -68,15 +81,29 @@ class PreferencesStore(private val context: Context) {
         prettyPrint = true
     }
     private val key = stringPreferencesKey("prefs-v1")
+    private val corruptKey = stringPreferencesKey("prefs-corrupt-v1")
+    private val _recovery = MutableStateFlow<PreferencesRecovery?>(null)
+    val recovery: StateFlow<PreferencesRecovery?> = _recovery.asStateFlow()
 
     val flow: Flow<Preferences> = context.dataStore.data.map { prefs ->
-        val raw = prefs[key] ?: return@map Preferences()
+        val raw = prefs[key] ?: run {
+            _recovery.value = null
+            return@map Preferences()
+        }
         decodeOrDefault(raw)
     }
 
     suspend fun update(transform: (Preferences) -> Preferences) {
         context.dataStore.edit { prefs ->
-            val current = prefs[key]?.let { decodeOrDefault(it) } ?: Preferences()
+            val raw = prefs[key]
+            val current = if (raw == null) {
+                Preferences()
+            } else {
+                decodeOrNull(raw) ?: run {
+                    quarantine(prefs, raw)
+                    return@edit
+                }
+            }
             val next = sanitize(transform(current))
             prefs[key] = json.encodeToString(Preferences.serializer(), next)
         }
@@ -142,6 +169,37 @@ class PreferencesStore(private val context: Context) {
             runCatching { applySanitizedImport(preview) }
         }
 
+    suspend fun exportCorruptTo(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val prefs = context.dataStore.data.first()
+            val raw = prefs[key]
+            check(raw != null && decodeOrNull(raw) == null) {
+                "No corrupt preferences are awaiting recovery"
+            }
+            val recoveryRaw = prefs[corruptKey] ?: boundedRecoveryText(raw)
+            context.contentResolver.openOutputStream(uri, "wt").use { out ->
+                checkNotNull(out) { "openOutputStream returned null for ${uri}" }
+                OutputStreamWriter(out, Charsets.UTF_8).use { writer -> writer.write(recoveryRaw) }
+            }
+        }
+    }
+
+    suspend fun resetCorruptPreferences(): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            var reset = false
+            context.dataStore.edit { prefs ->
+                val raw = prefs[key] ?: return@edit
+                if (decodeOrNull(raw) == null) {
+                    prefs.remove(corruptKey)
+                    prefs[key] = json.encodeToString(Preferences.serializer(), Preferences())
+                    reset = true
+                }
+            }
+            check(reset) { "No corrupt preferences are awaiting recovery" }
+            _recovery.value = null
+        }
+    }
+
     private fun readAllFromUri(uri: Uri): String {
         return context.contentResolver.openInputStream(uri).use { input ->
             checkNotNull(input) { "openInputStream returned null for $uri" }
@@ -149,27 +207,26 @@ class PreferencesStore(private val context: Context) {
         }
     }
 
-    private fun decodeOrDefault(raw: String): Preferences =
+    private fun decodeOrDefault(raw: String): Preferences = decodeOrNull(raw) ?: Preferences()
+
+    private fun decodeOrNull(raw: String): Preferences? =
         runCatching { decodeWithMigration(raw) }
-            .getOrElse { t ->
-                // Decode failure here means the persisted JSON is corrupted —
-                // most likely cause is a power loss mid-write, an OEM backup
-                // restoration mishap, or a developer who hand-edited the
-                // DataStore file. We don't surface this to the user
-                // (recovering to defaults is the right behavior) but we DO
-                // log it once per process so a contributor pulling a driver
-                // report has a breadcrumb instead of "config inexplicably
-                // reset itself". Silent defaulting was the previous
-                // behavior, which made this class of bug invisible.
+            .onFailure { t ->
+                _recovery.value = PreferencesRecovery(
+                    rawCharacterCount = raw.length,
+                    quarantinedCharacterCount = boundedRecoveryText(raw).length,
+                    errorType = t.javaClass.simpleName
+                )
                 if (decodeFailureLogged.compareAndSet(false, true)) {
                     Log.w(
                         TAG,
                         "persisted prefs decode failed (${t.javaClass.simpleName}); " +
-                            "reverting to defaults: ${t.message?.take(120)}"
+                            "runtime is using defaults while the original remains recoverable: " +
+                            t.message?.take(120)
                     )
                 }
-                Preferences()
             }
+            .getOrNull()
 
     /**
      * Decode JSON and run schema migrations. The schema version detection is
@@ -219,6 +276,15 @@ class PreferencesStore(private val context: Context) {
             ).also { appliedSummary = it }.preferences
         }
         return checkNotNull(appliedSummary) { "Import summary was not produced" }
+    }
+
+    private fun quarantine(
+        prefs: androidx.datastore.preferences.core.MutablePreferences,
+        raw: String
+    ) {
+       if (prefs[corruptKey] == null) {
+            prefs[corruptKey] = boundedRecoveryText(raw)
+       }
     }
 
     /**

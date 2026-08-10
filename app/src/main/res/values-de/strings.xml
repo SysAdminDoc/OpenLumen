@@ -162,6 +162,15 @@
     <string name="about_backup_body">Speichern oder stellen Sie Ihre Einstellungen als JSON-Datei wieder her. Nützlich beim Gerätewechsel oder zum Teilen von Vorlagen.</string>
     <string name="about_export_profile">Profil exportieren</string>
     <string name="about_import_profile">Profil importieren</string>
+    <string name="backup_recovery_title">Gespeicherte Einstellungen müssen wiederhergestellt werden</string>
+    <string name="backup_recovery_body">OpenLumen konnte die gespeicherten Einstellungen (%1$d Zeichen) nicht lesen. Sichere Standardwerte werden verwendet. Exportieren Sie vor dem Zurücksetzen eine begrenzte Wiederherstellungskopie (%2$d Zeichen).</string>
+    <string name="backup_recovery_export">Wiederherstellungskopie exportieren</string>
+    <string name="backup_recovery_reset_action">Auf Standardwerte zurücksetzen</string>
+    <string name="backup_recovery_reset_title">Nicht lesbare Einstellungen zurücksetzen?</string>
+    <string name="backup_recovery_reset_body">Die App bleibt nutzbar, aber die nicht lesbaren Einstellungen werden verworfen. Exportieren Sie zuerst die Wiederherstellungskopie, falls Sie sie benötigen.</string>
+    <string name="backup_recovery_reset_confirm">Einstellungen zurücksetzen</string>
+    <string name="backup_recovery_exported">Wiederherstellungskopie exportiert</string>
+    <string name="backup_recovery_reset">Einstellungen auf Standardwerte zurückgesetzt</string>
     <string name="about_diagnostics_title">Diagnose</string>
     <string name="about_diagnostics_body">OpenLumen speichert ein lokales Absturzprotokoll im app-privaten Speicher. Es verlässt niemals das Gerät.</string>
     <string name="about_view_crash_log">Absturzprotokoll anzeigen</string>

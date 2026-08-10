@@ -169,6 +169,15 @@
     <string name="about_backup_body">Save or restore your preferences as a JSON file. Useful for moving between devices or sharing presets.</string>
     <string name="about_export_profile">Export profile</string>
     <string name="about_import_profile">Import profile</string>
+    <string name="backup_recovery_title">Saved preferences need recovery</string>
+    <string name="backup_recovery_body">OpenLumen could not read its saved settings (%1$d characters). It is using safe defaults. Export a bounded recovery copy (%2$d characters) before resetting.</string>
+    <string name="backup_recovery_export">Export recovery copy</string>
+    <string name="backup_recovery_reset_action">Reset to defaults</string>
+    <string name="backup_recovery_reset_title">Reset unreadable preferences?</string>
+    <string name="backup_recovery_reset_body">This keeps the app usable but discards the unreadable saved settings. Export the recovery copy first if you may need it.</string>
+    <string name="backup_recovery_reset_confirm">Reset preferences</string>
+    <string name="backup_recovery_exported">Recovery copy exported</string>
+    <string name="backup_recovery_reset">Preferences reset to defaults</string>
     <string name="about_diagnostics_title">Diagnostics</string>
     <string name="about_diagnostics_body">OpenLumen keeps a local crash log in app-private storage. It never leaves the device.</string>
     <string name="about_view_crash_log">View crash log</string>

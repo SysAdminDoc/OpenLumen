@@ -13,6 +13,7 @@ import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.ImportSummary
 import com.openlumen.prefs.NamedProfile
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.PreferencesRecovery
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.prefs.normalizedEnabledFilterState
@@ -42,6 +43,7 @@ class OpenLumenViewModel @Inject constructor(
 
     val state: StateFlow<Preferences> = prefs.flow
         .stateIn(viewModelScope, SharingStarted.Eagerly, Preferences())
+    val preferenceRecovery: StateFlow<PreferencesRecovery?> = prefs.recovery
 
     private val _probes = MutableStateFlow<List<DriverProbe.Probe>>(emptyList())
     val probes: StateFlow<List<DriverProbe.Probe>> = _probes.asStateFlow()
@@ -258,6 +260,24 @@ class OpenLumenViewModel @Inject constructor(
         val result = prefs.exportTo(uri)
         _exportResult.value = if (result.isSuccess) {
             getString(R.string.backup_exported)
+        } else {
+            getString(R.string.backup_export_failed, result.errorText())
+        }
+    }
+
+    fun exportCorruptPreferencesTo(uri: Uri) = viewModelScope.launch {
+        val result = prefs.exportCorruptTo(uri)
+        _exportResult.value = if (result.isSuccess) {
+            getString(R.string.backup_recovery_exported)
+        } else {
+            getString(R.string.backup_export_failed, result.errorText())
+        }
+    }
+
+    fun resetCorruptPreferences() = viewModelScope.launch {
+        val result = prefs.resetCorruptPreferences()
+        _exportResult.value = if (result.isSuccess) {
+            getString(R.string.backup_recovery_reset)
         } else {
             getString(R.string.backup_export_failed, result.errorText())
         }

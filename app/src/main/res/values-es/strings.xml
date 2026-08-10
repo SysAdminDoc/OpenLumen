@@ -162,6 +162,15 @@
     <string name="about_backup_body">Guarde o restaure sus preferencias como un archivo JSON. Útil para cambiar de dispositivo o compartir ajustes.</string>
     <string name="about_export_profile">Exportar perfil</string>
     <string name="about_import_profile">Importar perfil</string>
+    <string name="backup_recovery_title">Es necesario recuperar las preferencias guardadas</string>
+    <string name="backup_recovery_body">OpenLumen no pudo leer los ajustes guardados (%1$d caracteres). Está usando valores predeterminados seguros. Exporta una copia de recuperación limitada (%2$d caracteres) antes de restablecerlos.</string>
+    <string name="backup_recovery_export">Exportar copia de recuperación</string>
+    <string name="backup_recovery_reset_action">Restablecer valores predeterminados</string>
+    <string name="backup_recovery_reset_title">¿Restablecer preferencias ilegibles?</string>
+    <string name="backup_recovery_reset_body">La aplicación seguirá funcionando, pero se descartarán los ajustes guardados ilegibles. Exporta primero la copia de recuperación si puedes necesitarla.</string>
+    <string name="backup_recovery_reset_confirm">Restablecer preferencias</string>
+    <string name="backup_recovery_exported">Copia de recuperación exportada</string>
+    <string name="backup_recovery_reset">Preferencias restablecidas a los valores predeterminados</string>
     <string name="about_diagnostics_title">Diagnósticos</string>
     <string name="about_diagnostics_body">OpenLumen mantiene un registro local de errores en el almacenamiento privado de la aplicación. Nunca sale del dispositivo.</string>
     <string name="about_view_crash_log">Ver registro de errores</string>

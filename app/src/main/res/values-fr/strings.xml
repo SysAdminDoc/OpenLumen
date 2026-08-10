@@ -162,6 +162,15 @@
     <string name="about_backup_body">Enregistrez ou restaurez vos preferences sous forme de fichier JSON. Utile pour migrer entre appareils ou partager des presets.</string>
     <string name="about_export_profile">Exporter le profil</string>
     <string name="about_import_profile">Importer un profil</string>
+    <string name="backup_recovery_title">Les préférences enregistrées doivent être récupérées</string>
+    <string name="backup_recovery_body">OpenLumen ne peut pas lire les réglages enregistrés (%1$d caractères). Des valeurs sûres par défaut sont utilisées. Exportez une copie de récupération limitée (%2$d caractères) avant la réinitialisation.</string>
+    <string name="backup_recovery_export">Exporter la copie de récupération</string>
+    <string name="backup_recovery_reset_action">Rétablir les valeurs par défaut</string>
+    <string name="backup_recovery_reset_title">Réinitialiser les préférences illisibles ?</string>
+    <string name="backup_recovery_reset_body">L\'application restera utilisable, mais les réglages illisibles seront supprimés. Exportez d\'abord la copie de récupération si nécessaire.</string>
+    <string name="backup_recovery_reset_confirm">Réinitialiser les préférences</string>
+    <string name="backup_recovery_exported">Copie de récupération exportée</string>
+    <string name="backup_recovery_reset">Préférences réinitialisées par défaut</string>
     <string name="about_diagnostics_title">Diagnostics</string>
     <string name="about_diagnostics_body">OpenLumen conserve un journal de plantages dans le stockage prive de l\'application. Il ne quitte jamais l\'appareil.</string>
     <string name="about_view_crash_log">Voir le journal de plantages</string>
