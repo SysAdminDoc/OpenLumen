@@ -116,6 +116,7 @@
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_equal_times_error">Start and end must be different. Choose Always for an all-day schedule.</string>
     <string name="schedule_timezone">Schedules fire against your device clock (%1$s).</string>
+    <string name="schedule_solar_timezone">Solar transitions use the selected location clock (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Exact alarms are off</string>
     <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Open exact alarm settings</string>
@@ -248,6 +249,8 @@
 
     <string name="location_title">Set location</string>
     <string name="location_decimal_degrees_help">Decimal degrees. Latitude must be -90 to 90, longitude -180 to 180.</string>
+    <string name="location_timezone_help">Pick a city to keep solar transitions in that location’s timezone. Manual coordinates use your device timezone.</string>
+    <string name="location_timezone_selected">Solar timezone: %1$s</string>
     <string name="location_latitude">Latitude</string>
     <string name="location_longitude">Longitude</string>
     <string name="location_latitude_range">Enter a value between -90 and 90</string>

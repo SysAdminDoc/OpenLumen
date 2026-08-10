@@ -109,6 +109,7 @@
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_equal_times_error">開始時刻と終了時刻は異なる必要があります。終日有効にするには「常にオン」を選択してください。</string>
     <string name="schedule_timezone">スケジュールはデバイスの時計 (%1$s) に基づいて実行されます。</string>
+    <string name="schedule_solar_timezone">太陽時刻の切り替えには選択した場所の時計 (%1$s) を使用します。</string>
     <string name="schedule_exact_alarm_warning_title">正確なアラームがオフです</string>
     <string name="schedule_exact_alarm_warning_body">Android が OpenLumen に不正確なアラームのみを許可しているため、時刻指定の切り替えが遅れることがあります。</string>
     <string name="schedule_exact_alarm_warning_action">正確なアラーム設定を開く</string>
@@ -236,6 +237,8 @@
 
     <string name="location_title">位置情報を設定</string>
     <string name="location_decimal_degrees_help">10進度数で入力してください。緯度は -90 から 90、経度は -180 から 180 です。</string>
+    <string name="location_timezone_help">都市を選ぶと、その場所のタイムゾーンで太陽時刻を切り替えます。手動入力した座標にはデバイスのタイムゾーンを使用します。</string>
+    <string name="location_timezone_selected">太陽スケジュールのタイムゾーン: %1$s</string>
     <string name="location_latitude">緯度</string>
     <string name="location_longitude">経度</string>
     <string name="location_latitude_range">-90〜90 の値を入力してください</string>

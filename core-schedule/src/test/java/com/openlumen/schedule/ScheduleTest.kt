@@ -94,6 +94,29 @@ class ScheduleTest {
         assertThat(isActive(mode, at(3, 0), zone)).isTrue()
     }
 
+    @Test fun `Solar schedule uses the selected location timezone across device zones`() {
+        val locationZone = ZoneId.of("America/New_York")
+        val deviceZone = ZoneId.of("Asia/Tokyo")
+        val mode = ScheduleMode.Solar(
+            latitude = 40.7128,
+            longitude = -74.0060,
+            locationZoneId = locationZone
+        )
+        val sunset = SolarCalculator.computeTimes(
+            LocalDate.of(2026, 5, 16),
+            mode.latitude,
+            mode.longitude,
+            locationZone
+        ).sunset
+        val beforeSunset = sunset.minusMinutes(1).withZoneSameInstant(deviceZone)
+        val afterSunset = sunset.plusMinutes(1).withZoneSameInstant(deviceZone)
+
+        assertThat(isActive(mode, beforeSunset, deviceZone)).isFalse()
+        assertThat(isActive(mode, afterSunset, deviceZone)).isTrue()
+        assertThat(nextTransition(mode, beforeSunset, deviceZone)?.zone)
+            .isEqualTo(locationZone)
+    }
+
     @Test fun `Solar schedule honors the now parameter (not the system clock) for date`() {
         // Regression guard: previously the function called `LocalDate.now(zoneId)`
         // and ignored the caller's `now`. That made unit tests time-bomb against

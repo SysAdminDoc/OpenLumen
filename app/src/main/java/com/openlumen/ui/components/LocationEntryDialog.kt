@@ -50,13 +50,17 @@ import com.openlumen.schedule.OfflineCities
  * field with a value the validator can't read and Save stays disabled. The
  * manual-input path additionally tolerates a single `,` as the user's decimal
  * separator and normalizes it to `.` before parsing.
+ *
+ * A bundled city also supplies its IANA timezone for solar scheduling. Manual
+ * coordinate edits clear that association and fall back to the device zone.
  */
 @Composable
 fun LocationEntryDialog(
     initialLat: Double?,
     initialLng: Double?,
+    initialTimezone: String? = null,
     onDismiss: () -> Unit,
-    onSave: (lat: Double, lng: Double) -> Unit
+    onSave: (lat: Double, lng: Double, solarTimezone: String?) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     var latText by rememberSaveable {
@@ -65,6 +69,7 @@ fun LocationEntryDialog(
     var lngText by rememberSaveable {
         mutableStateOf(initialLng?.let { formatCoord(it) } ?: "")
     }
+    var selectedTimezone by rememberSaveable { mutableStateOf(initialTimezone) }
     var query by rememberSaveable { mutableStateOf("") }
 
     val latVal = parseCoord(latText)
@@ -94,9 +99,18 @@ fun LocationEntryDialog(
                     stringResource(R.string.location_decimal_degrees_help),
                     modifier = Modifier.fillMaxWidth()
                 )
+                Text(
+                    stringResource(R.string.location_timezone_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 OutlinedTextField(
                     value = latText,
-                    onValueChange = { latText = it },
+                    onValueChange = {
+                        latText = it
+                        selectedTimezone = null
+                    },
                     label = { Text(stringResource(R.string.location_latitude)) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
@@ -114,7 +128,10 @@ fun LocationEntryDialog(
                 )
                 OutlinedTextField(
                     value = lngText,
-                    onValueChange = { lngText = it },
+                    onValueChange = {
+                        lngText = it
+                        selectedTimezone = null
+                    },
                     label = { Text(stringResource(R.string.location_longitude)) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
@@ -124,7 +141,9 @@ fun LocationEntryDialog(
                         onDone = {
                             val lat = latVal
                             val lng = lngVal
-                            if (lat != null && lng != null && canSave) onSave(lat, lng)
+                            if (lat != null && lng != null && canSave) {
+                                onSave(lat, lng, selectedTimezone)
+                            }
                         }
                     ),
                     singleLine = true,
@@ -176,6 +195,7 @@ fun LocationEntryDialog(
                                 .clickable(role = Role.Button) {
                                     latText = formatCoord(city.latitude)
                                     lngText = formatCoord(city.longitude)
+                                    selectedTimezone = city.timezone
                                     focusManager.clearFocus()
                                 }
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -197,6 +217,13 @@ fun LocationEntryDialog(
                         }
                     }
                 }
+                selectedTimezone?.let { timezone ->
+                    Text(
+                        stringResource(R.string.location_timezone_selected, timezone),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         confirmButton = {
@@ -204,7 +231,9 @@ fun LocationEntryDialog(
                 onClick = {
                     val lat = latVal
                     val lng = lngVal
-                    if (lat != null && lng != null && canSave) onSave(lat, lng)
+                    if (lat != null && lng != null && canSave) {
+                        onSave(lat, lng, selectedTimezone)
+                    }
                 },
                 enabled = canSave
             ) { Text(stringResource(R.string.action_save)) }

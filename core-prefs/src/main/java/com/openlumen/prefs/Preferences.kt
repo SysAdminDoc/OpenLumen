@@ -67,6 +67,8 @@ data class ScheduleDto(
     val endMinute: Int = 0,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    /** IANA zone selected with a bundled city; null follows the device zone. */
+    val solarTimezone: String? = null,
     val sunsetOffsetMin: Int = 0,
     val sunriseOffsetMin: Int = 0
 )

@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalTime
+import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -600,6 +601,8 @@ class LumenService : LifecycleService() {
                 ScheduleMode.Solar(
                     latitude = checkNotNull(lat),
                     longitude = checkNotNull(lng),
+                    locationZoneId = p.schedule.solarTimezone
+                        ?.let { runCatching { ZoneId.of(it) }.getOrNull() },
                     sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
                     sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
                 )

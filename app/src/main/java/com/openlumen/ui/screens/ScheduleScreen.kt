@@ -115,13 +115,19 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(stringResource(R.string.schedule_title), style = MaterialTheme.typography.titleMedium)
-        // Timezone hint (C27). Fixed-time schedules fire against the device's
-        // current zone, not UTC and not the location entered for solar mode.
-        // Showing it explicitly prevents the "I set 22:00 but it fires at
-        // weird-looking time after travel" support thread.
+        // Fixed-time schedules follow the device zone. A city-selected solar
+        // schedule keeps the city's IANA zone so its wall-clock sunrise and
+        // sunset remain stable when the device travels.
         val zoneLabel = ZoneId.systemDefault().id
+        val solarTimezone = prefs.schedule.solarTimezone
         Text(
-            stringResource(R.string.schedule_timezone, zoneLabel),
+            if (prefs.schedule.mode == ScheduleModeDto.Solar &&
+                solarTimezone != null
+            ) {
+                stringResource(R.string.schedule_solar_timezone, solarTimezone)
+            } else {
+                stringResource(R.string.schedule_timezone, zoneLabel)
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -455,9 +461,10 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         LocationEntryDialog(
             initialLat = prefs.schedule.latitude,
             initialLng = prefs.schedule.longitude,
+            initialTimezone = prefs.schedule.solarTimezone,
             onDismiss = { showLocationDialog = false },
-            onSave = { lat, lng ->
-                vm.setLocation(lat, lng)
+            onSave = { lat, lng, solarTimezone ->
+                vm.setLocation(lat, lng, solarTimezone)
                 showLocationDialog = false
             }
         )

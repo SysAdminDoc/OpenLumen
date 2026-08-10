@@ -109,6 +109,7 @@
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_equal_times_error">Start und Ende müssen unterschiedlich sein. Wählen Sie „Immer“ für einen ganztägigen Zeitplan.</string>
     <string name="schedule_timezone">Zeitpläne richten sich nach der Geräteuhr (%1$s).</string>
+    <string name="schedule_solar_timezone">Solarübergänge verwenden die Uhr des ausgewählten Standorts (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Exakte Alarme sind deaktiviert</string>
     <string name="schedule_exact_alarm_warning_body">Zeitgesteuerte Wechsel können verspätet ausgeführt werden, weil Android für OpenLumen nur ungenaue Alarme zulässt.</string>
     <string name="schedule_exact_alarm_warning_action">Einstellungen für exakte Alarme öffnen</string>
@@ -236,6 +237,8 @@
 
     <string name="location_title">Standort festlegen</string>
     <string name="location_decimal_degrees_help">Dezimalgrad. Breitengrad muss zwischen -90 und 90 liegen, Längengrad zwischen -180 und 180.</string>
+    <string name="location_timezone_help">Wählen Sie eine Stadt, damit Solarübergänge die Zeitzone dieses Standorts verwenden. Manuelle Koordinaten verwenden die Gerätezeitzone.</string>
+    <string name="location_timezone_selected">Solarzeitzone: %1$s</string>
     <string name="location_latitude">Breitengrad</string>
     <string name="location_longitude">Längengrad</string>
     <string name="location_latitude_range">Geben Sie einen Wert zwischen -90 und 90 ein</string>

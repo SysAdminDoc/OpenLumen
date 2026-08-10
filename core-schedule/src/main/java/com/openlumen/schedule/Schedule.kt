@@ -20,6 +20,8 @@ sealed interface ScheduleMode {
     data class Solar(
         val latitude: Double,
         val longitude: Double,
+        /** Optional named-location timezone; null follows the device zone. */
+        val locationZoneId: ZoneId? = null,
         /** Minutes to offset sunset start (negative = before sunset). */
         val sunsetOffsetMin: Int = 0,
         /** Minutes to offset sunrise end. */
@@ -63,7 +65,14 @@ fun isActive(
         isValidFixedTimeWindow(mode.start, mode.end) &&
             inWrappedWindow(now.toLocalTime(), mode.start, mode.end)
     is ScheduleMode.Solar -> {
-        val today = SolarCalculator.computeTimes(now.toLocalDate(), mode.latitude, mode.longitude, zoneId)
+        val solarZone = mode.locationZoneId ?: zoneId
+        val solarNow = now.withZoneSameInstant(solarZone)
+        val today = SolarCalculator.computeTimes(
+            solarNow.toLocalDate(),
+            mode.latitude,
+            mode.longitude,
+            solarZone
+        )
         // Polar-state short-circuit: the calculator returns a polar sentinel
         // when the sun never rises (polar night → filter always on) or
         // never sets (polar day → filter always off). Honor that explicitly
@@ -76,7 +85,7 @@ fun isActive(
                 val sunset = today.sunset.plusMinutes(mode.sunsetOffsetMin.toLong())
                 val sunrise = today.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong())
                 // "On from sunset to next-morning sunrise" — wrap midnight.
-                now.isAfter(sunset) || now.isBefore(sunrise)
+                solarNow.isAfter(sunset) || solarNow.isBefore(sunrise)
             }
         }
     }
@@ -183,16 +192,28 @@ private fun nextSolarTransition(
     zoneId: ZoneId,
     mode: ScheduleMode.Solar
 ): ZonedDateTime? {
-    val today = SolarCalculator.computeTimes(now.toLocalDate(), mode.latitude, mode.longitude, zoneId)
+    val solarZone = mode.locationZoneId ?: zoneId
+    val solarNow = now.withZoneSameInstant(solarZone)
+    val today = SolarCalculator.computeTimes(
+        solarNow.toLocalDate(),
+        mode.latitude,
+        mode.longitude,
+        solarZone
+    )
     // Polar day/night has no on/off boundary inside the polar window — the
     // filter is either always on (polar night) or always off (polar day)
     // until the calendar drifts back into a normal sunset/sunrise day.
     // Reschedule for the start of the next local day so we re-evaluate
     // once per day instead of busy-looping on a missing transition.
     if (today.polar != SolarCalculator.Polar.NONE) {
-        return now.toLocalDate().plusDays(1).atStartOfDay(zoneId)
+        return solarNow.toLocalDate().plusDays(1).atStartOfDay(solarZone)
     }
-    val tomorrow = SolarCalculator.computeTimes(now.toLocalDate().plusDays(1), mode.latitude, mode.longitude, zoneId)
+    val tomorrow = SolarCalculator.computeTimes(
+        solarNow.toLocalDate().plusDays(1),
+        mode.latitude,
+        mode.longitude,
+        solarZone
+    )
     val candidates = mutableListOf<ZonedDateTime>(
         today.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong()),
         today.sunset.plusMinutes(mode.sunsetOffsetMin.toLong())
@@ -207,5 +228,5 @@ private fun nextSolarTransition(
         // If every candidate is in the past (clock skew, exotic timezone),
         // fall back to the next local midnight so we re-evaluate quickly
         // instead of throwing.
-        ?: now.toLocalDate().plusDays(1).atStartOfDay(zoneId)
+        ?: solarNow.toLocalDate().plusDays(1).atStartOfDay(solarZone)
 }

@@ -11,7 +11,8 @@
       crash.log        — device-local crash log, per privacy policy
       diagnostics.log  — device-local event log, per privacy policy
 
-    ScheduleDto.latitude/longitude (user-entered approximate city coordinates)
+    ScheduleDto.latitude/longitude and solarTimezone (user-entered approximate
+    city coordinates plus the selected IANA zone)
     share the DataStore blob with the rest of preferences. Auto Backup only
     includes that blob when Android reports client-side encryption; explicit
     export remains available when encrypted backup is unavailable.

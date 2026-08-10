@@ -109,6 +109,7 @@
     <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
     <string name="schedule_equal_times_error">El inicio y el fin deben ser distintos. Elija «Siempre» para un horario de todo el día.</string>
     <string name="schedule_timezone">Los horarios se basan en el reloj de su dispositivo (%1$s).</string>
+    <string name="schedule_solar_timezone">Las transiciones solares usan el reloj de la ubicación seleccionada (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Las alarmas exactas están desactivadas</string>
     <string name="schedule_exact_alarm_warning_body">Los cambios programados pueden ejecutarse tarde porque Android solo permite alarmas inexactas para OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Abrir ajustes de alarmas exactas</string>
@@ -236,6 +237,8 @@
 
     <string name="location_title">Establecer ubicación</string>
     <string name="location_decimal_degrees_help">Grados decimales. La latitud debe estar entre -90 y 90, la longitud entre -180 y 180.</string>
+    <string name="location_timezone_help">Elija una ciudad para que las transiciones solares usen su zona horaria. Las coordenadas manuales usan la zona horaria del dispositivo.</string>
+    <string name="location_timezone_selected">Zona horaria solar: %1$s</string>
     <string name="location_latitude">Latitud</string>
     <string name="location_longitude">Longitud</string>
     <string name="location_latitude_range">Introduce un valor entre -90 y 90</string>

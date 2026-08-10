@@ -41,4 +41,17 @@ class ScheduleSanitizerTest {
 
         assertThat(normalizeEqualFixedTimeSchedule(schedule)).isEqualTo(schedule)
     }
+
+    @Test fun `valid solar timezone is retained`() {
+        val schedule = ScheduleDto(solarTimezone = "America/New_York")
+
+        assertThat(normalizeEqualFixedTimeSchedule(schedule).solarTimezone)
+            .isEqualTo("America/New_York")
+    }
+
+    @Test fun `invalid solar timezone is cleared`() {
+        val schedule = ScheduleDto(solarTimezone = "Not/AZone")
+
+        assertThat(normalizeEqualFixedTimeSchedule(schedule).solarTimezone).isNull()
+    }
 }

@@ -130,9 +130,17 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setLocation(lat: Double, lng: Double) = viewModelScope.launch {
+    fun setLocation(lat: Double, lng: Double, solarTimezone: String? = null) = viewModelScope.launch {
         if (!isValidSolarLocation(lat, lng)) return@launch
-        prefs.update { it.copy(schedule = it.schedule.copy(latitude = lat, longitude = lng)) }
+        prefs.update {
+            it.copy(
+                schedule = it.schedule.copy(
+                    latitude = lat,
+                    longitude = lng,
+                    solarTimezone = solarTimezone
+                )
+            )
+        }
     }
 
     fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
