@@ -30,13 +30,40 @@ class ColorDisplayManagerEngineTest {
         assertThat(inverse).isAtMost(3800)
     }
 
-    @Test fun `non-finite channels fall back to neutral white`() {
-        val inverse = engine.kelvinFromRgbScale(
-            Float.NaN,
-            Float.POSITIVE_INFINITY,
-            Float.NEGATIVE_INFINITY
-        )
+   @Test fun `non-finite channels fall back to neutral white`() {
+       val inverse = engine.kelvinFromRgbScale(
+           Float.NaN,
+           Float.POSITIVE_INFINITY,
+           Float.NEGATIVE_INFINITY
+       )
 
-        assertThat(inverse).isWithin(200).of(6500)
+       assertThat(inverse).isWithin(200).of(6500)
+   }
+
+    @Test fun `external Night Light changes prevent restoration`() {
+        assertThat(
+            shouldRestoreNightDisplay(
+                currentActive = true,
+                currentTemperature = 4_200,
+                lastAppliedTemperature = 4_000
+            )
+        ).isFalse()
+        assertThat(
+            shouldRestoreNightDisplay(
+                currentActive = false,
+                currentTemperature = 4_000,
+                lastAppliedTemperature = 4_000
+            )
+        ).isFalse()
+    }
+
+    @Test fun `matching owned state permits restoration`() {
+        assertThat(
+            shouldRestoreNightDisplay(
+                currentActive = true,
+                currentTemperature = 4_000,
+                lastAppliedTemperature = 4_000
+            )
+        ).isTrue()
     }
 }

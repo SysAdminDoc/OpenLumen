@@ -14,6 +14,17 @@ import kotlinx.coroutines.withContext
 import java.lang.reflect.Method
 
 /**
+ * Restores system Night Light only while the observed state still matches the
+ * values OpenLumen last wrote. Any external change transfers ownership back to
+ * the system and must be left untouched.
+ */
+internal fun shouldRestoreNightDisplay(
+    currentActive: Boolean,
+    currentTemperature: Int,
+    lastAppliedTemperature: Int
+): Boolean = currentActive && currentTemperature == lastAppliedTemperature
+
+/**
  * Reflection-based driver for `android.hardware.display.ColorDisplayManager`.
  *
  * Reaches the same code path system Night Light uses. The class has been present on
@@ -38,6 +49,9 @@ class ColorDisplayManagerEngine : ColorEngine {
     @Volatile private var cdm: Any? = null
     @Volatile private var setActivated: Method? = null
     @Volatile private var setTemperature: Method? = null
+    @Volatile private var getActivated: Method? = null
+    @Volatile private var getTemperature: Method? = null
+    @Volatile private var ownership: Ownership? = null
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT < 28) return@withContext false
@@ -59,7 +73,18 @@ class ColorDisplayManagerEngine : ColorEngine {
         }
         val temperature = kelvinFromRgbScale(matrix.r, matrix.g, matrix.b)
         try {
-            handles.setTemperature?.invoke(handles.cdm, temperature)
+            if (ownership == null) {
+                ownership = Ownership(
+                    original = NightDisplayState(
+                        active = handles.getActivated.invoke(handles.cdm) as Boolean,
+                        temperature = handles.getTemperature.invoke(handles.cdm) as Int
+                    ),
+                    lastAppliedTemperature = temperature
+                )
+            } else {
+                ownership = ownership?.copy(lastAppliedTemperature = temperature)
+            }
+            handles.setTemperature.invoke(handles.cdm, temperature)
             handles.setActivated.invoke(handles.cdm, true)
         } catch (t: Throwable) {
             Log.w(tag, "CDM apply failed: ${t.message}")
@@ -74,7 +99,24 @@ class ColorDisplayManagerEngine : ColorEngine {
         }
         val handles = load(context) ?: return@withContext EngineResult.Success
         try {
-            handles.setActivated.invoke(handles.cdm, false)
+            val owned = ownership ?: return@withContext EngineResult.Success
+            val current = NightDisplayState(
+                active = handles.getActivated.invoke(handles.cdm) as Boolean,
+                temperature = handles.getTemperature.invoke(handles.cdm) as Int
+            )
+            if (
+                shouldRestoreNightDisplay(
+                    currentActive = current.active,
+                    currentTemperature = current.temperature,
+                    lastAppliedTemperature = owned.lastAppliedTemperature
+                )
+            ) {
+                handles.setTemperature.invoke(handles.cdm, owned.original.temperature)
+                handles.setActivated.invoke(handles.cdm, owned.original.active)
+            } else {
+                Log.i(tag, "CDM state changed outside OpenLumen; leaving it untouched")
+            }
+            ownership = null
         } catch (t: Throwable) {
             Log.w(tag, "CDM clear failed: ${t.message}")
             return@withContext EngineResult.Failure("CDM clear failed: ${t.message ?: "unknown error"}")
@@ -94,8 +136,11 @@ class ColorDisplayManagerEngine : ColorEngine {
     private fun load(context: Context): Handles? {
         cdm?.let { existing ->
             val setActive = setActivated
-            if (setActive != null) {
-                return Handles(existing, setActive, setTemperature)
+            val setTemp = setTemperature
+            val getActive = getActivated
+            val getTemp = getTemperature
+            if (setActive != null && setTemp != null && getActive != null && getTemp != null) {
+                return Handles(existing, setActive, setTemp, getActive, getTemp)
             }
             clearCache()
             return null
@@ -105,13 +150,15 @@ class ColorDisplayManagerEngine : ColorEngine {
             val clazz = Class.forName("android.hardware.display.ColorDisplayManager")
             val instance = tryConstructors(clazz, context) ?: return null
             val setActive = clazz.getMethod("setNightDisplayActivated", Boolean::class.javaPrimitiveType)
-            val setTemp = runCatching {
-                clazz.getMethod("setNightDisplayColorTemperature", Int::class.javaPrimitiveType)
-            }.getOrNull()
+            val setTemp = clazz.getMethod("setNightDisplayColorTemperature", Int::class.javaPrimitiveType)
+            val getActive = clazz.getMethod("isNightDisplayActivated")
+            val getTemp = clazz.getMethod("getNightDisplayColorTemperature")
             cdm = instance
             setActivated = setActive
             setTemperature = setTemp
-            Handles(instance, setActive, setTemp)
+            getActivated = getActive
+            getTemperature = getTemp
+            Handles(instance, setActive, setTemp, getActive, getTemp)
         } catch (t: Throwable) {
             clearCache()
             Log.d(tag, "CDM reflection failed: ${t.message}")
@@ -123,6 +170,8 @@ class ColorDisplayManagerEngine : ColorEngine {
         cdm = null
         setActivated = null
         setTemperature = null
+        getActivated = null
+        getTemperature = null
     }
 
     private fun tryConstructors(clazz: Class<*>, context: Context): Any? {
@@ -177,5 +226,17 @@ class ColorDisplayManagerEngine : ColorEngine {
     private fun Float.unitOr(default: Float): Float =
         if (isFinite()) coerceIn(0f, 1f) else default
 
-    private data class Handles(val cdm: Any, val setActivated: Method, val setTemperature: Method?)
+    private data class Handles(
+        val cdm: Any,
+        val setActivated: Method,
+        val setTemperature: Method,
+        val getActivated: Method,
+        val getTemperature: Method
+    )
+
+    private data class NightDisplayState(val active: Boolean, val temperature: Int)
+    private data class Ownership(
+        val original: NightDisplayState,
+        val lastAppliedTemperature: Int
+    )
 }
