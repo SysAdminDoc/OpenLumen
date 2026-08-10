@@ -3,6 +3,8 @@ package com.openlumen.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Binder
+import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import com.openlumen.diagnostics.DiagnosticsLog
@@ -25,6 +27,12 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class AutomationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val callingUid = Binder.getCallingUid()
+        val callerPackages = context.packageManager.getPackagesForUid(callingUid)
+        if (!isTrustedCaller(callingUid, context.applicationInfo.uid, callerPackages)) {
+            Log.w(tag, "rejected automation caller uid=$callingUid packages=${callerPackages?.contentToString()}")
+            return
+        }
         val action = intent.action?.takeIf { it in supportedActions } ?: return
 
         val now = SystemClock.elapsedRealtime()
@@ -67,9 +75,26 @@ class AutomationReceiver : BroadcastReceiver() {
         }
     }
 
-    private companion object {
+    companion object {
         const val tag = "OpenLumen/Automation"
         const val THROTTLE_MS = 200L
+        private val trustedAutomationPackages = setOf(
+            "net.dinglisch.android.taskerm",
+            "com.termux",
+            "com.termux.api",
+            "com.arlosoft.macrodroid",
+            "com.llamalab.automate"
+        )
+
+        internal fun isTrustedCaller(
+            callingUid: Int,
+            appUid: Int,
+            packages: Array<String>?
+        ): Boolean =
+            callingUid == appUid ||
+                callingUid == Process.SHELL_UID ||
+                callingUid == Process.ROOT_UID ||
+                packages.orEmpty().any { it in trustedAutomationPackages }
 
         val supportedActions = setOf(
             LumenService.ACTION_TURN_OFF,
