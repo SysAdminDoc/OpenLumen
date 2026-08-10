@@ -1,6 +1,11 @@
 package com.openlumen.engine
 
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -63,5 +68,23 @@ class SuCacheInvalidationTest {
         Su.setCachedAvailableForTest(false)
         Su.resetCacheIfSuLikelyFailed(127)
         assertThat(Su.peekCachedAvailable()).isNull()
+    }
+
+    @Test fun `concurrent availability callers share one probe`() = runBlocking {
+        Su.resetCache()
+        val probeCount = AtomicInteger()
+
+        val results = (1..8).map {
+            async {
+                Su.probeAvailabilityForTest {
+                    probeCount.incrementAndGet()
+                    delay(20L)
+                    Su.SuResult(exitCode = 0, stdout = "uid=0(root)", stderr = "")
+                }
+            }
+        }.awaitAll()
+
+        assertThat(results).containsExactlyElementsIn(List(8) { true })
+        assertThat(probeCount.get()).isEqualTo(1)
     }
 }

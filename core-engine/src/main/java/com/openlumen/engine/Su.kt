@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -21,19 +23,39 @@ object Su {
     private const val CLEANUP_WAIT_MS = 250L
 
     @Volatile private var cachedAvailable: Boolean? = null
+    private val availabilityMutex = Mutex()
+    private val cacheGeneration = java.util.concurrent.atomic.AtomicLong(0L)
 
-    suspend fun isAvailable(): Boolean = withContext(Dispatchers.IO) {
-        cachedAvailable?.let { return@withContext it }
-        val probe = runCommandInternal("id", timeoutMs = PROBE_TIMEOUT_MS)
-        val ok = probe.exitCode == 0 && probe.stdout.contains("uid=0")
-        cachedAvailable = ok
-        if (!ok) {
-            Log.d(TAG, "su unavailable: exit=" + probe.exitCode + " stdout=" + probe.stdout.take(120))
+    suspend fun isAvailable(): Boolean =
+        probeAvailability { runCommandInternal("id", timeoutMs = PROBE_TIMEOUT_MS) }
+
+    private suspend fun probeAvailability(probe: suspend () -> SuResult): Boolean =
+        withContext(Dispatchers.IO) {
+            cachedAvailable?.let { return@withContext it }
+            availabilityMutex.withLock {
+                cachedAvailable?.let { return@withLock it }
+                val generation = cacheGeneration.get()
+                val result = probe()
+                val ok = result.exitCode == 0 && result.stdout.contains("uid=0")
+                // A UI refresh may invalidate the cache while the process is
+                // blocked in su. Do not publish that stale result into the new
+                // generation; the next caller will perform one fresh probe.
+                if (cacheGeneration.get() == generation) {
+                    cachedAvailable = ok
+                    if (!ok) {
+                        Log.d(
+                            TAG,
+                            "su unavailable: exit=" + result.exitCode +
+                                " stdout=" + result.stdout.take(120)
+                        )
+                    }
+                }
+                ok
+            }
         }
-        ok
-    }
 
     fun resetCache() {
+        cacheGeneration.incrementAndGet()
         cachedAvailable = null
     }
 
@@ -46,6 +68,10 @@ object Su {
     internal fun setCachedAvailableForTest(value: Boolean?) {
         cachedAvailable = value
     }
+
+    /** Test-only single-flight hook; production callers use [isAvailable]. */
+    internal suspend fun probeAvailabilityForTest(probe: suspend () -> SuResult): Boolean =
+        probeAvailability(probe)
 
     suspend fun runCommand(commandLine: String): SuResult =
         runCommandInternal(commandLine, timeoutMs = CMD_TIMEOUT_MS)
