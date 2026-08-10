@@ -80,7 +80,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - 1 × 1 toggle widget
 - 4 × 1 favorites widget (tap a chip to switch presets)
 - Foreground-service notification with Turn-off and Next-preset actions
-- Documented Tasker / Termux / ADB intent surface (`docs/automation.md`)
+- Caller-authenticated Tasker / Termux / ADB intent surface (`docs/automation.md`)
 
 **Persistence + reliability**
 
@@ -225,6 +225,11 @@ OpenLumen/
 
 If a release goes wrong and the overlay or root driver leaves your screen
 in a bad state, the canonical escape hatch is:
+
+The exported automation receiver accepts ADB shell/root and the documented
+automation package identities, while unknown applications are rejected. Its
+filter-state broadcast is signature-protected and is not a general-purpose
+inter-app state channel.
 
 ```bash
 adb shell am broadcast -a com.openlumen.action.TURN_OFF \
