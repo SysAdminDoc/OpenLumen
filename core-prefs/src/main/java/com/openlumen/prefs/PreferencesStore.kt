@@ -70,7 +70,10 @@ data class PreferencesRecovery(
  * in its JSON; we detect that at the JSON layer and pass `schemaVersion = 0`
  * into the migration runner so it can stamp it correctly.
  */
-class PreferencesStore(private val context: Context) {
+class PreferencesStore(
+    private val context: Context,
+    private val knownPresetKeys: Set<String>
+) {
     private val json = Json {
         ignoreUnknownKeys = true
         // Backward tolerance for early builds that used NaN as the "location unset"
@@ -248,14 +251,16 @@ class PreferencesStore(private val context: Context) {
     private fun sanitize(p: Preferences, enabled: Boolean = p.enabled): Preferences = p.copy(
         enabled = enabled,
         schemaVersion = if (p.schemaVersion <= 0) Preferences.CURRENT_SCHEMA_VERSION else p.schemaVersion,
-        activePresetKey = sanitizePresetKey(p.activePresetKey),
-        previousPresetKey = p.previousPresetKey?.let { sanitizePresetKeyOrNull(it) },
+        activePresetKey = PresetKeySanitizer.active(p.activePresetKey, knownPresetKeys),
+        previousPresetKey = p.previousPresetKey?.let {
+            PresetKeySanitizer.previous(it, knownPresetKeys)
+        },
         presetIntensity = p.presetIntensity.finiteIn(0f, 1f, default = 1f),
         dim = p.dim.finiteIn(0f, 0.95f, default = 0f),
         customMatrix = sanitizeMatrix(p.customMatrix),
         schedule = sanitizeSchedule(p.schedule),
         lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
-        favoritePresetKeys = sanitizeFavorites(p.favoritePresetKeys),
+        favoritePresetKeys = PresetKeySanitizer.favorites(p.favoritePresetKeys, knownPresetKeys),
         transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
         contrast = p.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f),
         savedProfiles = sanitizeProfiles(p.savedProfiles)
@@ -328,25 +333,6 @@ class PreferencesStore(private val context: Context) {
         sunriseOffsetMin = s.sunriseOffsetMin.coerceIn(-180, 180)
     )
 
-    private fun sanitizePresetKey(key: String): String =
-        sanitizePresetKeyOrNull(key) ?: "custom"
-
-    private fun sanitizePresetKeyOrNull(key: String): String? =
-        key.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
-
-    /**
-     * Favorites list is bounded and de-duplicated. We don't cross-check against
-     * the live preset catalog here because that would couple core-prefs to
-     * core-engine; use-site code in the app validates against
-     * `com.openlumen.engine.Presets.byKey()` when consuming the list.
-     */
-    private fun sanitizeFavorites(keys: List<String>): List<String> =
-        keys.asSequence()
-            .map { sanitizePresetKey(it) }
-            .distinct()
-            .take(MAX_FAVORITES)
-            .toList()
-
     /**
      * Bounds: name non-blank + ≤ 48 chars; library size capped at 32
      * entries; duplicate names drop earlier occurrences (last-write-wins,
@@ -374,13 +360,13 @@ class PreferencesStore(private val context: Context) {
     }
 
     private fun sanitizeSnapshot(s: ProfileSnapshot): ProfileSnapshot = s.copy(
-        activePresetKey = sanitizePresetKey(s.activePresetKey),
+        activePresetKey = PresetKeySanitizer.active(s.activePresetKey, knownPresetKeys),
         customMatrix = sanitizeMatrix(s.customMatrix),
         presetIntensity = s.presetIntensity.finiteIn(0f, 1f, default = 1f),
         dim = s.dim.finiteIn(0f, 0.95f, default = 0f),
         schedule = sanitizeSchedule(s.schedule),
         lightSensorLuxThreshold = s.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
-        favoritePresetKeys = sanitizeFavorites(s.favoritePresetKeys),
+        favoritePresetKeys = PresetKeySanitizer.favorites(s.favoritePresetKeys, knownPresetKeys),
         transitionDurationMs = s.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
         contrast = s.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f)
     )
@@ -393,7 +379,6 @@ class PreferencesStore(private val context: Context) {
 
     private companion object {
         const val TAG = "OpenLumen/Prefs"
-        const val MAX_FAVORITES = 8
         const val MATRIX_COEFF_MIN = -4f
         const val MATRIX_COEFF_MAX = 4f
 

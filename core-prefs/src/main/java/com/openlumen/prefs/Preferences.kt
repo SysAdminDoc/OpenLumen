@@ -171,6 +171,9 @@ data class Preferences(
         /** Canonical no-op preset key from the engine preset catalog. */
         const val OFF_PRESET_KEY: String = "off"
 
+        /** Sentinel for a user-tuned matrix that is not in the built-in catalog. */
+        const val CUSTOM_PRESET_KEY: String = "custom"
+
         /** Safe visible preset when a user turns the master switch on from Off. */
         const val DEFAULT_ACTIVE_PRESET_KEY: String = "night"
 

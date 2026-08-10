@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.openlumen.CrashLogger
 import com.openlumen.MainActivity
+import com.openlumen.PresetKeyResolver
 import com.openlumen.R
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.engine.DriverProbe
@@ -196,7 +197,10 @@ class LumenService : LifecycleService() {
                 // edit), so without this breadcrumb a user troubleshooting
                 // via the diagnostics log sees nothing happen.
                 prefs.update { current ->
-                    val next = com.openlumen.prefs.PresetCycle.next(current)
+                    val next = com.openlumen.prefs.PresetCycle.next(
+                        current,
+                        PresetKeyResolver::isKnown
+                    )
                     if (next === current && current.favoritePresetKeys.isEmpty()) {
                         DiagnosticsLog.log(
                             this@LumenService,
@@ -217,15 +221,28 @@ class LumenService : LifecycleService() {
                 // active preset to garbage is worse than a no-op. "custom"
                 // is allowed because the in-app picker uses it as the
                 // sentinel for a user-tuned RGB matrix.
-                val accepted = key?.takeIf { it == "custom" || com.openlumen.engine.Presets.byKey(it) != null }
+                val accepted = key?.takeIf(PresetKeyResolver::isSelectable)
                 if (accepted != null) {
-                    prefs.update { com.openlumen.prefs.PresetCycle.setActiveKey(it, accepted) }
+                    prefs.update {
+                        com.openlumen.prefs.PresetCycle.setActiveKey(
+                            it,
+                            accepted,
+                            PresetKeyResolver::isKnown
+                        )
+                    }
                 } else if (key != null) {
                     Log.w(tag, "ACTION_SET_PRESET rejected unknown key: $key")
                 }
             }
             ACTION_RESTORE_PREVIOUS -> lifecycleScope.launch {
-                if (isUserUnlocked()) prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
+                if (isUserUnlocked()) {
+                    prefs.update {
+                        com.openlumen.prefs.PresetCycle.restorePrevious(
+                            it,
+                            PresetKeyResolver::isKnown
+                        )
+                    }
+                }
             }
             ACTION_SET_INTENSITY -> lifecycleScope.launch {
                 if (!isUserUnlocked()) return@launch

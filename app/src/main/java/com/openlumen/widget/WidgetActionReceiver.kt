@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.openlumen.engine.Presets
+import com.openlumen.PresetKeyResolver
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.PresetCycle
 import com.openlumen.prefs.toggledFilterEnabled
@@ -63,13 +63,13 @@ class WidgetActionReceiver : BroadcastReceiver() {
     private suspend fun setPreset(context: Context, rawKey: String?) {
         val key = rawKey
             ?.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
-            ?.takeIf { it == "custom" || Presets.byKey(it) != null }
+            ?.takeIf(PresetKeyResolver::isSelectable)
             ?: return
 
         var shouldStartService = false
         prefs.update { current ->
             shouldStartService = current.enabled
-            PresetCycle.setActiveKey(current, key)
+            PresetCycle.setActiveKey(current, key, PresetKeyResolver::isKnown)
         }
         if (!shouldStartService) return
 

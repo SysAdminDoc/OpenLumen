@@ -105,4 +105,33 @@ class PresetCycleTest {
         assertThat(PresetCycle.setActiveKey(p, "")).isEqualTo(p)
         assertThat(PresetCycle.setActiveKey(p, "night")).isEqualTo(p)
     }
+
+    @Test fun `next skips and removes unknown favorites`() {
+        val p = Preferences(
+            activePresetKey = "night",
+            favoritePresetKeys = listOf("removed-preset", "amber")
+        )
+
+        val next = PresetCycle.next(p) { it in setOf("night", "amber") }
+
+        assertThat(next.activePresetKey).isEqualTo("amber")
+        assertThat(next.favoritePresetKeys).containsExactly("amber")
+        assertThat(next.previousPresetKey).isEqualTo("night")
+    }
+
+    @Test fun `restore clears an unknown previous key without activating it`() {
+        val p = Preferences(activePresetKey = "night", previousPresetKey = "removed-preset")
+
+        val restored = PresetCycle.restorePrevious(p) { it == "night" }
+
+        assertThat(restored.activePresetKey).isEqualTo("night")
+        assertThat(restored.previousPresetKey).isNull()
+    }
+
+    @Test fun `setActiveKey rejects a catalog-unknown key`() {
+        val p = Preferences(activePresetKey = "night", previousPresetKey = null)
+
+        assertThat(PresetCycle.setActiveKey(p, "removed-preset") { it == "night" })
+            .isEqualTo(p)
+    }
 }

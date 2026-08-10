@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.openlumen.PresetKeyResolver
 import com.openlumen.R
 import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
@@ -80,12 +81,16 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun selectPreset(key: String) = viewModelScope.launch {
-        prefs.update { com.openlumen.prefs.PresetCycle.setActiveKey(it, key) }
+        prefs.update {
+            com.openlumen.prefs.PresetCycle.setActiveKey(it, key, PresetKeyResolver::isKnown)
+        }
     }
 
     /** Restore the previously-active preset (C14). No-op if none recorded. */
     fun restorePreviousPreset() = viewModelScope.launch {
-        prefs.update { com.openlumen.prefs.PresetCycle.restorePrevious(it) }
+        prefs.update {
+            com.openlumen.prefs.PresetCycle.restorePrevious(it, PresetKeyResolver::isKnown)
+        }
     }
 
     /** Save the current configuration into the named-profile library (C31). */
@@ -376,6 +381,7 @@ class OpenLumenViewModel @Inject constructor(
      * notification-cycle / 4x1 widget command surfaces.
      */
     fun toggleFavorite(key: String) = viewModelScope.launch {
+        if (!PresetKeyResolver.isKnown(key)) return@launch
         prefs.update { current ->
             val next = if (key in current.favoritePresetKeys) {
                 current.favoritePresetKeys - key

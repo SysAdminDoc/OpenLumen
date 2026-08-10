@@ -14,26 +14,37 @@ object PresetCycle {
      * [Preferences.favoritePresetKeys]. Wraps around.
      *
      * Behavior matrix:
-     * - Empty favorites: returns the input unchanged. The cycle action is a
+     * - Empty favorites: returns the input unchanged apart from clearing
+     *   catalog-invalid keys. The cycle action is a
      *   no-op rather than an error so the notification button can stay
      *   visible without rebuilds when favorites is edited.
      * - Current preset not in favorites: starts at the first favorite. This
      *   is the natural "I picked off-favorite, now cycle me back to my
      *   list" semantic.
      * - Current preset is the last favorite: wraps to the first favorite.
-     * - Duplicate keys in favorites: harmless because [PreferencesStore]
-     *   sanitizes via `distinct()` before persist. We assume the caller
-     *   passes a sanitized list.
-     */
-    fun next(current: Preferences): Preferences {
-        val favs = current.favoritePresetKeys
-        if (favs.isEmpty()) return current
-        val idx = favs.indexOf(current.activePresetKey)
+     * - Unknown and duplicate keys in favorites: skipped and removed from the
+     *   returned snapshot, so an older export cannot activate a removed preset.
+    */
+    fun next(current: Preferences, isKnown: (String) -> Boolean = { true }): Preferences {
+        val isSelectable: (String) -> Boolean = {
+            it == Preferences.CUSTOM_PRESET_KEY || isKnown(it)
+        }
+        val favs = current.favoritePresetKeys.filter(isKnown).distinct()
+        if (favs.isEmpty()) {
+            return current.copy(
+                favoritePresetKeys = favs,
+                previousPresetKey = current.previousPresetKey?.takeIf(isSelectable)
+            )
+        }
+        val currentKey = current.activePresetKey.takeIf(isSelectable)
+        val idx = favs.indexOf(currentKey)
         val nextKey = if (idx < 0) favs.first() else favs[(idx + 1) % favs.size]
         return current.copy(
-            previousPresetKey = current.activePresetKey,
+            favoritePresetKeys = favs,
+            previousPresetKey = currentKey,
             activePresetKey = nextKey
         )
+
     }
 
     /**
@@ -41,8 +52,10 @@ object PresetCycle {
      * Recording the *current* key as the new previous so a double-undo round-
      * trips. Tied to roadmap candidate C14 (Previous profile restore).
      */
-    fun restorePrevious(current: Preferences): Preferences {
-        val prev = current.previousPresetKey ?: return current
+    fun restorePrevious(current: Preferences, isKnown: (String) -> Boolean = { true }): Preferences {
+        val prev = current.previousPresetKey?.takeIf {
+            it == Preferences.CUSTOM_PRESET_KEY || isKnown(it)
+        } ?: return current.copy(previousPresetKey = null)
         if (prev == current.activePresetKey) return current
         return current.copy(
             activePresetKey = prev,
@@ -56,10 +69,20 @@ object PresetCycle {
      * `SET_PRESET` intent and the in-app preset picker so the undo trail
      * is consistent across surfaces.
      */
-    fun setActiveKey(current: Preferences, newKey: String): Preferences {
-        if (newKey.isBlank() || newKey == current.activePresetKey) return current
+    fun setActiveKey(
+        current: Preferences,
+        newKey: String,
+        isKnown: (String) -> Boolean = { true }
+    ): Preferences {
+        if (
+            newKey.isBlank() ||
+            (newKey != Preferences.CUSTOM_PRESET_KEY && !isKnown(newKey)) ||
+            newKey == current.activePresetKey
+        ) return current
         return current.copy(
-            previousPresetKey = current.activePresetKey,
+            previousPresetKey = current.activePresetKey.takeIf {
+                it == Preferences.CUSTOM_PRESET_KEY || isKnown(it)
+            },
             activePresetKey = newKey
         )
     }

@@ -1,6 +1,7 @@
 package com.openlumen.di
 
 import android.content.Context
+import com.openlumen.PresetKeyResolver
 import com.openlumen.engine.DriverProbe
 import com.openlumen.prefs.DirectBootStateStore
 import com.openlumen.prefs.PreferencesStore
@@ -16,7 +17,8 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides @Singleton
-    fun providePrefs(@ApplicationContext ctx: Context): PreferencesStore = PreferencesStore(ctx)
+    fun providePrefs(@ApplicationContext ctx: Context): PreferencesStore =
+        PreferencesStore(ctx, PresetKeyResolver.knownKeys)
 
     @Provides @Singleton
     fun provideDirectBootState(@ApplicationContext ctx: Context): DirectBootStateStore =
