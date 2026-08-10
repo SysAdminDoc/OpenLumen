@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlumen.R
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.ExactAlarmAccess
 import com.openlumen.ui.components.LightSensorCard
 import com.openlumen.ui.components.LumenButton
@@ -104,11 +105,18 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             ScheduleModeDto.Solar     to stringResource(R.string.schedule_solar),
             ScheduleModeDto.UntilNextAlarm to stringResource(R.string.schedule_until_next_alarm)
         )
+        val solarLocationValid = isValidSolarLocation(
+            prefs.schedule.latitude,
+            prefs.schedule.longitude
+        )
         modes.forEach { (mode, label) ->
+            val solarUnavailable = mode == ScheduleModeDto.Solar && !solarLocationValid
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
-                    containerColor = if (prefs.schedule.mode == mode)
+                    containerColor = if (solarUnavailable && prefs.schedule.mode == mode) {
+                        MaterialTheme.colorScheme.tertiaryContainer
+                    } else if (prefs.schedule.mode == mode)
                         MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
@@ -116,6 +124,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     .fillMaxWidth()
                     .selectable(
                         selected = prefs.schedule.mode == mode,
+                        enabled = !solarUnavailable,
                         onClick = { vm.setScheduleMode(mode) },
                         role = Role.RadioButton
                     )
@@ -129,15 +138,34 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     // "selected/not selected" and the RadioButton role once.
                     RadioButton(
                         selected = prefs.schedule.mode == mode,
-                        onClick = null
+                        onClick = null,
+                        enabled = !solarUnavailable
                     )
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (prefs.schedule.mode == mode) FontWeight.SemiBold else FontWeight.Normal
-                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (solarUnavailable) {
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            fontWeight = if (prefs.schedule.mode == mode) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                        if (solarUnavailable) {
+                            Text(
+                                stringResource(R.string.schedule_solar_location_required_short),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
                 }
             }
+        }
+
+        if (!solarLocationValid) {
+            SolarLocationWarningCard(onSetLocation = { showLocationDialog = true })
         }
 
         if (
@@ -399,6 +427,36 @@ private fun ExactAlarmWarningCard(onOpenSettings: () -> Unit) {
             )
             LumenButton(onClick = onOpenSettings) {
                 Text(stringResource(R.string.schedule_exact_alarm_warning_action))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SolarLocationWarningCard(onSetLocation: () -> Unit) {
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                stringResource(R.string.schedule_solar_location_required_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Text(
+                stringResource(R.string.schedule_solar_location_required_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            LumenButton(onClick = onSetLocation) {
+                Text(stringResource(R.string.schedule_set_location))
             }
         }
     }

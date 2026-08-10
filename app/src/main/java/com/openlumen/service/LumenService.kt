@@ -31,6 +31,7 @@ import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
+import com.openlumen.schedule.isValidSolarLocation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.runBlocking
@@ -320,19 +321,22 @@ class LumenService : LifecycleService() {
 
     private fun updateNotificationSubtitle(p: Preferences) {
         if (!p.enabled) return
-        val subtitle: String? = if (
-            p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm
-        ) {
-            scheduleAlarms.nextAlarmClockAt()?.let { alarmAt ->
-                val nowMs = System.currentTimeMillis()
-                val remainMs = alarmAt.toInstant().toEpochMilli() - nowMs
-                if (remainMs > 0) {
-                    val h = (remainMs / 3_600_000L).toInt()
-                    val m = ((remainMs % 3_600_000L) / 60_000L).toInt()
-                    getString(R.string.notif_alarm_countdown, h, m)
-                } else null
-            }
-        } else null
+        val subtitle: String? = when {
+            p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.Solar &&
+                !isValidSolarLocation(p.schedule.latitude, p.schedule.longitude) ->
+                getString(R.string.notif_solar_location_required)
+            p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm ->
+                scheduleAlarms.nextAlarmClockAt()?.let { alarmAt ->
+                    val nowMs = System.currentTimeMillis()
+                    val remainMs = alarmAt.toInstant().toEpochMilli() - nowMs
+                    if (remainMs > 0) {
+                        val h = (remainMs / 3_600_000L).toInt()
+                        val m = ((remainMs % 3_600_000L) / 60_000L).toInt()
+                        getString(R.string.notif_alarm_countdown, h, m)
+                    } else null
+                }
+            else -> null
+        }
 
         runCatching {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -538,12 +542,12 @@ class LumenService : LifecycleService() {
         com.openlumen.prefs.ScheduleModeDto.Solar -> {
             val lat = p.schedule.latitude
             val lng = p.schedule.longitude
-            if (lat == null || lng == null || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
+            if (!isValidSolarLocation(lat, lng)) {
                 ScheduleMode.AlwaysOff
             } else {
                 ScheduleMode.Solar(
-                    latitude = lat,
-                    longitude = lng,
+                    latitude = checkNotNull(lat),
+                    longitude = checkNotNull(lng),
                     sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
                     sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
                 )

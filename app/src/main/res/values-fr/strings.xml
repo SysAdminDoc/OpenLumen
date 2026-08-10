@@ -112,6 +112,9 @@
     <string name="schedule_exact_alarm_warning_body">Les changements programmés peuvent être en retard, car Android n\'autorise que des alarmes approximatives pour OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Ouvrir les réglages des alarmes exactes</string>
     <string name="schedule_set_location">Definir la position</string>
+    <string name="schedule_solar_location_required_short">Position requise</string>
+    <string name="schedule_solar_location_required_title">Le programme solaire nécessite une position</string>
+    <string name="schedule_solar_location_required_body">Saisissez une latitude et une longitude valides avant de choisir Solaire. Le filtre reste désactivé jusque-là.</string>
     <string name="schedule_sunset_offset">Decalage coucher de soleil : %1$d m</string>
     <string name="schedule_sunrise_offset">Decalage lever de soleil : %1$d m</string>
     <string name="schedule_offset_state">%1$s %2$d minutes</string>
@@ -198,6 +201,7 @@
     <string name="notif_action_off">Desactiver</string>
     <string name="notif_action_cycle">Preset suivant</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m avant le reveil</string>
+    <string name="notif_solar_location_required">Le programme solaire nécessite une position valide</string>
 
     <string name="tile_off">Eteint</string>
     <string name="tile_on">Actif</string>

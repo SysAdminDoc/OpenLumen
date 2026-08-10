@@ -9,6 +9,16 @@ import java.time.ZonedDateTime
 
 class ScheduleTest {
 
+    @Test fun `solar location validation rejects missing non-finite and out-of-range coordinates`() {
+        assertThat(isValidSolarLocation(null, 0.0)).isFalse()
+        assertThat(isValidSolarLocation(0.0, null)).isFalse()
+        assertThat(isValidSolarLocation(Double.NaN, 0.0)).isFalse()
+        assertThat(isValidSolarLocation(0.0, Double.POSITIVE_INFINITY)).isFalse()
+        assertThat(isValidSolarLocation(90.0001, 0.0)).isFalse()
+        assertThat(isValidSolarLocation(0.0, -180.0001)).isFalse()
+        assertThat(isValidSolarLocation(90.0, 180.0)).isTrue()
+    }
+
     private val zone = ZoneId.of("UTC")
 
     @Test fun `AlwaysOn is always active`() {

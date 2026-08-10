@@ -18,6 +18,7 @@ import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.prefs.normalizedEnabledFilterState
 import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
+import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -102,7 +103,15 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {
-        prefs.update { it.copy(schedule = it.schedule.copy(mode = mode)) }
+        prefs.update { current ->
+            if (mode == ScheduleModeDto.Solar &&
+                !isValidSolarLocation(current.schedule.latitude, current.schedule.longitude)
+            ) {
+                current
+            } else {
+                current.copy(schedule = current.schedule.copy(mode = mode))
+            }
+        }
     }
 
     fun setScheduleTimes(startH: Int, startM: Int, endH: Int, endM: Int) = viewModelScope.launch {
@@ -114,6 +123,7 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun setLocation(lat: Double, lng: Double) = viewModelScope.launch {
+        if (!isValidSolarLocation(lat, lng)) return@launch
         prefs.update { it.copy(schedule = it.schedule.copy(latitude = lat, longitude = lng)) }
     }
 

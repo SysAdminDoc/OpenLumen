@@ -119,6 +119,9 @@
     <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Open exact alarm settings</string>
     <string name="schedule_set_location">Set location</string>
+    <string name="schedule_solar_location_required_short">Location required</string>
+    <string name="schedule_solar_location_required_title">Solar schedule needs a location</string>
+    <string name="schedule_solar_location_required_body">Enter a valid latitude and longitude before choosing Solar. The filter stays off until a location is set.</string>
     <string name="schedule_sunset_offset">Sunset offset: %1$d m</string>
     <string name="schedule_sunrise_offset">Sunrise offset: %1$d m</string>
     <string name="schedule_offset_state">%1$s %2$d minutes</string>
@@ -210,6 +213,7 @@
     <string name="notif_action_off">Turn off</string>
     <string name="notif_action_cycle">Next preset</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m until alarm</string>
+    <string name="notif_solar_location_required">Solar schedule needs a valid location</string>
 
     <string name="tile_off">Off</string>
     <string name="tile_on">On</string>
