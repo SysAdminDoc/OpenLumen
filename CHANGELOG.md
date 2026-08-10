@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Solar scheduling now requires a valid location and clearly reports missing location data instead of silently behaving as Always Off.
+- Profile import confirmation now applies the exact sanitized preview snapshot instead of rereading mutable external documents.
 
 ### Security
 - Hardened the exported automation receiver with caller-UID/package allowlisting

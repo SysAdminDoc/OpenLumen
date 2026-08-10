@@ -109,13 +109,7 @@ class PreferencesStore(private val context: Context) {
         runCatching {
             val text = readAllFromUri(uri)
             val imported = decodeWithMigration(text)
-            var appliedSummary: ImportSummary? = null
-            update { current ->
-                sanitizeImport(imported, enabled = current.enabled).also { summary ->
-                    appliedSummary = summary
-                }.preferences
-            }
-            checkNotNull(appliedSummary) { "Import summary was not produced" }
+            applySanitizedImport(sanitizeImport(imported))
         }
     }
 
@@ -134,6 +128,19 @@ class PreferencesStore(private val context: Context) {
             sanitizeImport(decodeWithMigration(text))
         }
     }
+
+    /**
+     * Applies the immutable, sanitized snapshot shown by the import preview.
+     *
+     * The preview UI must not reopen the caller-supplied URI at confirmation:
+     * SAF/cloud documents can be replaced or mutated between those two user
+     * actions. The current enabled flag is still preserved at the moment of
+     * application, matching [importFrom]'s safety contract.
+     */
+    suspend fun applyImport(preview: ImportSummary): Result<ImportSummary> =
+        withContext(Dispatchers.IO) {
+            runCatching { applySanitizedImport(preview) }
+        }
 
     private fun readAllFromUri(uri: Uri): String {
         return context.contentResolver.openInputStream(uri).use { input ->
@@ -202,6 +209,17 @@ class PreferencesStore(private val context: Context) {
             preferences = sanitize(p, enabled = enabled),
             droppedDuplicateNames = droppedDuplicateProfileNames(p.savedProfiles)
         )
+
+    private suspend fun applySanitizedImport(summary: ImportSummary): ImportSummary {
+        var appliedSummary: ImportSummary? = null
+        update { current ->
+            ImportSummary(
+                preferences = sanitize(summary.preferences, enabled = current.enabled),
+                droppedDuplicateNames = summary.droppedDuplicateNames
+            ).also { appliedSummary = it }.preferences
+        }
+        return checkNotNull(appliedSummary) { "Import summary was not produced" }
+    }
 
     /**
      * Clamp every field of [m] into its valid range, replacing

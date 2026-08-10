@@ -296,20 +296,20 @@ class OpenLumenViewModel @Inject constructor(
     /**
      * Import preview (C30). Decodes + migrates + sanitizes the incoming
      * profile without writing it. UI uses the [ImportSummary] for a diff
-     * view and duplicate-profile warning; if the user confirms, the same URI
-     * goes through [importFrom] to apply.
+     * view and duplicate-profile warning; if the user confirms, that exact
+     * sanitized snapshot is applied rather than reopening the external URI.
      */
     private val _pendingImport = MutableStateFlow<PendingImport?>(null)
     val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
 
-    data class PendingImport(val uri: Uri, val summary: ImportSummary) {
+    data class PendingImport(val summary: ImportSummary) {
         val decoded: Preferences get() = summary.preferences
     }
 
     fun beginImportPreview(uri: Uri) = viewModelScope.launch {
         val result = prefs.previewImport(uri)
         if (result.isSuccess) {
-            _pendingImport.value = PendingImport(uri, result.getOrThrow())
+            _pendingImport.value = PendingImport(result.getOrThrow())
         } else {
             _exportResult.value = getString(R.string.backup_import_failed, result.errorText())
         }
@@ -317,8 +317,13 @@ class OpenLumenViewModel @Inject constructor(
 
     fun confirmPendingImport() = viewModelScope.launch {
         val pending = _pendingImport.value ?: return@launch
-        _pendingImport.value = null
-        importFrom(pending.uri)
+        val result = prefs.applyImport(pending.summary)
+        if (result.isSuccess) {
+            if (_pendingImport.value == pending) _pendingImport.value = null
+            _exportResult.value = importMessage(result.getOrThrow())
+        } else {
+            _exportResult.value = getString(R.string.backup_import_failed, result.errorText())
+        }
     }
 
     fun cancelPendingImport() {
