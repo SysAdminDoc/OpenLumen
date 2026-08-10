@@ -2,7 +2,9 @@ import json
 import sys
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
+from unittest.mock import patch
 
 import local_release_gate as gate
 
@@ -16,6 +18,19 @@ releaseRuntimeClasspath - Runtime classpath of /main.
 
 
 class LocalReleaseGateTest(unittest.TestCase):
+    class _Response:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps(self.payload).encode("utf-8")
+
     def test_repository_backup_rules_protect_coordinate_blob(self):
         gate.assert_backup_rules(Path(__file__).resolve().parents[1])
 
@@ -151,6 +166,138 @@ class LocalReleaseGateTest(unittest.TestCase):
 
         self.assertEqual(overrides["com.google.guava:listenablefuture:1.0"]["license"], "Apache-2.0")
         self.assertTrue(overrides["com.google.guava:listenablefuture:1.0"]["reason"])
+
+    def test_advisory_policy_rejects_partial_query(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = Path(tmp) / "allowlist.json"
+            allowlist.write_text("[]", encoding="utf-8")
+            with self.assertRaises(gate.GateError):
+                gate.assert_advisory_policy(
+                    {"status": "partial", "vulnerabilities": []},
+                    mode="query",
+                    allow_unsigned_release=False,
+                    allowlist_path=allowlist,
+                )
+
+    def test_advisory_report_preserves_osv_severity(self):
+        with patch.object(
+            gate.urllib.request,
+            "urlopen",
+            return_value=self._Response(
+                {
+                    "results": [
+                        {
+                            "vulns": [
+                                {
+                                    "id": "OSV-1",
+                                    "summary": "fixture",
+                                    "database_specific": {"severity": "HIGH"},
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ),
+        ):
+            report = gate.build_advisory_report(["x:y:1.0"], mode="query")
+
+        self.assertEqual(report["status"], "ok")
+        self.assertEqual(report["vulnerabilities"][0]["severity"], "HIGH")
+
+    def test_advisory_report_marks_network_error_partial(self):
+        with patch.object(gate.urllib.request, "urlopen", side_effect=OSError("offline")):
+            report = gate.build_advisory_report(["x:y:1.0"], mode="query")
+
+        self.assertEqual(report["status"], "partial")
+        self.assertTrue(report["errors"])
+
+    def test_advisory_policy_rejects_missing_severity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = Path(tmp) / "allowlist.json"
+            allowlist.write_text("[]", encoding="utf-8")
+            with self.assertRaises(gate.GateError):
+                gate.assert_advisory_policy(
+                    {
+                        "status": "ok",
+                        "vulnerabilities": [{"id": "OSV-1", "dependency": "x:y:1.0", "severity": "UNKNOWN"}],
+                    },
+                    mode="query",
+                    allow_unsigned_release=False,
+                    allowlist_path=allowlist,
+                )
+
+    def test_advisory_policy_requires_exact_unexpired_high_allowlist(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = Path(tmp) / "allowlist.json"
+            allowlist.write_text(
+                json.dumps(
+                    [{
+                        "advisory_id": "OSV-1",
+                        "dependency": "x:y:1.0",
+                        "reason": "Not reachable from the offline app surface.",
+                        "reviewer": "release-team",
+                        "expires": "2026-12-31",
+                    }]
+                ),
+                encoding="utf-8",
+            )
+            report = {
+                "status": "ok",
+                "vulnerabilities": [{"id": "OSV-1", "dependency": "x:y:1.0", "severity": "HIGH"}],
+            }
+
+            gate.assert_advisory_policy(
+                report,
+                mode="query",
+                allow_unsigned_release=False,
+                allowlist_path=allowlist,
+                today=date(2026, 8, 10),
+            )
+
+    def test_advisory_policy_rejects_unallowlisted_critical_and_expired_entry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = Path(tmp) / "allowlist.json"
+            allowlist.write_text(
+                json.dumps(
+                    [{
+                        "advisory_id": "OSV-1",
+                        "dependency": "x:y:1.0",
+                        "reason": "Temporary exception.",
+                        "reviewer": "release-team",
+                        "expires": "2026-08-09",
+                    }]
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(gate.GateError):
+                gate.assert_advisory_policy(
+                    {
+                        "status": "ok",
+                        "vulnerabilities": [{"id": "OSV-2", "dependency": "x:y:1.0", "severity": "CRITICAL"}],
+                    },
+                    mode="query",
+                    allow_unsigned_release=False,
+                    allowlist_path=allowlist,
+                    today=date(2026, 8, 10),
+                )
+
+    def test_offline_advisory_mode_requires_unsigned_release(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = Path(tmp) / "allowlist.json"
+            allowlist.write_text("[]", encoding="utf-8")
+            with self.assertRaises(gate.GateError):
+                gate.assert_advisory_policy(
+                    {"status": "offline-review-required", "vulnerabilities": []},
+                    mode="offline",
+                    allow_unsigned_release=False,
+                    allowlist_path=allowlist,
+                )
+            gate.assert_advisory_policy(
+                {"status": "offline-review-required", "vulnerabilities": []},
+                mode="offline",
+                allow_unsigned_release=True,
+                allowlist_path=allowlist,
+            )
 
     def test_run_times_out_cleanly(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and made the filter-state permission signature-protected; unknown local apps
   can no longer control the filter or observe its state broadcast.
 - Release SBOM generation now records SPDX license and source provenance for every resolved dependency and fails unknown or prohibited metadata unless an exact reviewed override exists.
+- Signed release validation now fails incomplete OSV responses, missing advisory severity, and unreviewed High/Critical findings; offline advisory mode is restricted to explicit unsigned checks.
 
 ### Fixed
 - Root command execution now uses hard process-level deadlines and guaranteed

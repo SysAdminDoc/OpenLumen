@@ -176,6 +176,11 @@ py -3 tools/local_release_gate.py --allow-unsigned-release
 Gate outputs are written to `build/reports/openlumen-release-gate/`:
 SBOM JSON, advisory report, release classpath, SHA-256 sums, and signature status.
 
+The signed/release gate queries OSV and fails on incomplete responses, missing
+severity metadata, or unreviewed High/Critical advisories. An offline advisory
+scaffold is reserved for explicitly unsigned local/F-Droid checks:
+`py -3 tools/local_release_gate.py --allow-unsigned-release --advisory-mode offline`.
+
 ## Module layout
 
 ```

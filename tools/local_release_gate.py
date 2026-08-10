@@ -17,7 +17,7 @@ import sys
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -90,6 +90,11 @@ def main(argv: list[str] | None = None) -> int:
         help="query uses OSV's public API; offline writes a review scaffold without network.",
     )
     parser.add_argument(
+        "--advisory-allowlist",
+        default="tools/osv-advisory-allowlist.json",
+        help="JSON file of exact, reviewed High/Critical OSV exceptions.",
+    )
+    parser.add_argument(
         "--report-dir",
         default="build/reports/openlumen-release-gate",
         help="Directory for SBOM, advisory, SHA-256, and signature outputs.",
@@ -125,7 +130,14 @@ def main(argv: list[str] | None = None) -> int:
         dependencies = parse_gradle_dependencies(dependency_output)
         write_text(report_dir / "releaseRuntimeClasspath.txt", dependency_output)
         write_json(report_dir / "sbom.spdx.json", build_spdx(dependencies, root=root))
-        write_json(report_dir / "advisory-report.json", build_advisory_report(dependencies, args.advisory_mode))
+        advisory_report = build_advisory_report(dependencies, args.advisory_mode)
+        write_json(report_dir / "advisory-report.json", advisory_report)
+        assert_advisory_policy(
+            advisory_report,
+            mode=args.advisory_mode,
+            allow_unsigned_release=args.allow_unsigned_release,
+            allowlist_path=(root / args.advisory_allowlist).resolve(),
+        )
         assert_no_banned_dependencies(dependencies)
         manifest = find_release_manifest(root)
         assert_no_banned_permissions(manifest)
@@ -445,7 +457,8 @@ def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, objec
     vulnerabilities = []
     errors = []
     for start in range(0, len(queries), 100):
-        payload = json.dumps({"queries": queries[start : start + 100]}).encode("utf-8")
+        batch = queries[start : start + 100]
+        payload = json.dumps({"queries": batch}).encode("utf-8")
         request = urllib.request.Request(
             "https://api.osv.dev/v1/querybatch",
             data=payload,
@@ -455,12 +468,31 @@ def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, objec
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 data = json.loads(response.read().decode("utf-8"))
-        except (OSError, urllib.error.URLError, TimeoutError) as exc:
+        except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
             errors.append(str(exc))
             continue
 
-        for query_index, result in enumerate(data.get("results", []), start=start):
-            for vuln in result.get("vulns", []) or []:
+        results = data.get("results") if isinstance(data, dict) else None
+        if not isinstance(results, list) or len(results) != len(batch):
+            errors.append(
+                f"OSV returned {len(results) if isinstance(results, list) else 'no'} results "
+                f"for {len(batch)} queries"
+            )
+            continue
+
+        for query_index, result in enumerate(results, start=start):
+            if not isinstance(result, dict):
+                errors.append(f"OSV returned a malformed result for query {query_index}")
+                continue
+            raw_vulnerabilities = result.get("vulns", []) or []
+            if not isinstance(raw_vulnerabilities, list):
+                errors.append(f"OSV returned a malformed vulnerability list for query {query_index}")
+                continue
+            for vuln in raw_vulnerabilities:
+                if not isinstance(vuln, dict):
+                    errors.append(f"OSV returned a malformed vulnerability for query {query_index}")
+                    continue
+                severity, severity_detail = advisory_severity(vuln)
                 vulnerabilities.append(
                     {
                         "dependency": dependencies[query_index],
@@ -468,6 +500,8 @@ def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, objec
                         "summary": vuln.get("summary"),
                         "modified": vuln.get("modified"),
                         "aliases": vuln.get("aliases", []),
+                        "severity": severity,
+                        "severity_detail": severity_detail,
                     }
                 )
 
@@ -476,6 +510,139 @@ def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, objec
     if errors:
         report["errors"] = errors
     return report
+
+
+def advisory_severity(vulnerability: dict[str, object]) -> tuple[str, str]:
+    """Extract a normalized severity without treating missing metadata as safe."""
+    candidates: list[str] = []
+    for container_key in ("database_specific", "ecosystem_specific"):
+        container = vulnerability.get(container_key)
+        if isinstance(container, dict):
+            value = container.get("severity")
+            if isinstance(value, str):
+                candidates.append(value)
+    severity_entries = vulnerability.get("severity")
+    if isinstance(severity_entries, list):
+        for entry in severity_entries:
+            if isinstance(entry, dict):
+                score = entry.get("score")
+                if isinstance(score, (int, float)):
+                    return cvss_score_severity(float(score)), str(score)
+                if isinstance(score, str) and re.fullmatch(r"\d+(?:\.\d+)?", score):
+                    return cvss_score_severity(float(score)), score
+                if isinstance(score, str):
+                    candidates.append(score)
+
+    for candidate in candidates:
+        normalized = candidate.strip().upper()
+        if normalized in {"CRITICAL", "HIGH", "MEDIUM", "LOW"}:
+            return normalized, candidate
+    return "UNKNOWN", "; ".join(candidates) or "missing"
+
+
+def cvss_score_severity(score: float) -> str:
+    if score >= 9.0:
+        return "CRITICAL"
+    if score >= 7.0:
+        return "HIGH"
+    if score >= 4.0:
+        return "MEDIUM"
+    return "LOW"
+
+
+def load_advisory_allowlist(path: Path) -> list[dict[str, str]]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GateError(f"OSV advisory allowlist could not be read: {path}: {exc}") from exc
+    if not isinstance(raw, list):
+        raise GateError("OSV advisory allowlist must be a JSON array")
+
+    entries: list[dict[str, str]] = []
+    for index, raw_entry in enumerate(raw):
+        if not isinstance(raw_entry, dict):
+            raise GateError(f"OSV advisory allowlist entry {index} must be an object")
+        required = ("advisory_id", "dependency", "reason", "reviewer", "expires")
+        missing = [key for key in required if not str(raw_entry.get(key, "")).strip()]
+        if missing:
+            raise GateError(
+                f"OSV advisory allowlist entry {index} is missing: {', '.join(missing)}"
+            )
+        dependency = str(raw_entry["dependency"])
+        if not DEPENDENCY_RE.fullmatch(dependency):
+            raise GateError(f"OSV advisory allowlist entry {index} has invalid dependency: {dependency}")
+        try:
+            expiry = datetime.strptime(str(raw_entry["expires"]), "%Y-%m-%d").date()
+        except ValueError as exc:
+            raise GateError(
+                f"OSV advisory allowlist entry {index} expiry must be YYYY-MM-DD"
+            ) from exc
+        if expiry < date.today():
+            raise GateError(
+                f"OSV advisory allowlist entry {index} expired on {expiry.isoformat()}"
+            )
+        entries.append({key: str(raw_entry[key]).strip() for key in required})
+    return entries
+
+
+def assert_advisory_policy(
+    report: dict[str, object],
+    mode: str,
+    allow_unsigned_release: bool,
+    allowlist_path: Path,
+    today: date | None = None,
+) -> None:
+    if mode == "offline":
+        if not allow_unsigned_release:
+            raise GateError(
+                "offline advisory mode is allowed only with --allow-unsigned-release; "
+                "a signed release must query OSV"
+            )
+        return
+
+    if report.get("status") != "ok":
+        raise GateError(
+            "OSV advisory query was incomplete; signed/query-mode releases require a complete response"
+        )
+
+    entries = load_advisory_allowlist(allowlist_path)
+    effective_today = today or date.today()
+    for entry in entries:
+        expiry = datetime.strptime(entry["expires"], "%Y-%m-%d").date()
+        if expiry < effective_today:
+            raise GateError(
+                f"OSV advisory allowlist entry for {entry['advisory_id']} expired on {expiry.isoformat()}"
+            )
+
+    vulnerabilities = report.get("vulnerabilities", [])
+    if not isinstance(vulnerabilities, list):
+        raise GateError("OSV advisory report has an invalid vulnerabilities list")
+    for vulnerability in vulnerabilities:
+        if not isinstance(vulnerability, dict):
+            raise GateError("OSV advisory report contains a malformed vulnerability")
+        severity = vulnerability.get("severity")
+        if severity == "UNKNOWN":
+            raise GateError(
+                f"OSV advisory {vulnerability.get('id')} has no usable severity metadata"
+            )
+        if severity not in {"HIGH", "CRITICAL"}:
+            continue
+        advisory_ids = {str(vulnerability.get("id", ""))}
+        advisory_ids.update(str(alias) for alias in vulnerability.get("aliases", []) or [])
+        dependency = str(vulnerability.get("dependency", ""))
+        matching = next(
+            (
+                entry
+                for entry in entries
+                if entry["advisory_id"] in advisory_ids and entry["dependency"] == dependency
+            ),
+            None,
+        )
+        if matching is None:
+            raise GateError(
+                f"{severity} OSV advisory {vulnerability.get('id')} affects {dependency}; "
+                "add an exact, unexpired reviewed allowlist entry or update the dependency"
+            )
 
 
 def assert_no_banned_dependencies(dependencies: Iterable[str]) -> None:
