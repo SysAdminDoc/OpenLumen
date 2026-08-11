@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C227 — Previous-preset restore cannot represent a previous custom snapshot
-  Category: ux
-  Where: app/src/main/java/com/openlumen/service/PresetCycle.kt:54-64 and app/src/main/java/com/openlumen/ui/presets/PresetsScreen.kt:123-126
-  Problem: Cycling records "custom" as previousPresetKey, but the Presets screen renders a restore affordance only when Presets.byKey(previousKey) returns a built-in preset. After changing from custom to a named preset, the previous custom state is hidden from the UI even though notification restore can still attempt it, producing inconsistent recovery behavior.
-  Evidence: restorePrevious accepts arbitrary keys, while the screen's conditional card requires a catalog lookup. Custom matrices are stored separately in preferences and are not represented as a catalog entry or snapshot in the restore UI.
-  Fix: Represent custom as a first-class restore target with the exact prior RGB/gamma/dim snapshot, or explicitly exclude custom from previous-state recording and make notification/UI behavior consistent. Add custom-to-named-to-restore tests across Home, notification, and widget paths.
-  Acceptance: A custom-to-named transition either shows and restores the exact prior custom matrix or consistently communicates that it cannot be restored; no surface offers a restore action that another surface silently omits.
-  Confidence: Verified
-  Effort: M
-
 - [ ] P2 — C228 — Normalization silently overrides the explicit Off preset and AlwaysOff schedule
   Category: correctness
   Where: core-prefs/src/main/java/com/openlumen/prefs/Preferences.kt:221-242 and app/src/main/java/com/openlumen/service/LumenService.kt:403-409; user choices in app/src/main/java/com/openlumen/ui/presets/PresetsScreen.kt and ScheduleScreen.kt:100-105

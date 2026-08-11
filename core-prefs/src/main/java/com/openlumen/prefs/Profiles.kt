@@ -35,9 +35,11 @@ object Profiles {
      * a profile doesn't silently toggle the filter on, change the schema
      * version, or wipe the saved-profiles library.
      *
-     * The current preset key is recorded as the new `previousPresetKey` so
-     * the user can undo a "load profile" via the same restore path that
-     * powers C14.
+     * Named current preset keys are recorded as the new `previousPresetKey`
+     * so the user can undo a "load profile" via the same restore path that
+     * powers C14. The custom sentinel is intentionally excluded because its
+     * key does not carry the exact custom matrix snapshot; offering restore
+     * for it would disagree with the Presets screen.
      */
     fun apply(current: Preferences, snapshot: ProfileSnapshot): Preferences {
         return current.copy(
@@ -54,7 +56,9 @@ object Profiles {
             contrast = snapshot.contrast,
             amoledBlackClamp = snapshot.amoledBlackClamp,
             previousPresetKey = current.activePresetKey
-                .takeIf { it != snapshot.activePresetKey }
+                .takeIf {
+                    it != Preferences.CUSTOM_PRESET_KEY && it != snapshot.activePresetKey
+                }
                 ?: current.previousPresetKey
         )
     }

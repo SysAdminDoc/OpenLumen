@@ -14,8 +14,7 @@ class PresetKeySanitizerTest {
 
     @Test fun `previous unknown key is discarded`() {
         assertThat(PresetKeySanitizer.previous("removed-preset", known)).isNull()
-        assertThat(PresetKeySanitizer.previous("custom", known))
-            .isEqualTo(Preferences.CUSTOM_PRESET_KEY)
+        assertThat(PresetKeySanitizer.previous("custom", known)).isNull()
     }
 
     @Test fun `favorites keep only current named presets`() {

@@ -12,7 +12,7 @@ internal object PresetKeySanitizer {
             ?: Preferences.CUSTOM_PRESET_KEY
 
     fun previous(key: String, knownKeys: Set<String>): String? =
-        syntacticallyValid(key)?.takeIf { it == Preferences.CUSTOM_PRESET_KEY || it in knownKeys }
+        syntacticallyValid(key)?.takeIf { it in knownKeys }
 
     fun favorites(keys: List<String>, knownKeys: Set<String>): List<String> =
         keys.asSequence()

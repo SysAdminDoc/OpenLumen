@@ -48,6 +48,16 @@ class ProfilesTest {
         assertThat(applied.previousPresetKey).isEqualTo("amber")
     }
 
+    @Test fun `apply does not offer a custom current preset as restorable`() {
+        val current = Preferences(activePresetKey = Preferences.CUSTOM_PRESET_KEY)
+        val snap = Profiles.snapshot(Preferences(activePresetKey = "red"))
+
+        val applied = Profiles.apply(current, snap)
+
+        assertThat(applied.activePresetKey).isEqualTo("red")
+        assertThat(applied.previousPresetKey).isNull()
+    }
+
     @Test fun `apply preserves runtime fields (enabled, savedProfiles, schemaVersion)`() {
         val mySaved = NamedProfile("mine", Profiles.snapshot(Preferences()))
         val current = Preferences(

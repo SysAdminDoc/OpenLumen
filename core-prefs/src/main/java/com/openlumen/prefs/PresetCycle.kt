@@ -29,11 +29,14 @@ object PresetCycle {
         val isSelectable: (String) -> Boolean = {
             it == Preferences.CUSTOM_PRESET_KEY || isKnown(it)
         }
+        val isRestorable: (String) -> Boolean = {
+            it != Preferences.CUSTOM_PRESET_KEY && isKnown(it)
+        }
         val favs = current.favoritePresetKeys.filter(isKnown).distinct()
         if (favs.isEmpty()) {
             return current.copy(
                 favoritePresetKeys = favs,
-                previousPresetKey = current.previousPresetKey?.takeIf(isSelectable)
+                previousPresetKey = current.previousPresetKey?.takeIf(isRestorable)
             )
         }
         val currentKey = current.activePresetKey.takeIf(isSelectable)
@@ -41,7 +44,7 @@ object PresetCycle {
         val nextKey = if (idx < 0) favs.first() else favs[(idx + 1) % favs.size]
         return current.copy(
             favoritePresetKeys = favs,
-            previousPresetKey = currentKey,
+            previousPresetKey = currentKey?.takeIf(isRestorable),
             activePresetKey = nextKey
         )
 
@@ -53,13 +56,14 @@ object PresetCycle {
      * trips. Tied to roadmap candidate C14 (Previous profile restore).
      */
     fun restorePrevious(current: Preferences, isKnown: (String) -> Boolean = { true }): Preferences {
-        val prev = current.previousPresetKey?.takeIf {
-            it == Preferences.CUSTOM_PRESET_KEY || isKnown(it)
-        } ?: return current.copy(previousPresetKey = null)
+        val prev = current.previousPresetKey
+            ?.takeIf { it != Preferences.CUSTOM_PRESET_KEY && isKnown(it) }
+            ?: return current.copy(previousPresetKey = null)
         if (prev == current.activePresetKey) return current
         return current.copy(
             activePresetKey = prev,
             previousPresetKey = current.activePresetKey
+                .takeIf { it != Preferences.CUSTOM_PRESET_KEY && isKnown(it) }
         )
     }
 
@@ -81,7 +85,7 @@ object PresetCycle {
         ) return current
         return current.copy(
             previousPresetKey = current.activePresetKey.takeIf {
-                it == Preferences.CUSTOM_PRESET_KEY || isKnown(it)
+                it != Preferences.CUSTOM_PRESET_KEY && isKnown(it)
             },
             activePresetKey = newKey
         )

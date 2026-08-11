@@ -99,6 +99,27 @@ class PresetCycleTest {
         assertThat(updated.previousPresetKey).isEqualTo("night")
     }
 
+    @Test fun `setActiveKey does not offer custom as a restorable previous preset`() {
+        val p = Preferences(activePresetKey = Preferences.CUSTOM_PRESET_KEY)
+
+        val updated = PresetCycle.setActiveKey(p, "amber")
+
+        assertThat(updated.activePresetKey).isEqualTo("amber")
+        assertThat(updated.previousPresetKey).isNull()
+    }
+
+    @Test fun `cycle from custom does not offer custom as a restorable previous preset`() {
+        val p = Preferences(
+            activePresetKey = Preferences.CUSTOM_PRESET_KEY,
+            favoritePresetKeys = listOf("night", "amber")
+        )
+
+        val updated = PresetCycle.next(p)
+
+        assertThat(updated.activePresetKey).isEqualTo("night")
+        assertThat(updated.previousPresetKey).isNull()
+    }
+
     @Test fun `setActiveKey rejects blank or identical keys`() {
         val p = Preferences(activePresetKey = "night", previousPresetKey = "amber")
 
@@ -126,6 +147,14 @@ class PresetCycleTest {
 
         assertThat(restored.activePresetKey).isEqualTo("night")
         assertThat(restored.previousPresetKey).isNull()
+    }
+
+    @Test fun `restore clears legacy custom previous key without activating it`() {
+        val p = Preferences(activePresetKey = "night", previousPresetKey = Preferences.CUSTOM_PRESET_KEY)
+
+        val restored = PresetCycle.restorePrevious(p)
+
+        assertThat(restored).isEqualTo(p.copy(previousPresetKey = null))
     }
 
     @Test fun `setActiveKey rejects a catalog-unknown key`() {

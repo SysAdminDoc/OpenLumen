@@ -139,10 +139,11 @@ data class Preferences(
      */
     val contrast: Float = 1.0f,
     /**
-     * Previous preset key, tracked across user-driven preset changes so the
-     * "Undo last preset change" notification action and the in-app
-     * [PresetCycle.restorePrevious] can flip back to it. Tied to roadmap
-     * candidate C14. Null means "no previous preset recorded yet".
+     * Previous named-preset key, tracked across user-driven preset changes so
+     * the "Undo last preset change" action and the in-app
+     * [PresetCycle.restorePrevious] can flip back to it. Custom matrices are
+     * intentionally excluded because this key has no matching matrix snapshot.
+     * Tied to roadmap candidate C14. Null means "no previous preset recorded".
      */
     val previousPresetKey: String? = null,
     /**
@@ -228,7 +229,9 @@ fun Preferences.withFilterEnabled(enabled: Boolean): Preferences {
 
     val restoredPreset = when {
         activePresetKey != Preferences.OFF_PRESET_KEY -> activePresetKey
-        previousPresetKey != null && previousPresetKey != Preferences.OFF_PRESET_KEY -> previousPresetKey
+        previousPresetKey != null &&
+            previousPresetKey != Preferences.OFF_PRESET_KEY &&
+            previousPresetKey != Preferences.CUSTOM_PRESET_KEY -> previousPresetKey
         else -> Preferences.DEFAULT_ACTIVE_PRESET_KEY
     }
     return copy(
