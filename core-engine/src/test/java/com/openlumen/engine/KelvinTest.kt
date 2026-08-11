@@ -51,4 +51,13 @@ class KelvinTest {
             assertThat(rgb.b).isAtMost(1f)
         }
     }
+
+    @Test fun `inverse returns the source temperature for generated colors`() {
+        for (kelvin in listOf(1_200, 1_800, 3_200, 5_000, 6_500, 8_000, 10_000)) {
+            val rgb = Kelvin.toRgb(kelvin)
+            assertThat(Kelvin.fromRgb(rgb.r, rgb.g, rgb.b))
+                .isWithin(8)
+                .of(kelvin)
+        }
+    }
 }

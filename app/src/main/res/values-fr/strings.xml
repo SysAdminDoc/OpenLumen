@@ -29,6 +29,7 @@
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
     <string name="home_kelvin_hint">Plus chaud (K bas) renforce les rouges ; plus froid (K haut) accentue les bleus. 6500 K correspond au blanc neutre.</string>
+    <string name="home_kelvin_preset_hint">Disponible pour le profil personnalisé ; sélectionnez Personnalisé pour modifier cette température</string>
     <string name="home_preview">Apercu</string>
     <string name="home_gamma_title">Gamma par canal</string>
     <string name="home_gamma_hint">1.0 = neutre. Plus eleve rehausse les tons moyens ; plus bas les assombrit.</string>

@@ -206,34 +206,8 @@ class ColorDisplayManagerEngine : ColorEngine {
      * to their intended temperature and accounts for green-channel shape.
      */
     internal fun kelvinFromRgbScale(r: Float, g: Float, b: Float): Int {
-        val targetR = r.unitOr(default = 1f)
-        val targetG = g.unitOr(default = 1f)
-        val targetB = b.unitOr(default = 1f)
-        var low = Kelvin.MIN_K
-        var high = Kelvin.MAX_K
-        while (low < high) {
-            val mid = low + (high - low) / 2
-            if (rgbDistance(mid, targetR, targetG, targetB) <=
-                rgbDistance(mid + 1, targetR, targetG, targetB)
-            ) {
-                high = mid
-            } else {
-                low = mid + 1
-            }
-        }
-        return low
+        return Kelvin.fromRgb(r, g, b)
     }
-
-    private fun rgbDistance(kelvin: Int, targetR: Float, targetG: Float, targetB: Float): Float {
-        val rgb = Kelvin.toRgb(kelvin)
-        val dr = rgb.r - targetR
-        val dg = rgb.g - targetG
-        val db = rgb.b - targetB
-        return dr * dr + dg * dg + db * db
-    }
-
-    private fun Float.unitOr(default: Float): Float =
-        if (isFinite()) coerceIn(0f, 1f) else default
 
     private fun normalizeChromaticity(rgb: FloatArray): FloatArray {
         val peak = rgb.maxOrNull()?.takeIf { it > 0f } ?: return floatArrayOf(1f, 1f, 1f)

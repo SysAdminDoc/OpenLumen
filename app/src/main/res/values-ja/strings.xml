@@ -29,6 +29,7 @@
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d ケルビン</string>
     <string name="home_kelvin_hint">暖色（低いK）で赤みが増し、寒色（高いK）で青みが増します。6500 Kがニュートラルホワイトです。</string>
+    <string name="home_kelvin_preset_hint">カスタムRGBで使用できます。この温度を編集するにはカスタムを選択してください</string>
     <string name="home_preview">プレビュー</string>
     <string name="home_gamma_title">チャンネル別ガンマ</string>
     <string name="home_gamma_hint">1.0 = ニュートラル。高いほど中間調が明るくなり、低いほど暗くなります。</string>

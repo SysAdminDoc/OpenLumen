@@ -29,6 +29,7 @@
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
     <string name="home_kelvin_hint">Mais quente (K menor) intensifica os vermelhos; mais frio (K maior) realca os azuis. 6500 K e branco neutro.</string>
+    <string name="home_kelvin_preset_hint">Disponível para RGB personalizado; selecione Personalizado para editar esta temperatura</string>
     <string name="home_preview">Visualizar</string>
     <string name="home_gamma_title">Gama por canal</string>
     <string name="home_gamma_hint">1.0 = neutro. Valores maiores clareiam tons medios; menores escurecem.</string>

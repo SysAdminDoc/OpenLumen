@@ -178,6 +178,22 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     var gammaG by rememberSaveable { mutableFloatStateOf(prefs.customMatrix.gammaG) }
     var gammaB by rememberSaveable { mutableFloatStateOf(prefs.customMatrix.gammaB) }
     var kelvinSliderK by rememberSaveable { mutableIntStateOf(Kelvin.DEFAULT_K) }
+    val kelvinEditable = prefs.activePresetKey == "custom"
+    val kelvinSource = Presets.byKey(prefs.activePresetKey)?.matrix
+    LaunchedEffect(
+        prefs.activePresetKey,
+        prefs.customMatrix.r,
+        prefs.customMatrix.g,
+        prefs.customMatrix.b
+    ) {
+        kelvinSliderK = kelvinSource?.let {
+            Kelvin.fromRgb(it.r, it.g, it.b)
+        } ?: Kelvin.fromRgb(
+            prefs.customMatrix.r,
+            prefs.customMatrix.g,
+            prefs.customMatrix.b
+        )
+    }
 
     LaunchedEffect(prefs.presetIntensity) { intensityDraft = prefs.presetIntensity }
     LaunchedEffect(prefs.dim) { dimDraft = prefs.dim }
@@ -511,11 +527,9 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
 
-        // Kelvin color-temperature picker (C65). UI-local state — the picker
-        // is a convenience input that writes through `setCustomKelvin`, but
-        // the canonical persisted value is the RGB triplet on `customMatrix`.
-        // Reverse-mapping RGB → Kelvin is approximate, so we don't try to
-        // derive the slider position from the current RGB on every recomp.
+        // Kelvin color-temperature picker (C65). The canonical persisted value
+        // remains the RGB triplet; this slider derives its display value from
+        // the current scalar RGB and is editable only for the custom profile.
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 val kelvinState = stringResource(R.string.home_kelvin_state, kelvinSliderK)
@@ -533,12 +547,19 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     },
                     onValueChangeFinished = { vm.setCustomKelvin(kelvinSliderK) },
                     valueRange = Kelvin.MIN_K.toFloat()..Kelvin.MAX_K.toFloat(),
+                    enabled = kelvinEditable,
                     modifier = Modifier.semantics {
                         stateDescription = kelvinState
                     }
                 )
                 Text(
-                    stringResource(R.string.home_kelvin_hint),
+                    stringResource(
+                        if (kelvinEditable) {
+                            R.string.home_kelvin_hint
+                        } else {
+                            R.string.home_kelvin_preset_hint
+                        }
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

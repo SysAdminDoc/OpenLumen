@@ -29,6 +29,7 @@
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
     <string name="home_kelvin_hint">Más cálido (K más bajo) intensifica los rojos; más frío (K más alto) realza los azules. 6500 K es blanco neutro.</string>
+    <string name="home_kelvin_preset_hint">Disponible para RGB personalizado; selecciona Personalizado para editar esta temperatura</string>
     <string name="home_preview">Vista previa</string>
     <string name="home_gamma_title">Gamma por canal</string>
     <string name="home_gamma_hint">1.0 = neutro. Valores más altos elevan los tonos medios; más bajos los profundizan.</string>

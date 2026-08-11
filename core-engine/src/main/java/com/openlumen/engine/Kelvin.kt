@@ -68,6 +68,41 @@ object Kelvin {
         )
     }
 
+    /**
+     * Approximate inverse of [toRgb]. Returns the closest temperature for a
+     * scalar RGB triplet; arbitrary colors are mapped to the nearest point on
+     * the temperature curve so a UI can show a stable, useful value.
+     */
+    fun fromRgb(r: Float, g: Float, b: Float): Int {
+        val targetR = r.unitOr(default = 1f)
+        val targetG = g.unitOr(default = 1f)
+        val targetB = b.unitOr(default = 1f)
+        var low = MIN_K
+        var high = MAX_K
+        while (low < high) {
+            val mid = low + (high - low) / 2
+            if (rgbDistance(mid, targetR, targetG, targetB) <=
+                rgbDistance(mid + 1, targetR, targetG, targetB)
+            ) {
+                high = mid
+            } else {
+                low = mid + 1
+            }
+        }
+        return low
+    }
+
+    private fun rgbDistance(kelvin: Int, targetR: Float, targetG: Float, targetB: Float): Float {
+        val rgb = toRgb(kelvin)
+        val dr = rgb.r - targetR
+        val dg = rgb.g - targetG
+        val db = rgb.b - targetB
+        return dr * dr + dg * dg + db * db
+    }
+
+    private fun Float.unitOr(default: Float): Float =
+        if (isFinite()) coerceIn(0f, 1f) else default
+
     /** Clamp a 0..255 channel into 0..1, defending against the formula's edge over/undershoot. */
     private fun norm(c: Double): Float =
         max(0.0, min(255.0, c)).let { (it / 255.0).toFloat() }

@@ -29,6 +29,7 @@
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
     <string name="home_kelvin_hint">Wärmer (niedrigere K) verstärkt Rottöne; kühler (höhere K) hebt Blautöne an. 6500 K ist neutrales Weiß.</string>
+    <string name="home_kelvin_preset_hint">Für benutzerdefiniertes RGB verfügbar; zum Bearbeiten „Benutzerdefiniert“ auswählen</string>
     <string name="home_preview">Vorschau</string>
     <string name="home_gamma_title">Gamma pro Kanal</string>
     <string name="home_gamma_hint">1,0 = neutral. Höhere Werte heben Mitteltöne an; niedrigere vertiefen sie.</string>

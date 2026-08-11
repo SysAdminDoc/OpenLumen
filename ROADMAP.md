@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C226 — Kelvin slider is visually stale and can jump when custom/preset color changes
-  Category: ux
-  Where: app/src/main/java/com/openlumen/ui/HomeScreen.kt:120,122-129,397-420 and app/src/main/java/com/openlumen/ui/OpenLumenViewModel.kt:149-175
-  Problem: The Kelvin slider is initialized/displayed from a fixed KELVIN_DEFAULT and is not reverse-derived when RGB, custom matrix, or a preset changes. The next Kelvin drag therefore starts from an unrelated 6500 K value and can jump the color unexpectedly, while the RGB controls and status represent a different current matrix.
-  Evidence: The Home effects synchronize RGB/gamma but intentionally omit Kelvin derivation; the Kelvin label reads the fixed state. The ViewModel persists canonical RGB for custom changes, so selecting a warm preset or editing RGB does not update the Kelvin slider state.
-  Fix: Store a canonical color-temperature state when applicable and derive/display an approximate Kelvin value for compatible matrices, or clearly scope the Kelvin control to an explicit mode and reset/disable it when the matrix is not temperature-derived. Ensure the first drag uses the visible current value.
-  Acceptance: After selecting a preset, editing RGB, navigating away/back, and recomposing, the Kelvin control either reflects the current temperature-derived color or is clearly inactive; moving it never jumps from a stale hidden default.
-  Confidence: Verified
-  Effort: M
-
 - [ ] P2 — C227 — Previous-preset restore cannot represent a previous custom snapshot
   Category: ux
   Where: app/src/main/java/com/openlumen/service/PresetCycle.kt:54-64 and app/src/main/java/com/openlumen/ui/presets/PresetsScreen.kt:123-126

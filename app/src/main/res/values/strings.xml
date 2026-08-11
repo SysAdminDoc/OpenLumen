@@ -30,6 +30,7 @@
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
     <string name="home_kelvin_hint">Warmer (lower K) deepens reds; cooler (higher K) lifts blues. 6500 K is neutral white.</string>
+    <string name="home_kelvin_preset_hint">Available for Custom RGB; select Custom to edit this temperature</string>
     <string name="home_preview">Preview</string>
     <string name="home_gamma_title">Per-channel gamma</string>
     <string name="home_gamma_hint">1.0 = neutral. Higher lifts mid-tones; lower deepens them.</string>
