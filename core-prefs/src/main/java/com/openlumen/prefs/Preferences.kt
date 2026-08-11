@@ -218,11 +218,11 @@ data class Preferences(
 /**
  * Apply the user-facing master switch semantics.
  *
- * Turning the filter on should produce a visible effect immediately. Older
- * builds could leave the service enabled while `ScheduleModeDto.AlwaysOff`
- * or the `off` preset kept the actual matrix at identity, which made the
- * Home sliders look broken. This helper is shared by the app, tile, widget,
- * and intent command surfaces so every "turn on" path behaves the same.
+ * Turning the filter on from the master switch should produce a visible
+ * effect immediately. This explicit action may restore a prior named preset
+ * and activate an AlwaysOff schedule. It is deliberately separate from
+ * [normalizedEnabledFilterState], because selecting the Off preset or the
+ * AlwaysOff schedule while the service is enabled is a valid standby choice.
  */
 fun Preferences.withFilterEnabled(enabled: Boolean): Preferences {
     if (!enabled) return copy(enabled = false)
@@ -243,8 +243,14 @@ fun Preferences.withFilterEnabled(enabled: Boolean): Preferences {
 
 fun Preferences.toggledFilterEnabled(): Preferences = withFilterEnabled(!enabled)
 
-fun Preferences.normalizedEnabledFilterState(): Preferences =
-    if (enabled) withFilterEnabled(true) else this
+/**
+ * Preserve explicit standby choices when preferences are emitted.
+ *
+ * Kept as a named compatibility seam for callers that used the old
+ * normalization hook; it is now intentionally idempotent so an enabled Off
+ * preset or AlwaysOff schedule is not silently rewritten.
+ */
+fun Preferences.normalizedEnabledFilterState(): Preferences = this
 
 private fun ScheduleDto.activatingForManualOn(): ScheduleDto =
     if (mode == ScheduleModeDto.AlwaysOff) copy(mode = ScheduleModeDto.AlwaysOn) else this

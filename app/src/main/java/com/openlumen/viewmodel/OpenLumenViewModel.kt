@@ -17,7 +17,6 @@ import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesRecovery
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.ScheduleModeDto
-import com.openlumen.prefs.normalizedEnabledFilterState
 import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.isValidSolarLocation
@@ -71,7 +70,6 @@ class OpenLumenViewModel @Inject constructor(
                     }
                 }
         }
-        normalizeEnabledFilterState()
         refreshProbes()
     }
 
@@ -428,9 +426,6 @@ class OpenLumenViewModel @Inject constructor(
             .onFailure { Log.w(tag, "Failed to stop LumenService: ${it.message}", it) }
     }
 
-    private fun normalizeEnabledFilterState() = viewModelScope.launch {
-        prefs.update { it.normalizedEnabledFilterState() }
-    }
 }
 
 private fun List<DriverProbe.Probe>.isUnavailable(kind: EngineKindDto): Boolean {

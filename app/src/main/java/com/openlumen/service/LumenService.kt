@@ -26,7 +26,6 @@ import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.DirectBootStateStore
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
-import com.openlumen.prefs.normalizedEnabledFilterState
 import com.openlumen.prefs.toggledFilterEnabled
 import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.AmbientLightGate
@@ -496,11 +495,6 @@ class LumenService : LifecycleService() {
 
     private suspend fun handlePreferenceEmission(p: Preferences) {
         latestPrefs.set(p)
-        val normalized = p.normalizedEnabledFilterState()
-        if (normalized != p && isUserUnlocked()) {
-            prefs.update { it.normalizedEnabledFilterState() }
-            return
-        }
         lightSubscription.update(p.enabled && p.lightSensorEnabled)
         // Nudge installed widget instances only when fields they actually
         // render have changed. A slider drag (intensity / dim / gamma /
@@ -586,7 +580,13 @@ class LumenService : LifecycleService() {
             thresholdLux = p.lightSensorLuxThreshold,
             lux = luxNow
         )
-        val shouldBeActive = scheduleActive || lightActive
+        // Off and AlwaysOff are explicit standby choices. The light sensor is
+        // an additional trigger for ordinary schedules, but it must not
+        // override either user-selected off state.
+        val explicitStandby =
+            p.activePresetKey == Preferences.OFF_PRESET_KEY ||
+                p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.AlwaysOff
+        val shouldBeActive = !explicitStandby && (scheduleActive || lightActive)
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)

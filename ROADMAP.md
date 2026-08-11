@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C228 — Normalization silently overrides the explicit Off preset and AlwaysOff schedule
-  Category: correctness
-  Where: core-prefs/src/main/java/com/openlumen/prefs/Preferences.kt:221-242 and app/src/main/java/com/openlumen/service/LumenService.kt:403-409; user choices in app/src/main/java/com/openlumen/ui/presets/PresetsScreen.kt and ScheduleScreen.kt:100-105
-  Problem: Whenever enabled preferences are emitted, normalizedEnabledFilterState changes active preset "off" to the previous/default preset and changes AlwaysOff to AlwaysOn. The UI explicitly offers an Off preset and an AlwaysOff schedule, so selecting either is immediately undone without explanation; the user cannot intentionally leave the service running but filtering disabled through those controls.
-  Evidence: handlePreferenceEmission writes the normalized state and returns before applying it. The same screen surfaces expose the values that normalization rejects, and no confirmation/helper/status explains the override.
-  Fix: Define Off/AlwaysOff semantics explicitly: permit them as valid standby states, or move normalization to the narrow action that explicitly means "turn on" and show a clear confirmation when it replaces Off. Keep persisted state, notification copy, and schedule UI aligned.
-  Acceptance: Selecting Off or AlwaysOff produces the documented stable state and survives the next preference emission; any intentional auto-normalization is visibly explained and covered by service/UI tests.
-  Confidence: Verified
-  Effort: M
-
 - [ ] P2 — C229 — External settings/share intents can fail without a safe user-facing result
   Category: reliability
   Where: app/src/main/java/com/openlumen/ui/settings/OverlayPermissionCard.kt:98-103, app/src/main/java/com/openlumen/ui/settings/ExactAlarmAccess.kt:27-40, and app/src/main/java/com/openlumen/ui/driver/DriverScreen.kt:261-274

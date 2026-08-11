@@ -67,7 +67,7 @@ class PreferencesActivationTest {
         assertThat(disabled.schedule.mode).isEqualTo(ScheduleModeDto.Solar)
     }
 
-    @Test fun `enabled inert state normalizes to a visible filter`() {
+    @Test fun `enabled explicit standby state is preserved`() {
         val prefs = Preferences(
             enabled = true,
             activePresetKey = Preferences.OFF_PRESET_KEY,
@@ -78,7 +78,19 @@ class PreferencesActivationTest {
         val normalized = prefs.normalizedEnabledFilterState()
 
         assertThat(normalized.enabled).isTrue()
-        assertThat(normalized.activePresetKey).isEqualTo("amber")
-        assertThat(normalized.schedule.mode).isEqualTo(ScheduleModeDto.AlwaysOn)
+        assertThat(normalized.activePresetKey).isEqualTo(Preferences.OFF_PRESET_KEY)
+        assertThat(normalized.schedule.mode).isEqualTo(ScheduleModeDto.AlwaysOff)
+        assertThat(normalized).isEqualTo(prefs)
+    }
+
+    @Test fun `turning on explicitly still activates an always-off schedule`() {
+        val prefs = Preferences(
+            enabled = false,
+            schedule = ScheduleDto(mode = ScheduleModeDto.AlwaysOff)
+        )
+
+        val enabled = prefs.withFilterEnabled(true)
+
+        assertThat(enabled.schedule.mode).isEqualTo(ScheduleModeDto.AlwaysOn)
     }
 }
