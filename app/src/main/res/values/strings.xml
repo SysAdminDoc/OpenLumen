@@ -229,6 +229,12 @@
     <string name="notif_action_cycle">Next preset</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m until alarm</string>
     <string name="notif_solar_location_required">Solar schedule needs a valid location</string>
+    <string name="notif_permission_title">Notifications are off</string>
+    <string name="notif_permission_rationale">Allow notifications so OpenLumen can show the foreground-service status and recovery actions.</string>
+    <string name="notif_permission_settings_body">Android has blocked another prompt. Enable OpenLumen notifications in system settings to keep the service status visible.</string>
+    <string name="notif_permission_retry">Try again</string>
+    <string name="notif_permission_settings">Open notification settings</string>
+    <string name="notif_permission_settings_failed">Notification settings could not be opened. Open system settings and enable notifications for OpenLumen.</string>
 
     <string name="tile_off">Off</string>
     <string name="tile_on">On</string>

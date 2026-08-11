@@ -217,6 +217,12 @@
     <string name="notif_action_cycle">次のプリセット</string>
     <string name="notif_alarm_countdown">アラームまで %1$d時間%2$d分</string>
     <string name="notif_solar_location_required">ソーラースケジュールには有効な位置情報が必要です</string>
+    <string name="notif_permission_title">通知がオフです</string>
+    <string name="notif_permission_rationale">通知を許可すると、OpenLumenのフォアグラウンドサービス状態と復旧操作を表示できます。</string>
+    <string name="notif_permission_settings_body">Androidが再度の確認をブロックしました。システム設定でOpenLumenの通知を有効にしてください。</string>
+    <string name="notif_permission_retry">再試行</string>
+    <string name="notif_permission_settings">通知設定を開く</string>
+    <string name="notif_permission_settings_failed">通知設定を開けませんでした。システム設定でOpenLumenの通知を有効にしてください。</string>
 
     <string name="tile_off">オフ</string>
     <string name="tile_on">オン</string>

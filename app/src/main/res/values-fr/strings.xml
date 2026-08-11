@@ -217,6 +217,12 @@
     <string name="notif_action_cycle">Preset suivant</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m avant le reveil</string>
     <string name="notif_solar_location_required">Le programme solaire nécessite une position valide</string>
+    <string name="notif_permission_title">Les notifications sont désactivées</string>
+    <string name="notif_permission_rationale">Autorisez les notifications pour qu’OpenLumen affiche l’état du service et les actions de récupération.</string>
+    <string name="notif_permission_settings_body">Android a bloqué une nouvelle demande. Activez les notifications d’OpenLumen dans les réglages système.</string>
+    <string name="notif_permission_retry">Réessayer</string>
+    <string name="notif_permission_settings">Ouvrir les réglages des notifications</string>
+    <string name="notif_permission_settings_failed">Impossible d’ouvrir les réglages des notifications. Activez les notifications d’OpenLumen dans les réglages système.</string>
 
     <string name="tile_off">Eteint</string>
     <string name="tile_on">Actif</string>

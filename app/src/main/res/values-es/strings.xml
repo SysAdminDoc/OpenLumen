@@ -217,6 +217,12 @@
     <string name="notif_action_cycle">Siguiente ajuste</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m hasta la alarma</string>
     <string name="notif_solar_location_required">El horario solar necesita una ubicación válida</string>
+    <string name="notif_permission_title">Las notificaciones están desactivadas</string>
+    <string name="notif_permission_rationale">Permite las notificaciones para que OpenLumen muestre el estado del servicio y las acciones de recuperación.</string>
+    <string name="notif_permission_settings_body">Android bloqueó otra solicitud. Activa las notificaciones de OpenLumen en los ajustes del sistema.</string>
+    <string name="notif_permission_retry">Intentar de nuevo</string>
+    <string name="notif_permission_settings">Abrir ajustes de notificaciones</string>
+    <string name="notif_permission_settings_failed">No se pudieron abrir los ajustes de notificaciones. Activa las notificaciones de OpenLumen en los ajustes del sistema.</string>
 
     <string name="tile_off">Desactivado</string>
     <string name="tile_on">Activado</string>

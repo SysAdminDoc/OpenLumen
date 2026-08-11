@@ -1,9 +1,13 @@
 package com.openlumen.ui.screens
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -32,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.app.ActivityCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.R
@@ -83,16 +89,55 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val notifPromptPrefs = remember {
         context.getSharedPreferences("openlumen-prompts", Context.MODE_PRIVATE)
     }
+    var notificationPermissionUiState by rememberSaveable { mutableIntStateOf(0) }
+    var notificationSettingsLaunchFailed by rememberSaveable { mutableStateOf(false) }
+    val activity = context.findActivity()
+    val refreshNotificationPermissionState = {
+        val granted = Build.VERSION.SDK_INT < 33 ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        val asked = notifPromptPrefs.getBoolean("notification_permission_asked", false)
+        val denied = notifPromptPrefs.getBoolean("notification_permission_denied", false)
+        val rationale = Build.VERSION.SDK_INT >= 33 && activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                it,
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        } == true
+        notificationPermissionUiState = resolveNotificationPermissionUiState(
+            api33OrNewer = Build.VERSION.SDK_INT >= 33,
+            granted = granted,
+            asked = asked,
+            denied = denied,
+            shouldShowRationale = rationale
+        ).ordinal
+        if (granted) notificationSettingsLaunchFailed = false
+    }
+    LaunchedEffect(Unit) { refreshNotificationPermissionState() }
     val notifLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
+        val rationale = Build.VERSION.SDK_INT >= 33 && activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                it,
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        } == true
         notifPromptPrefs.edit {
             putBoolean("notification_permission_asked", true)
+            putBoolean("notification_permission_denied", !granted)
         }
+        notificationPermissionUiState = resolveNotificationPermissionUiState(
+            api33OrNewer = Build.VERSION.SDK_INT >= 33,
+            granted = granted,
+            asked = true,
+            denied = !granted,
+            shouldShowRationale = rationale
+        ).ordinal
         if (!granted) {
             DiagnosticsLog.log(
                 context, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE,
-                "notification permission denied on first enable"
+                "notification permission denied; recovery=${if (rationale) "retry" else "settings"}"
             )
         }
     }
@@ -106,6 +151,21 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+    }
+    val openNotificationSettings: () -> Unit = {
+        val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val launched = runCatching {
+            if (settingsIntent.resolveActivity(context.packageManager) == null) {
+                false
+            } else {
+                context.startActivity(settingsIntent)
+                true
+            }
+        }.getOrDefault(false)
+        notificationSettingsLaunchFailed = !launched
     }
 
     var intensityDraft by rememberSaveable { mutableFloatStateOf(prefs.presetIntensity) }
@@ -186,6 +246,65 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     checked = prefs.enabled,
                     onCheckedChange = null
                 )
+            }
+        }
+
+        when (NotificationPermissionUiState.entries[notificationPermissionUiState]) {
+            NotificationPermissionUiState.Hidden -> Unit
+            NotificationPermissionUiState.Rationale,
+            NotificationPermissionUiState.Settings -> Card(
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val rationale = notificationPermissionUiState ==
+                        NotificationPermissionUiState.Rationale.ordinal
+                    Text(
+                        stringResource(R.string.notif_permission_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        stringResource(
+                            if (rationale) {
+                                R.string.notif_permission_rationale
+                            } else {
+                                R.string.notif_permission_settings_body
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LumenOutlinedButton(
+                        onClick = if (rationale) {
+                            {
+                                notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        } else {
+                            openNotificationSettings
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            stringResource(
+                                if (rationale) {
+                                    R.string.notif_permission_retry
+                                } else {
+                                    R.string.notif_permission_settings
+                                }
+                            )
+                        )
+                    }
+                    if (notificationSettingsLaunchFailed) {
+                        Text(
+                            stringResource(R.string.notif_permission_settings_failed),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
 
@@ -459,6 +578,12 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
     }
+}
+
+private fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable

@@ -6,6 +6,7 @@
 - Preserve the selected offline city's IANA timezone for solar schedules, while keeping manually entered coordinates on the device timezone.
 - Ambient-light activation now uses a visible hysteresis band, preventing lux readings near the threshold from repeatedly restarting filter transitions.
 - Foreground notifications now refresh after schedule reevaluation and distinguish active filtering from standby while retaining the next-alarm countdown.
+- Notification permission denials now distinguish retryable and permanent states, with an in-app Retry or notification-settings recovery action instead of a silent one-time failure.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

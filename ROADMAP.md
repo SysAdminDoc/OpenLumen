@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C224 — Notification permission denial is treated as permanent and cannot be retried in-app
-  Category: ux
-  Where: app/src/main/java/com/openlumen/ui/HomeScreen.kt:83-109, requestNotifIfNeeded, and CHANGELOG.md:332-336
-  Problem: The permission result stores notification_permission_asked=true for every denial, and future requests are blocked by that flag. The code does not check shouldShowRequestPermissionRationale or offer a notification-settings route, so a first temporary denial prevents the app from explaining/re-requesting the permission later. The changelog says the prompt should re-fire when rationale is true, but the current implementation does not do so.
-  Evidence: The result callback writes the asked flag unconditionally; the launch guard checks only API level and the stored flag. No rationale branch or permanent-denial recovery action is present in the traced Home flow.
-  Fix: Track first request, temporary denial, and permanent denial separately; show a rationale with Retry when Android permits another request and a Settings action when it does not. Keep notification-dependent behavior clearly marked when permission is absent.
-  Acceptance: A first denial can be retried after the rationale is shown, a permanent denial opens the app notification settings, and tests cover both result states without repeatedly nagging the user.
-  Confidence: Verified
-  Effort: M
-
 - [ ] P2 — C226 — Kelvin slider is visually stale and can jump when custom/preset color changes
   Category: ux
   Where: app/src/main/java/com/openlumen/ui/HomeScreen.kt:120,122-129,397-420 and app/src/main/java/com/openlumen/ui/OpenLumenViewModel.kt:149-175

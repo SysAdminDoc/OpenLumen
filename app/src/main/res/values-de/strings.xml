@@ -217,6 +217,12 @@
     <string name="notif_action_cycle">Nächste Vorlage</string>
     <string name="notif_alarm_countdown">%1$d Std. %2$d Min. bis zum Wecker</string>
     <string name="notif_solar_location_required">Der Solarzeitplan benötigt einen gültigen Standort</string>
+    <string name="notif_permission_title">Benachrichtigungen sind deaktiviert</string>
+    <string name="notif_permission_rationale">Erlauben Sie Benachrichtigungen, damit OpenLumen den Vordergrunddienststatus und Wiederherstellungsaktionen anzeigen kann.</string>
+    <string name="notif_permission_settings_body">Android hat eine weitere Anfrage blockiert. Aktivieren Sie OpenLumen-Benachrichtigungen in den Systemeinstellungen.</string>
+    <string name="notif_permission_retry">Erneut versuchen</string>
+    <string name="notif_permission_settings">Benachrichtigungseinstellungen öffnen</string>
+    <string name="notif_permission_settings_failed">Die Benachrichtigungseinstellungen konnten nicht geöffnet werden. Aktivieren Sie OpenLumen-Benachrichtigungen in den Systemeinstellungen.</string>
 
     <string name="tile_off">Aus</string>
     <string name="tile_on">An</string>
