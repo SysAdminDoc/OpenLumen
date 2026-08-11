@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C230 — Location-entry dialog can push its actions below the keyboard/short viewport
-  Category: ux
-  Where: app/src/main/java/com/openlumen/ui/schedule/LocationEntryDialog.kt:84-215
-  Problem: The dialog body is an unbounded Column containing help text, a LazyColumn capped at 200 dp, three inputs, validation/error content, and actions. It has no IME-aware scroll container or bounded body layout. On a short phone viewport, especially with the keyboard open and a 12-city result list, the Save/Cancel actions can be obscured or unreachable.
-  Evidence: The screenshot suite does not exercise this dialog, and the implementation has no verticalScroll, constrained dialog body, or keyboard inset handling around the stacked content. The result list plus fields can exceed the available window height.
-  Fix: Use an IME-aware bounded dialog layout with a scrollable content region and fixed/visible actions, preserving focus and error visibility. Test long results, validation errors, keyboard-open, and 360×640-style constraints in both themes.
-  Acceptance: Every field, result, validation message, Save, and Cancel remains reachable by keyboard and touch in a short viewport; opening/closing the IME does not lose the selected city or move actions off-screen.
-  Confidence: Needs-repro
-  Effort: M
-
 - [ ] P2 — C231 — Navigation-rail content does not receive system-bar insets
   Category: visual
   Where: app/src/main/java/com/openlumen/ui/OpenLumenRoot.kt:98-115,156-167 and app/src/main/java/com/openlumen/ui/ScreenPadding.kt:9-19
