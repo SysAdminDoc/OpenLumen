@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.7.0] - 2026-08-11
+
 - Reject equal fixed-schedule start and end times in the editor and normalize imported or persisted equal-time schedules to the explicit Off mode.
 - Preserve the selected offline city's IANA timezone for solar schedules, while keeping manually entered coordinates on the device timezone.
 - Ambient-light activation now uses a visible hysteresis band, preventing lux readings near the threshold from repeatedly restarting filter transitions.

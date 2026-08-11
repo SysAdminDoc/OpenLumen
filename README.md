@@ -1,6 +1,6 @@
 # OpenLumen
 
-[![Version](https://img.shields.io/badge/version-0.6.6-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
+[![Version](https://img.shields.io/badge/version-0.7.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE)
 [![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements)
 [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)
@@ -47,7 +47,7 @@ you want a specific driver such as `ColorDisplayManager`, Settings → Driver
 lets you pin one; if that pinned driver later probes as unavailable, OpenLumen
 resets to Auto instead of leaving the filter enabled with no visible effect.
 
-## Features (v0.6.6)
+## Features (v0.7.0)
 
 **Color**
 
@@ -89,8 +89,10 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Boot persistence with crash-window safety net (no auto-restart after a recent crash)
 - Profile export / import as JSON via Storage Access Framework, with diff preview
 - Named profile library — save current configuration, load it back later
+- Portable preset packs with merge preview, custom built-in labels, and alphabetical or recent ordering
 - Previous-preset restore (one-tap undo of a preset change)
 - Local-only crash log + structured diagnostics log (`filesDir/`, viewable in-app)
+- Diagnostics timeline range and text search over the active log filters
 - Versioned preference schema with explicit migrations
 
 **Trust + privacy**
@@ -257,7 +259,7 @@ shipped; deferred items have design sketches in
 [docs/deferred-candidates.md](docs/deferred-candidates.md) and
 [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md).
 
-Post-v0.6.6 work clusters around:
+Post-v0.7.0 work clusters around:
 
 - A Shizuku-backed privileged path for per-app behavior (C06)
 - Wear OS companion as a separate F-Droid package (C21)
