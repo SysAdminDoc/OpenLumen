@@ -31,11 +31,12 @@ import kotlin.math.max
  * Heavy filtering on the SensorEvent stream — we only emit when the smoothed lux value
  * crosses a 5% delta vs. the last emission to avoid waking the service every half-second.
  *
- * Concurrency: the sensor callback runs on the SensorManager's worker thread;
- * the flow is conflated so a slow collector can never block the callback and
- * the latest reading always wins. We never call `trySend` and silently drop —
- * `BufferOverflow.DROP_OLDEST` makes the buffer behave like the conflation
- * `callbackFlow` semantics for sensors.
+ * Concurrency: the sensor callback runs on the SensorManager's worker thread.
+ * `trySend` is intentionally non-blocking, so a slow collector can never
+ * stall that callback. The one-element `BufferOverflow.DROP_OLDEST` buffer
+ * makes readings lossy by design: when the collector falls behind, older
+ * pending values are dropped and the latest pending reading wins. The
+ * downstream `distinctUntilChanged` also coalesces small EMA changes.
  *
  * **Multiple collectors share one SensorManager registration.** The adapter
  * is a `@Singleton` (see `AppModule`), and both [com.openlumen.viewmodel.OpenLumenViewModel]

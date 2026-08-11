@@ -41,10 +41,9 @@ object DiagnosticsLog {
     private const val TRIM_TO_BYTES = 32 * 1024
     private const val TAG = "OpenLumen/Diag"
 
-    // Process-wide write lock. Reads are *intentionally* not locked: the file
-    // is opened in append mode, so a concurrent read may see a partial trail
-    // line but never a corrupted prefix. The dialog renders raw bytes, which
-    // is tolerable for a diagnostics surface.
+    // Process-wide lock for all file mutations and reads. `log` holds it over
+    // append + size check + trim; `read` and `clear` use the same identity so
+    // readers never observe a partial trim rewrite.
     private val writeLock = Any()
 
     /** Bounded test-mode override so unit tests can run without a real Context. */
@@ -92,13 +91,11 @@ object DiagnosticsLog {
         }
     }
 
+    /** Read a stable snapshot while sharing the writer/trim lock. */
     fun read(context: Context): String {
         val f = File(context.filesDir, FILENAME)
-        // The reader briefly acquires [writeLock] so we never observe a
-        // partial trim rewrite. The dialog is opened by user action and
-        // isn't hot, so the contention cost is negligible — and without it
-        // a "View diagnostics log" tap during heavy service activity could
-        // render torn bytes mid-trim.
+        // The dialog is opened by user action, so the brief lock contention
+        // avoids exposing bytes from the middle of a trim rewrite.
         synchronized(writeLock) {
             return if (f.exists()) f.readText() else ""
         }
