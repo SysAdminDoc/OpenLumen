@@ -37,12 +37,18 @@
     <string name="home_gamma_state">%1$s Gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
     <string name="home_rgb_state">%1$s-Kanal %2$d Prozent</string>
+    <string name="home_rgb_red_name">Roter Kanal</string>
+    <string name="home_rgb_green_name">Grüner Kanal</string>
+    <string name="home_rgb_blue_name">Blauer Kanal</string>
     <string name="channel_red_short">R</string>
     <string name="channel_green_short">G</string>
     <string name="channel_blue_short">B</string>
     <string name="gamma_red_short">γR</string>
     <string name="gamma_green_short">γG</string>
     <string name="gamma_blue_short">γB</string>
+    <string name="home_gamma_red_name">Rotes Gamma</string>
+    <string name="home_gamma_green_name">Grünes Gamma</string>
+    <string name="home_gamma_blue_name">Blaues Gamma</string>
 
     <string name="presets_title">Vorlage auswählen</string>
     <string name="presets_custom">Benutzerdefiniertes RGB</string>
@@ -120,6 +126,8 @@
     <string name="schedule_solar_location_required_body">Geben Sie einen gültigen Breiten- und Längengrad ein, bevor Sie Solar wählen. Der Filter bleibt bis dahin ausgeschaltet.</string>
     <string name="schedule_sunset_offset">Sonnenuntergang-Versatz: %1$d Min.</string>
     <string name="schedule_sunrise_offset">Sonnenaufgang-Versatz: %1$d Min.</string>
+    <string name="schedule_sunset_offset_name">Versatz bei Sonnenuntergang</string>
+    <string name="schedule_sunrise_offset_name">Versatz bei Sonnenaufgang</string>
     <string name="schedule_offset_state">%1$s %2$d Minuten</string>
     <string name="transition_duration_title">Übergangsdauer</string>
     <string name="transition_duration_subtitle">Wie sanft der Filter an Zeitplangrenzen ein- oder ausblendet. Manuelle Änderungen (Regler, Vorlagenwechsel) bleiben sofort.</string>
@@ -250,6 +258,7 @@
     <string name="light_sensor_now">Aktuell: %1$d Lux</string>
     <string name="light_sensor_threshold">Schwellenwert: %1$d Lux</string>
     <string name="light_sensor_threshold_state">%1$d Lux Schwellenwert</string>
+    <string name="light_sensor_threshold_name">Schwellenwert für Umgebungslicht</string>
     <string name="light_sensor_hysteresis">Aktivierung unter %1$d Lux; Deaktivierung über %2$d Lux gegen Flackern</string>
     <string name="light_sensor_calibrate">Kalibrieren: aktuellen Messwert als Schwellenwert verwenden</string>
 

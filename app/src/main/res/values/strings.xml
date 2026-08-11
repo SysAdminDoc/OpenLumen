@@ -38,12 +38,18 @@
     <string name="home_gamma_state">%1$s gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
     <string name="home_rgb_state">%1$s channel %2$d percent</string>
+    <string name="home_rgb_red_name">Red channel</string>
+    <string name="home_rgb_green_name">Green channel</string>
+    <string name="home_rgb_blue_name">Blue channel</string>
     <string name="channel_red_short">R</string>
     <string name="channel_green_short">G</string>
     <string name="channel_blue_short">B</string>
     <string name="gamma_red_short">γR</string>
     <string name="gamma_green_short">γG</string>
     <string name="gamma_blue_short">γB</string>
+    <string name="home_gamma_red_name">Red gamma</string>
+    <string name="home_gamma_green_name">Green gamma</string>
+    <string name="home_gamma_blue_name">Blue gamma</string>
 
     <string name="presets_title">Choose a preset</string>
     <string name="presets_custom">Custom RGB</string>
@@ -127,6 +133,8 @@
     <string name="schedule_solar_location_required_body">Enter a valid latitude and longitude before choosing Solar. The filter stays off until a location is set.</string>
     <string name="schedule_sunset_offset">Sunset offset: %1$d m</string>
     <string name="schedule_sunrise_offset">Sunrise offset: %1$d m</string>
+    <string name="schedule_sunset_offset_name">Sunset offset</string>
+    <string name="schedule_sunrise_offset_name">Sunrise offset</string>
     <string name="schedule_offset_state">%1$s %2$d minutes</string>
     <string name="transition_duration_title">Transition duration</string>
     <string name="transition_duration_subtitle">How smoothly the filter fades in or out at schedule boundaries. User-driven changes (sliders, preset taps) remain instant.</string>
@@ -262,6 +270,7 @@
     <string name="light_sensor_now">Now: %1$d lux</string>
     <string name="light_sensor_threshold">Threshold: %1$d lux</string>
     <string name="light_sensor_threshold_state">%1$d lux threshold</string>
+    <string name="light_sensor_threshold_name">Ambient-light threshold</string>
     <string name="light_sensor_hysteresis">Engages below %1$d lux; disengages above %2$d lux to prevent flicker</string>
     <string name="light_sensor_calibrate">Calibrate: use current reading as threshold</string>
 

@@ -30,8 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -50,6 +48,7 @@ import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
+import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.viewmodel.OpenLumenViewModel
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import java.time.LocalTime
@@ -301,9 +300,10 @@ fun ScheduleScreen(
                         },
                         valueRange = -180f..180f,
                         steps = 71,
-                        modifier = Modifier.semantics {
-                            stateDescription = sunsetOffsetLabel
-                        }
+                        modifier = Modifier.labeledSliderSemantics(
+                            name = stringResource(R.string.schedule_sunset_offset_name),
+                            valueDescription = sunsetOffsetLabel
+                        )
                     )
 
                     val sunriseOffsetLabel = stringResource(
@@ -325,9 +325,10 @@ fun ScheduleScreen(
                         },
                         valueRange = -180f..180f,
                         steps = 71,
-                        modifier = Modifier.semantics {
-                            stateDescription = sunriseOffsetLabel
-                        }
+                        modifier = Modifier.labeledSliderSemantics(
+                            name = stringResource(R.string.schedule_sunrise_offset_name),
+                            valueDescription = sunriseOffsetLabel
+                        )
                     )
                 }
             }

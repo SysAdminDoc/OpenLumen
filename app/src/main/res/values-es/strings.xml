@@ -37,12 +37,18 @@
     <string name="home_gamma_state">%1$s gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
     <string name="home_rgb_state">Canal %1$s %2$d por ciento</string>
+    <string name="home_rgb_red_name">Canal rojo</string>
+    <string name="home_rgb_green_name">Canal verde</string>
+    <string name="home_rgb_blue_name">Canal azul</string>
     <string name="channel_red_short">R</string>
     <string name="channel_green_short">G</string>
     <string name="channel_blue_short">B</string>
     <string name="gamma_red_short">γR</string>
     <string name="gamma_green_short">γG</string>
     <string name="gamma_blue_short">γB</string>
+    <string name="home_gamma_red_name">Gamma rojo</string>
+    <string name="home_gamma_green_name">Gamma verde</string>
+    <string name="home_gamma_blue_name">Gamma azul</string>
 
     <string name="presets_title">Elegir un ajuste predefinido</string>
     <string name="presets_custom">RGB personalizado</string>
@@ -120,6 +126,8 @@
     <string name="schedule_solar_location_required_body">Introduce una latitud y longitud válidas antes de elegir Solar. El filtro permanece desactivado hasta entonces.</string>
     <string name="schedule_sunset_offset">Desfase del atardecer: %1$d m</string>
     <string name="schedule_sunrise_offset">Desfase del amanecer: %1$d m</string>
+    <string name="schedule_sunset_offset_name">Desfase del atardecer</string>
+    <string name="schedule_sunrise_offset_name">Desfase del amanecer</string>
     <string name="schedule_offset_state">%1$s %2$d minutos</string>
     <string name="transition_duration_title">Duración de la transición</string>
     <string name="transition_duration_subtitle">Qué tan suavemente se atenúa o desvanece el filtro en los límites del horario. Los cambios manuales (deslizadores, toques en ajustes) son instantáneos.</string>
@@ -250,6 +258,7 @@
     <string name="light_sensor_now">Actual: %1$d lux</string>
     <string name="light_sensor_threshold">Umbral: %1$d lux</string>
     <string name="light_sensor_threshold_state">Umbral de %1$d lux</string>
+    <string name="light_sensor_threshold_name">Umbral de luz ambiental</string>
     <string name="light_sensor_hysteresis">Se activa por debajo de %1$d lux; se desactiva por encima de %2$d lux para evitar parpadeos</string>
     <string name="light_sensor_calibrate">Calibrar: usar la lectura actual como umbral</string>
 

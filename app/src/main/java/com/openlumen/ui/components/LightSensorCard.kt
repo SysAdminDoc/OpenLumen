@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.openlumen.R
@@ -107,9 +106,10 @@ fun LightSensorCard(
                 valueRange = 0f..200f,
                 steps = 39,
                 enabled = enabled && available,
-                modifier = Modifier.semantics {
-                    stateDescription = thresholdState
-                }
+                modifier = Modifier.labeledSliderSemantics(
+                    name = stringResource(R.string.light_sensor_threshold_name),
+                    valueDescription = thresholdState
+                )
             )
             Text(
                 stringResource(R.string.light_sensor_hysteresis, thresholdLux, disengageLux),

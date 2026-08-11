@@ -37,12 +37,18 @@
     <string name="home_gamma_state">%1$s gama %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
     <string name="home_rgb_state">canal %1$s %2$d porcento</string>
+    <string name="home_rgb_red_name">Canal vermelho</string>
+    <string name="home_rgb_green_name">Canal verde</string>
+    <string name="home_rgb_blue_name">Canal azul</string>
     <string name="channel_red_short">R</string>
     <string name="channel_green_short">G</string>
     <string name="channel_blue_short">B</string>
     <string name="gamma_red_short">γR</string>
     <string name="gamma_green_short">γG</string>
     <string name="gamma_blue_short">γB</string>
+    <string name="home_gamma_red_name">Gama vermelha</string>
+    <string name="home_gamma_green_name">Gama verde</string>
+    <string name="home_gamma_blue_name">Gama azul</string>
 
     <string name="presets_title">Escolha um predefinido</string>
     <string name="presets_custom">RGB personalizado</string>
@@ -120,6 +126,8 @@
     <string name="schedule_solar_location_required_body">Insira uma latitude e longitude válidas antes de escolher Solar. O filtro permanece desligado até lá.</string>
     <string name="schedule_sunset_offset">Deslocamento do por do sol: %1$d m</string>
     <string name="schedule_sunrise_offset">Deslocamento do nascer do sol: %1$d m</string>
+    <string name="schedule_sunset_offset_name">Deslocamento do pôr do sol</string>
+    <string name="schedule_sunrise_offset_name">Deslocamento do nascer do sol</string>
     <string name="schedule_offset_state">%1$s %2$d minutos</string>
     <string name="transition_duration_title">Duracao da transicao</string>
     <string name="transition_duration_subtitle">Velocidade com que o filtro aparece ou desaparece nos limites do agendamento. Alteracoes manuais (controles deslizantes, toques em predefinidos) permanecem instantaneas.</string>
@@ -250,6 +258,7 @@
     <string name="light_sensor_now">Atual: %1$d lux</string>
     <string name="light_sensor_threshold">Limiar: %1$d lux</string>
     <string name="light_sensor_threshold_state">limiar de %1$d lux</string>
+    <string name="light_sensor_threshold_name">Limiar de luz ambiente</string>
     <string name="light_sensor_hysteresis">Ativa abaixo de %1$d lux; desativa acima de %2$d lux para evitar cintilação</string>
     <string name="light_sensor_calibrate">Calibrar: usar leitura atual como limiar</string>
 

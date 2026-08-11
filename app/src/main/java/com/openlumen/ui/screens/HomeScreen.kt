@@ -45,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +63,7 @@ import com.openlumen.presetLabel
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.OverlayPermissionCard
+import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -347,9 +347,10 @@ fun HomeScreen(
                     onValueChange = { intensityDraft = it.coerceIn(0f, 1f) },
                     onValueChangeFinished = { vm.setIntensity(intensityDraft) },
                     valueRange = 0f..1f,
-                    modifier = Modifier.semantics {
-                        stateDescription = intensityState
-                    }
+                    modifier = Modifier.labeledSliderSemantics(
+                        name = stringResource(R.string.home_intensity),
+                        valueDescription = intensityState
+                    )
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -372,9 +373,10 @@ fun HomeScreen(
                     onValueChange = { dimDraft = it.coerceIn(0f, 0.95f) },
                     onValueChangeFinished = { vm.setDim(dimDraft) },
                     valueRange = 0f..0.95f,
-                    modifier = Modifier.semantics {
-                        stateDescription = dimState
-                    }
+                    modifier = Modifier.labeledSliderSemantics(
+                        name = stringResource(R.string.home_dim),
+                        valueDescription = dimState
+                    )
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -437,9 +439,10 @@ fun HomeScreen(
                     },
                     onValueChangeFinished = { vm.setContrast(contrastDraft) },
                     valueRange = com.openlumen.prefs.Preferences.CONTRAST_MIN..com.openlumen.prefs.Preferences.CONTRAST_MAX,
-                    modifier = Modifier.semantics {
-                        stateDescription = contrastState
-                    }
+                    modifier = Modifier.labeledSliderSemantics(
+                        name = stringResource(R.string.home_contrast),
+                        valueDescription = contrastState
+                    )
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -494,6 +497,7 @@ fun HomeScreen(
 
                 RgbSlider(
                     label = stringResource(R.string.channel_red_short),
+                    accessibleName = stringResource(R.string.home_rgb_red_name),
                     value = customR,
                     track = channels.red,
                     onChange = { customR = it },
@@ -501,6 +505,7 @@ fun HomeScreen(
                 )
                 RgbSlider(
                     label = stringResource(R.string.channel_green_short),
+                    accessibleName = stringResource(R.string.home_rgb_green_name),
                     value = customG,
                     track = channels.green,
                     onChange = { customG = it },
@@ -508,6 +513,7 @@ fun HomeScreen(
                 )
                 RgbSlider(
                     label = stringResource(R.string.channel_blue_short),
+                    accessibleName = stringResource(R.string.home_rgb_blue_name),
                     value = customB,
                     track = channels.blue,
                     onChange = { customB = it },
@@ -558,9 +564,10 @@ fun HomeScreen(
                     onValueChangeFinished = { vm.setCustomKelvin(kelvinSliderK) },
                     valueRange = Kelvin.MIN_K.toFloat()..Kelvin.MAX_K.toFloat(),
                     enabled = kelvinEditable,
-                    modifier = Modifier.semantics {
-                        stateDescription = kelvinState
-                    }
+                    modifier = Modifier.labeledSliderSemantics(
+                        name = stringResource(R.string.home_kelvin_title),
+                        valueDescription = kelvinState
+                    )
                 )
                 Text(
                     stringResource(
@@ -587,6 +594,7 @@ fun HomeScreen(
                 )
                 GammaSlider(
                     label = stringResource(R.string.gamma_red_short),
+                    accessibleName = stringResource(R.string.home_gamma_red_name),
                     value = gammaR,
                     track = channels.red,
                     onChange = { gammaR = it },
@@ -594,6 +602,7 @@ fun HomeScreen(
                 )
                 GammaSlider(
                     label = stringResource(R.string.gamma_green_short),
+                    accessibleName = stringResource(R.string.home_gamma_green_name),
                     value = gammaG,
                     track = channels.green,
                     onChange = { gammaG = it },
@@ -601,6 +610,7 @@ fun HomeScreen(
                 )
                 GammaSlider(
                     label = stringResource(R.string.gamma_blue_short),
+                    accessibleName = stringResource(R.string.home_gamma_blue_name),
                     value = gammaB,
                     track = channels.blue,
                     onChange = { gammaB = it },
@@ -620,6 +630,7 @@ private fun Context.findActivity(): Activity? = when (this) {
 @Composable
 private fun GammaSlider(
     label: String,
+    accessibleName: String,
     value: Float,
     track: Color,
     onChange: (Float) -> Unit,
@@ -642,7 +653,10 @@ private fun GammaSlider(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 8.dp)
-                .semantics { stateDescription = gammaState }
+                .labeledSliderSemantics(
+                    name = accessibleName,
+                    valueDescription = gammaState
+                )
         )
         Text(
             stringResource(R.string.home_gamma_value, value),
@@ -657,6 +671,7 @@ private fun GammaSlider(
 @Composable
 private fun RgbSlider(
     label: String,
+    accessibleName: String,
     value: Float,
     track: Color,
     onChange: (Float) -> Unit,
@@ -680,7 +695,10 @@ private fun RgbSlider(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 8.dp)
-                .semantics { stateDescription = rgbState }
+                .labeledSliderSemantics(
+                    name = accessibleName,
+                    valueDescription = rgbState
+                )
         )
         Text(
             stringResource(R.string.home_rgb_value, percent),

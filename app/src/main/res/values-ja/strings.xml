@@ -37,12 +37,18 @@
     <string name="home_gamma_state">%1$s ガンマ %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
     <string name="home_rgb_state">%1$sチャンネル %2$dパーセント</string>
+    <string name="home_rgb_red_name">赤チャンネル</string>
+    <string name="home_rgb_green_name">緑チャンネル</string>
+    <string name="home_rgb_blue_name">青チャンネル</string>
     <string name="channel_red_short">R</string>
     <string name="channel_green_short">G</string>
     <string name="channel_blue_short">B</string>
     <string name="gamma_red_short">γR</string>
     <string name="gamma_green_short">γG</string>
     <string name="gamma_blue_short">γB</string>
+    <string name="home_gamma_red_name">赤ガンマ</string>
+    <string name="home_gamma_green_name">緑ガンマ</string>
+    <string name="home_gamma_blue_name">青ガンマ</string>
 
     <string name="presets_title">プリセットを選択</string>
     <string name="presets_custom">カスタム RGB</string>
@@ -120,6 +126,8 @@
     <string name="schedule_solar_location_required_body">ソーラーを選択する前に、有効な緯度と経度を入力してください。位置情報を設定するまでフィルターはオフのままです。</string>
     <string name="schedule_sunset_offset">日没オフセット: %1$d分</string>
     <string name="schedule_sunrise_offset">日の出オフセット: %1$d分</string>
+    <string name="schedule_sunset_offset_name">日没オフセット</string>
+    <string name="schedule_sunrise_offset_name">日の出オフセット</string>
     <string name="schedule_offset_state">%1$s %2$d分</string>
     <string name="transition_duration_title">トランジション時間</string>
     <string name="transition_duration_subtitle">スケジュールの切替時にフィルターがフェードイン・フェードアウトする滑らかさを設定します。スライダーやプリセットの手動操作は即時反映されます。</string>
@@ -250,6 +258,7 @@
     <string name="light_sensor_now">現在: %1$d lux</string>
     <string name="light_sensor_threshold">しきい値: %1$d lux</string>
     <string name="light_sensor_threshold_state">%1$d lux しきい値</string>
+    <string name="light_sensor_threshold_name">環境光のしきい値</string>
     <string name="light_sensor_hysteresis">%1$d lux 未満で適用、ちらつき防止のため %2$d lux 超で解除</string>
     <string name="light_sensor_calibrate">キャリブレーション: 現在の読み取り値をしきい値に設定</string>
 
