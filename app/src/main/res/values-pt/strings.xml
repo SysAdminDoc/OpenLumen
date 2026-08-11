@@ -197,6 +197,9 @@
     <string name="about_profiles_body">Salve o predefinido atual, agendamento, intensidade, escurecimento e favoritos como um perfil nomeado. Carregue-o depois a partir desta lista.</string>
     <string name="about_profiles_save">Salvar atual como…</string>
     <string name="about_profiles_save_title">Salvar perfil</string>
+    <string name="about_profiles_replace_title">Substituir perfil?</string>
+    <string name="about_profiles_replace_body">Já existe um perfil com este nome. Substituir a configuração salva pela configuração atual?</string>
+    <string name="about_profiles_replace">Substituir</string>
     <string name="about_profiles_name_label">Nome do perfil</string>
     <string name="about_profiles_name_count">Comprimento %1$d/%2$d</string>
     <string name="about_profiles_load">Carregar</string>

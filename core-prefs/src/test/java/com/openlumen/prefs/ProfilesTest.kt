@@ -94,14 +94,26 @@ class ProfilesTest {
         assertThat(saved.savedProfiles[0].name).hasLength(Preferences.MAX_PROFILE_NAME_LENGTH)
     }
 
-    @Test fun `saveCurrentAs overwrites an existing same-named profile`() {
+    @Test fun `saveCurrentAs refuses an existing name until replacement is explicit`() {
         var p = Preferences(activePresetKey = "night")
         p = Profiles.saveCurrentAs(p, "evening")
-        p = p.copy(activePresetKey = "amber")
-        p = Profiles.saveCurrentAs(p, "evening")
+        val unchanged = Profiles.saveCurrentAs(
+            p.copy(activePresetKey = "amber"),
+            "  EVENING  "
+        )
 
-        assertThat(p.savedProfiles).hasSize(1)
-        assertThat(p.savedProfiles[0].snapshot.activePresetKey).isEqualTo("amber")
+        assertThat(unchanged.activePresetKey).isEqualTo("amber")
+        assertThat(unchanged.savedProfiles).containsExactlyElementsIn(p.savedProfiles)
+
+        val replaced = Profiles.saveCurrentAs(
+            p.copy(activePresetKey = "amber"),
+            "  EVENING  ",
+            replaceExisting = true
+        )
+
+        assertThat(replaced.savedProfiles).hasSize(1)
+        assertThat(replaced.savedProfiles[0].name).isEqualTo("EVENING")
+        assertThat(replaced.savedProfiles[0].snapshot.activePresetKey).isEqualTo("amber")
     }
 
     @Test fun `loadByName flips active preset and stamps previousPresetKey`() {
@@ -148,7 +160,7 @@ class ProfilesTest {
 
     @Test fun `import duplicate summary reports profile names dropped by last-write-wins`() {
         val first = NamedProfile("evening", Profiles.snapshot(Preferences(activePresetKey = "night")))
-        val second = NamedProfile("  evening  ", Profiles.snapshot(Preferences(activePresetKey = "amber")))
+        val second = NamedProfile("  Evening  ", Profiles.snapshot(Preferences(activePresetKey = "amber")))
         val third = NamedProfile("morning", Profiles.snapshot(Preferences(activePresetKey = "red")))
 
         val dropped = droppedDuplicateProfileNames(listOf(first, second, third))
@@ -191,7 +203,8 @@ class ProfilesTest {
         // Update the active preset, then overwrite an existing profile name.
         val updated = Profiles.saveCurrentAs(
             p.copy(activePresetKey = "amber"),
-            "profile-00"
+            "profile-00",
+            replaceExisting = true
         )
 
         assertThat(updated.savedProfiles).hasSize(sizeBeforeOverwrite)

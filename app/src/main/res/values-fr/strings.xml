@@ -197,6 +197,9 @@
     <string name="about_profiles_body">Enregistrez le preset actuel, la programmation, l\'intensite, la reduction et les favoris sous un profil nomme. Chargez-le ulterieurement depuis cette liste.</string>
     <string name="about_profiles_save">Enregistrer sous…</string>
     <string name="about_profiles_save_title">Enregistrer le profil</string>
+    <string name="about_profiles_replace_title">Remplacer le profil ?</string>
+    <string name="about_profiles_replace_body">Un profil portant ce nom existe déjà. Remplacer sa configuration enregistrée par la configuration actuelle ?</string>
+    <string name="about_profiles_replace">Remplacer</string>
     <string name="about_profiles_name_label">Nom du profil</string>
     <string name="about_profiles_name_count">Longueur %1$d/%2$d</string>
     <string name="about_profiles_load">Charger</string>

@@ -197,6 +197,9 @@
     <string name="about_profiles_body">Speichern Sie die aktuelle Vorlage, den Zeitplan, die Intensität, Abdunklung und Favoriten als benanntes Profil. Laden Sie es später aus dieser Liste.</string>
     <string name="about_profiles_save">Aktuelles speichern als…</string>
     <string name="about_profiles_save_title">Profil speichern</string>
+    <string name="about_profiles_replace_title">Profil ersetzen?</string>
+    <string name="about_profiles_replace_body">Ein Profil mit diesem Namen existiert bereits. Den gespeicherten Zustand durch die aktuelle Konfiguration ersetzen?</string>
+    <string name="about_profiles_replace">Ersetzen</string>
     <string name="about_profiles_name_label">Profilname</string>
     <string name="about_profiles_name_count">Länge %1$d/%2$d</string>
     <string name="about_profiles_load">Laden</string>

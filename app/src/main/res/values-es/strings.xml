@@ -197,6 +197,9 @@
     <string name="about_profiles_body">Guarde el ajuste actual, horario, intensidad, atenuación y favoritos como un perfil con nombre. Cárguelo más tarde desde esta lista.</string>
     <string name="about_profiles_save">Guardar actual como…</string>
     <string name="about_profiles_save_title">Guardar perfil</string>
+    <string name="about_profiles_replace_title">¿Reemplazar perfil?</string>
+    <string name="about_profiles_replace_body">Ya existe un perfil con este nombre. ¿Reemplazar su configuración guardada por la configuración actual?</string>
+    <string name="about_profiles_replace">Reemplazar</string>
     <string name="about_profiles_name_label">Nombre del perfil</string>
     <string name="about_profiles_name_count">Longitud %1$d/%2$d</string>
     <string name="about_profiles_load">Cargar</string>

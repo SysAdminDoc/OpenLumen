@@ -15,6 +15,7 @@
 - Navigation-rail layouts now apply safe top/bottom insets, adapt rail sizing for large font scales, and expose complete destination labels through accessibility semantics.
 - Auto driver explanations now use the same shared root → CDM → Overlay resolver as the service, including the no-driver state.
 - Driver re-probing is now single-flight across the UI and service, preserves the last known result during refresh, and exposes a localized retry state when probing fails.
+- Profile saves now require explicit confirmation before replacing a trimmed, case-insensitive name collision; canceling leaves the original snapshot untouched.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

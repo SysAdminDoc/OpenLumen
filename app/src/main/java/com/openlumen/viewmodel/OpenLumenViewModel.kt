@@ -116,8 +116,14 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     /** Save the current configuration into the named-profile library (C31). */
-    fun saveProfileAs(name: String) = viewModelScope.launch {
-        prefs.update { com.openlumen.prefs.Profiles.saveCurrentAs(it, name) }
+    fun saveProfileAs(name: String, replaceExisting: Boolean = false) = viewModelScope.launch {
+        prefs.update { current ->
+            com.openlumen.prefs.Profiles.saveCurrentAs(
+                current,
+                name,
+                replaceExisting = replaceExisting
+            )
+        }
     }
 
     fun loadProfile(name: String) = viewModelScope.launch {

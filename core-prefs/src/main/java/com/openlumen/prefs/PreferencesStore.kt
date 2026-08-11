@@ -335,8 +335,8 @@ class PreferencesStore(
 
     /**
      * Bounds: name non-blank + ≤ 48 chars; library size capped at 32
-     * entries; duplicate names drop earlier occurrences (last-write-wins,
-     * matching `Profiles.saveCurrentAs` semantics).
+     * entries; duplicate normalized names (trimmed, case-insensitive) drop
+     * earlier occurrences (last-write-wins for imported data).
      *
      * Defense-in-depth: each snapshot's matrix, schedule, intensity, dim,
      * contrast, transition, lux threshold, and preset keys are clamped
@@ -350,8 +350,9 @@ class PreferencesStore(
         return list.asReversed()
             .asSequence()
             .mapNotNull { p ->
-                val name = sanitizedProfileNameOrNull(p.name)
-                if (name == null || !seen.add(name)) null
+                val name = profileNameOrNull(p.name)
+                val key = name?.let(::profileNameKey)
+                if (name == null || key == null || !seen.add(key)) null
                 else p.copy(name = name, snapshot = sanitizeSnapshot(p.snapshot))
             }
             .take(Preferences.MAX_PROFILES)
@@ -398,16 +399,12 @@ internal fun droppedDuplicateProfileNames(list: List<NamedProfile>): List<String
     val droppedEarlier = mutableListOf<String>()
     list.asReversed()
         .asSequence()
-        .mapNotNull { sanitizedProfileNameOrNull(it.name) }
+        .mapNotNull { profileNameOrNull(it.name) }
         .forEach { name ->
-            if (!keptFromEnd.add(name)) {
+            val key = profileNameKey(name) ?: return@forEach
+            if (!keptFromEnd.add(key)) {
                 droppedEarlier += name
             }
         }
     return droppedEarlier.asReversed().distinct()
 }
-
-private fun sanitizedProfileNameOrNull(raw: String): String? =
-    raw.trim()
-        .take(Preferences.MAX_PROFILE_NAME_LENGTH)
-        .takeIf { it.isNotBlank() }

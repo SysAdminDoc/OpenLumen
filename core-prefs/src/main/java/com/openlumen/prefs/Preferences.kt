@@ -148,8 +148,8 @@ data class Preferences(
     val previousPresetKey: String? = null,
     /**
      * Named profile library (C31). Each entry is a (name, snapshot) pair;
-     * names are unique within the list and capped at [MAX_PROFILES] to keep
-     * the persisted blob bounded.
+     * normalized names (trimmed, case-insensitive) are unique within the
+     * list and capped at [MAX_PROFILES] to keep the persisted blob bounded.
      */
     val savedProfiles: List<NamedProfile> = emptyList()
 ) {

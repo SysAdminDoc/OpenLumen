@@ -58,6 +58,7 @@ import com.openlumen.R
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.presetDisplayName
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.prefs.Profiles
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.ui.components.CommandBlock
@@ -78,7 +79,9 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     var showDiagLog by rememberSaveable { mutableStateOf(false) }
     var showRecoveryReset by rememberSaveable { mutableStateOf(false) }
     var showSaveProfileDialog by rememberSaveable { mutableStateOf(false) }
+    var showReplaceProfileDialog by rememberSaveable { mutableStateOf(false) }
     var saveProfileName by rememberSaveable { mutableStateOf("") }
+    var pendingReplaceProfileName by rememberSaveable { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -98,6 +101,19 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
     val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
     val undoActionLabel = stringResource(R.string.action_undo)
+
+    fun submitProfileSave(name: String) {
+        val cleanName = name.trim()
+        if (cleanName.isEmpty()) return
+        if (Profiles.findByName(currentPrefs, cleanName) != null) {
+            pendingReplaceProfileName = cleanName
+            showSaveProfileDialog = false
+            showReplaceProfileDialog = true
+        } else {
+            vm.saveProfileAs(cleanName)
+            showSaveProfileDialog = false
+        }
+    }
 
     LaunchedEffect(result) {
         val msg = result ?: return@LaunchedEffect
@@ -232,6 +248,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     LumenOutlinedButton(
                         onClick = {
                             saveProfileName = ""
+                            pendingReplaceProfileName = ""
                             showSaveProfileDialog = true
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -378,10 +395,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            if (cleanProfileName.isNotEmpty()) {
-                                vm.saveProfileAs(cleanProfileName)
-                                showSaveProfileDialog = false
-                            }
+                            submitProfileSave(cleanProfileName)
                         }
                     ),
                     singleLine = true,
@@ -391,8 +405,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             confirmButton = {
                 LumenTextButton(
                     onClick = {
-                        vm.saveProfileAs(cleanProfileName)
-                        showSaveProfileDialog = false
+                        submitProfileSave(cleanProfileName)
                     },
                     enabled = cleanProfileName.isNotEmpty()
                 ) { Text(stringResource(R.string.about_profiles_save)) }
@@ -401,6 +414,38 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 LumenTextButton(onClick = { showSaveProfileDialog = false }) {
                     Text(stringResource(R.string.import_preview_cancel))
                 }
+            }
+        )
+    }
+
+    if (showReplaceProfileDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showReplaceProfileDialog = false
+                pendingReplaceProfileName = ""
+            },
+            shape = MaterialTheme.shapes.large,
+            title = { Text(stringResource(R.string.about_profiles_replace_title)) },
+            text = { Text(stringResource(R.string.about_profiles_replace_body)) },
+            confirmButton = {
+                LumenTextButton(
+                    onClick = {
+                        vm.saveProfileAs(
+                            pendingReplaceProfileName,
+                            replaceExisting = true
+                        )
+                        showReplaceProfileDialog = false
+                        pendingReplaceProfileName = ""
+                    }
+                ) { Text(stringResource(R.string.about_profiles_replace)) }
+            },
+            dismissButton = {
+                LumenTextButton(
+                    onClick = {
+                        showReplaceProfileDialog = false
+                        pendingReplaceProfileName = ""
+                    }
+                ) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }

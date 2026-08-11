@@ -204,6 +204,9 @@
     <string name="about_profiles_body">Save the current preset, schedule, intensity, dim, and favorites as a named profile. Load it later from this list.</string>
     <string name="about_profiles_save">Save current as…</string>
     <string name="about_profiles_save_title">Save profile</string>
+    <string name="about_profiles_replace_title">Replace profile?</string>
+    <string name="about_profiles_replace_body">A profile with this name already exists. Replace its saved snapshot with the current configuration?</string>
+    <string name="about_profiles_replace">Replace</string>
     <string name="about_profiles_name_label">Profile name</string>
     <string name="about_profiles_name_count">Length %1$d/%2$d</string>
     <string name="about_profiles_load">Load</string>

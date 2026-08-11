@@ -1,5 +1,7 @@
 package com.openlumen.prefs
 
+import java.util.Locale
+
 /**
  * Pure transforms over [Preferences] for the named-profile library.
  *
@@ -65,29 +67,38 @@ object Profiles {
 
     /**
      * Save the snapshot of [current] under [name] in the saved-profile
-     * library. If a profile with the same trimmed name already exists,
-     * it is overwritten in place. Blank names are rejected. The list is
+     * library. Profile identity is trimmed and case-insensitive. Existing
+     * profiles are left untouched unless [replaceExisting] is explicitly
+     * true; this keeps a caller that has not shown a collision confirmation
+     * from destroying a snapshot. Blank names are rejected. The list is
      * capped at [Preferences.MAX_PROFILES]; over-cap entries fall off the
      * tail.
      */
-    fun saveCurrentAs(current: Preferences, name: String): Preferences {
-        val cleanName = name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
-        if (cleanName.isBlank()) return current
+    fun saveCurrentAs(
+        current: Preferences,
+        name: String,
+        replaceExisting: Boolean = false
+    ): Preferences {
+        val cleanName = profileNameOrNull(name) ?: return current
+        val nameKey = profileNameKey(cleanName) ?: return current
         val snap = snapshot(current)
         val existing = current.savedProfiles
-        val withoutDuplicate = existing.filterNot { it.name == cleanName }
+        val hasExisting = existing.any { profileNameKey(it.name) == nameKey }
+        if (hasExisting && !replaceExisting) return current
+        val withoutDuplicate = existing.filterNot { profileNameKey(it.name) == nameKey }
         val updated = (withoutDuplicate + NamedProfile(cleanName, snap))
             .takeLast(Preferences.MAX_PROFILES)
         return current.copy(savedProfiles = updated)
     }
 
     /**
-     * Find a profile by exact name. Used by `loadByName` and indirectly by
-     * any UI that needs to confirm a profile exists before offering to load
-     * it.
+     * Find a profile by normalized name. Used by `loadByName` and by the UI
+     * to confirm a profile exists before offering to replace it.
      */
     fun findByName(current: Preferences, name: String): NamedProfile? =
-        current.savedProfiles.firstOrNull { it.name == name }
+        profileNameKey(name)?.let { key ->
+            current.savedProfiles.firstOrNull { profileNameKey(it.name) == key }
+        }
 
     /**
      * Load a profile by name. No-op if the name isn't in the library.
@@ -99,9 +110,10 @@ object Profiles {
 
     /** Drop the named profile from the library. No-op if it isn't there. */
     fun delete(current: Preferences, name: String): Preferences {
-        if (current.savedProfiles.none { it.name == name }) return current
+        val nameKey = profileNameKey(name) ?: return current
+        if (current.savedProfiles.none { profileNameKey(it.name) == nameKey }) return current
         return current.copy(
-            savedProfiles = current.savedProfiles.filterNot { it.name == name }
+            savedProfiles = current.savedProfiles.filterNot { profileNameKey(it.name) == nameKey }
         )
     }
 
@@ -111,11 +123,21 @@ object Profiles {
      * ordering, and duplicate names are replaced rather than duplicated.
      */
     fun restoreDeleted(current: Preferences, profile: NamedProfile): Preferences {
-        val cleanName = profile.name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
-        if (cleanName.isBlank()) return current
-        val withoutDuplicate = current.savedProfiles.filterNot { it.name == cleanName }
+        val cleanName = profileNameOrNull(profile.name) ?: return current
+        val nameKey = profileNameKey(cleanName) ?: return current
+        val withoutDuplicate = current.savedProfiles.filterNot { profileNameKey(it.name) == nameKey }
         val updated = (withoutDuplicate + profile.copy(name = cleanName))
             .takeLast(Preferences.MAX_PROFILES)
         return current.copy(savedProfiles = updated)
     }
 }
+
+/** Canonical display form for a profile name, or null when it is unusable. */
+internal fun profileNameOrNull(raw: String): String? =
+    raw.trim()
+        .take(Preferences.MAX_PROFILE_NAME_LENGTH)
+        .takeIf { it.isNotBlank() }
+
+/** Stable profile identity: whitespace is trimmed and case is ignored. */
+internal fun profileNameKey(raw: String): String? =
+    profileNameOrNull(raw)?.lowercase(Locale.ROOT)
