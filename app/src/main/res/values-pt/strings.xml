@@ -209,7 +209,10 @@
 
     <string name="notif_channel_name">Status do filtro</string>
     <string name="notif_channel_desc">Indica que o OpenLumen está tingindo a tela no momento.</string>
-    <string name="notif_title">OpenLumen ativo</string>
+    <string name="notif_title_filtering">OpenLumen filtrando</string>
+    <string name="notif_title_standby">OpenLumen em espera</string>
+    <string name="notif_status_filtering">Filtro ativo</string>
+    <string name="notif_status_standby">Em espera — filtro não aplicado</string>
     <string name="notif_action_off">Desligar</string>
     <string name="notif_action_cycle">Próximo predefinido</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m até o alarme</string>
@@ -234,6 +237,7 @@
     <string name="light_sensor_now">Atual: %1$d lux</string>
     <string name="light_sensor_threshold">Limiar: %1$d lux</string>
     <string name="light_sensor_threshold_state">limiar de %1$d lux</string>
+    <string name="light_sensor_hysteresis">Ativa abaixo de %1$d lux; desativa acima de %2$d lux para evitar cintilação</string>
     <string name="light_sensor_calibrate">Calibrar: usar leitura atual como limiar</string>
 
     <string name="location_title">Definir localizacao</string>

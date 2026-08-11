@@ -209,7 +209,10 @@
 
     <string name="notif_channel_name">Estado del filtro</string>
     <string name="notif_channel_desc">Indica que OpenLumen está aplicando un filtro de color a la pantalla.</string>
-    <string name="notif_title">OpenLumen activo</string>
+    <string name="notif_title_filtering">OpenLumen filtrando</string>
+    <string name="notif_title_standby">OpenLumen en espera</string>
+    <string name="notif_status_filtering">Filtro activo</string>
+    <string name="notif_status_standby">En espera — filtro no aplicado</string>
     <string name="notif_action_off">Desactivar</string>
     <string name="notif_action_cycle">Siguiente ajuste</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m hasta la alarma</string>
@@ -234,6 +237,7 @@
     <string name="light_sensor_now">Actual: %1$d lux</string>
     <string name="light_sensor_threshold">Umbral: %1$d lux</string>
     <string name="light_sensor_threshold_state">Umbral de %1$d lux</string>
+    <string name="light_sensor_hysteresis">Se activa por debajo de %1$d lux; se desactiva por encima de %2$d lux para evitar parpadeos</string>
     <string name="light_sensor_calibrate">Calibrar: usar la lectura actual como umbral</string>
 
     <string name="location_title">Establecer ubicación</string>

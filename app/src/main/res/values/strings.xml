@@ -221,7 +221,10 @@
     <string name="notif_channel_id" translatable="false">openlumen.filter</string>
     <string name="notif_channel_name">Filter status</string>
     <string name="notif_channel_desc">Indicates that OpenLumen is currently tinting the display.</string>
-    <string name="notif_title">OpenLumen active</string>
+    <string name="notif_title_filtering">OpenLumen filtering</string>
+    <string name="notif_title_standby">OpenLumen standby</string>
+    <string name="notif_status_filtering">Filtering active</string>
+    <string name="notif_status_standby">Standby — filter not applied</string>
     <string name="notif_action_off">Turn off</string>
     <string name="notif_action_cycle">Next preset</string>
     <string name="notif_alarm_countdown">%1$d h %2$d m until alarm</string>

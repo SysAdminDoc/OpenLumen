@@ -209,7 +209,10 @@
 
     <string name="notif_channel_name">フィルター状態</string>
     <string name="notif_channel_desc">OpenLumen がディスプレイにカラーフィルターを適用中であることを示します。</string>
-    <string name="notif_title">OpenLumen 動作中</string>
+    <string name="notif_title_filtering">OpenLumen フィルタ適用中</string>
+    <string name="notif_title_standby">OpenLumen 待機中</string>
+    <string name="notif_status_filtering">フィルタ適用中</string>
+    <string name="notif_status_standby">待機中 — フィルタ未適用</string>
     <string name="notif_action_off">オフにする</string>
     <string name="notif_action_cycle">次のプリセット</string>
     <string name="notif_alarm_countdown">アラームまで %1$d時間%2$d分</string>
@@ -234,6 +237,7 @@
     <string name="light_sensor_now">現在: %1$d lux</string>
     <string name="light_sensor_threshold">しきい値: %1$d lux</string>
     <string name="light_sensor_threshold_state">%1$d lux しきい値</string>
+    <string name="light_sensor_hysteresis">%1$d lux 未満で適用、ちらつき防止のため %2$d lux 超で解除</string>
     <string name="light_sensor_calibrate">キャリブレーション: 現在の読み取り値をしきい値に設定</string>
 
     <string name="location_title">位置情報を設定</string>

@@ -105,13 +105,19 @@ class LumenService : LifecycleService() {
                 Intent.ACTION_SCREEN_OFF -> {
                     lightSubscription.invalidate()
                     lifecycleScope.launch {
-                        latestPrefs.get()?.let { applyIfShouldBeActive(it) }
+                        latestPrefs.get()?.let { p ->
+                            val active = applyIfShouldBeActive(p)
+                            updateNotification(p, active, force = true)
+                        }
                     }
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     latestPrefs.get()?.let { p ->
                         lightSubscription.restart(p.enabled && p.lightSensorEnabled)
-                        lifecycleScope.launch { applyIfShouldBeActive(p) }
+                        lifecycleScope.launch {
+                            val active = applyIfShouldBeActive(p)
+                            updateNotification(p, active, force = true)
+                        }
                     }
                 }
                 Intent.ACTION_USER_UNLOCKED -> {
@@ -146,7 +152,10 @@ class LumenService : LifecycleService() {
             luxFlow = lightSensor::lux,
             scope = lifecycleScope,
             onLuxChanged = {
-                latestPrefs.get()?.let { prefs -> applyIfShouldBeActive(prefs) }
+                latestPrefs.get()?.let { p ->
+                    val active = applyIfShouldBeActive(p)
+                    updateNotification(p, active)
+                }
             },
             onUnavailable = {
                 DiagnosticsLog.log(
@@ -219,11 +228,19 @@ class LumenService : LifecycleService() {
                 if (isUserUnlocked()) prefs.update { it.toggledFilterEnabled() }
             }
             ACTION_REEVALUATE -> lifecycleScope.launch {
-                if (isUserUnlocked()) latestPrefs.get()?.let { applyIfShouldBeActive(it) }
+                if (isUserUnlocked()) latestPrefs.get()?.let { p ->
+                    val active = applyIfShouldBeActive(p)
+                    // An alarm may have changed the next system alarm without
+                    // changing the current filter state, so this is forced.
+                    updateNotification(p, active, force = true)
+                }
             }
             ACTION_RECONCILE_EXACT_ALARM -> lifecycleScope.launch {
                 if (isUserUnlocked()) {
-                    latestPrefs.get()?.let { applyIfShouldBeActive(it, reconcileExactAlarmPermission = true) }
+                    latestPrefs.get()?.let { p ->
+                        val active = applyIfShouldBeActive(p, reconcileExactAlarmPermission = true)
+                        updateNotification(p, active, force = true)
+                    }
                 }
             }
             ACTION_CYCLE_PRESET -> lifecycleScope.launch {
@@ -348,7 +365,8 @@ class LumenService : LifecycleService() {
         )
         val notification: Notification = NotificationCompat.Builder(this, getString(R.string.notif_channel_id))
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(R.string.notif_title))
+            .setContentTitle(getString(R.string.notif_title_standby))
+            .setContentText(getString(R.string.notif_status_standby))
             .setContentIntent(tapIntent)
             .setOngoing(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
@@ -378,9 +396,17 @@ class LumenService : LifecycleService() {
         }
     }
 
-    private fun updateNotificationSubtitle(p: Preferences) {
+    private val lastNotificationActive = AtomicReference<Boolean?>(null)
+
+    private fun updateNotification(p: Preferences, active: Boolean, force: Boolean = false) {
         if (!p.enabled) return
-        val subtitle: String? = when {
+        if (!force && lastNotificationActive.get() == active) return
+        lastNotificationActive.set(active)
+
+        val status = getString(
+            if (active) R.string.notif_status_filtering else R.string.notif_status_standby
+        )
+        val detail: String? = when {
             p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.Solar &&
                 !isValidSolarLocation(p.schedule.latitude, p.schedule.longitude) ->
                 getString(R.string.notif_solar_location_required)
@@ -396,6 +422,7 @@ class LumenService : LifecycleService() {
                 }
             else -> null
         }
+        val contentText = if (detail == null) status else "$status · $detail"
 
         runCatching {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -417,8 +444,12 @@ class LumenService : LifecycleService() {
             )
             val notification = NotificationCompat.Builder(this, getString(R.string.notif_channel_id))
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(getString(R.string.notif_title))
-                .apply { if (subtitle != null) setContentText(subtitle) }
+                .setContentTitle(
+                    getString(
+                        if (active) R.string.notif_title_filtering else R.string.notif_title_standby
+                    )
+                )
+                .setContentText(contentText)
                 .setContentIntent(tapIntent)
                 .setOngoing(true)
                 .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
@@ -484,8 +515,8 @@ class LumenService : LifecycleService() {
             return
         }
         engineController.ensureEngineFor(p)
-        applyIfShouldBeActive(p)
-        updateNotificationSubtitle(p)
+        val active = applyIfShouldBeActive(p)
+        updateNotification(p, active, force = true)
         maybeBroadcastFilterStateChanged(p)
     }
 
@@ -546,7 +577,7 @@ class LumenService : LifecycleService() {
     private suspend fun applyIfShouldBeActive(
         p: Preferences,
         reconcileExactAlarmPermission: Boolean = false
-    ) {
+    ): Boolean {
         val mode = mapMode(p)
         val scheduleActive = isActive(mode)
         val luxNow = lightSubscription.currentLuxOrNegative()
@@ -566,6 +597,7 @@ class LumenService : LifecycleService() {
         } else {
             scheduleAlarms.rescheduleNextTransition(mode)
         }
+        return shouldBeActive
     }
 
     /**

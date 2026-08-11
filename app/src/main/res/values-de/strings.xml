@@ -209,7 +209,10 @@
 
     <string name="notif_channel_name">Filterstatus</string>
     <string name="notif_channel_desc">Zeigt an, dass OpenLumen derzeit das Display einfärbt.</string>
-    <string name="notif_title">OpenLumen aktiv</string>
+    <string name="notif_title_filtering">OpenLumen filtert</string>
+    <string name="notif_title_standby">OpenLumen Bereitschaft</string>
+    <string name="notif_status_filtering">Filter aktiv</string>
+    <string name="notif_status_standby">Bereitschaft – Filter nicht angewendet</string>
     <string name="notif_action_off">Ausschalten</string>
     <string name="notif_action_cycle">Nächste Vorlage</string>
     <string name="notif_alarm_countdown">%1$d Std. %2$d Min. bis zum Wecker</string>
@@ -234,6 +237,7 @@
     <string name="light_sensor_now">Aktuell: %1$d Lux</string>
     <string name="light_sensor_threshold">Schwellenwert: %1$d Lux</string>
     <string name="light_sensor_threshold_state">%1$d Lux Schwellenwert</string>
+    <string name="light_sensor_hysteresis">Aktivierung unter %1$d Lux; Deaktivierung über %2$d Lux gegen Flackern</string>
     <string name="light_sensor_calibrate">Kalibrieren: aktuellen Messwert als Schwellenwert verwenden</string>
 
     <string name="location_title">Standort festlegen</string>

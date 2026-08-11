@@ -45,26 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C222 — Notification countdown becomes stale after an alarm or reevaluation
-  Category: ux
-  Where: app/src/main/java/com/openlumen/service/LumenService.kt:321-368,423-425, ScheduleAlarmReceiver.kt, and app/src/main/res/values/strings.xml:207-212
-  Problem: The "until alarm" countdown is computed only during preference emissions through updateNotificationSubtitle. ACTION_REEVALUATE and ScheduleAlarmReceiver do not update it, and there is no chronometer/timer. The notification can continue showing a future countdown after the alarm fired or show a past value until an unrelated preference change.
-  Evidence: The countdown fields are read from preferences and updated in the emission handler; the receiver's transition path starts/re-evaluates service work without a notification refresh. No scheduled countdown update exists between emissions.
-  Fix: Refresh the subtitle whenever a transition/reevaluation changes the next alarm, or use a platform chronometer/strictly bounded periodic update for a live countdown. Clear the countdown when no future alarm exists.
-  Acceptance: Delivering the scheduled alarm or an explicit reevaluation updates/removes the countdown immediately; notification text never reports a stale/past next alarm after the service has recomputed the schedule.
-  Confidence: Verified
-  Effort: M
-
-- [ ] P2 — C223 — Foreground notification copy claims "active" while the service is only on standby
-  Category: ux
-  Where: app/src/main/res/values/strings.xml:207-212 and app/src/main/java/com/openlumen/service/LumenService.kt:289-302,321-368
-  Problem: The foreground notification title is always "OpenLumen active" whenever the enabled service is running, even when a fixed/solar schedule is outside its interval or an ambient threshold is not met. The subtitle only adds the next alarm and does not state that the filter is currently inactive.
-  Evidence: startInForeground uses the same active title for every p.enabled service state; the service distinguishes shouldBeActive internally but does not map it to notification title/status copy. Users therefore cannot tell "service running" from "filter currently applied."
-  Fix: Provide separate service-running/standby/actively-filtering copy and update the notification on active-state transitions, retaining the next-transition information. Use calm, unambiguous terminology consistent with Home status text.
-  Acceptance: An enabled but out-of-window service notification explicitly says standby/not filtering, while an applied matrix says filtering active; transitions update without restarting the service.
-  Confidence: Likely
-  Effort: S
-
 - [ ] P2 — C224 — Notification permission denial is treated as permanent and cannot be retried in-app
   Category: ux
   Where: app/src/main/java/com/openlumen/ui/HomeScreen.kt:83-109, requestNotifIfNeeded, and CHANGELOG.md:332-336
