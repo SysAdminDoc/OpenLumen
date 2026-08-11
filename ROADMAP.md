@@ -4,57 +4,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
 
 ## Actionable Items
 
-Design-doc deliverables (deferred implementations with durable analysis):
-
-- [ ] **C11** Per-app pause/exclusions — deferred behind Shizuku spike (C06)
-
-- [ ] **C12** Secure/install/su dialog auto-pause — same blocker as C11
-
-- [ ] **C69** Per-app profiles — same Shizuku blocker
-
-- [ ] **C01** Real-device validation rows — per-engine smoke flow documented;
-  rows pending real hardware.
-
-- [ ] **C36** Store screenshot matrix — layout in place; captures pending
-  real device/emulator screenshots.
-
-- [ ] **C55/C56/C57** Accessibility scanner / dynamic font scale / CVD
-  contrast audit — still need a real device pass.
-  Static 2026-06-15 pass: profile deletion now has undo recovery,
-  chip controls use project shapes, widget labels use larger centered
-  ellipsized text, and stale light-theme screenshot baselines were
-  refreshed. Accessibility Scanner, font-scale screenshots, and CVD
-  contrast device evidence remain open.
-
-- [ ] **Device validation and driver report (C01)**
-   - Real-device rows in `docs/device-matrix.md`. Include at minimum: a
-     Pixel running stable Android 15 and Android 17 preview, a Samsung
-     One UI device, a Snapdragon device with a KCAL kernel, and a
-     non-root overlay device. The in-app driver report (already shipped)
-     is the data-collection mechanism.
-   - Impact 5, effort 3, risk 2. Why now: OpenLumen's multi-driver claim
-     cannot be trusted without per-device evidence and an easy bug-report
-     path. Sources: S00, S10, S11, S25, S26, S48, S86.
-
-- [ ] **F-Droid release packaging (C34, C35, C36, C37, C45)**
-   - C35 is shipped. Capture phone screenshots into
-      `fastlane/metadata/android/en-US/images/phoneScreenshots/` (C36),
-      confirm reproducibility on F-Droid's build server (C37), and walk
-     the pre-release checklist (C45). The 70% translation floor (S111)
-     applies for translated releases but the en-US baseline is enough
-     to ship.
-   - Impact 5, effort 3, risk 2. Sources: S00, S11, S29, S60, S61, S62,
-     S74, S111, S112.
-
-- [ ] **Android 17 readiness (C82 extension, supersedes API-36-only scope)**
-   - Validate on Android 17 Beta 4 (or stable when it lands in June
-     2026). Confirm: tile subtitle render, overlay alpha + cutout,
-     exact-alarm fallback, `specialUse` FGS subtype declaration, and
-     the new BAL hardening (C111). Add an Android 17 row to
-     `docs/device-matrix.md`. Bump `targetSdk` in its own release per
-     `docs/android-17-readiness.md` policy.
-   - Impact 4, effort 3, risk 3. Sources: S83, S84, S96.
-
 - [ ] **SYSTEM_ALERT_WINDOW + FGS-from-background restriction (C105, new)**
    - Android 15+ requires SAW apps to have a visible overlay window
      before starting an FGS from the background. Audit the tile/widget
@@ -63,42 +12,6 @@ Design-doc deliverables (deferred implementations with durable analysis):
      the app to grant the overlay permission, then re-attempts the
      service start.
    - Impact 4, effort 2, risk 2. Sources: S85.
-
-- [ ] **BOOT_COMPLETED FGS verification (C106, new)**
-   - Android 14+ blocks `BOOT_COMPLETED` from launching certain FGS
-     types. `specialUse` is not on the affected list per current docs,
-     but we should add an explicit Android 14/15/16/17 row to the
-     wake/vitals audit and the device matrix confirming the boot-
-     restore path still works.
-   - Impact 3, effort 1, risk 1. Sources: S85.
-
-- [ ] **Activity Background Start (BAL) hardening readiness (C111, new)**
-   - Android 17 deprecates `MODE_BACKGROUND_ACTIVITY_START_ALLOWED`
-     for `IntentSender` in favor of
-     `MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE`. Audit the
-     PendingIntent / notification-tap and tile long-press paths.
-   - Impact 3, effort 1, risk 1. Sources: S84.
-
-- [ ] **Overlay-safe interaction model (C10, C11, C12, C90, C91)**
-   - C10/C90 shipped via troubleshooting + notification/tile/ADB
-     emergency-off. The remaining work for Now is publishing the design
-     decision in `docs/overlay-and-per-app-design.md` (done) and
-     ensuring the per-app candidates (C11/C12/C69) are clearly
-     blocked-by-Shizuku in the public docs so users understand why
-     "auto-pause on installer" is not on the v1 list. The C91
-     SurfaceView regression test belongs here once we have a device.
-   - Impact 5, effort 3, risk 3. Sources: S10, S12, S18, S20, S26,
-     S32, S42, S67, S68, S71, S73, S88, S89, S108.
-
-- [ ] **Test and CI hardening (C83, C84, C91, C94)**
-    - C101 shipped the first Compose Preview Screenshot Testing fixture
-      and CI job. C83 remains the broader screen-coverage expansion.
-      Connected-device tests (C84) and
-      SurfaceView regression (C91) still need emulator infrastructure;
-      schedule once `reactivecircus/android-emulator-runner`
-      [S113] is wired in. SBOM/advisory scan (C94) already runs weekly
-      and on release.
-    - Impact 5, effort 3, risk 2. Sources: S97, S98, S113, S26, S27, S28.
 
 - [ ] **Security and supply-chain baseline (C38, C47-C51, C94)**
     - Already shipped; C142 refreshed the Actions baseline to
@@ -120,71 +33,17 @@ Design-doc deliverables (deferred implementations with durable analysis):
       they're auto-revoked see the receipt in our report.
     - Impact 3, effort 1, risk 1. Sources: S134, S135, S136.
 
-- [ ] **Shizuku-backed privileged backend (C06, also unblocks C11, C12, C69)**
-   - Optional flavor (or first-class detection at runtime), wired
-     through a new `ShizukuEngine` that uses `dumpsys activity recents` /
-     IActivityManager binder access for foreground-app detection. Lets
-     us ship per-app pause (C11), installer auto-pause (C12), and per-app
-     profiles (C69) without `PACKAGE_USAGE_STATS` or AccessibilityService
-     (which Android 17 AAPM auto-revokes — S88, S89, S90). Document the
-     Shizuku install path; don't bundle the library, just probe at
-     runtime.
-   - Impact 5, effort 5, risk 4. Sources: S12, S25, S33, S43, S115, S116.
-
-- [ ] **Wear OS companion (C21)** — separate F-Droid package (`com.openlumen.wear`)
-   that uses the Wearable Data Layer. Phone-side keeps the no-INTERNET
-   posture. Wear tile = single Toggle button. ProtoLayout for
-   responsive tile rendering (S117). No display tinting on the watch
-   itself.
-
-- [ ] **Driver compatibility learning (continued)** — extend
-   `SurfaceFlinger.candidatesFor()` and `Kcal.CANDIDATE_BASES` as device
-   reports arrive. Maintain `docs/device-matrix.md` per release.
-
 - [ ] **Preset system v2 polish** — preset-pack export/import (the JSON
-   format is already extensible); user-renameable presets; sort presets
-   alphabetically or by recency.
-
-- [ ] **Connected permission / overlay tests (C84, C91)** — emulator CI via
-   `reactivecircus/android-emulator-runner` covers
-   `SYSTEM_ALERT_WINDOW`, `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`,
-   blocked-touch behavior, and SurfaceView pass-through.
-
-- [ ] **Research watchlist maintenance** — review `docs/research-watchlist.md`
-   each release planning pass; add Android 17 behavior tracker, AAPM
-   updates, AGP 10 timeline (mid-2026 opt-out removal).
-
-- [ ] **Android TV flavor (C22)** — leanback metadata, D-pad navigation,
-  acknowledging that many TV firmwares ignore `ColorDisplayManager`.
-
-- [ ] **AMOLED-aware content-aware dimming (C67)** — privacy-heavy; requires
-  `MediaProjection` or accessibility access. After Android 17 AAPM
-  (S88) the accessibility door is closed for us; `MediaProjection`
-  shows a recording indicator that's terrible UX for an always-on
-  filter. Likely stays Later indefinitely.
-
-- [ ] **Partial-screen filters (C68)** — same per-app blocker as C11.
-
-- [ ] **Pixel-grid AMOLED dimming (C89)** — Pixel Filter's idea; risky
-  given Android 12+ untrusted-touch and overlay-alpha rules. Burn-in
-  perception concern.
+  format is already extensible); user-renameable presets; sort presets
+  alphabetically or by recency.
 
 - [ ] **PWM-sensitive workflow guidance** — document the OLED Saver (S103)
   / Iris approach without claiming health benefits.
-
-- [ ] **Multi-user / work-profile behavior (C81)** — polish after C11/C12.
 
 - [ ] **Local diagnostics viewer with timeline filtering** — already
   shipped as C53; the filter-by-category/level stretch also shipped
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
-
-- [ ] **Optional Play Store listing (C39)** — `specialUse` evidence pack
-  is ready (C93); we just have not committed maintenance bandwidth.
-  See [docs/play-fgs-evidence.md](docs/play-fgs-evidence.md).
-
-- [ ] **System brightness write support (C86)** — confusing UX (two
-  brightness sliders); probably reject.
 
 - [ ] P2 — C221 — Ambient threshold has no hysteresis or dwell protection
   Category: reliability
