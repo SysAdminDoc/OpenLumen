@@ -41,27 +41,27 @@ class OpenLumenViewModel @Inject constructor(
     private val prefs: PreferencesStore,
     private val probe: DriverProbe,
     private val lightSensor: LightSensorAdapter
-) : AndroidViewModel(application) {
+) : AndroidViewModel(application), OpenLumenScreenModel {
 
     private val tag = "OpenLumen/ViewModel"
 
-    val state: StateFlow<Preferences> = prefs.flow
+    override val state: StateFlow<Preferences> = prefs.flow
         .stateIn(viewModelScope, SharingStarted.Eagerly, Preferences())
-    val preferenceRecovery: StateFlow<PreferencesRecovery?> = prefs.recovery
+    override val preferenceRecovery: StateFlow<PreferencesRecovery?> = prefs.recovery
 
     private val _probes = MutableStateFlow<List<DriverProbe.Probe>>(emptyList())
-    val probes: StateFlow<List<DriverProbe.Probe>> = _probes.asStateFlow()
+    override val probes: StateFlow<List<DriverProbe.Probe>> = _probes.asStateFlow()
 
     private val probeMutex = Mutex()
     private val _probesRefreshing = MutableStateFlow(false)
-    val probesRefreshing: StateFlow<Boolean> = _probesRefreshing.asStateFlow()
+    override val probesRefreshing: StateFlow<Boolean> = _probesRefreshing.asStateFlow()
     private val _probeError = MutableStateFlow<String?>(null)
-    val probeError: StateFlow<String?> = _probeError.asStateFlow()
+    override val probeError: StateFlow<String?> = _probeError.asStateFlow()
 
     /** Live ambient-light lux reading. -1 means no sensor / not yet emitted. */
-    val lux: StateFlow<Float> = lightSensor.lux()
+    override val lux: StateFlow<Float> = lightSensor.lux()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1f)
-    val lightSensorAvailable: StateFlow<Boolean> = lightSensor.availability
+    override val lightSensorAvailable: StateFlow<Boolean> = lightSensor.availability
 
     init {
         viewModelScope.launch {
@@ -81,7 +81,7 @@ class OpenLumenViewModel @Inject constructor(
         refreshProbes()
     }
 
-    fun setEnabled(enabled: Boolean) {
+    override fun setEnabled(enabled: Boolean) {
         viewModelScope.launch {
             // Order matters: write the pref first so the service's
             // observePreferences sees `enabled=true` on its first flow
@@ -102,21 +102,21 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun selectPreset(key: String) = viewModelScope.launch {
+    override fun selectPreset(key: String) = viewModelScope.launch {
         prefs.update {
             com.openlumen.prefs.PresetCycle.setActiveKey(it, key, PresetKeyResolver::isKnown)
         }
     }
 
     /** Restore the previously-active preset (C14). No-op if none recorded. */
-    fun restorePreviousPreset() = viewModelScope.launch {
+    override fun restorePreviousPreset() = viewModelScope.launch {
         prefs.update {
             com.openlumen.prefs.PresetCycle.restorePrevious(it, PresetKeyResolver::isKnown)
         }
     }
 
     /** Save the current configuration into the named-profile library (C31). */
-    fun saveProfileAs(name: String, replaceExisting: Boolean = false) = viewModelScope.launch {
+    override fun saveProfileAs(name: String, replaceExisting: Boolean) = viewModelScope.launch {
         prefs.update { current ->
             com.openlumen.prefs.Profiles.saveCurrentAs(
                 current,
@@ -126,19 +126,19 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun loadProfile(name: String) = viewModelScope.launch {
+    override fun loadProfile(name: String) = viewModelScope.launch {
         prefs.update { com.openlumen.prefs.Profiles.loadByName(it, name) }
     }
 
-    fun deleteProfile(name: String) = viewModelScope.launch {
+    override fun deleteProfile(name: String) = viewModelScope.launch {
         prefs.update { com.openlumen.prefs.Profiles.delete(it, name) }
     }
 
-    fun restoreDeletedProfile(profile: NamedProfile) = viewModelScope.launch {
+    override fun restoreDeletedProfile(profile: NamedProfile) = viewModelScope.launch {
         prefs.update { com.openlumen.prefs.Profiles.restoreDeleted(it, profile) }
     }
 
-    fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {
+    override fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {
         prefs.update { current ->
             if (mode == ScheduleModeDto.Solar &&
                 !isValidSolarLocation(current.schedule.latitude, current.schedule.longitude)
@@ -150,7 +150,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setScheduleTimes(startH: Int, startM: Int, endH: Int, endM: Int) = viewModelScope.launch {
+    override fun setScheduleTimes(startH: Int, startM: Int, endH: Int, endM: Int) = viewModelScope.launch {
         prefs.update {
             it.copy(schedule = it.schedule.copy(
                 startHour = startH, startMinute = startM, endHour = endH, endMinute = endM
@@ -158,7 +158,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setLocation(lat: Double, lng: Double, solarTimezone: String? = null) = viewModelScope.launch {
+    override fun setLocation(lat: Double, lng: Double, solarTimezone: String?) = viewModelScope.launch {
         if (!isValidSolarLocation(lat, lng)) return@launch
         prefs.update {
             it.copy(
@@ -171,25 +171,25 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
+    override fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
         prefs.update { it.copy(engine = availableEngineOrAuto(kind)) }
     }
 
-    fun setIntensity(value: Float) = viewModelScope.launch {
+    override fun setIntensity(value: Float) = viewModelScope.launch {
         prefs.update { it.copy(presetIntensity = value.coerceIn(0f, 1f)) }
     }
 
-    fun setDim(value: Float) = viewModelScope.launch {
+    override fun setDim(value: Float) = viewModelScope.launch {
         prefs.update { it.copy(dim = value.coerceIn(0f, 0.95f)) }
     }
 
     /** AMOLED true-black clamp (C66). Off by default; safe no-op on LCD. */
-    fun setAmoledBlackClamp(enabled: Boolean) = viewModelScope.launch {
+    override fun setAmoledBlackClamp(enabled: Boolean) = viewModelScope.launch {
         prefs.update { it.copy(amoledBlackClamp = enabled) }
     }
 
     /** Contrast multiplier (C64). 1.0 = identity. */
-    fun setContrast(value: Float) = viewModelScope.launch {
+    override fun setContrast(value: Float) = viewModelScope.launch {
         prefs.update {
             it.copy(
                 contrast = value.coerceIn(
@@ -200,7 +200,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setCustomRgb(r: Float, g: Float, b: Float) = viewModelScope.launch {
+    override fun setCustomRgb(r: Float, g: Float, b: Float) = viewModelScope.launch {
         prefs.update {
             it.copy(
                 activePresetKey = "custom",
@@ -219,7 +219,7 @@ class OpenLumenViewModel @Inject constructor(
      * range is clamped at the [com.openlumen.engine.Kelvin] bounds before
      * conversion.
      */
-    fun setCustomKelvin(kelvin: Int) = viewModelScope.launch {
+    override fun setCustomKelvin(kelvin: Int) = viewModelScope.launch {
         val rgb = com.openlumen.engine.Kelvin.toRgb(kelvin)
         prefs.update {
             it.copy(
@@ -229,7 +229,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setGamma(r: Float, g: Float, b: Float) = viewModelScope.launch {
+    override fun setGamma(r: Float, g: Float, b: Float) = viewModelScope.launch {
         prefs.update {
             it.copy(
                 customMatrix = it.customMatrix.copy(
@@ -241,7 +241,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setScheduleOffsets(sunsetMin: Int, sunriseMin: Int) = viewModelScope.launch {
+    override fun setScheduleOffsets(sunsetMin: Int, sunriseMin: Int) = viewModelScope.launch {
         prefs.update {
             it.copy(schedule = it.schedule.copy(
                 sunsetOffsetMin = sunsetMin.coerceIn(-180, 180),
@@ -255,7 +255,7 @@ class OpenLumenViewModel @Inject constructor(
      * broadcast covers the background case; returning from Settings covers
      * OEMs that omit or delay that broadcast, especially after revocation.
      */
-    fun reconcileExactAlarmPermission() = viewModelScope.launch {
+    override fun reconcileExactAlarmPermission() = viewModelScope.launch {
         val current = prefs.flow.first()
         if (!com.openlumen.service.ExactAlarmPermissionReceiver.shouldReconcile(current)) return@launch
         val ctx = getApplication<Application>()
@@ -270,7 +270,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun setLightSensor(enabled: Boolean, threshold: Float) = viewModelScope.launch {
+    override fun setLightSensor(enabled: Boolean, threshold: Float) = viewModelScope.launch {
         if (enabled && !lightSensor.availability.value) return@launch
         prefs.update {
             it.copy(
@@ -285,13 +285,13 @@ class OpenLumenViewModel @Inject constructor(
      * clamps the persisted value into 0..TRANSITION_MAX_MS; 0 disables
      * the ramp entirely.
      */
-    fun setTransitionDuration(durationMs: Long) = viewModelScope.launch {
+    override fun setTransitionDuration(durationMs: Long) = viewModelScope.launch {
         prefs.update {
             it.copy(transitionDurationMs = durationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS))
         }
     }
 
-    fun refreshProbes() = viewModelScope.launch {
+    override fun refreshProbes() = viewModelScope.launch {
         // Keep repeated taps single-flight at the UI boundary. DriverProbe
         // also serializes this generation with service-side resolution.
         if (!probeMutex.tryLock()) return@launch
@@ -327,13 +327,13 @@ class OpenLumenViewModel @Inject constructor(
      * [_probes], current [state] preferences, plus device + permission info
      * pulled from the Android `Context`. No I/O.
      */
-    fun buildDriverReport(): String =
+    override fun buildDriverReport(): String =
         DriverReport.build(getApplication(), state.value, _probes.value)
 
     private val _exportResult = MutableStateFlow<String?>(null)
-    val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
+    override val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
-    fun exportTo(uri: Uri) = viewModelScope.launch {
+    override fun exportTo(uri: Uri) = viewModelScope.launch {
         val result = prefs.exportTo(uri)
         _exportResult.value = if (result.isSuccess) {
             getString(R.string.backup_exported)
@@ -342,7 +342,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun exportCorruptPreferencesTo(uri: Uri) = viewModelScope.launch {
+    override fun exportCorruptPreferencesTo(uri: Uri) = viewModelScope.launch {
         val result = prefs.exportCorruptTo(uri)
         _exportResult.value = if (result.isSuccess) {
             getString(R.string.backup_recovery_exported)
@@ -351,7 +351,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun resetCorruptPreferences() = viewModelScope.launch {
+    override fun resetCorruptPreferences() = viewModelScope.launch {
         val result = prefs.resetCorruptPreferences()
         _exportResult.value = if (result.isSuccess) {
             getString(R.string.backup_recovery_reset)
@@ -360,7 +360,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun importFrom(uri: Uri) = viewModelScope.launch {
+    override fun importFrom(uri: Uri) = viewModelScope.launch {
         val result = prefs.importFrom(uri)
         _exportResult.value = if (result.isSuccess) {
             importMessage(result.getOrThrow())
@@ -388,7 +388,7 @@ class OpenLumenViewModel @Inject constructor(
             ?: exceptionOrNull()?.javaClass?.simpleName
             ?: getApplication<Application>().getString(R.string.error_unknown)
 
-    fun consumeExportResult() { _exportResult.value = null }
+    override fun consumeExportResult() { _exportResult.value = null }
 
     /**
      * Import preview (C30). Decodes + migrates + sanitizes the incoming
@@ -397,13 +397,13 @@ class OpenLumenViewModel @Inject constructor(
      * sanitized snapshot is applied rather than reopening the external URI.
      */
     private val _pendingImport = MutableStateFlow<PendingImport?>(null)
-    val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
+    override val pendingImport: StateFlow<PendingImport?> = _pendingImport.asStateFlow()
 
     data class PendingImport(val summary: ImportSummary) {
         val decoded: Preferences get() = summary.preferences
     }
 
-    fun beginImportPreview(uri: Uri) = viewModelScope.launch {
+    override fun beginImportPreview(uri: Uri) = viewModelScope.launch {
         val result = prefs.previewImport(uri)
         if (result.isSuccess) {
             _pendingImport.value = PendingImport(result.getOrThrow())
@@ -412,7 +412,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun confirmPendingImport() = viewModelScope.launch {
+    override fun confirmPendingImport() = viewModelScope.launch {
         val pending = _pendingImport.value ?: return@launch
         val result = prefs.applyImport(pending.summary)
         if (result.isSuccess) {
@@ -423,7 +423,7 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    fun cancelPendingImport() {
+    override fun cancelPendingImport() {
         _pendingImport.value = null
     }
 
@@ -431,7 +431,7 @@ class OpenLumenViewModel @Inject constructor(
      * Favorites toggle (C15). Used by the Presets screen and by upcoming
      * notification-cycle / 4x1 widget command surfaces.
      */
-    fun toggleFavorite(key: String) = viewModelScope.launch {
+    override fun toggleFavorite(key: String) = viewModelScope.launch {
         if (!PresetKeyResolver.isKnown(key)) return@launch
         prefs.update { current ->
             val next = if (key in current.favoritePresetKeys) {

@@ -48,10 +48,11 @@ import com.openlumen.prefs.EngineKindDto
 import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
+import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
 
 @Composable
-fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
+fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>()) {
     val ctx = LocalContext.current
     val prefs by vm.state.collectAsStateWithLifecycle()
     val probes by vm.probes.collectAsStateWithLifecycle()

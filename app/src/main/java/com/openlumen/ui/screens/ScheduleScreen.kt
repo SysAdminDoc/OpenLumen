@@ -51,21 +51,27 @@ import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.viewmodel.OpenLumenViewModel
+import com.openlumen.viewmodel.OpenLumenScreenModel
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
-fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
+fun ScheduleScreen(
+    vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>(),
+    enableSystemActions: Boolean = true
+) {
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefs by vm.state.collectAsStateWithLifecycle()
     val lux by vm.lux.collectAsStateWithLifecycle()
     val lightSensorAvailable by vm.lightSensorAvailable.collectAsStateWithLifecycle()
 
-    var canScheduleExactAlarms by remember(ctx) {
-        mutableStateOf(ExactAlarmAccess.canScheduleExactAlarms(ctx))
+    var canScheduleExactAlarms by remember(ctx, enableSystemActions) {
+        mutableStateOf(
+            !enableSystemActions || ExactAlarmAccess.canScheduleExactAlarms(ctx)
+        )
     }
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
@@ -89,7 +95,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         equalFixedTimesError = false
     }
 
-    DisposableEffect(lifecycleOwner, ctx) {
+    if (enableSystemActions) DisposableEffect(lifecycleOwner, ctx) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
                 val refreshed = ExactAlarmAccess.canScheduleExactAlarms(ctx)
@@ -102,7 +108,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(ctx) {
+    if (enableSystemActions) LaunchedEffect(ctx) {
         val refreshed = ExactAlarmAccess.canScheduleExactAlarms(ctx)
         if (refreshed != canScheduleExactAlarms) {
             canScheduleExactAlarms = refreshed

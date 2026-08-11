@@ -16,6 +16,7 @@
 - Auto driver explanations now use the same shared root → CDM → Overlay resolver as the service, including the no-driver state.
 - Driver re-probing is now single-flight across the UI and service, preserves the last known result during refresh, and exposes a localized retry state when probing fails.
 - Profile saves now require explicit confirmation before replacing a trimmed, case-insensitive name collision; canceling leaves the original snapshot untouched.
+- Screenshot coverage now renders the production navigation root and real screens with deterministic state, including light/dark themes, phone/rail layouts, loading/error/empty states, and an import dialog.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

@@ -52,6 +52,8 @@ import com.openlumen.ui.screens.HomeScreen
 import com.openlumen.ui.screens.PresetsScreen
 import com.openlumen.ui.screens.ScheduleScreen
 import com.openlumen.ui.theme.OpenLumenTheme
+import com.openlumen.viewmodel.OpenLumenScreenModel
+import androidx.compose.foundation.isSystemInDarkTheme
 
 private sealed class Dest(val route: String, val labelRes: Int, val iconRes: Int) {
     data object Home     : Dest("home",     R.string.nav_home,     R.drawable.ic_nav_home)
@@ -66,8 +68,13 @@ private sealed class Dest(val route: String, val labelRes: Int, val iconRes: Int
 }
 
 @Composable
-fun OpenLumenRoot() {
-    OpenLumenTheme {
+fun OpenLumenRoot(
+    screenModel: OpenLumenScreenModel? = null,
+    initialRoute: String = Dest.Home.route,
+    enableSystemActions: Boolean = true,
+    darkTheme: Boolean? = null
+) {
+    OpenLumenTheme(darkTheme = darkTheme ?: isSystemInDarkTheme()) {
         val nav = rememberNavController()
         val backStack by nav.currentBackStackEntryAsState()
         val currentRoute = backStack?.destination?.route
@@ -93,6 +100,9 @@ fun OpenLumenRoot() {
             ) { innerPadding ->
                 OpenLumenNavHost(
                     nav = nav,
+                    startRoute = initialRoute,
+                    screenModel = screenModel,
+                    enableSystemActions = enableSystemActions,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
@@ -112,6 +122,9 @@ fun OpenLumenRoot() {
                 )
                 OpenLumenNavHost(
                     nav = nav,
+                    startRoute = initialRoute,
+                    screenModel = screenModel,
+                    enableSystemActions = enableSystemActions,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -260,18 +273,36 @@ internal fun navigationRailMetrics(fontScale: Float): NavigationRailMetrics {
 @Composable
 private fun OpenLumenNavHost(
     nav: NavHostController,
+    startRoute: String,
+    screenModel: OpenLumenScreenModel?,
+    enableSystemActions: Boolean,
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = nav,
-        startDestination = Dest.Home.route,
+        startDestination = startRoute,
         modifier = modifier
     ) {
-        composable(Dest.Home.route)     { HomeScreen() }
-        composable(Dest.Schedule.route) { ScheduleScreen() }
-        composable(Dest.Presets.route)  { PresetsScreen() }
-        composable(Dest.Driver.route)   { DriverScreen() }
-        composable(Dest.About.route)    { AboutScreen() }
+        composable(Dest.Home.route) {
+            if (screenModel == null) HomeScreen(enableSystemActions = enableSystemActions)
+            else HomeScreen(screenModel, enableSystemActions)
+        }
+        composable(Dest.Schedule.route) {
+            if (screenModel == null) ScheduleScreen(enableSystemActions = enableSystemActions)
+            else ScheduleScreen(screenModel, enableSystemActions)
+        }
+        composable(Dest.Presets.route) {
+            if (screenModel == null) PresetsScreen(enableSystemActions = enableSystemActions)
+            else PresetsScreen(screenModel, enableSystemActions)
+        }
+        composable(Dest.Driver.route) {
+            if (screenModel == null) DriverScreen()
+            else DriverScreen(screenModel)
+        }
+        composable(Dest.About.route) {
+            if (screenModel == null) AboutScreen(enableSystemActions = enableSystemActions)
+            else AboutScreen(screenModel, enableSystemActions)
+        }
     }
 }
 

@@ -52,19 +52,25 @@ import com.openlumen.presetLabel
 import com.openlumen.prefs.Preferences
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.ui.theme.lumenChannelColors
+import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun PresetsScreen(vm: OpenLumenViewModel = hiltViewModel()) {
+fun PresetsScreen(
+    vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>(),
+    enableSystemActions: Boolean = true
+) {
     val prefs by vm.state.collectAsStateWithLifecycle()
     val favorites = prefs.favoritePresetKeys.toSet()
     val scope = rememberCoroutineScope()
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
 
-    BackHandler(navigator.canNavigateBack()) {
-        scope.launch { navigator.navigateBack() }
+    if (enableSystemActions) {
+        BackHandler(navigator.canNavigateBack()) {
+            scope.launch { navigator.navigateBack() }
+        }
     }
 
     ListDetailPaneScaffold(

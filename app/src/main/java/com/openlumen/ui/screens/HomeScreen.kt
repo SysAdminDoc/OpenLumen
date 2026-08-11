@@ -65,6 +65,7 @@ import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.theme.lumenChannelColors
+import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -79,7 +80,10 @@ import kotlin.math.roundToInt
 private const val DIM_FINE_STEP: Float = 0.005f
 
 @Composable
-fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
+fun HomeScreen(
+    vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>(),
+    enableSystemActions: Boolean = true
+) {
     val prefs by vm.state.collectAsStateWithLifecycle()
     val preset = Presets.byKey(prefs.activePresetKey)
     val activePresetLabel = preset?.let { presetLabel(it.key, it.displayName) }
@@ -113,8 +117,10 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         ).ordinal
         if (granted) notificationSettingsLaunchFailed = false
     }
-    LaunchedEffect(Unit) { refreshNotificationPermissionState() }
-    val notifLauncher = rememberLauncherForActivityResult(
+    if (enableSystemActions) {
+        LaunchedEffect(Unit) { refreshNotificationPermissionState() }
+    }
+    val notifLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         val rationale = Build.VERSION.SDK_INT >= 33 && activity?.let {
@@ -140,10 +146,12 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                 "notification permission denied; recovery=${if (rationale) "retry" else "settings"}"
             )
         }
+    } else {
+        null
     }
-    val requestNotifIfNeeded: () -> Unit = remember {
+    val requestNotifIfNeeded: () -> Unit = remember(enableSystemActions, notifLauncher) {
         {
-            if (Build.VERSION.SDK_INT >= 33 &&
+            if (enableSystemActions && notifLauncher != null && Build.VERSION.SDK_INT >= 33 &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED &&
                 !notifPromptPrefs.getBoolean("notification_permission_asked", false)
@@ -152,7 +160,8 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
     }
-    val openNotificationSettings: () -> Unit = {
+    val openNotificationSettings: () -> Unit = openNotificationSettings@{
+        if (!enableSystemActions) return@openNotificationSettings
         val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -265,7 +274,7 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             }
         }
 
-        when (NotificationPermissionUiState.entries[notificationPermissionUiState]) {
+        if (enableSystemActions) when (NotificationPermissionUiState.entries[notificationPermissionUiState]) {
             NotificationPermissionUiState.Hidden -> Unit
             NotificationPermissionUiState.Rationale,
             NotificationPermissionUiState.Settings -> Card(
@@ -296,7 +305,8 @@ fun HomeScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     LumenOutlinedButton(
                         onClick = if (rationale) {
                             {
-                                notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                notifLauncher?.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                Unit
                             }
                         } else {
                             openNotificationSettings

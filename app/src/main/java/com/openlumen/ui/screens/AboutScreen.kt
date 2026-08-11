@@ -65,6 +65,7 @@ import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenTextButton
+import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -72,7 +73,10 @@ import java.util.Locale
 private val DialogLogMaxHeight = 420.dp
 
 @Composable
-fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
+fun AboutScreen(
+    vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>(),
+    enableSystemActions: Boolean = true
+) {
     val ctx = LocalContext.current
     val result by vm.exportResult.collectAsStateWithLifecycle()
     var showCrashLog by rememberSaveable { mutableStateOf(false) }
@@ -85,16 +89,19 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val exportLauncher = rememberLauncherForActivityResult(
+    val exportLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri -> uri?.let(vm::exportTo) }
+    else null
 
-    val importLauncher = rememberLauncherForActivityResult(
+    val importLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(vm::beginImportPreview) }
-    val recoveryExportLauncher = rememberLauncherForActivityResult(
+    else null
+    val recoveryExportLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri -> uri?.let(vm::exportCorruptPreferencesTo) }
+    else null
 
     val pendingImport by vm.pendingImport.collectAsStateWithLifecycle()
     val preferenceRecovery by vm.preferenceRecovery.collectAsStateWithLifecycle()
@@ -164,12 +171,12 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                     )
                     LumenButton(
                         onClick = {
-                            exportLauncher.launch("openlumen-profile-${java.time.LocalDate.now()}.json")
+                            exportLauncher?.launch("openlumen-profile-${java.time.LocalDate.now()}.json")
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(stringResource(R.string.about_export_profile)) }
                     LumenOutlinedButton(
-                        onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
+                        onClick = { importLauncher?.launch(arrayOf("application/json", "text/plain")) },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(stringResource(R.string.about_import_profile)) }
                     preferenceRecovery?.let { recovery ->
@@ -198,7 +205,7 @@ fun AboutScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                                 )
                                 LumenButton(
                                     onClick = {
-                                        recoveryExportLauncher.launch("openlumen-corrupt-preferences.json")
+                                        recoveryExportLauncher?.launch("openlumen-corrupt-preferences.json")
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.backup_recovery_export)) }
