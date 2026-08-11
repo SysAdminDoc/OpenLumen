@@ -8,6 +8,7 @@ import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesRecovery
 import com.openlumen.prefs.ScheduleModeDto
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -27,11 +28,14 @@ interface OpenLumenScreenModel {
     val lightSensorAvailable: StateFlow<Boolean>
     val exportResult: StateFlow<String?>
     val pendingImport: StateFlow<OpenLumenViewModel.PendingImport?>
+    val pendingPresetPack: StateFlow<OpenLumenViewModel.PendingPresetPack?>
+        get() = MutableStateFlow(null)
 
     fun setEnabled(enabled: Boolean)
     fun selectPreset(key: String): Job
     fun restorePreviousPreset(): Job
     fun saveProfileAs(name: String, replaceExisting: Boolean = false): Job
+    fun renameProfile(oldName: String, newName: String): Job = Job()
     fun loadProfile(name: String): Job
     fun deleteProfile(name: String): Job
     fun restoreDeletedProfile(profile: NamedProfile): Job
@@ -61,4 +65,10 @@ interface OpenLumenScreenModel {
     fun confirmPendingImport(): Job
     fun cancelPendingImport()
     fun toggleFavorite(key: String): Job
+    fun renamePreset(key: String, name: String): Job = Job()
+    fun setPresetSortOrder(order: com.openlumen.prefs.PresetSortOrder): Job = Job()
+    fun exportPresetPack(uri: Uri): Job = Job()
+    fun beginPresetPackPreview(uri: Uri): Job = Job()
+    fun confirmPendingPresetPack(): Job = Job()
+    fun cancelPendingPresetPack() = Unit
 }

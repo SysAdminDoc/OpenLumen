@@ -86,7 +86,9 @@ fun HomeScreen(
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
     val preset = Presets.byKey(prefs.activePresetKey)
-    val activePresetLabel = preset?.let { presetLabel(it.key, it.displayName) }
+    val activePresetLabel = preset?.let {
+        presetLabel(it.key, it.displayName, prefs.presetNameOverrides[it.key])
+    }
         ?: prefs.activePresetKey
 
     val context = LocalContext.current

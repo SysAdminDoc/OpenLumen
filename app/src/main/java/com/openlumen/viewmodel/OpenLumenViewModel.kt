@@ -16,7 +16,10 @@ import com.openlumen.prefs.NamedProfile
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesRecovery
 import com.openlumen.prefs.PreferencesStore
+import com.openlumen.prefs.PresetPackImportSummary
+import com.openlumen.prefs.PresetSortOrder
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.prefs.touchPreset
 import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.isValidSolarLocation
@@ -104,7 +107,13 @@ class OpenLumenViewModel @Inject constructor(
 
     override fun selectPreset(key: String) = viewModelScope.launch {
         prefs.update {
-            com.openlumen.prefs.PresetCycle.setActiveKey(it, key, PresetKeyResolver::isKnown)
+            if (!PresetKeyResolver.isKnown(key)) {
+                it
+            } else {
+                com.openlumen.prefs.PresetCycle
+                    .setActiveKey(it, key, PresetKeyResolver::isKnown)
+                    .touchPreset(key)
+            }
         }
     }
 
@@ -126,8 +135,20 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    override fun renameProfile(oldName: String, newName: String) = viewModelScope.launch {
+        prefs.update { current ->
+            com.openlumen.prefs.Profiles.rename(current, oldName, newName)
+        }
+    }
+
     override fun loadProfile(name: String) = viewModelScope.launch {
-        prefs.update { com.openlumen.prefs.Profiles.loadByName(it, name) }
+        prefs.update { current ->
+            val loaded = com.openlumen.prefs.Profiles.loadByName(current, name)
+            loaded.activePresetKey
+                .takeIf(PresetKeyResolver::isKnown)
+                ?.let { loaded.touchPreset(it) }
+                ?: loaded
+        }
     }
 
     override fun deleteProfile(name: String) = viewModelScope.launch {
@@ -441,6 +462,66 @@ class OpenLumenViewModel @Inject constructor(
             }
             current.copy(favoritePresetKeys = next)
         }
+    }
+
+    override fun renamePreset(key: String, name: String) = viewModelScope.launch {
+        if (!PresetKeyResolver.isKnown(key)) return@launch
+        prefs.update { current ->
+            val cleanName = name.trim().take(Preferences.MAX_PROFILE_NAME_LENGTH)
+            val overrides = if (cleanName.isBlank()) {
+                current.presetNameOverrides - key
+            } else {
+                current.presetNameOverrides + (key to cleanName)
+            }
+            current.copy(presetNameOverrides = overrides)
+        }
+    }
+
+    override fun setPresetSortOrder(order: PresetSortOrder) = viewModelScope.launch {
+        prefs.update { it.copy(presetSortOrder = order) }
+    }
+
+    override fun exportPresetPack(uri: Uri) = viewModelScope.launch {
+        val result = prefs.exportPresetPack(uri)
+        _exportResult.value = if (result.isSuccess) {
+            getString(R.string.backup_preset_pack_exported)
+        } else {
+            getString(R.string.backup_export_failed, result.errorText())
+        }
+    }
+
+    private val _pendingPresetPack = MutableStateFlow<PendingPresetPack?>(null)
+    override val pendingPresetPack: StateFlow<PendingPresetPack?> = _pendingPresetPack.asStateFlow()
+
+    data class PendingPresetPack(val summary: PresetPackImportSummary)
+
+    override fun beginPresetPackPreview(uri: Uri) = viewModelScope.launch {
+        val result = prefs.previewPresetPack(uri)
+        if (result.isSuccess) {
+            _pendingPresetPack.value = PendingPresetPack(result.getOrThrow())
+        } else {
+            _exportResult.value = getString(R.string.backup_preset_pack_import_failed, result.errorText())
+        }
+    }
+
+    override fun confirmPendingPresetPack() = viewModelScope.launch {
+        val pending = _pendingPresetPack.value ?: return@launch
+        val result = prefs.applyPresetPack(pending.summary)
+        if (result.isSuccess) {
+            if (_pendingPresetPack.value == pending) _pendingPresetPack.value = null
+            val summary = result.getOrThrow()
+            _exportResult.value = getString(
+                R.string.backup_preset_pack_imported,
+                summary.importedProfileNames.size,
+                summary.replacedProfileNames.size
+            )
+        } else {
+            _exportResult.value = getString(R.string.backup_preset_pack_import_failed, result.errorText())
+        }
+    }
+
+    override fun cancelPendingPresetPack() {
+        _pendingPresetPack.value = null
     }
 
     private fun startService(): Boolean {

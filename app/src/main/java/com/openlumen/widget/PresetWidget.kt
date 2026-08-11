@@ -88,7 +88,12 @@ private class PresetGlanceWidget : GlanceAppWidget() {
             .take(SLOT_COUNT)
             .map { entry ->
                 PresetSlotUi(
-                    label = presetDisplayName(context, entry.key, entry.displayName),
+                    label = presetDisplayName(
+                        context,
+                        entry.key,
+                        entry.displayName,
+                        snapshot.presetNameOverrides[entry.key]
+                    ),
                     color = Color(
                         red = entry.matrix.r.coerceIn(0f, 1f),
                         green = entry.matrix.g.coerceIn(0f, 1f),

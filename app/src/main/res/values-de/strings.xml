@@ -282,4 +282,25 @@
     <string name="backup_imported_skipped_duplicates">Importiert; doppelte Profile übersprungen: %1$s</string>
     <string name="backup_import_failed">Import fehlgeschlagen: %1$s</string>
     <string name="error_unknown">Unbekannter Fehler</string>
+    <string name="presets_sort_label">Sortieren</string>
+    <string name="presets_sort_alphabetical">A–Z</string>
+    <string name="presets_sort_recent">Zuletzt</string>
+    <string name="presets_saved_title">Gespeicherte Presets</string>
+    <string name="preset_saved_badge">Gespeichert</string>
+    <string name="preset_saved_detail">Dieses gespeicherte Preset enthält eigene Farb-, Zeitplan-, Treiber- und Intensitätseinstellungen. Zum Anwenden aus der Liste laden.</string>
+    <string name="preset_rename_action">Umbenennen</string>
+    <string name="preset_rename_title">Preset umbenennen</string>
+    <string name="preset_rename_label">Preset-Name</string>
+    <string name="preset_rename_reset">Zurücksetzen</string>
+    <string name="preset_pack_preview_title">Preset-Paket prüfen</string>
+    <string name="preset_pack_preview_summary">Dieses Paket fügt %1$d gespeicherte Presets hinzu und ersetzt %2$d vorhandene Namen.</string>
+    <string name="preset_pack_preview_replaced">Ersetzt: %1$s</string>
+    <string name="preset_pack_preview_safe">Importiert werden nur gespeicherte Presets und eingebaute Bezeichnungen. Filter, Zeitplan und Berechtigungen bleiben unverändert.</string>
+    <string name="backup_preset_pack_exported">Preset-Paket exportiert</string>
+    <string name="backup_preset_pack_imported">Preset-Paket importiert: %1$d hinzugefügt, %2$d ersetzt</string>
+    <string name="backup_preset_pack_import_failed">Preset-Paket konnte nicht importiert werden: %1$s</string>
+    <string name="about_export_preset_pack">Preset-Paket exportieren</string>
+    <string name="about_import_preset_pack">Preset-Paket importieren</string>
+    <string name="about_profiles_rename">Umbenennen</string>
+    <string name="about_profiles_rename_title">Profil umbenennen</string>
 </resources>

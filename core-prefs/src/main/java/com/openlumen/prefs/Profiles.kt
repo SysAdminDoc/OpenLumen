@@ -77,7 +77,8 @@ object Profiles {
     fun saveCurrentAs(
         current: Preferences,
         name: String,
-        replaceExisting: Boolean = false
+        replaceExisting: Boolean = false,
+        nowMs: Long = System.currentTimeMillis()
     ): Preferences {
         val cleanName = profileNameOrNull(name) ?: return current
         val nameKey = profileNameKey(cleanName) ?: return current
@@ -86,7 +87,7 @@ object Profiles {
         val hasExisting = existing.any { profileNameKey(it.name) == nameKey }
         if (hasExisting && !replaceExisting) return current
         val withoutDuplicate = existing.filterNot { profileNameKey(it.name) == nameKey }
-        val updated = (withoutDuplicate + NamedProfile(cleanName, snap))
+        val updated = (withoutDuplicate + NamedProfile(cleanName, snap, nowMs.coerceAtLeast(0L)))
             .takeLast(Preferences.MAX_PROFILES)
         return current.copy(savedProfiles = updated)
     }
@@ -103,9 +104,41 @@ object Profiles {
     /**
      * Load a profile by name. No-op if the name isn't in the library.
      */
-    fun loadByName(current: Preferences, name: String): Preferences {
+    fun loadByName(
+        current: Preferences,
+        name: String,
+        nowMs: Long = System.currentTimeMillis()
+    ): Preferences {
         val profile = findByName(current, name) ?: return current
-        return apply(current, profile.snapshot)
+        val touchedProfiles = current.savedProfiles.map { saved ->
+            if (profileNameKey(saved.name) == profileNameKey(profile.name)) {
+                saved.copy(lastUsedAtEpochMs = nowMs.coerceAtLeast(0L))
+            } else {
+                saved
+            }
+        }
+        return apply(current, profile.snapshot).copy(savedProfiles = touchedProfiles)
+    }
+
+    /** Rename a profile without changing its snapshot or recency. */
+    fun rename(current: Preferences, oldName: String, newName: String): Preferences {
+        val oldKey = profileNameKey(oldName) ?: return current
+        val cleanName = profileNameOrNull(newName) ?: return current
+        val newKey = profileNameKey(cleanName) ?: return current
+        val profile = current.savedProfiles.firstOrNull { profileNameKey(it.name) == oldKey }
+            ?: return current
+        if (newKey != oldKey && current.savedProfiles.any { profileNameKey(it.name) == newKey }) {
+            return current
+        }
+        return current.copy(
+            savedProfiles = current.savedProfiles.map { saved ->
+                if (profileNameKey(saved.name) == oldKey) {
+                    profile.copy(name = cleanName)
+                } else {
+                    saved
+                }
+            }
+        )
     }
 
     /** Drop the named profile from the library. No-op if it isn't there. */

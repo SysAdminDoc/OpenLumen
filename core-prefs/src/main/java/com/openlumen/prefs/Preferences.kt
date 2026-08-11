@@ -30,8 +30,32 @@ data class ProfileSnapshot(
 @Serializable
 data class NamedProfile(
     val name: String,
-    val snapshot: ProfileSnapshot
+    val snapshot: ProfileSnapshot,
+    /** Last save/load time used by the optional recency sort. */
+    val lastUsedAtEpochMs: Long = 0L
 )
+
+@Serializable
+enum class PresetSortOrder { Alphabetical, Recent }
+
+/** Portable preset-only payload. It deliberately excludes runtime settings. */
+@Serializable
+data class PresetPack(
+    val format: String = FORMAT,
+    val version: Int = CURRENT_VERSION,
+    val profiles: List<NamedProfile> = emptyList(),
+    val presetNameOverrides: Map<String, String> = emptyMap()
+) {
+    companion object {
+        const val FORMAT: String = "openlumen-preset-pack"
+        const val CURRENT_VERSION: Int = 1
+
+        fun from(preferences: Preferences): PresetPack = PresetPack(
+            profiles = preferences.savedProfiles,
+            presetNameOverrides = preferences.presetNameOverrides
+        )
+    }
+}
 
 /** Serializable mirror of LumenMatrix (core-engine has no kotlinx-serialization dep). */
 @Serializable
@@ -113,6 +137,12 @@ data class Preferences(
     val lightSensorLuxThreshold: Float = 2f,
     val firstRunComplete: Boolean = false,
     val favoritePresetKeys: List<String> = DEFAULT_FAVORITES,
+    /** User-selected ordering for the Presets surface. */
+    val presetSortOrder: PresetSortOrder = PresetSortOrder.Alphabetical,
+    /** Last-use timestamps for built-in preset keys, bounded by the store. */
+    val presetUsage: Map<String, Long> = emptyMap(),
+    /** Optional user labels for built-in preset keys; localized defaults remain the fallback. */
+    val presetNameOverrides: Map<String, String> = emptyMap(),
     /**
      * Smooth-transition duration in milliseconds (roadmap C23/C24). 0 means
      * instant — the engine receives the new matrix in a single apply call,
@@ -251,6 +281,10 @@ fun Preferences.toggledFilterEnabled(): Preferences = withFilterEnabled(!enabled
  * preset or AlwaysOff schedule is not silently rewritten.
  */
 fun Preferences.normalizedEnabledFilterState(): Preferences = this
+
+/** Record a built-in preset use for the recency sort without changing filter state. */
+fun Preferences.touchPreset(key: String, nowMs: Long = System.currentTimeMillis()): Preferences =
+    copy(presetUsage = presetUsage + (key to nowMs.coerceAtLeast(0L)))
 
 private fun ScheduleDto.activatingForManualOn(): ScheduleDto =
     if (mode == ScheduleModeDto.AlwaysOff) copy(mode = ScheduleModeDto.AlwaysOn) else this

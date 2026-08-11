@@ -27,6 +27,7 @@
 - Tile and widget foreground-service starts now retain the requested enabled state through a blocked-start recovery handoff, retrying from the visible app after overlay permission is granted.
 - Supply-chain documentation now records the current protobuf CVE-2024-7254 triage against the release SBOM/OSV report and makes artifact provenance cadence explicit.
 - The Driver tab now explains Android Advanced Protection's irrelevant impact on OpenLumen and the driver report has a regression contract for its platform-state output.
+- Preset v2 now supports portable JSON preset packs, user-renamable built-in labels and saved profiles, plus persistent alphabetical or recency ordering without importing runtime state.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

@@ -213,4 +213,29 @@ class ProfilesTest {
         assertThat(updated.savedProfiles.last().name).isEqualTo("profile-00")
         assertThat(updated.savedProfiles.last().snapshot.activePresetKey).isEqualTo("amber")
     }
+
+    @Test fun `rename changes only the profile label and refuses collisions`() {
+        var p = Profiles.saveCurrentAs(Preferences(activePresetKey = "amber"), "Evening", nowMs = 10L)
+        p = Profiles.saveCurrentAs(p.copy(activePresetKey = "red"), "Morning", nowMs = 20L)
+
+        val renamed = Profiles.rename(p, "evening", "Late evening")
+
+        assertThat(renamed.savedProfiles.map { it.name }).containsExactly("Late evening", "Morning").inOrder()
+        assertThat(renamed.savedProfiles.first().snapshot.activePresetKey).isEqualTo("amber")
+        assertThat(renamed.savedProfiles.first().lastUsedAtEpochMs).isEqualTo(10L)
+        assertThat(Profiles.rename(renamed, "Late evening", "Morning")).isEqualTo(renamed)
+    }
+
+    @Test fun `loading a profile updates its recency without changing its saved snapshot`() {
+        val saved = Profiles.saveCurrentAs(Preferences(activePresetKey = "amber"), "Evening", nowMs = 10L)
+
+        val loaded = Profiles.loadByName(
+            saved.copy(activePresetKey = "red"),
+            "Evening",
+            nowMs = 99L
+        )
+
+        assertThat(loaded.activePresetKey).isEqualTo("amber")
+        assertThat(loaded.savedProfiles.single().lastUsedAtEpochMs).isEqualTo(99L)
+    }
 }

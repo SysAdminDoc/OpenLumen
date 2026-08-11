@@ -23,8 +23,13 @@ fun presetNameRes(key: String): Int? = when (key) {
 }
 
 @Composable
-fun presetLabel(key: String, fallback: String = key): String =
-    presetNameRes(key)?.let { stringResource(it) } ?: fallback
+fun presetLabel(key: String, fallback: String = key, override: String? = null): String =
+    override?.takeIf { it.isNotBlank() } ?: (presetNameRes(key)?.let { stringResource(it) } ?: fallback)
 
-fun presetDisplayName(context: Context, key: String, fallback: String = key): String =
-    presetNameRes(key)?.let(context::getString) ?: fallback
+fun presetDisplayName(
+    context: Context,
+    key: String,
+    fallback: String = key,
+    override: String? = null
+): String =
+    override?.takeIf { it.isNotBlank() } ?: (presetNameRes(key)?.let(context::getString) ?: fallback)

@@ -282,4 +282,25 @@
     <string name="backup_imported_skipped_duplicates">インポートしました。重複したプロファイルをスキップしました: %1$s</string>
     <string name="backup_import_failed">インポートに失敗しました: %1$s</string>
     <string name="error_unknown">不明なエラー</string>
+    <string name="presets_sort_label">並べ替え</string>
+    <string name="presets_sort_alphabetical">A–Z</string>
+    <string name="presets_sort_recent">最近使用</string>
+    <string name="presets_saved_title">保存済みプリセット</string>
+    <string name="preset_saved_badge">保存済み</string>
+    <string name="preset_saved_detail">この保存済みプリセットには色、スケジュール、ドライバー、強度の設定が含まれます。リストから読み込んで適用できます。</string>
+    <string name="preset_rename_action">名前を変更</string>
+    <string name="preset_rename_title">プリセット名を変更</string>
+    <string name="preset_rename_label">プリセット名</string>
+    <string name="preset_rename_reset">リセット</string>
+    <string name="preset_pack_preview_title">プリセットパックの確認</string>
+    <string name="preset_pack_preview_summary">このパックは保存済みプリセットを%1$d件追加し、既存の名前を%2$d件置き換えます。</string>
+    <string name="preset_pack_preview_replaced">置き換え: %1$s</string>
+    <string name="preset_pack_preview_safe">保存済みプリセットと組み込みラベルだけを取り込みます。現在のフィルター、スケジュール、権限は変更されません。</string>
+    <string name="backup_preset_pack_exported">プリセットパックをエクスポートしました</string>
+    <string name="backup_preset_pack_imported">プリセットパックを取り込みました: %1$d件追加、%2$d件置換</string>
+    <string name="backup_preset_pack_import_failed">プリセットパックの取り込みに失敗: %1$s</string>
+    <string name="about_export_preset_pack">プリセットパックをエクスポート</string>
+    <string name="about_import_preset_pack">プリセットパックをインポート</string>
+    <string name="about_profiles_rename">名前を変更</string>
+    <string name="about_profiles_rename_title">プロファイル名を変更</string>
 </resources>

@@ -282,4 +282,25 @@
     <string name="backup_imported_skipped_duplicates">Importado; perfiles duplicados omitidos: %1$s</string>
     <string name="backup_import_failed">Error al importar: %1$s</string>
     <string name="error_unknown">Error desconocido</string>
+    <string name="presets_sort_label">Ordenar</string>
+    <string name="presets_sort_alphabetical">A–Z</string>
+    <string name="presets_sort_recent">Recientes</string>
+    <string name="presets_saved_title">Preajustes guardados</string>
+    <string name="preset_saved_badge">Guardado</string>
+    <string name="preset_saved_detail">Este preajuste guardado incluye sus propios ajustes de color, horario, controlador e intensidad. Cárgalo desde la lista para aplicarlo.</string>
+    <string name="preset_rename_action">Renombrar</string>
+    <string name="preset_rename_title">Renombrar preajuste</string>
+    <string name="preset_rename_label">Nombre del preajuste</string>
+    <string name="preset_rename_reset">Restablecer</string>
+    <string name="preset_pack_preview_title">Vista previa del paquete</string>
+    <string name="preset_pack_preview_summary">Este paquete añade %1$d preajuste(s) guardado(s) y reemplaza %2$d nombre(s) existente(s).</string>
+    <string name="preset_pack_preview_replaced">Reemplazados: %1$s</string>
+    <string name="preset_pack_preview_safe">Solo se importan preajustes guardados y nombres integrados. El filtro activo, el horario y los permisos no cambian.</string>
+    <string name="backup_preset_pack_exported">Paquete de preajustes exportado</string>
+    <string name="backup_preset_pack_imported">Paquete importado: %1$d añadidos, %2$d reemplazados</string>
+    <string name="backup_preset_pack_import_failed">No se pudo importar el paquete: %1$s</string>
+    <string name="about_export_preset_pack">Exportar paquete de preajustes</string>
+    <string name="about_import_preset_pack">Importar paquete de preajustes</string>
+    <string name="about_profiles_rename">Renombrar</string>
+    <string name="about_profiles_rename_title">Renombrar perfil</string>
 </resources>

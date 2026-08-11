@@ -53,6 +53,12 @@ data class ImportSummary(
     val droppedDuplicateNames: List<String>
 )
 
+data class PresetPackImportSummary(
+    val preferences: Preferences,
+    val importedProfileNames: List<String>,
+    val replacedProfileNames: List<String>
+)
+
 data class PreferencesRecovery(
     val rawCharacterCount: Int,
     val quarantinedCharacterCount: Int,
@@ -123,6 +129,51 @@ class PreferencesStore(
             }
         }
     }
+
+    /** Export only the portable named presets and user labels. */
+    suspend fun exportPresetPack(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val current = flow.first()
+            val body = json.encodeToString(PresetPack.serializer(), PresetPack.from(current))
+            context.contentResolver.openOutputStream(uri, "wt").use { out ->
+                checkNotNull(out) { "openOutputStream returned null for $uri" }
+                out.write(body.toByteArray(Charsets.UTF_8))
+            }
+        }
+    }
+
+    /** Decode and merge a preset pack without writing it. */
+    suspend fun previewPresetPack(uri: Uri): Result<PresetPackImportSummary> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val current = flow.first()
+                val merge = PresetPacks.merge(current, decodePresetPack(readAllFromUri(uri)))
+                PresetPackImportSummary(
+                    preferences = sanitize(merge.preferences, enabled = current.enabled),
+                    importedProfileNames = merge.importedProfileNames,
+                    replacedProfileNames = merge.replacedProfileNames
+                )
+            }
+        }
+
+    /** Apply a previously previewed pack while preserving concurrent runtime state. */
+    suspend fun applyPresetPack(summary: PresetPackImportSummary):
+        Result<PresetPackImportSummary> = withContext(Dispatchers.IO) {
+            runCatching {
+                var applied: Preferences? = null
+                update { current ->
+                    current.copy(
+                        savedProfiles = summary.preferences.savedProfiles,
+                        presetNameOverrides = summary.preferences.presetNameOverrides
+                    ).also { applied = it }
+                }
+                PresetPackImportSummary(
+                    preferences = checkNotNull(applied),
+                    importedProfileNames = summary.importedProfileNames,
+                    replacedProfileNames = summary.replacedProfileNames
+                )
+            }
+        }
 
     /**
      * Reads from the URI returned by ACTION_OPEN_DOCUMENT and replaces the active prefs.
@@ -210,6 +261,17 @@ class PreferencesStore(
         }
     }
 
+    private fun decodePresetPack(raw: String): PresetPack {
+        val element = json.parseToJsonElement(raw) as? JsonObject
+        val format = (element?.get("format") as? JsonPrimitive)?.content
+        require(format == PresetPack.FORMAT) { "Unsupported preset pack format" }
+        val pack = json.decodeFromString(PresetPack.serializer(), raw)
+        require(pack.version in 1..PresetPack.CURRENT_VERSION) {
+            "Unsupported preset pack version: ${pack.version}"
+        }
+        return pack
+    }
+
     private fun decodeOrDefault(raw: String): Preferences = decodeOrNull(raw) ?: Preferences()
 
     private fun decodeOrNull(raw: String): Preferences? =
@@ -261,6 +323,8 @@ class PreferencesStore(
         schedule = sanitizeSchedule(p.schedule),
         lightSensorLuxThreshold = p.lightSensorLuxThreshold.finiteIn(0f, 200f, default = 2f),
         favoritePresetKeys = PresetKeySanitizer.favorites(p.favoritePresetKeys, knownPresetKeys),
+        presetUsage = sanitizePresetUsage(p.presetUsage),
+        presetNameOverrides = sanitizePresetNameOverrides(p.presetNameOverrides),
         transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
         contrast = p.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f),
         savedProfiles = sanitizeProfiles(p.savedProfiles)
@@ -353,7 +417,11 @@ class PreferencesStore(
                 val name = profileNameOrNull(p.name)
                 val key = name?.let(::profileNameKey)
                 if (name == null || key == null || !seen.add(key)) null
-                else p.copy(name = name, snapshot = sanitizeSnapshot(p.snapshot))
+                else p.copy(
+                    name = name,
+                    snapshot = sanitizeSnapshot(p.snapshot),
+                    lastUsedAtEpochMs = p.lastUsedAtEpochMs.coerceAtLeast(0L)
+                )
             }
             .take(Preferences.MAX_PROFILES)
             .toList()
@@ -372,6 +440,28 @@ class PreferencesStore(
         contrast = s.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f)
     )
 
+    private fun sanitizePresetUsage(usage: Map<String, Long>): Map<String, Long> =
+        usage.asSequence()
+            .mapNotNull { (key, timestamp) ->
+                key.takeIf { it.isNotBlank() && it.length <= 64 && it.none(Char::isISOControl) }
+                    ?.let { cleanKey -> cleanKey to timestamp.coerceAtLeast(0L) }
+            }
+            .sortedByDescending { it.second }
+            .take(MAX_PRESET_USAGE)
+            .toMap()
+
+    private fun sanitizePresetNameOverrides(overrides: Map<String, String>): Map<String, String> =
+        overrides.asSequence()
+            .mapNotNull { (key, value) ->
+                val cleanKey = key.takeIf {
+                    it in knownPresetKeys && it.length <= 64 && it.none(Char::isISOControl)
+                }
+                val cleanValue = profileNameOrNull(value)
+                if (cleanKey == null || cleanValue == null) null else cleanKey to cleanValue
+            }
+            .take(MAX_PRESET_OVERRIDES)
+            .toMap()
+
     private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
         if (isFinite()) coerceIn(min, max) else default
 
@@ -382,6 +472,8 @@ class PreferencesStore(
         const val TAG = "OpenLumen/Prefs"
         const val MATRIX_COEFF_MIN = -4f
         const val MATRIX_COEFF_MAX = 4f
+        const val MAX_PRESET_USAGE = 128
+        const val MAX_PRESET_OVERRIDES = 64
 
         /**
          * Process-wide latch so a repeated decode failure (the DataStore

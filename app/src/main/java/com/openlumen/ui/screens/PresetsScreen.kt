@@ -19,11 +19,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +36,10 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,13 +55,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.Presets
+import com.openlumen.engine.LumenMatrix
 import com.openlumen.presetLabel
+import com.openlumen.prefs.MatrixDto
+import com.openlumen.prefs.NamedProfile
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.PresetSortOrder
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -66,6 +78,8 @@ fun PresetsScreen(
     val favorites = prefs.favoritePresetKeys.toSet()
     val scope = rememberCoroutineScope()
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
+    var renamePresetKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var renamePresetValue by rememberSaveable { mutableStateOf("") }
 
     if (enableSystemActions) {
         BackHandler(navigator.canNavigateBack()) {
@@ -82,7 +96,12 @@ fun PresetsScreen(
                     prefs = prefs,
                     favorites = favorites,
                     onPresetClick = { key ->
-                        vm.selectPreset(key)
+                        when {
+                            key.startsWith(BUILTIN_DESTINATION_PREFIX) ->
+                                vm.selectPreset(key.removePrefix(BUILTIN_DESTINATION_PREFIX))
+                            key.startsWith(PROFILE_DESTINATION_PREFIX) ->
+                                vm.loadProfile(key.removePrefix(PROFILE_DESTINATION_PREFIX))
+                        }
                         scope.launch {
                             navigator.navigateTo(
                                 ListDetailPaneScaffoldRole.Detail,
@@ -91,27 +110,85 @@ fun PresetsScreen(
                         }
                     },
                     onFavoriteToggle = vm::toggleFavorite,
-                    onRestorePrevious = vm::restorePreviousPreset
+                    onRestorePrevious = vm::restorePreviousPreset,
+                    onRenamePreset = { key ->
+                        renamePresetKey = key
+                        renamePresetValue = prefs.presetNameOverrides[key].orEmpty()
+                    },
+                    onSortOrderChange = vm::setPresetSortOrder
                 )
             }
         },
         detailPane = {
             AnimatedPane {
-                val key = navigator.currentDestination?.contentKey
-                val entry = key?.let(Presets::byKey)
+                val destination = navigator.currentDestination?.contentKey
+                val builtinKey = destination
+                    ?.takeIf { it.startsWith(BUILTIN_DESTINATION_PREFIX) }
+                    ?.removePrefix(BUILTIN_DESTINATION_PREFIX)
+                val entry = builtinKey?.let(Presets::byKey)
                 if (entry != null) {
+                    val selectedKey = checkNotNull(builtinKey)
                     PresetDetailPane(
                         entry = entry,
-                        isSelected = key == prefs.activePresetKey,
-                        isFavorite = key in favorites,
-                        onFavoriteToggle = { vm.toggleFavorite(key) }
+                        isSelected = selectedKey == prefs.activePresetKey,
+                        isFavorite = selectedKey in favorites,
+                        onFavoriteToggle = { vm.toggleFavorite(selectedKey) },
+                        labelOverride = prefs.presetNameOverrides[selectedKey]
                     )
+                } else if (destination?.startsWith(PROFILE_DESTINATION_PREFIX) == true) {
+                    val name = destination.removePrefix(PROFILE_DESTINATION_PREFIX)
+                    prefs.savedProfiles.firstOrNull { it.name == name }?.let { profile ->
+                        ProfileDetailPane(profile)
+                    } ?: PresetDetailEmpty()
                 } else {
                     PresetDetailEmpty()
                 }
             }
         }
     )
+
+    renamePresetKey?.let { key ->
+        AlertDialog(
+            onDismissRequest = { renamePresetKey = null },
+            shape = MaterialTheme.shapes.large,
+            title = { Text(stringResource(R.string.preset_rename_title)) },
+            text = {
+                OutlinedTextField(
+                    value = renamePresetValue,
+                    onValueChange = {
+                        renamePresetValue = it.take(Preferences.MAX_PROFILE_NAME_LENGTH)
+                    },
+                    label = { Text(stringResource(R.string.preset_rename_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                LumenTextButton(
+                    onClick = {
+                        vm.renamePreset(key, renamePresetValue)
+                        renamePresetKey = null
+                    },
+                    enabled = renamePresetValue.trim().isNotEmpty()
+                ) { Text(stringResource(R.string.action_save)) }
+            },
+            dismissButton = {
+                Row {
+                    if (prefs.presetNameOverrides.containsKey(key)) {
+                        LumenTextButton(
+                            onClick = {
+                                vm.renamePreset(key, "")
+                                renamePresetKey = null
+                            }
+                        ) { Text(stringResource(R.string.preset_rename_reset)) }
+                    }
+                    LumenTextButton(onClick = { renamePresetKey = null }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -120,7 +197,9 @@ private fun PresetListPane(
     favorites: Set<String>,
     onPresetClick: (String) -> Unit,
     onFavoriteToggle: (String) -> Unit,
-    onRestorePrevious: () -> Unit
+    onRestorePrevious: () -> Unit,
+    onRenamePreset: (String) -> Unit,
+    onSortOrderChange: (PresetSortOrder) -> Unit
 ) {
     LazyColumn(
         contentPadding = topLevelScrollPadding(),
@@ -131,7 +210,11 @@ private fun PresetListPane(
             ?.let(Presets::byKey)
         if (previousEntry != null) {
             item {
-                val previousLabel = presetLabel(previousEntry.key, previousEntry.displayName)
+                val previousLabel = presetLabel(
+                    previousEntry.key,
+                    previousEntry.displayName,
+                    prefs.presetNameOverrides[previousEntry.key]
+                )
                 Card(
                     shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(
@@ -160,10 +243,52 @@ private fun PresetListPane(
             }
         }
 
-        items(Presets.ALL, key = { it.key }) { entry ->
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    stringResource(R.string.presets_sort_label),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = prefs.presetSortOrder == PresetSortOrder.Alphabetical,
+                    onClick = { onSortOrderChange(PresetSortOrder.Alphabetical) },
+                    label = { Text(stringResource(R.string.presets_sort_alphabetical)) }
+                )
+                FilterChip(
+                    selected = prefs.presetSortOrder == PresetSortOrder.Recent,
+                    onClick = { onSortOrderChange(PresetSortOrder.Recent) },
+                    label = { Text(stringResource(R.string.presets_sort_recent)) }
+                )
+            }
+        }
+
+        val sortedEntries = when (prefs.presetSortOrder) {
+            PresetSortOrder.Alphabetical -> Presets.ALL.sortedBy {
+                (prefs.presetNameOverrides[it.key] ?: it.displayName)
+                    .lowercase(Locale.ROOT)
+            }
+            PresetSortOrder.Recent -> Presets.ALL.sortedWith(
+                compareByDescending<Presets.Entry> { prefs.presetUsage[it.key] ?: 0L }
+                    .thenBy {
+                        (prefs.presetNameOverrides[it.key] ?: it.displayName)
+                            .lowercase(Locale.ROOT)
+                    }
+            )
+        }
+
+        items(sortedEntries, key = { "$BUILTIN_DESTINATION_PREFIX${it.key}" }) { entry ->
             val selected = entry.key == prefs.activePresetKey
             val isFavorite = entry.key in favorites
-            val entryLabel = presetLabel(entry.key, entry.displayName)
+            val entryLabel = presetLabel(
+                entry.key,
+                entry.displayName,
+                prefs.presetNameOverrides[entry.key]
+            )
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
@@ -174,7 +299,7 @@ private fun PresetListPane(
                     .fillMaxWidth()
                     .selectable(
                         selected = selected,
-                        onClick = { onPresetClick(entry.key) },
+                        onClick = { onPresetClick("$BUILTIN_DESTINATION_PREFIX${entry.key}") },
                         role = Role.RadioButton
                     )
             ) {
@@ -201,6 +326,13 @@ private fun PresetListPane(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    LumenTextButton(onClick = { onRenamePreset(entry.key) }) {
+                        Text(
+                            stringResource(R.string.preset_rename_action),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     IconButton(onClick = { onFavoriteToggle(entry.key) }) {
                         Icon(
                             painter = painterResource(
@@ -223,17 +355,88 @@ private fun PresetListPane(
                 }
             }
         }
+
+        if (prefs.savedProfiles.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.presets_saved_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            val sortedProfiles = when (prefs.presetSortOrder) {
+                PresetSortOrder.Alphabetical -> prefs.savedProfiles.sortedBy {
+                    it.name.lowercase(Locale.ROOT)
+                }
+                PresetSortOrder.Recent -> prefs.savedProfiles.sortedWith(
+                    compareByDescending<NamedProfile> { it.lastUsedAtEpochMs }
+                        .thenBy { it.name.lowercase(Locale.ROOT) }
+                )
+            }
+            items(sortedProfiles, key = { "$PROFILE_DESTINATION_PREFIX${it.name}" }) { profile ->
+                val matrix = profileMatrix(profile)
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = false,
+                            onClick = {
+                                onPresetClick("$PROFILE_DESTINATION_PREFIX${profile.name}")
+                            },
+                            role = Role.RadioButton
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(
+                                    color = swatchOf(matrix.r, matrix.g, matrix.b),
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                        )
+                        Spacer(Modifier.size(12.dp))
+                        Text(
+                            text = profile.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            stringResource(R.string.preset_saved_badge),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
     }
+
 }
+
+private const val BUILTIN_DESTINATION_PREFIX = "builtin:"
+private const val PROFILE_DESTINATION_PREFIX = "profile:"
 
 @Composable
 private fun PresetDetailPane(
     entry: Presets.Entry,
     isSelected: Boolean,
     isFavorite: Boolean,
-    onFavoriteToggle: () -> Unit
+    onFavoriteToggle: () -> Unit,
+    labelOverride: String? = null
 ) {
-    val label = presetLabel(entry.key, entry.displayName)
+    val label = presetLabel(entry.key, entry.displayName, labelOverride)
     val m = entry.matrix
 
     LazyColumn(
@@ -345,6 +548,87 @@ private fun PresetDetailPane(
             }
         }
     }
+}
+
+@Composable
+private fun ProfileDetailPane(profile: NamedProfile) {
+    val matrix = profileMatrix(profile)
+    LazyColumn(
+        contentPadding = topLevelScrollPadding(horizontal = 24.dp, top = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Text(
+                profile.name,
+                style = MaterialTheme.typography.headlineMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        color = swatchOf(matrix.r, matrix.g, matrix.b),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            )
+        }
+        item {
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val channels = lumenChannelColors()
+                    ChannelRow(stringResource(R.string.channel_red_short), matrix.r, channels.red)
+                    ChannelRow(stringResource(R.string.channel_green_short), matrix.g, channels.green)
+                    ChannelRow(stringResource(R.string.channel_blue_short), matrix.b, channels.blue)
+                }
+            }
+        }
+        item {
+            Text(
+                stringResource(R.string.preset_saved_detail),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun profileMatrix(profile: NamedProfile): LumenMatrix {
+    Presets.byKey(profile.snapshot.activePresetKey)?.let { return it.matrix }
+    val m: MatrixDto = profile.snapshot.customMatrix
+    return LumenMatrix(
+        r = m.r,
+        g = m.g,
+        b = m.b,
+        biasR = m.biasR,
+        biasG = m.biasG,
+        biasB = m.biasB,
+        dim = m.dim,
+        gammaR = m.gammaR,
+        gammaG = m.gammaG,
+        gammaB = m.gammaB,
+        hasColorMatrix = m.hasColorMatrix,
+        matrixRr = m.matrixRr,
+        matrixRg = m.matrixRg,
+        matrixRb = m.matrixRb,
+        matrixGr = m.matrixGr,
+        matrixGg = m.matrixGg,
+        matrixGb = m.matrixGb,
+        matrixBr = m.matrixBr,
+        matrixBg = m.matrixBg,
+        matrixBb = m.matrixBb
+    )
 }
 
 @Composable

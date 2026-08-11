@@ -131,7 +131,7 @@ class LumenTileService : TileService() {
             return getString(R.string.tile_subtitle_off)
         }
         val presetName = Presets.byKey(p.activePresetKey)
-            ?.let { presetDisplayName(this, it.key, it.displayName) }
+            ?.let { presetDisplayName(this, it.key, it.displayName, p.presetNameOverrides[it.key]) }
             ?: p.activePresetKey.replaceFirstChar { it.uppercaseChar() }
         return getString(R.string.tile_subtitle_on, presetName)
     }

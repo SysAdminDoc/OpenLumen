@@ -84,8 +84,11 @@ fun AboutScreen(
     var showRecoveryReset by rememberSaveable { mutableStateOf(false) }
     var showSaveProfileDialog by rememberSaveable { mutableStateOf(false) }
     var showReplaceProfileDialog by rememberSaveable { mutableStateOf(false) }
+    var showRenameProfileDialog by rememberSaveable { mutableStateOf(false) }
     var saveProfileName by rememberSaveable { mutableStateOf("") }
     var pendingReplaceProfileName by rememberSaveable { mutableStateOf("") }
+    var pendingRenameProfileName by rememberSaveable { mutableStateOf("") }
+    var renameProfileName by rememberSaveable { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -98,12 +101,21 @@ fun AboutScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(vm::beginImportPreview) }
     else null
+    val presetPackExportLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> uri?.let(vm::exportPresetPack) }
+    else null
+    val presetPackImportLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let(vm::beginPresetPackPreview) }
+    else null
     val recoveryExportLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri -> uri?.let(vm::exportCorruptPreferencesTo) }
     else null
 
     val pendingImport by vm.pendingImport.collectAsStateWithLifecycle()
+    val pendingPresetPack by vm.pendingPresetPack.collectAsStateWithLifecycle()
     val preferenceRecovery by vm.preferenceRecovery.collectAsStateWithLifecycle()
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
     val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
@@ -120,6 +132,17 @@ fun AboutScreen(
             vm.saveProfileAs(cleanName)
             showSaveProfileDialog = false
         }
+    }
+
+    fun submitProfileRename(name: String) {
+        val oldName = pendingRenameProfileName
+        val cleanName = name.trim()
+        if (oldName.isBlank() || cleanName.isBlank()) return
+        val existing = Profiles.findByName(currentPrefs, cleanName)
+        if (existing != null && !existing.name.equals(oldName, ignoreCase = true)) return
+        vm.renameProfile(oldName, cleanName)
+        showRenameProfileDialog = false
+        pendingRenameProfileName = ""
     }
 
     LaunchedEffect(result) {
@@ -179,6 +202,20 @@ fun AboutScreen(
                         onClick = { importLauncher?.launch(arrayOf("application/json", "text/plain")) },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(stringResource(R.string.about_import_profile)) }
+                    LumenOutlinedButton(
+                        onClick = {
+                            presetPackExportLauncher?.launch(
+                                "openlumen-preset-pack-${java.time.LocalDate.now()}.json"
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_export_preset_pack)) }
+                    LumenOutlinedButton(
+                        onClick = {
+                            presetPackImportLauncher?.launch(arrayOf("application/json", "text/plain"))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(stringResource(R.string.about_import_preset_pack)) }
                     preferenceRecovery?.let { recovery ->
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
@@ -314,6 +351,20 @@ fun AboutScreen(
                                         }
                                         LumenTextButton(
                                             onClick = {
+                                                pendingRenameProfileName = profile.name
+                                                renameProfileName = profile.name
+                                                showRenameProfileDialog = true
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.about_profiles_rename),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        LumenTextButton(
+                                            onClick = {
                                                 vm.deleteProfile(profile.name)
                                                 scope.launch {
                                                     val result = snackbarHostState.showSnackbar(
@@ -425,6 +476,55 @@ fun AboutScreen(
         )
     }
 
+    if (showRenameProfileDialog) {
+        val cleanProfileName = renameProfileName.trim()
+        val maxProfileNameLength = Preferences.MAX_PROFILE_NAME_LENGTH
+        AlertDialog(
+            onDismissRequest = {
+                showRenameProfileDialog = false
+                pendingRenameProfileName = ""
+            },
+            shape = MaterialTheme.shapes.large,
+            title = { Text(stringResource(R.string.about_profiles_rename_title)) },
+            text = {
+                OutlinedTextField(
+                    value = renameProfileName,
+                    onValueChange = { renameProfileName = it.take(maxProfileNameLength) },
+                    label = { Text(stringResource(R.string.about_profiles_name_label)) },
+                    supportingText = {
+                        Text(
+                            stringResource(
+                                R.string.about_profiles_name_count,
+                                renameProfileName.length,
+                                maxProfileNameLength
+                            )
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { submitProfileRename(cleanProfileName) }
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                LumenTextButton(
+                    onClick = { submitProfileRename(cleanProfileName) },
+                    enabled = cleanProfileName.isNotEmpty()
+                ) { Text(stringResource(R.string.action_save)) }
+            },
+            dismissButton = {
+                LumenTextButton(
+                    onClick = {
+                        showRenameProfileDialog = false
+                        pendingRenameProfileName = ""
+                    }
+                ) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
     if (showReplaceProfileDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -503,6 +603,54 @@ fun AboutScreen(
                         stringResource(R.string.action_clear),
                         color = MaterialTheme.colorScheme.error
                     )
+                }
+            }
+        )
+    }
+
+    pendingPresetPack?.let { pending ->
+        AlertDialog(
+            onDismissRequest = { vm.cancelPendingPresetPack() },
+            shape = MaterialTheme.shapes.large,
+            title = { Text(stringResource(R.string.preset_pack_preview_title)) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = DialogLogMaxHeight)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.preset_pack_preview_summary,
+                            pending.summary.importedProfileNames.size,
+                            pending.summary.replacedProfileNames.size
+                        )
+                    )
+                    if (pending.summary.replacedProfileNames.isNotEmpty()) {
+                        Text(
+                            stringResource(
+                                R.string.preset_pack_preview_replaced,
+                                pending.summary.replacedProfileNames.joinToString(", ")
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.preset_pack_preview_safe),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                LumenTextButton(onClick = { vm.confirmPendingPresetPack() }) {
+                    Text(stringResource(R.string.import_preview_apply))
+                }
+            },
+            dismissButton = {
+                LumenTextButton(onClick = { vm.cancelPendingPresetPack() }) {
+                    Text(stringResource(R.string.import_preview_cancel))
                 }
             }
         )
@@ -602,8 +750,16 @@ private fun describeDiff(
     }
     diff(
         R.string.diff_active_preset,
-        presetDisplayName(context, current.activePresetKey),
-        presetDisplayName(context, next.activePresetKey)
+        presetDisplayName(
+            context,
+            current.activePresetKey,
+            override = current.presetNameOverrides[current.activePresetKey]
+        ),
+        presetDisplayName(
+            context,
+            next.activePresetKey,
+            override = next.presetNameOverrides[next.activePresetKey]
+        )
     )
     diff(R.string.diff_engine, engineLabel(context, current.engine), engineLabel(context, next.engine))
     diff(
@@ -658,8 +814,12 @@ private fun describeDiff(
     val noneLabel = context.getString(R.string.value_unset)
     diff(
         R.string.diff_favorites,
-        current.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) }.ifEmpty { noneLabel },
-        next.favoritePresetKeys.joinToString(",") { presetDisplayName(context, it) }.ifEmpty { noneLabel }
+        current.favoritePresetKeys.joinToString(",") {
+            presetDisplayName(context, it, override = current.presetNameOverrides[it])
+        }.ifEmpty { noneLabel },
+        next.favoritePresetKeys.joinToString(",") {
+            presetDisplayName(context, it, override = next.presetNameOverrides[it])
+        }.ifEmpty { noneLabel }
     )
     diff(
         R.string.diff_transition,
