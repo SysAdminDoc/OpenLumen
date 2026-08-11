@@ -246,6 +246,7 @@
     <string name="light_sensor_now">Now: %1$d lux</string>
     <string name="light_sensor_threshold">Threshold: %1$d lux</string>
     <string name="light_sensor_threshold_state">%1$d lux threshold</string>
+    <string name="light_sensor_hysteresis">Engages below %1$d lux; disengages above %2$d lux to prevent flicker</string>
     <string name="light_sensor_calibrate">Calibrate: use current reading as threshold</string>
 
     <string name="location_title">Set location</string>

@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C221 — Ambient threshold has no hysteresis or dwell protection
-  Category: reliability
-  Where: app/src/main/java/com/openlumen/service/LumenService.kt:483-489 and app/src/main/java/com/openlumen/sensor/LightSensorAdapter.kt:55-77
-  Problem: The active decision uses a single lux < threshold comparison. EMA smoothing and a 5% distinct filter reduce noise but do not prevent repeated enter/exit transitions when lux hovers around the threshold, causing ramp cancellation/restart, alarm churn, and visible flicker.
-  Evidence: There are no separate engage/disengage thresholds, consecutive-sample counters, or minimum dwell time in the service or sensor adapter. Every distinct reading is passed to the same direct comparison and can change shouldBeActive.
-  Fix: Add configurable or fixed hysteresis (for example, enter below the threshold and exit above a higher threshold) and/or require a bounded dwell/consecutive-sample period. Make the chosen behavior visible in helper text and cover it with a noisy-boundary test.
-  Acceptance: A lux sequence oscillating around the threshold does not repeatedly toggle the engine; crossing the exit threshold or completing the dwell changes state promptly and exactly once.
-  Confidence: Likely
-  Effort: M
-
 - [ ] P2 — C222 — Notification countdown becomes stale after an alarm or reevaluation
   Category: ux
   Where: app/src/main/java/com/openlumen/service/LumenService.kt:321-368,423-425, ScheduleAlarmReceiver.kt, and app/src/main/res/values/strings.xml:207-212

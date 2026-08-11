@@ -29,6 +29,7 @@ import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.normalizedEnabledFilterState
 import com.openlumen.prefs.toggledFilterEnabled
 import com.openlumen.prefs.withFilterEnabled
+import com.openlumen.schedule.AmbientLightGate
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
@@ -78,6 +79,7 @@ class LumenService : LifecycleService() {
     private lateinit var scheduleAlarms: ScheduleAlarmOrchestrator
     private lateinit var lightSubscription: LightSensorSubscription
     private lateinit var widgetBridge: WidgetBridge
+    private val ambientLightGate = AmbientLightGate()
     private val directBootMirror: DirectBootMirror by lazy {
         DirectBootMirror(directBootState, tag)
     }
@@ -548,8 +550,11 @@ class LumenService : LifecycleService() {
         val mode = mapMode(p)
         val scheduleActive = isActive(mode)
         val luxNow = lightSubscription.currentLuxOrNegative()
-        val lightActive = p.lightSensorEnabled &&
-            luxNow >= 0f && luxNow < p.lightSensorLuxThreshold
+        val lightActive = ambientLightGate.update(
+            enabled = p.lightSensorEnabled,
+            thresholdLux = p.lightSensorLuxThreshold,
+            lux = luxNow
+        )
         val shouldBeActive = scheduleActive || lightActive
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY

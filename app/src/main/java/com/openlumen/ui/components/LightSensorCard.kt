@@ -24,14 +24,16 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.openlumen.R
+import com.openlumen.schedule.AmbientLightGate
 
 /**
  * Ambient-light-sensor-driven activation card.
  *
  * Behavior: when [enabled] is on and the current ambient lux reading drops below
- * [threshold] for any sample, the filter is activated regardless of the schedule mode.
- * This is an OR condition with the schedule — useful for "always engage in a dark
- * room" workflows where the user doesn't trust their schedule to match indoor light.
+ * [threshold], the filter is activated. It remains active until lux rises above a
+ * small hysteresis band, regardless of the schedule mode. This is an OR condition
+ * with the schedule — useful for "always engage in a dark room" workflows where
+ * the user doesn't trust their schedule to match indoor light.
  */
 @Composable
 fun LightSensorCard(
@@ -89,6 +91,7 @@ fun LightSensorCard(
 
             val thresholdLux = thresholdDraft.toInt()
             val thresholdState = stringResource(R.string.light_sensor_threshold_state, thresholdLux)
+            val disengageLux = AmbientLightGate.disengageThreshold(thresholdDraft).toInt()
             Text(
                 stringResource(R.string.light_sensor_threshold, thresholdLux),
                 color = if (enabled && available) {
@@ -107,6 +110,11 @@ fun LightSensorCard(
                 modifier = Modifier.semantics {
                     stateDescription = thresholdState
                 }
+            )
+            Text(
+                stringResource(R.string.light_sensor_hysteresis, thresholdLux, disengageLux),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             LumenOutlinedButton(
