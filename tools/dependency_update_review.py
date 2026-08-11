@@ -25,6 +25,58 @@ REPOSITORIES = (
 UNSTABLE_RE = re.compile(
     r"(?i)(?:^|[.\-_+])(?:alpha|a|beta|b|rc|cr|m|milestone|preview|dev|eap|snapshot)(?:\d+)?(?:$|[.\-_+])"
 )
+DEFAULT_POLICY_PATH = Path(__file__).resolve().with_name("dependency_update_policy.json")
+
+AREA_GUIDANCE = {
+    "build-tooling": {
+        "compatibility_risk_note": (
+            "Build-tool updates can change Gradle compatibility, compiler behavior, generated "
+            "code, packaging, or target-SDK validation."
+        ),
+        "required_commands": [
+            "./gradlew --version",
+            "./gradlew test :app:lint assembleDebug",
+        ],
+    },
+    "compose": {
+        "compatibility_risk_note": (
+            "Compose updates can change layout, semantics, rendering, compiler-plugin coupling, "
+            "and screenshot baselines."
+        ),
+        "required_commands": [
+            "./gradlew test :app:lint assembleDebug",
+            "./gradlew :app:validateDebugScreenshotTest",
+        ],
+    },
+    "androidx": {
+        "compatibility_risk_note": (
+            "AndroidX updates can change runtime behavior, lifecycle contracts, platform-version "
+            "compatibility, and transitive resources."
+        ),
+        "required_commands": [
+            "./gradlew test :app:lint assembleDebug",
+            "./gradlew :app:validateDebugScreenshotTest",
+        ],
+    },
+    "kotlin": {
+        "compatibility_risk_note": (
+            "Kotlin library updates can change compiler, coroutine, serialization, or binary "
+            "compatibility contracts across all modules."
+        ),
+        "required_commands": [
+            "./gradlew test :app:lint assembleDebug",
+        ],
+    },
+    "test-tooling": {
+        "compatibility_risk_note": (
+            "Test-tool updates can change emulator/runtime behavior, rendering output, or the "
+            "meaning of screenshot and unit-test failures."
+        ),
+        "required_commands": [
+            "./gradlew test :app:validateDebugScreenshotTest",
+        ],
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -60,6 +112,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Version catalog to inspect.",
     )
     parser.add_argument(
+        "--policy",
+        default="tools/dependency_update_policy.json",
+        help="Checked-in hold and official release-note mapping policy.",
+    )
+    parser.add_argument(
         "--include-pre-releases",
         action="store_true",
         help="Include alpha/beta/rc/snapshot metadata candidates.",
@@ -85,7 +142,13 @@ def main(argv: list[str] | None = None) -> int:
 
     root = Path(__file__).resolve().parents[1]
     catalog_path = (root / args.catalog).resolve()
-    report = review_catalog(catalog_path, args.include_pre_releases, args.timeout_seconds)
+    policy_path = (root / args.policy).resolve()
+    report = review_catalog(
+        catalog_path,
+        args.include_pre_releases,
+        args.timeout_seconds,
+        policy_path=policy_path,
+    )
     print_report(report)
 
     if args.output_json:
@@ -98,37 +161,142 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def review_catalog(catalog_path: Path, include_pre_releases: bool, timeout_seconds: int) -> dict[str, object]:
+def review_catalog(
+    catalog_path: Path,
+    include_pre_releases: bool,
+    timeout_seconds: int,
+    policy_path: Path | None = None,
+) -> dict[str, object]:
+    policy = load_policy(policy_path or DEFAULT_POLICY_PATH)
+    held_policy = policy["held"]
+    release_notes_policy = policy["release_notes"]
     refs = parse_version_catalog(catalog_path)
     entries = []
     for ref in refs:
         candidates, errors = collect_candidates(ref, include_pre_releases, timeout_seconds)
         latest = max(candidates, key=lambda candidate: version_sort_key(candidate.version), default=None)
-        status = classify_status(ref.current, latest, errors)
-        entries.append(
-            {
-                "name": ref.name,
-                "current": ref.current,
-                "latest": latest.version if latest else None,
-                "latest_repository": latest.repository if latest else None,
-                "latest_coordinate": latest.coordinate.label if latest else None,
-                "status": status,
-                "coordinates": sorted({coordinate.label for coordinate in ref.coordinates}),
-                "errors": errors,
-            }
-        )
+        hold = held_policy.get(ref.name)
+        hold_error = held_policy_error(ref, hold)
+        status = "unresolved" if hold_error else classify_status(ref.current, latest, errors)
+        entry = {
+            "name": ref.name,
+            "current": ref.current,
+            "latest": latest.version if latest else None,
+            "latest_repository": latest.repository if latest else None,
+            "latest_coordinate": latest.coordinate.label if latest else None,
+            "status": status,
+            "coordinates": sorted({coordinate.label for coordinate in ref.coordinates}),
+            "errors": [*errors, *([hold_error] if hold_error else [])],
+        }
+        if hold is not None and not hold_error:
+            entry["status"] = "held"
+            entry["hold_reason"] = hold_reason(hold)
+        if entry["status"] == "update-available":
+            evidence = build_update_evidence(ref, release_notes_policy)
+            entry.update(evidence)
+            if evidence["evidence_status"] != "mapped":
+                entry["status"] = "unresolved"
+                entry["errors"].append(
+                    f"official release-note evidence missing for version ref {ref.name}"
+                )
+        entries.append(entry)
 
     updates = [entry for entry in entries if entry["status"] == "update-available"]
+    held = [entry for entry in entries if entry["status"] == "held"]
     current = [entry for entry in entries if entry["status"] == "current"]
     unresolved = [entry for entry in entries if entry["status"] in {"unresolved", "pre-release-only"}]
     return {
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "catalog": str(catalog_path),
+        "policy": str(policy_path or DEFAULT_POLICY_PATH),
         "include_pre_releases": include_pre_releases,
         "checked": len(entries),
         "updates": updates,
+        "held": held,
         "current": current,
         "unresolved": unresolved,
+    }
+
+
+def load_policy(policy_path: Path) -> dict[str, dict[str, object]]:
+    data = json.loads(policy_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"Dependency review policy must be an object: {policy_path}")
+
+    held = data.get("held", {})
+    release_notes = data.get("release_notes", {})
+    if not isinstance(held, dict) or not isinstance(release_notes, dict):
+        raise ValueError(f"Dependency review policy sections must be objects: {policy_path}")
+    return {"held": held, "release_notes": release_notes}
+
+
+def held_policy_error(ref: VersionRef, hold: object) -> str | None:
+    if hold is None:
+        return None
+    if isinstance(hold, dict):
+        held_version = hold.get("version", ref.current)
+    else:
+        held_version = ref.current
+    if str(held_version) != ref.current:
+        return (
+            f"held policy for {ref.name} targets {held_version}, but catalog current is "
+            f"{ref.current}"
+        )
+    return None
+
+
+def hold_reason(hold: object) -> str:
+    if isinstance(hold, dict):
+        return str(hold.get("reason", "intentionally held by policy"))
+    if isinstance(hold, str) and hold:
+        return hold
+    return "intentionally held by policy"
+
+
+def build_update_evidence(
+    ref: VersionRef,
+    release_notes_policy: dict[str, object],
+) -> dict[str, object]:
+    mapping = release_notes_policy.get(ref.name)
+    if not isinstance(mapping, dict):
+        return {
+            "evidence_status": "missing",
+            "release_notes_url": None,
+            "release_notes_source": "no checked-in official mapping",
+            "affected_module": None,
+            "compatibility_risk_note": None,
+            "required_commands": [],
+            "verification_metadata_impact": (
+                "Review gradle/verification-metadata.xml manually if this update is adopted."
+            ),
+        }
+
+    area = str(mapping.get("area", ""))
+    guidance = AREA_GUIDANCE.get(area)
+    if not guidance:
+        return {
+            "evidence_status": "missing",
+            "release_notes_url": mapping.get("url"),
+            "release_notes_source": "checked-in official mapping has unknown risk area",
+            "affected_module": mapping.get("module"),
+            "compatibility_risk_note": None,
+            "required_commands": [],
+            "verification_metadata_impact": (
+                "Review gradle/verification-metadata.xml manually if this update is adopted."
+            ),
+        }
+
+    return {
+        "evidence_status": "mapped",
+        "release_notes_url": mapping.get("url"),
+        "release_notes_source": "checked-in official release-note mapping",
+        "affected_module": mapping.get("module"),
+        "compatibility_risk_note": guidance["compatibility_risk_note"],
+        "required_commands": guidance["required_commands"],
+        "verification_metadata_impact": (
+            "If adopted, regenerate gradle/verification-metadata.xml with strict verification "
+            "inputs and review new checksums, signatures, and transitive artifacts."
+        ),
     }
 
 
@@ -220,6 +388,8 @@ def classify_status(current: str, latest: Candidate | None, errors: list[str]) -
         return "unresolved" if errors else "pre-release-only"
     if version_sort_key(latest.version) > version_sort_key(current):
         return "update-available"
+    if errors:
+        return "unresolved"
     return "current"
 
 
@@ -241,7 +411,12 @@ def version_sort_key(version: str) -> tuple[tuple[int, object], ...]:
 def print_report(report: dict[str, object]) -> None:
     print("OpenLumen dependency update review")
     print(f"Catalog: {report['catalog']}")
+    print(f"Policy: {report['policy']}")
     print(f"Version refs checked: {report['checked']}")
+    print(
+        f"Status counts: current={len(report['current'])}, "
+        f"held={len(report['held'])}, unresolved={len(report['unresolved'])}"
+    )
 
     updates = report["updates"]
     if updates:
@@ -251,8 +426,25 @@ def print_report(report: dict[str, object]) -> None:
                 f"- {entry['name']}: {entry['current']} -> {entry['latest']} "
                 f"({entry['latest_coordinate']} from {entry['latest_repository']})"
             )
+            print(f"  Module: {entry['affected_module']}")
+            print(f"  Release notes: {entry['release_notes_url']}")
+            print(f"  Compatibility risk: {entry['compatibility_risk_note']}")
+            print("  Required commands:")
+            for command in entry["required_commands"]:
+                print(f"    {command}")
+            print(f"  Verification metadata: {entry['verification_metadata_impact']}")
+            if entry["errors"]:
+                print("  Metadata warnings:")
+                for error in entry["errors"]:
+                    print(f"    {error}")
     else:
         print("\nStable updates available: none")
+
+    held = report["held"]
+    if held:
+        print("\nIntentionally held versions:")
+        for entry in held:
+            print(f"- {entry['name']}: {entry['current']} ({entry['hold_reason']})")
 
     unresolved = report["unresolved"]
     if unresolved:

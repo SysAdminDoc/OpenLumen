@@ -1,6 +1,8 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import dependency_update_review as review
 
@@ -20,6 +22,18 @@ compose-ui = { module = "androidx.compose.ui:ui" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+"""
+
+REPORT_CATALOG = """
+[versions]
+androidx = "1.0.0"
+held = "2.0.0"
+uncertain = "1.0.0"
+
+[libraries]
+androidx = { module = "androidx.example:example", version.ref = "androidx" }
+held = { module = "androidx.example:held", version.ref = "held" }
+uncertain = { module = "androidx.example:uncertain", version.ref = "uncertain" }
 """
 
 
@@ -68,6 +82,81 @@ class DependencyUpdateReviewTest(unittest.TestCase):
         self.assertEqual(review.classify_status("1.2.0", candidate, []), "current")
         self.assertEqual(review.classify_status("1.2.0-alpha01", None, []), "pre-release-only")
         self.assertEqual(review.classify_status("1.2.0", None, ["network error"]), "unresolved")
+
+    def test_report_attaches_release_evidence_and_distinguishes_holds(self):
+        policy = {
+            "held": {"held": {"version": "2.0.0", "reason": "wait for device matrix"}},
+            "release_notes": {
+                "androidx": {
+                    "url": "https://developer.android.com/jetpack/androidx/versions",
+                    "module": "AndroidX example",
+                    "area": "androidx",
+                }
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "libs.versions.toml"
+            catalog.write_text(REPORT_CATALOG, encoding="utf-8")
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy), encoding="utf-8")
+
+            def candidates(ref, include_pre_releases, timeout_seconds):
+                if ref.name == "androidx":
+                    return [
+                        review.Candidate(
+                            "1.1.0",
+                            "google",
+                            ref.coordinates[0],
+                        )
+                    ], []
+                if ref.name == "held":
+                    return [
+                        review.Candidate(
+                            "3.0.0",
+                            "google",
+                            ref.coordinates[0],
+                        )
+                    ], []
+                return [], ["network error"]
+
+            with patch.object(review, "collect_candidates", side_effect=candidates):
+                report = review.review_catalog(catalog, False, 1, policy_path)
+
+        update = next(entry for entry in report["updates"] if entry["name"] == "androidx")
+        self.assertEqual(update["evidence_status"], "mapped")
+        self.assertEqual(update["release_notes_url"], policy["release_notes"]["androidx"]["url"])
+        self.assertEqual(update["affected_module"], "AndroidX example")
+        self.assertTrue(update["compatibility_risk_note"])
+        self.assertTrue(update["required_commands"])
+        self.assertIn("verification-metadata.xml", update["verification_metadata_impact"])
+
+        self.assertEqual([entry["name"] for entry in report["held"]], ["held"])
+        uncertain = next(entry for entry in report["unresolved"] if entry["name"] == "uncertain")
+        self.assertNotEqual(uncertain["status"], "current")
+
+    def test_missing_release_note_mapping_is_explicit(self):
+        ref = review.VersionRef(
+            "unknown",
+            "1.0.0",
+            (review.Coordinate("com.example", "example", "library:example"),),
+        )
+
+        evidence = review.build_update_evidence(ref, {})
+
+        self.assertEqual(evidence["evidence_status"], "missing")
+        self.assertIsNone(evidence["release_notes_url"])
+
+    def test_checked_in_policy_covers_current_catalog(self):
+        root = Path(__file__).resolve().parents[1]
+        refs = review.parse_version_catalog(root / "gradle/libs.versions.toml")
+        policy = review.load_policy(root / "tools/dependency_update_policy.json")
+
+        self.assertEqual(
+            {ref.name for ref in refs} - set(policy["release_notes"]),
+            set(),
+        )
 
 
 if __name__ == "__main__":

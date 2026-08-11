@@ -1,0 +1,115 @@
+{
+  "held": {},
+  "release_notes": {
+    "agp": {
+      "url": "https://developer.android.com/build/releases/gradle-plugin",
+      "module": "Android Gradle Plugin",
+      "area": "build-tooling"
+    },
+    "kotlin": {
+      "url": "https://kotlinlang.org/docs/releases.html",
+      "module": "Kotlin compiler and language",
+      "area": "build-tooling"
+    },
+    "ksp": {
+      "url": "https://github.com/google/ksp/releases",
+      "module": "Kotlin Symbol Processing",
+      "area": "build-tooling"
+    },
+    "compose-bom": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/compose",
+      "module": "Jetpack Compose BOM",
+      "area": "compose"
+    },
+    "activity-compose": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/activity",
+      "module": "AndroidX Activity Compose",
+      "area": "androidx"
+    },
+    "lifecycle": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle",
+      "module": "AndroidX Lifecycle",
+      "area": "androidx"
+    },
+    "navigation": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/navigation",
+      "module": "AndroidX Navigation",
+      "area": "androidx"
+    },
+    "hilt": {
+      "url": "https://github.com/google/dagger/releases",
+      "module": "Dagger Hilt",
+      "area": "androidx"
+    },
+    "hilt-compose": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/hilt",
+      "module": "AndroidX Hilt integration",
+      "area": "androidx"
+    },
+    "datastore": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/datastore",
+      "module": "AndroidX DataStore",
+      "area": "androidx"
+    },
+    "kotlinx-serialization": {
+      "url": "https://github.com/Kotlin/kotlinx.serialization/releases",
+      "module": "kotlinx.serialization",
+      "area": "kotlin"
+    },
+    "kotlinx-coroutines": {
+      "url": "https://github.com/Kotlin/kotlinx.coroutines/releases",
+      "module": "kotlinx.coroutines",
+      "area": "kotlin"
+    },
+    "material3": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/compose-material3",
+      "module": "Jetpack Compose Material 3",
+      "area": "compose"
+    },
+    "material3-adaptive": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/adaptive",
+      "module": "Jetpack Compose Adaptive",
+      "area": "compose"
+    },
+    "core": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/core",
+      "module": "AndroidX Core",
+      "area": "androidx"
+    },
+    "glance": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/glance",
+      "module": "AndroidX Glance",
+      "area": "androidx"
+    },
+    "work": {
+      "url": "https://developer.android.com/jetpack/androidx/releases/work",
+      "module": "AndroidX WorkManager",
+      "area": "androidx"
+    },
+    "screenshot": {
+      "url": "https://developer.android.com/studio/preview/features#screenshot-testing",
+      "module": "Compose screenshot testing",
+      "area": "test-tooling"
+    },
+    "roborazzi": {
+      "url": "https://github.com/takahirom/roborazzi/releases",
+      "module": "Roborazzi screenshot verification",
+      "area": "test-tooling"
+    },
+    "robolectric": {
+      "url": "https://robolectric.org/changelog/",
+      "module": "Robolectric Android test runtime",
+      "area": "test-tooling"
+    },
+    "junit": {
+      "url": "https://github.com/junit-team/junit4/releases",
+      "module": "JUnit 4 test framework",
+      "area": "test-tooling"
+    },
+    "truth": {
+      "url": "https://github.com/google/truth/releases",
+      "module": "Google Truth assertions",
+      "area": "test-tooling"
+    }
+  }
+}

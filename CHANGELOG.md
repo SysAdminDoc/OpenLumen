@@ -20,6 +20,7 @@
 - Adjustable sliders now expose localized control names alongside live value descriptions for TalkBack and keyboard users.
 - Exact schedule alarms now target the foreground service directly, while inexact fallback alarms retain bounded blocked-start retries and cancel legacy alarm identities during reconciliation.
 - Android 13+ per-app language settings now expose exactly the shipped English, German, Spanish, French, Japanese, and Portuguese locales, with automated string-key parity checks.
+- Dependency-update review now reports official release-note endpoints, compatibility risks, required verification commands, checksum impact, unresolved metadata, and explicit intentional holds.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
