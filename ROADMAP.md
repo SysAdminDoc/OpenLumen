@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C233 — Driver screen's Auto explanation disagrees with the service resolver
-  Category: ux
-  Where: app/src/main/java/com/openlumen/ui/driver/DriverScreen.kt:70-79 and core-engine/src/main/java/com/openlumen/engine/DriverProbe.kt:47-55
-  Problem: The Driver screen describes Auto as root first, then Overlay, omitting CDM. The actual resolver selects root, then CDM, then Overlay. On a device with CDM available and no root, the service uses CDM while the UI tells the user Auto will use Overlay, making driver behavior and troubleshooting misleading.
-  Evidence: The UI label has a separate root/overlay conditional; pickBestFrom includes COLOR_DISPLAY_MANAGER before the overlay fallback. No shared resolver/description is used.
-  Fix: Derive the Auto explanation from the same ordered resolver/capability list used by the service, including the no-driver case, and keep it updated after reprobe.
-  Acceptance: For every availability combination, the screen's Auto explanation names the same selected driver and fallback order that the service will use; tests exercise root-only, CDM-only, overlay-only, and none.
-  Confidence: Verified
-  Effort: S
-
 - [ ] P2 — C234 — Reprobe can run concurrently and overwrite newer driver results
   Category: reliability
   Where: app/src/main/java/com/openlumen/ui/driver/DriverScreen.kt:155-157 and app/src/main/java/com/openlumen/ui/OpenLumenViewModel.kt:219-231

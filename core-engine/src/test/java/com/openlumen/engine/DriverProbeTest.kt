@@ -74,6 +74,21 @@ class DriverProbeTest {
         ).isNull()
     }
 
+    @Test fun `shared auto kind resolver includes CDM before overlay`() {
+        val engines = engines()
+        val kind = DriverProbe.bestAvailableKind(
+            probes(
+                engines,
+                EngineKind.COLOR_DISPLAY_MANAGER to true,
+                EngineKind.SURFACE_FLINGER to false,
+                EngineKind.KCAL to false,
+                EngineKind.OVERLAY to true
+            )
+        )
+
+        assertThat(kind).isEqualTo(EngineKind.COLOR_DISPLAY_MANAGER)
+    }
+
     private fun engines(): List<ColorEngine> = EngineKind.entries.map { FakeEngine(it) }
 
     private fun probes(

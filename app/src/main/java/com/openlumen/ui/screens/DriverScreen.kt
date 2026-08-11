@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.EngineKind
+import com.openlumen.engine.DriverProbe
 import com.openlumen.external.ExternalIntentLauncher
 import com.openlumen.external.ExternalIntentResult
 import com.openlumen.prefs.EngineKindDto
@@ -73,16 +74,10 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             EngineKindDto.Overlay to stringResource(R.string.driver_overlay)
         )
 
-        // Resolve which engine the "Auto" choice would pick right now.
-        // Auto deliberately mirrors DriverProbe.pickBest: highest-rank
-        // available root engine first, otherwise Overlay.
-        val autoResolvedLabelRes: Int? = probes
-            .filter { it.available && it.engine.kind.requiresRoot }
-            .maxByOrNull { it.engine.kind.rank }
-            ?.engine?.kind?.let(::engineKindLabelRes)
-            ?: probes
-                .firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }
-                ?.engine?.kind?.let(::engineKindLabelRes)
+        // Resolve which engine the "Auto" choice would pick right now from
+        // the same ordered capability resolver used by EngineController.
+        val autoResolvedLabelRes: Int? = DriverProbe.bestAvailableKind(probes)
+            ?.let(::engineKindLabelRes)
 
         choices.forEach { (kind, label) ->
             val availability = kind.toEngineKind()

@@ -51,9 +51,7 @@ class DriverProbe(
     }
 
     internal fun pickBestFrom(probes: List<Probe>): ColorEngine? =
-        probes.firstOrNull { it.available && it.engine.kind.requiresRoot }?.engine
-            ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER }?.engine
-            ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }?.engine
+        bestAvailableKind(probes)?.let { kind -> engines.firstOrNull { it.kind == kind } }
 
     /** Look up an engine by kind. Used when the user pins a specific driver. */
     fun engineOf(kind: EngineKind): ColorEngine? = engines.firstOrNull { it.kind == kind }
@@ -61,6 +59,19 @@ class DriverProbe(
     data class Probe(val engine: ColorEngine, val available: Boolean)
 
     companion object {
+        /**
+         * Resolve Auto's ordered choice from an already-probed capability
+         * list. Both the service and the UI use this so the explanation
+         * cannot drift from the engine actually selected at runtime.
+         */
+        fun bestAvailableKind(probes: List<Probe>): EngineKind? =
+            probes.firstOrNull { it.available && it.engine.kind.requiresRoot }?.engine?.kind
+                ?: probes.firstOrNull {
+                    it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER
+                }?.engine?.kind
+                ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }
+                    ?.engine?.kind
+
         fun defaultEngines(): List<ColorEngine> = listOf(
             ColorDisplayManagerEngine(),
             SurfaceFlingerEngine(),
