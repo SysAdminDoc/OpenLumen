@@ -7,6 +7,8 @@ import com.openlumen.engine.engines.OverlayEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Runs each ColorEngine's cheap isAvailable() probe and returns the engines that work,
@@ -21,23 +23,37 @@ class DriverProbe(
     private val engines: List<ColorEngine> = defaultEngines()
 ) {
     /**
-     * Run every engine probe and rank-order the result. Probes run in
-     * parallel via `async`: CDM is a fast reflection call, but the
-     * SurfaceFlinger and KCAL probes can each spend 1-2 seconds spawning
-     * `su` subprocesses to test their candidate codes / sysfs paths.
-     * Serializing them adds up on first launch on root devices.
-     * Engines' own probe state is `@Volatile` and idempotent under
-     * concurrent first-touch, so parallel probes are safe.
+     * A probe is a generation of shared capability state. Keep generations
+     * single-flight so a service resolution cannot race a UI refresh and
+     * publish an older answer after the refresh has completed.
      */
-    suspend fun probeAll(context: Context): List<Probe> = coroutineScope {
-        engines.map { engine ->
-            async {
-                val available = runCatching { engine.isAvailable(context) }.getOrDefault(false)
-                Probe(engine, available)
+    private val probeMutex = Mutex()
+
+    /**
+     * Run every engine probe and rank-order the result. The generation is
+     * serialized, while the individual engine checks still run in parallel:
+     * CDM is a fast reflection call, but SurfaceFlinger and KCAL can each
+     * spend 1-2 seconds spawning `su` subprocesses.
+     *
+     * [invalidateCaches] is intentionally handled inside the same lock. A
+     * UI refresh therefore cannot clear the process-wide root cache while a
+     * service generation is still using it.
+     */
+    suspend fun probeAll(
+        context: Context,
+        invalidateCaches: Boolean = false
+    ): List<Probe> = probeMutex.withLock {
+        if (invalidateCaches) Su.resetCache()
+        coroutineScope {
+            engines.map { engine ->
+                async {
+                    val available = runCatching { engine.isAvailable(context) }.getOrDefault(false)
+                    Probe(engine, available)
+                }
             }
+                .map { it.await() }
+                .sortedByDescending { it.engine.kind.rank }
         }
-            .map { it.await() }
-            .sortedByDescending { it.engine.kind.rank }
     }
 
     /**

@@ -136,6 +136,8 @@
     <string name="driver_kcal">KCAL kernel (root, Qualcomm)</string>
     <string name="driver_overlay">Overlay (sem root)</string>
     <string name="driver_refresh">Verificar novamente</string>
+    <string name="driver_refreshing">Verificando drivers…</string>
+    <string name="driver_probe_failed">Falha ao verificar os drivers. Tente novamente.</string>
     <string name="driver_available">Disponível</string>
     <string name="driver_not_available">Indisponível neste dispositivo</string>
     <string name="driver_auto_resolved">Automático escolheu: %1$s</string>

@@ -55,6 +55,8 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
     val prefs by vm.state.collectAsStateWithLifecycle()
     val probes by vm.probes.collectAsStateWithLifecycle()
+    val probesRefreshing by vm.probesRefreshing.collectAsStateWithLifecycle()
+    val probeError by vm.probeError.collectAsStateWithLifecycle()
     var shareError by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -168,8 +170,24 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
             )
         }
 
-        LumenButton(onClick = { vm.refreshProbes() }, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.driver_refresh))
+        probeError?.let { error ->
+            Text(
+                error,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        LumenButton(
+            onClick = { vm.refreshProbes() },
+            enabled = !probesRefreshing,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                stringResource(
+                    if (probesRefreshing) R.string.driver_refreshing else R.string.driver_refresh
+                )
+            )
         }
 
         // Overlay alpha cap explainer (C09): visible when the Overlay engine is

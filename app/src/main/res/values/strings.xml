@@ -143,6 +143,8 @@
     <string name="driver_kcal">KCAL kernel (root, Qualcomm)</string>
     <string name="driver_overlay">Overlay (rootless)</string>
     <string name="driver_refresh">Re-probe</string>
+    <string name="driver_refreshing">Probing drivers…</string>
+    <string name="driver_probe_failed">Driver probe failed. Try again.</string>
     <string name="driver_available">Available</string>
     <string name="driver_not_available">Not available on this device</string>
     <string name="driver_auto_resolved">Auto picks: %1$s</string>

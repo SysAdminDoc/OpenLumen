@@ -30,7 +30,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
 @HiltViewModel
@@ -49,6 +51,12 @@ class OpenLumenViewModel @Inject constructor(
 
     private val _probes = MutableStateFlow<List<DriverProbe.Probe>>(emptyList())
     val probes: StateFlow<List<DriverProbe.Probe>> = _probes.asStateFlow()
+
+    private val probeMutex = Mutex()
+    private val _probesRefreshing = MutableStateFlow(false)
+    val probesRefreshing: StateFlow<Boolean> = _probesRefreshing.asStateFlow()
+    private val _probeError = MutableStateFlow<String?>(null)
+    val probeError: StateFlow<String?> = _probeError.asStateFlow()
 
     /** Live ambient-light lux reading. -1 means no sensor / not yet emitted. */
     val lux: StateFlow<Float> = lightSensor.lux()
@@ -278,17 +286,31 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     fun refreshProbes() = viewModelScope.launch {
-        // Invalidate the per-process su availability cache before re-probing:
-        // a user who grants Magisk root after first launch should be able to
-        // see root-only engines light up without restarting the app.
-        com.openlumen.engine.Su.resetCache()
-        val results = probe.probeAll(getApplication())
-        _probes.value = results
-        val current = state.value.engine
-        if (current != EngineKindDto.Auto && results.isUnavailable(current)) {
-            prefs.update { prefs ->
-                if (prefs.engine == current) prefs.copy(engine = EngineKindDto.Auto) else prefs
+        // Keep repeated taps single-flight at the UI boundary. DriverProbe
+        // also serializes this generation with service-side resolution.
+        if (!probeMutex.tryLock()) return@launch
+        _probesRefreshing.value = true
+        _probeError.value = null
+        try {
+            // Invalidate the per-process su availability cache before re-probing:
+            // a user who grants Magisk root after first launch should be able to
+            // see root-only engines light up without restarting the app.
+            val results = probe.probeAll(getApplication(), invalidateCaches = true)
+            _probes.value = results
+            val current = state.value.engine
+            if (current != EngineKindDto.Auto && results.isUnavailable(current)) {
+                prefs.update { prefs ->
+                    if (prefs.engine == current) prefs.copy(engine = EngineKindDto.Auto) else prefs
+                }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            Log.w(tag, "Driver probe failed", error)
+            _probeError.value = getApplication<Application>().getString(R.string.driver_probe_failed)
+        } finally {
+            _probesRefreshing.value = false
+            probeMutex.unlock()
         }
     }
 

@@ -136,6 +136,8 @@
     <string name="driver_kcal">KCAL カーネル (root, Qualcomm)</string>
     <string name="driver_overlay">オーバーレイ (root不要)</string>
     <string name="driver_refresh">再検出</string>
+    <string name="driver_refreshing">ドライバーを確認中…</string>
+    <string name="driver_probe_failed">ドライバーの確認に失敗しました。もう一度お試しください。</string>
     <string name="driver_available">利用可能</string>
     <string name="driver_not_available">このデバイスでは利用できません</string>
     <string name="driver_auto_resolved">自動選択: %1$s</string>
