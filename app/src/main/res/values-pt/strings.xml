@@ -152,6 +152,8 @@
     <string name="driver_auto_resolved_none">Automático: nenhum driver disponível — instale o Overlay concedendo a permissão de sobreposição.</string>
     <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. ColorDisplayManager, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
+    <string name="driver_aapm_title">Advanced Protection do Android</string>
+    <string name="driver_aapm_explanation">O modo Advanced Protection pode revogar automaticamente recursos baseados em Accessibility. O OpenLumen não usa Accessibility nem UsageStats, portanto o AAPM não afeta este app. O relatório do controlador registra o estado da plataforma quando disponível.</string>
     <string name="driver_grant_status_granted">Concedido neste dispositivo.</string>
     <string name="driver_grant_status_not_granted">Não concedido. O driver ColorDisplayManager fica indisponível até que seja concedido pelo comando ADB abaixo.</string>
     <string name="driver_copy_command">Copiar comando</string>

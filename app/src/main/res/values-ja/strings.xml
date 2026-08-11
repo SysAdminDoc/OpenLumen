@@ -152,6 +152,8 @@
     <string name="driver_auto_resolved_none">自動: 利用可能なドライバーがありません — オーバーレイ権限を許可してオーバーレイフォールバックをインストールしてください。</string>
     <string name="driver_color_contract">SurfaceFlinger は完全なカラーマトリクスを保持します。ColorDisplayManager、KCAL、Overlay はスカラー近似を使用するため、コントラストは変換後の白色点に一致しますが、黒と中間調は異なる場合があります。</string>
     <string name="driver_grant_secure_settings">ADB で WRITE_SECURE_SETTINGS を許可する</string>
+    <string name="driver_aapm_title">Android Advanced Protection</string>
+    <string name="driver_aapm_explanation">Advanced Protection Mode は Accessibility ベースの機能を自動的に取り消す場合があります。OpenLumen は Accessibility も UsageStats も使用しないため、AAPM はこのアプリに影響しません。利用可能な場合、ドライバーレポートにプラットフォームの状態が記録されます。</string>
     <string name="driver_grant_status_granted">このデバイスで許可済みです。</string>
     <string name="driver_grant_status_not_granted">未許可です。以下の ADB コマンドで許可するまで ColorDisplayManager ドライバーは利用できません。</string>
     <string name="driver_copy_command">コマンドをコピー</string>
