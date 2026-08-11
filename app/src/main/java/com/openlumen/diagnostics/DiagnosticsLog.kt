@@ -5,6 +5,7 @@ import android.util.Log
 import java.io.File
 import java.io.RandomAccessFile
 import java.time.Instant
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -138,6 +139,51 @@ object DiagnosticsLog {
         val level = tokens[1]
         val category = tokens[2]
         return level in levels && category in categories
+    }
+
+    data class TimelineBounds(val earliest: Instant, val latest: Instant)
+
+    /** Parse the ISO-8601 timestamp at the start of a structured log line. */
+    fun lineInstant(line: String): Instant? =
+        line.substringBefore(' ', missingDelimiterValue = line)
+            .takeIf { it.isNotBlank() }
+            ?.let { token -> runCatching { Instant.parse(token) }.getOrNull() }
+
+    /** Return the time span represented by lines that pass level/category filters. */
+    fun timelineBounds(
+        lines: Iterable<String>,
+        levels: Set<String>,
+        categories: Set<String>
+    ): TimelineBounds? {
+        val instants = lines.asSequence()
+            .filter { lineMatches(it, levels, categories) }
+            .mapNotNull(::lineInstant)
+            .toList()
+        if (instants.isEmpty()) return null
+        return TimelineBounds(instants.minOrNull()!!, instants.maxOrNull()!!)
+    }
+
+    /**
+     * Apply level/category filtering first, then optional timeline and text
+     * constraints. Search is case-insensitive and covers the complete
+     * structured line so users can search either messages or tokens.
+     */
+    fun filterLines(
+        lines: Iterable<String>,
+        levels: Set<String>,
+        categories: Set<String>,
+        query: String = "",
+        from: Instant? = null,
+        through: Instant? = null
+    ): List<String> {
+        val normalizedQuery = query.trim().lowercase(Locale.ROOT)
+        return lines.filter { line ->
+            if (!lineMatches(line, levels, categories)) return@filter false
+            val instant = lineInstant(line) ?: return@filter false
+            if (from != null && instant.isBefore(from)) return@filter false
+            if (through != null && instant.isAfter(through)) return@filter false
+            normalizedQuery.isBlank() || line.lowercase(Locale.ROOT).contains(normalizedQuery)
+        }
     }
 
     /**

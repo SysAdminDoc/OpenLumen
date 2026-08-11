@@ -303,4 +303,6 @@
     <string name="about_import_preset_pack">Importar pacote de predefinições</string>
     <string name="about_profiles_rename">Mudar nome</string>
     <string name="about_profiles_rename_title">Mudar nome do perfil</string>
+    <string name="about_diag_log_timeline">Intervalo de tempo</string>
+    <string name="about_diag_log_search">Pesquisar nas linhas filtradas</string>
 </resources>

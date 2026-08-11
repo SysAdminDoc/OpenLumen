@@ -303,4 +303,6 @@
     <string name="about_import_preset_pack">Importar paquete de preajustes</string>
     <string name="about_profiles_rename">Renombrar</string>
     <string name="about_profiles_rename_title">Renombrar perfil</string>
+    <string name="about_diag_log_timeline">Intervalo de tiempo</string>
+    <string name="about_diag_log_search">Buscar en las líneas filtradas</string>
 </resources>

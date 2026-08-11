@@ -1,6 +1,7 @@
 package com.openlumen.diagnostics
 
 import com.google.common.truth.Truth.assertThat
+import java.time.Instant
 import org.junit.Test
 
 /**
@@ -89,5 +90,47 @@ class DiagnosticsLogFormatTest {
         val line = "2026-05-17T22:00:00Z WARN ENGINE this message has many spaces in it"
         val ok = DiagnosticsLog.lineMatches(line, setOf("WARN"), setOf("ENGINE"))
         assertThat(ok).isTrue()
+    }
+
+    @Test fun `lineInstant parses structured timestamps and rejects malformed lines`() {
+        assertThat(DiagnosticsLog.lineInstant("2026-05-17T22:00:00Z WARN ENGINE apply"))
+            .isEqualTo(Instant.parse("2026-05-17T22:00:00Z"))
+        assertThat(DiagnosticsLog.lineInstant("not-a-timestamp WARN ENGINE apply")).isNull()
+    }
+
+    @Test fun `filterLines searches inside the selected category and timeline`() {
+        val lines = listOf(
+            "2026-05-17T22:00:00Z WARN ENGINE old matrix",
+            "2026-05-17T22:01:00Z WARN SCHEDULE next alarm",
+            "2026-05-17T22:02:00Z ERROR ENGINE new matrix",
+            "not-a-timestamp WARN ENGINE torn write"
+        )
+
+        val filtered = DiagnosticsLog.filterLines(
+            lines = lines,
+            levels = setOf("WARN", "ERROR"),
+            categories = setOf("ENGINE"),
+            query = "NEW",
+            from = Instant.parse("2026-05-17T22:01:00Z")
+        )
+
+        assertThat(filtered).containsExactly(lines[2])
+    }
+
+    @Test fun `timelineBounds uses only selected structured lines`() {
+        val lines = listOf(
+            "2026-05-17T22:00:00Z INFO ENGINE old",
+            "2026-05-17T22:04:00Z WARN SCHEDULE alarm",
+            "2026-05-17T22:08:00Z ERROR ENGINE new"
+        )
+
+        val bounds = DiagnosticsLog.timelineBounds(
+            lines,
+            levels = setOf("WARN", "ERROR"),
+            categories = setOf("ENGINE", "SCHEDULE")
+        )
+
+        assertThat(bounds?.earliest).isEqualTo(Instant.parse("2026-05-17T22:04:00Z"))
+        assertThat(bounds?.latest).isEqualTo(Instant.parse("2026-05-17T22:08:00Z"))
     }
 }

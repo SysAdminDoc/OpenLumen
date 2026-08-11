@@ -303,4 +303,6 @@
     <string name="about_import_preset_pack">プリセットパックをインポート</string>
     <string name="about_profiles_rename">名前を変更</string>
     <string name="about_profiles_rename_title">プロファイル名を変更</string>
+    <string name="about_diag_log_timeline">時間範囲</string>
+    <string name="about_diag_log_search">フィルター済み行を検索</string>
 </resources>

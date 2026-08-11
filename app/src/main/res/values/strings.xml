@@ -227,6 +227,8 @@
     <string name="about_diag_log_empty">No events recorded yet.</string>
     <string name="about_diag_log_filter_level">Levels</string>
     <string name="about_diag_log_filter_category">Categories</string>
+    <string name="about_diag_log_timeline">Timeline range</string>
+    <string name="about_diag_log_search">Search filtered lines</string>
     <string name="about_diag_log_count">Showing %1$d of %2$d lines</string>
     <string name="about_diag_log_no_matches">No lines match the current filter.</string>
     <string name="about_profiles_title">Profiles</string>

@@ -28,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -40,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -49,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -904,12 +907,44 @@ private fun DiagnosticsLogDialog(
     var selectedCategories by rememberSaveable {
         mutableStateOf(com.openlumen.diagnostics.DiagnosticsLog.Category.values().map { it.name }.toSet())
     }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var timelineStartFraction by rememberSaveable { mutableFloatStateOf(0f) }
+    var timelineEndFraction by rememberSaveable { mutableFloatStateOf(1f) }
 
-    val filteredLines = remember(rawLines, selectedLevels, selectedCategories) {
-        if (rawLines.isEmpty()) emptyList()
-        else rawLines.filter { line ->
+    val timelineBounds = remember(rawLines, selectedLevels, selectedCategories) {
+        DiagnosticsLog.timelineBounds(rawLines, selectedLevels, selectedCategories)
+    }
+    LaunchedEffect(timelineBounds) {
+        timelineStartFraction = 0f
+        timelineEndFraction = 1f
+    }
+    val timelineFrom = timelineBounds?.let {
+        timelineInstantAt(it, timelineStartFraction)
+    }
+    val timelineThrough = timelineBounds?.let {
+        timelineInstantAt(it, timelineEndFraction)
+    }
+    val baseFilteredLines = remember(rawLines, selectedLevels, selectedCategories) {
+        rawLines.filter { line ->
             DiagnosticsLog.lineMatches(line, selectedLevels, selectedCategories)
         }
+    }
+    val filteredLines = remember(
+        rawLines,
+        selectedLevels,
+        selectedCategories,
+        searchQuery,
+        timelineFrom,
+        timelineThrough
+    ) {
+        DiagnosticsLog.filterLines(
+            lines = rawLines,
+            levels = selectedLevels,
+            categories = selectedCategories,
+            query = searchQuery,
+            from = timelineFrom,
+            through = timelineThrough
+        )
     }
 
     AlertDialog(
@@ -969,12 +1004,57 @@ private fun DiagnosticsLogDialog(
                             )
                         }
                     }
+                    timelineBounds?.let { bounds ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.about_diag_log_timeline),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        RangeSlider(
+                            value = timelineStartFraction..timelineEndFraction,
+                            onValueChange = { range ->
+                                timelineStartFraction = range.start
+                                timelineEndFraction = range.endInclusive
+                            },
+                            valueRange = 0f..1f,
+                            steps = 0
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                bounds.earliest.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                bounds.latest.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.End
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text(stringResource(R.string.about_diag_log_search)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Spacer(Modifier.height(8.dp))
                     Text(
                         stringResource(
                             R.string.about_diag_log_count,
                             filteredLines.size,
-                            rawLines.size
+                            baseFilteredLines.size
                         ),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1015,4 +1095,15 @@ private fun DiagnosticsLogDialog(
             }
         }
     )
+}
+
+private fun timelineInstantAt(
+    bounds: DiagnosticsLog.TimelineBounds,
+    fraction: Float
+): java.time.Instant {
+    val start = bounds.earliest.toEpochMilli()
+    val end = bounds.latest.toEpochMilli()
+    val clamped = fraction.coerceIn(0f, 1f)
+    val offset = ((end - start).toDouble() * clamped).toLong()
+    return java.time.Instant.ofEpochMilli(start + offset)
 }
