@@ -6,9 +6,9 @@ import android.content.Intent
 import android.util.Log
 
 /**
- * Fires when the schedule's next-transition AlarmManager alarm comes due. The receiver
- * just nudges [LumenService] to re-evaluate; the service itself decides whether to apply
- * a filter matrix or clear (and schedules the *next* alarm).
+ * Handles bounded retries for schedule-triggered foreground-service starts and consumes
+ * legacy broadcast alarms created before the direct-service alarm migration. New normal
+ * schedule alarms target [LumenService] directly to avoid a process-death handoff gap.
  */
 class ScheduleAlarmReceiver : BroadcastReceiver() {
     private val tag = "OpenLumen/SchedAlarm"

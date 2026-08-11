@@ -31,7 +31,19 @@ class ScheduleAlarmOrchestratorTest {
 
         assertThat(alarms.exactCalls).isEqualTo(1)
         assertThat(alarms.inexactCalls).isEqualTo(0)
+        assertThat(alarms.lastPendingIntent?.isForegroundService).isTrue()
         assertThat(inexactFallbackLogs()).isEmpty()
+    }
+
+    @Test
+    @Config(sdk = [31, 35])
+    fun `direct service alarm remains the primary path across supported API levels`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true)
+
+        orchestrator(alarms).rescheduleNextTransition(testMode)
+
+        assertThat(alarms.lastPendingIntent?.isForegroundService).isTrue()
+        assertThat(alarms.lastPendingIntent?.isBroadcast).isFalse()
     }
 
     @Test fun `denied exact alarm permission schedules inexact transition and logs degradation`() {
@@ -41,6 +53,7 @@ class ScheduleAlarmOrchestratorTest {
 
         assertThat(alarms.exactCalls).isEqualTo(0)
         assertThat(alarms.inexactCalls).isEqualTo(1)
+        assertThat(alarms.lastPendingIntent?.isBroadcast).isTrue()
         assertThat(inexactFallbackLogs()).containsExactly(
             "exact alarms unavailable; scheduled inexact transition"
         )
@@ -68,7 +81,8 @@ class ScheduleAlarmOrchestratorTest {
 
         assertThat(alarms.exactCalls).isEqualTo(0)
         assertThat(alarms.inexactCalls).isEqualTo(1)
-        assertThat(alarms.cancelCalls).isEqualTo(1)
+        assertThat(alarms.cancelCalls).isEqualTo(3)
+        assertThat(alarms.lastPendingIntent?.isBroadcast).isTrue()
         assertThat(logs.any { it.contains("scheduled blocked-service retry 2 in 5s") }).isTrue()
     }
 
@@ -85,6 +99,7 @@ class ScheduleAlarmOrchestratorTest {
         assertThat(alarmOrchestrator.rescheduleIfExactAlarmPermissionChanged(testMode)).isFalse()
         assertThat(alarms.exactCalls).isEqualTo(1)
         assertThat(alarms.inexactCalls).isEqualTo(1)
+        assertThat(alarms.lastPendingIntent?.isBroadcast).isTrue()
     }
 
     @Test fun `normal scheduling establishes permission state for reconciliation`() {
@@ -104,7 +119,7 @@ class ScheduleAlarmOrchestratorTest {
         alarmOrchestrator.rescheduleNextTransition(testMode)
         alarmOrchestrator.rescheduleNextTransition(testMode)
 
-        assertThat(alarms.cancelCalls).isEqualTo(1)
+        assertThat(alarms.cancelCalls).isEqualTo(3)
         assertThat(alarms.exactCalls).isEqualTo(1)
         assertThat(logs.count { it.contains("scheduled next transition") }).isEqualTo(1)
     }
@@ -124,7 +139,7 @@ class ScheduleAlarmOrchestratorTest {
         now = NOW_MS + 120_001L
         alarmOrchestrator.rescheduleNextTransition(testMode)
 
-        assertThat(alarms.cancelCalls).isEqualTo(2)
+        assertThat(alarms.cancelCalls).isEqualTo(6)
         assertThat(alarms.exactCalls).isEqualTo(2)
     }
 
@@ -155,16 +170,20 @@ class ScheduleAlarmOrchestratorTest {
             private set
         var cancelCalls = 0
             private set
+        var lastPendingIntent: PendingIntent? = null
+            private set
 
         override fun canScheduleExactAlarms(): Boolean = exactAllowed
 
         override fun setExactAndAllowWhileIdle(triggerMs: Long, pi: PendingIntent) {
             exactCalls += 1
+            lastPendingIntent = pi
             if (throwOnExact) throw SecurityException("revoked")
         }
 
         override fun setAndAllowWhileIdle(triggerMs: Long, pi: PendingIntent) {
             inexactCalls += 1
+            lastPendingIntent = pi
         }
 
         override fun cancel(pi: PendingIntent) {

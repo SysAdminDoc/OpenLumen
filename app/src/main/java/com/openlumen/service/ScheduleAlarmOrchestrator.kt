@@ -61,8 +61,7 @@ internal class ScheduleAlarmOrchestrator(
         lastExactAlarmPermission = exactAllowed
         lastScheduleSignature = signature
         lastScheduledTriggerMs = null
-        val pi = schedulePendingIntent()
-        alarms.cancel(pi)
+        cancelScheduledAlarms(alarms)
 
         val nextTransition: ZonedDateTime = next ?: return
         var triggerMs = nextTransition.toInstant().toEpochMilli()
@@ -84,6 +83,7 @@ internal class ScheduleAlarmOrchestrator(
             )
         }
         lastScheduledTriggerMs = triggerMs
+        val pi = schedulePendingIntent(exactAllowed)
 
         try {
             if (!exactAllowed) {
@@ -96,7 +96,7 @@ internal class ScheduleAlarmOrchestrator(
             Log.w(logTag, "SecurityException scheduling exact alarm, falling back: ${e.message}")
             try {
                 logExactAlarmFallback("exact alarm rejected; scheduled inexact transition")
-                alarms.setAndAllowWhileIdle(triggerMs, pi)
+                alarms.setAndAllowWhileIdle(triggerMs, broadcastSchedulePendingIntent())
             } catch (e2: SecurityException) {
                 Log.e(logTag, "Both exact and inexact scheduling rejected: ${e2.message}")
                 lastScheduleSignature = null
@@ -117,7 +117,7 @@ internal class ScheduleAlarmOrchestrator(
         lastScheduledTriggerMs = null
         lastExactAlarmPermission = null
         val alarms = alarmOpsProvider(context) ?: return
-        alarms.cancel(schedulePendingIntent())
+        cancelScheduledAlarms(alarms)
     }
 
     @Synchronized
@@ -125,8 +125,8 @@ internal class ScheduleAlarmOrchestrator(
         lastScheduleSignature = null
         lastScheduledTriggerMs = null
         val alarms = alarmOpsProvider(context) ?: return
-        val pi = schedulePendingIntent(retryAttempt = attempt)
-        alarms.cancel(pi)
+        cancelScheduledAlarms(alarms)
+        val pi = blockedStartRetryPendingIntent(attempt)
         val triggerMs = nowMs() + delayMs.coerceAtLeast(1_000L)
         runCatching {
             alarms.setAndAllowWhileIdle(triggerMs, pi)
@@ -156,14 +156,54 @@ internal class ScheduleAlarmOrchestrator(
         }.getOrNull()
     }
 
-    private fun schedulePendingIntent(retryAttempt: Int = 0): PendingIntent = PendingIntent.getBroadcast(
+    /**
+     * Exact alarms target the service directly, removing the receiver-to-service
+     * process handoff window. Inexact alarms intentionally retain the receiver
+     * so a blocked foreground-service start can use the bounded retry budget.
+     * The service remains the idempotent owner of schedule evaluation and
+     * next-alarm reconciliation.
+     */
+    private fun schedulePendingIntent(exactAllowed: Boolean): PendingIntent =
+        if (exactAllowed) {
+            PendingIntent.getForegroundService(
+                context,
+                SCHEDULE_REQUEST_CODE,
+                Intent(context, LumenService::class.java)
+                    .setAction(LumenService.ACTION_REEVALUATE),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            broadcastSchedulePendingIntent()
+        }
+
+    /**
+     * Kept so an alarm created by a previous app version cannot fire through
+     * the old receiver after a direct-service alarm has been installed.
+     */
+    private fun broadcastSchedulePendingIntent(): PendingIntent = PendingIntent.getBroadcast(
         context,
-        0,
+        SCHEDULE_REQUEST_CODE,
         Intent(context, ScheduleAlarmReceiver::class.java)
-            .setAction(ScheduleAlarmReceiver.ACTION_FIRE)
-            .putExtra(ScheduleAlarmReceiver.EXTRA_RETRY_ATTEMPT, retryAttempt),
+            .setAction(ScheduleAlarmReceiver.ACTION_FIRE),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
+
+    /** Broadcast retries can catch a blocked foreground-service start. */
+    private fun blockedStartRetryPendingIntent(attempt: Int = 0): PendingIntent =
+        PendingIntent.getBroadcast(
+            context,
+            BLOCKED_RETRY_REQUEST_CODE,
+            Intent(context, ScheduleAlarmReceiver::class.java)
+                .setAction(ScheduleAlarmReceiver.ACTION_FIRE)
+                .putExtra(ScheduleAlarmReceiver.EXTRA_RETRY_ATTEMPT, attempt),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+    private fun cancelScheduledAlarms(alarms: ScheduleAlarmOps) {
+        alarms.cancel(schedulePendingIntent(exactAllowed = true))
+        alarms.cancel(broadcastSchedulePendingIntent())
+        alarms.cancel(blockedStartRetryPendingIntent())
+    }
 
     private fun logExactAlarmFallback(message: String) {
         DiagnosticsLog.logAsync(
@@ -179,6 +219,11 @@ internal class ScheduleAlarmOrchestrator(
         val exactAllowed: Boolean,
         val requestedTriggerMs: Long?
     )
+
+    private companion object {
+        private const val SCHEDULE_REQUEST_CODE = 0
+        private const val BLOCKED_RETRY_REQUEST_CODE = 1
+    }
 }
 
 internal interface ScheduleAlarmOps {

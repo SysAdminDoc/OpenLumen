@@ -109,6 +109,8 @@
             </intent-filter>
         </receiver>
 
+        <!-- Legacy schedule alarms and bounded retries still use a receiver; current
+             schedule alarms target LumenService directly to survive process death. -->
         <receiver
             android:name=".service.ScheduleAlarmReceiver"
             android:exported="false" />

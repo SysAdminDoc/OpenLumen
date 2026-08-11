@@ -47,15 +47,16 @@ import javax.inject.Inject
 
 /**
  * Foreground service that orchestrates the active display filter. Lives as long as the
- * user has the filter enabled. The schedule's next state-flip drives an alarm via
- * [ScheduleAlarmReceiver]; the light sensor drives a Flow collector — no polling.
+ * user has the filter enabled. The schedule's next state-flip targets this service
+ * directly; [ScheduleAlarmReceiver] remains only for bounded blocked-start retries and
+ * legacy alarms. The light sensor drives a Flow collector — no polling.
  *
  * IMPORTANT: We declare `foregroundServiceType="specialUse"` because Android 14+ requires
  * a typed FGS and `dataSync` / `systemExempted` are likely to be rejected on Play / F-Droid
  * review. The `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` manifest property documents the use.
  *
  * Concurrency model:
- *   - Prefs and lux are AtomicReferences so the alarm receiver / sensor callback can
+ *   - Prefs and lux are AtomicReferences so the schedule alarm / sensor callback can
  *     read the latest snapshot without coupling to the collector coroutine.
  *   - [EngineController] serializes engine `apply()` / `clear()` calls and ramp
  *     cancellation so root subprocesses and transition jobs do not race.
