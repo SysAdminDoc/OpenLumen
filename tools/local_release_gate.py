@@ -21,6 +21,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
+from project_context_check import validate_project_context
+
 
 BANNED_PERMISSIONS = {
     "android.permission.INTERNET",
@@ -119,6 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     report_dir.mkdir(parents=True, exist_ok=True)
 
     try:
+        run_project_context_check(root)
         run_health_claim_lint(root)
         run_gradle_validation(
             root,
@@ -228,6 +231,12 @@ def run_health_claim_lint(root: Path) -> None:
         run(cmd, root)
     except subprocess.CalledProcessError as exc:
         raise GateError(f"health-claim lint failed with exit code {exc.returncode}") from exc
+
+
+def run_project_context_check(root: Path) -> None:
+    errors = validate_project_context(root)
+    if errors:
+        raise GateError("PROJECT_CONTEXT consistency check failed: " + "; ".join(errors))
 
 
 def collect_dependencies(root: Path, timeout_seconds: int) -> str:
