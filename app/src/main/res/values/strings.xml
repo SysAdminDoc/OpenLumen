@@ -249,6 +249,7 @@
     <string name="perm_overlay_title">Allow display over other apps</string>
     <string name="perm_overlay_rationale">Required for the rootless overlay driver. Skip if you only use root drivers.</string>
     <string name="perm_overlay_grant">Open settings</string>
+    <string name="external_intent_failed">Could not open that screen. Open Android Settings or choose an app manually.</string>
 
     <string name="light_sensor_title">Ambient-light trigger</string>
     <string name="light_sensor_no_hardware">No ambient-light sensor is available on this device. The trigger is disabled.</string>

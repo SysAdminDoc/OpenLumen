@@ -40,6 +40,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlumen.R
+import com.openlumen.external.ExternalIntentResult
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
@@ -70,6 +71,7 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
     var equalFixedTimesError by rememberSaveable { mutableStateOf(false) }
+    var exactAlarmSettingsError by rememberSaveable { mutableStateOf(false) }
     var sunsetOffsetDraft by remember {
         mutableFloatStateOf(prefs.schedule.sunsetOffsetMin.toFloat())
     }
@@ -209,9 +211,11 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
         ) {
             ExactAlarmWarningCard(
                 onOpenSettings = {
-                    ExactAlarmAccess.openExactAlarmSettings(ctx)
+                    exactAlarmSettingsError = ExactAlarmAccess.openExactAlarmSettings(ctx) !=
+                        ExternalIntentResult.Launched
                     canScheduleExactAlarms = ExactAlarmAccess.canScheduleExactAlarms(ctx)
-                }
+                },
+                settingsError = exactAlarmSettingsError
             )
         }
 
@@ -474,7 +478,10 @@ fun ScheduleScreen(vm: OpenLumenViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun ExactAlarmWarningCard(onOpenSettings: () -> Unit) {
+private fun ExactAlarmWarningCard(
+    onOpenSettings: () -> Unit,
+    settingsError: Boolean
+) {
     Card(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
@@ -496,6 +503,13 @@ private fun ExactAlarmWarningCard(onOpenSettings: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )
+            if (settingsError) {
+                Text(
+                    stringResource(R.string.external_intent_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
             LumenButton(onClick = onOpenSettings) {
                 Text(stringResource(R.string.schedule_exact_alarm_warning_action))
             }

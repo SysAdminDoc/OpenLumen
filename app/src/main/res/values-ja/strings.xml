@@ -237,6 +237,7 @@
     <string name="perm_overlay_title">他のアプリの上に表示を許可</string>
     <string name="perm_overlay_rationale">rootレスのオーバーレイドライバーに必要です。rootドライバーのみ使用する場合はスキップできます。</string>
     <string name="perm_overlay_grant">設定を開く</string>
+    <string name="external_intent_failed">画面を開けませんでした。Androidの設定を開くか、アプリを手動で選択してください。</string>
 
     <string name="light_sensor_title">環境光トリガー</string>
     <string name="light_sensor_no_hardware">このデバイスでは環境光センサーを利用できません。トリガーは無効です。</string>

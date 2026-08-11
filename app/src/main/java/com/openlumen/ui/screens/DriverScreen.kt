@@ -26,8 +26,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.EngineKind
+import com.openlumen.external.ExternalIntentLauncher
+import com.openlumen.external.ExternalIntentResult
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
@@ -49,6 +54,7 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
     val ctx = LocalContext.current
     val prefs by vm.state.collectAsStateWithLifecycle()
     val probes by vm.probes.collectAsStateWithLifecycle()
+    var shareError by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -281,12 +287,21 @@ fun DriverScreen(vm: OpenLumenViewModel = hiltViewModel()) {
                         putExtra(Intent.EXTRA_SUBJECT, driverReportSubject)
                         putExtra(Intent.EXTRA_TEXT, report)
                     }
-                    ctx.startActivity(
-                        Intent.createChooser(send, driverShareReport)
-                    )
+                    shareError = ExternalIntentLauncher.share(
+                        context = ctx,
+                        sendIntent = send,
+                        chooserTitle = driverShareReport
+                    ) != ExternalIntentResult.Launched
                 },
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(R.string.driver_share_report)) }
+            if (shareError) {
+                Text(
+                    stringResource(R.string.external_intent_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

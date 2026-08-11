@@ -10,6 +10,7 @@
 - Kelvin control state now follows the current RGB and is explicitly disabled for named presets that are not editable temperature profiles, preventing stale-value jumps.
 - Previous-preset restore now records only named presets; custom-to-named changes consistently omit the restore affordance instead of offering a key without its exact RGB snapshot.
 - Explicit Off and AlwaysOff selections now remain stable standby states while the service is enabled; only the master-switch turn-on action restores an active schedule/preset.
+- Settings and driver-report share actions now resolve external activities defensively and show localized recovery guidance when an OEM or managed profile cannot launch them.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

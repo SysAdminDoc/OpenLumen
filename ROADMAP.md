@@ -45,16 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C229 — External settings/share intents can fail without a safe user-facing result
-  Category: reliability
-  Where: app/src/main/java/com/openlumen/ui/settings/OverlayPermissionCard.kt:98-103, app/src/main/java/com/openlumen/ui/settings/ExactAlarmAccess.kt:27-40, and app/src/main/java/com/openlumen/ui/driver/DriverScreen.kt:261-274
-  Problem: Several flows call startActivity/chooser directly. Overlay permission has no resolver or catch; Exact Alarm catches only the primary activity failure and silently swallows fallback failure; Driver export/share has no ActivityNotFoundException/SecurityException handling. OEMs, managed profiles, missing browsers/share targets, or restricted settings can therefore crash the click or make it appear to do nothing.
-  Evidence: The cited call sites perform direct launches and do not share a safe launcher/result message. The Exact Alarm fallback catch has no user feedback, and the share chooser is invoked without checking whether it can resolve.
-  Fix: Introduce one small UI-safe external-intent helper that checks resolveActivity, catches ActivityNotFoundException and SecurityException, and reports an actionable inline/snackbar error. Use it for settings and share flows, preserving the best available fallback.
-  Acceptance: Tests with no resolver and with a throwing activity prove no crash, no silent failure, and a localized recovery message; normal devices still open the intended destination.
-  Confidence: Needs-repro
-  Effort: M
-
 - [ ] P2 — C230 — Location-entry dialog can push its actions below the keyboard/short viewport
   Category: ux
   Where: app/src/main/java/com/openlumen/ui/schedule/LocationEntryDialog.kt:84-215

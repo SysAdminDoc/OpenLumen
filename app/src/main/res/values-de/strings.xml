@@ -237,6 +237,7 @@
     <string name="perm_overlay_title">Anzeige über anderen Apps erlauben</string>
     <string name="perm_overlay_rationale">Erforderlich für den rootlosen Overlay-Treiber. Überspringen, wenn Sie nur Root-Treiber verwenden.</string>
     <string name="perm_overlay_grant">Einstellungen öffnen</string>
+    <string name="external_intent_failed">Dieser Bildschirm konnte nicht geöffnet werden. Öffnen Sie die Android-Einstellungen oder wählen Sie manuell eine App aus.</string>
 
     <string name="light_sensor_title">Umgebungslicht-Auslöser</string>
     <string name="light_sensor_no_hardware">Auf diesem Gerät ist kein Umgebungslichtsensor verfügbar. Der Auslöser ist deaktiviert.</string>

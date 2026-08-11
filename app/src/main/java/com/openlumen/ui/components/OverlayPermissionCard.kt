@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.openlumen.external.ExternalIntentLauncher
+import com.openlumen.external.ExternalIntentResult
 import com.openlumen.R
 
 /**
@@ -75,6 +78,7 @@ fun OverlayPermissionCard(
     }
 
     if (canDrawOverlays) return
+    var settingsError by rememberSaveable { mutableStateOf(false) }
 
     Card(
         shape = MaterialTheme.shapes.large,
@@ -95,12 +99,20 @@ fun OverlayPermissionCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )
+            if (settingsError) {
+                Text(
+                    stringResource(R.string.external_intent_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
             LumenButton(onClick = {
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     ("package:" + ctx.packageName).toUri()
                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                ctx.startActivity(intent)
+                settingsError = ExternalIntentLauncher.launch(ctx, intent) !=
+                    ExternalIntentResult.Launched
             }) {
                 Text(stringResource(R.string.perm_overlay_grant))
             }

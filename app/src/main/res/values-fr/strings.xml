@@ -237,6 +237,7 @@
     <string name="perm_overlay_title">Autoriser l\'affichage par-dessus les autres applications</string>
     <string name="perm_overlay_rationale">Requis pour le pilote overlay sans root. Ignorez si vous n\'utilisez que des pilotes root.</string>
     <string name="perm_overlay_grant">Ouvrir les parametres</string>
+    <string name="external_intent_failed">Impossible d’ouvrir cet écran. Ouvrez les réglages Android ou choisissez une application manuellement.</string>
 
     <string name="light_sensor_title">Declenchement par luminosite ambiante</string>
     <string name="light_sensor_no_hardware">Aucun capteur de lumière ambiante n’est disponible sur cet appareil. Le déclencheur est désactivé.</string>

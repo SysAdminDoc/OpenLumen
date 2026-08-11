@@ -237,6 +237,7 @@
     <string name="perm_overlay_title">Permitir mostrar sobre otras aplicaciones</string>
     <string name="perm_overlay_rationale">Necesario para el controlador overlay sin root. Omita si solo utiliza controladores con root.</string>
     <string name="perm_overlay_grant">Abrir ajustes</string>
+    <string name="external_intent_failed">No se pudo abrir esa pantalla. Abre los ajustes de Android o elige una aplicación manualmente.</string>
 
     <string name="light_sensor_title">Activación por luz ambiental</string>
     <string name="light_sensor_no_hardware">Este dispositivo no tiene sensor de luz ambiental. El activador está desactivado.</string>
