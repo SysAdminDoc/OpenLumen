@@ -58,9 +58,12 @@ class WidgetActionReceiver : BroadcastReceiver() {
         if (toggledTo) {
             val result = LumenServiceStarter.start(context, logTag = TAG)
             if (!result.started) {
-                prefs.update { it.copy(enabled = false) }
                 if (result.foregroundStartNotAllowed) {
+                    // Keep enabled=true while the visible activity obtains
+                    // overlay permission and retries the service start.
                     LumenServiceStarter.openAppAfterBlockedStart(context, TAG, "widget_toggle")
+                } else {
+                    prefs.update { it.copy(enabled = false) }
                 }
             }
         } else {

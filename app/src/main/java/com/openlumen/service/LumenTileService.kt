@@ -75,9 +75,13 @@ class LumenTileService : TileService() {
                     if (toggledTo) {
                         val result = LumenServiceStarter.start(this@LumenTileService, logTag = tag)
                         if (!result.started) {
-                            prefs.update { it.copy(enabled = false) }
                             if (result.foregroundStartNotAllowed) {
+                                // Keep the requested state while MainActivity
+                                // guides the user through overlay permission
+                                // and retries the visible start.
                                 openAppAfterBlockedStart()
+                            } else {
+                                prefs.update { it.copy(enabled = false) }
                             }
                         }
                     }

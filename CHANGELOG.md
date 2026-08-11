@@ -24,6 +24,7 @@
 - KCAL emergency recovery documentation now uses the engine's valid 0–255 scalar range, with documentation lint rejecting out-of-range recovery examples.
 - PROJECT_CONTEXT.md now reflects the v0.6.6 release metadata, preference schema 2, and nullable Auto driver resolution, with a local consistency gate for future drift.
 - Sensor callback backpressure and diagnostics-log locking comments now match the live lossy-buffer and shared-lock implementations, with a concurrency regression test for reader locking.
+- Tile and widget foreground-service starts now retain the requested enabled state through a blocked-start recovery handoff, retrying from the visible app after overlay permission is granted.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
