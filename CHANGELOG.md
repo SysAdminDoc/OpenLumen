@@ -19,6 +19,7 @@
 - Screenshot coverage now renders the production navigation root and real screens with deterministic state, including light/dark themes, phone/rail layouts, loading/error/empty states, and an import dialog.
 - Adjustable sliders now expose localized control names alongside live value descriptions for TalkBack and keyboard users.
 - Exact schedule alarms now target the foreground service directly, while inexact fallback alarms retain bounded blocked-start retries and cancel legacy alarm identities during reconciliation.
+- Android 13+ per-app language settings now expose exactly the shipped English, German, Spanish, French, Japanese, and Portuguese locales, with automated string-key parity checks.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

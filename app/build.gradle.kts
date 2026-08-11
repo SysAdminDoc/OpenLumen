@@ -94,6 +94,11 @@ android {
         targetSdk = 35
         versionCode = 14
         versionName = "0.6.6"
+        resourceConfigurations += setOf("en", "de", "es", "fr", "ja", "pt")
+    }
+
+    androidResources {
+        generateLocaleConfig = true
     }
 
     signingConfigs {
