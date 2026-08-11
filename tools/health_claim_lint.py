@@ -26,6 +26,10 @@ ALLOW_CONTEXT_RE = re.compile(
     r"unsupported|not supported|not a|not medical|not health|not treatment|not a treatment|"
     r"not a sleep claim|not medical advice|rather than a sleep|no .{0,80}claims?)\b"
 )
+KCAL_RECOVERY_RE = re.compile(
+    r"(?i)\becho\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+>[^\n]*\bkcal\b"
+)
+KCAL_MAX_SCALAR = 255
 
 
 @dataclass(frozen=True)
@@ -134,6 +138,13 @@ def build_rules(root: Path) -> list[Rule]:
     )
     for name, pattern in MULTILINGUAL_PATTERNS:
         rules.append(Rule(name, re.compile(pattern, re.IGNORECASE), "localized guardrail"))
+    rules.append(
+        Rule(
+            "kcal-recovery-scalar-range",
+            KCAL_RECOVERY_RE,
+            "core-engine KcalEngine.MAX_SCALAR",
+        )
+    )
     return rules
 
 
@@ -169,6 +180,16 @@ def scan(root: Path, targets: Iterable[str], rules: list[Rule]) -> list[Violatio
             if not normalized or is_allowed_context(normalized):
                 continue
             for rule in rules:
+                if rule.name == "kcal-recovery-scalar-range":
+                    match = KCAL_RECOVERY_RE.search(normalized)
+                    if not match:
+                        continue
+                    if any(
+                        not 0 <= int(value) <= KCAL_MAX_SCALAR
+                        for value in match.groups()
+                    ):
+                        violations.append(Violation(path, index, rule, line))
+                    continue
                 if rule.pattern.search(normalized):
                     violations.append(Violation(path, index, rule, line))
     return violations

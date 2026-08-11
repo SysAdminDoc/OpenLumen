@@ -76,6 +76,31 @@ class HealthClaimLintTest(unittest.TestCase):
         self.assertEqual(len(violations), 1)
         self.assertEqual(violations[0].rule.name, "treat-cure-prevent-condition")
 
+    def test_flags_out_of_range_kcal_recovery_scalar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs/troubleshooting.md",
+                'adb shell su -c "echo 255 256 255 > /sys/devices/platform/kcal_ctrl.0/kcal"\n',
+            )
+
+            violations = lint.scan(root, ["docs"], lint.build_rules(root))
+
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0].rule.name, "kcal-recovery-scalar-range")
+
+    def test_allows_in_range_kcal_recovery_scalar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "docs/root-safety.md",
+                'adb shell su -c "echo 255 255 255 > /sys/devices/platform/kcal_ctrl.0/kcal"\n',
+            )
+
+            violations = lint.scan(root, ["docs"], lint.build_rules(root))
+
+        self.assertEqual(violations, [])
+
 
 def write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
