@@ -12,6 +12,7 @@
 - Explicit Off and AlwaysOff selections now remain stable standby states while the service is enabled; only the master-switch turn-on action restores an active schedule/preset.
 - Settings and driver-report share actions now resolve external activities defensively and show localized recovery guidance when an OEM or managed profile cannot launch them.
 - Location entry now uses an IME-aware bounded scroll region, keeping coordinate fields, city results, validation text, and dialog actions reachable on short viewports.
+- Navigation-rail layouts now apply safe top/bottom insets, adapt rail sizing for large font scales, and expose complete destination labels through accessibility semantics.
 
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

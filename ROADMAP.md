@@ -45,26 +45,6 @@ Actionable work only. Historical and completed roadmap material is archived in C
   2026-05-17 (see C53 entry in Progress). Remaining stretch: timeline
   scrubbing (jump to range), text search within filtered subset.
 
-- [ ] P2 — C231 — Navigation-rail content does not receive system-bar insets
-  Category: visual
-  Where: app/src/main/java/com/openlumen/ui/OpenLumenRoot.kt:98-115,156-167 and app/src/main/java/com/openlumen/ui/ScreenPadding.kt:9-19
-  Problem: In rail mode the rail itself applies statusBarsPadding/navigationBarsPadding, but the sibling OpenLumenNavHost content only receives weight/fill/background and screen-level fixed padding. Because MainActivity enables edge-to-edge, top-level content can draw under the status bar and bottom content under the navigation area on wide/tablet layouts.
-  Evidence: The rail branch places the NavHost directly beside the padded rail; topLevelScrollPadding is a fixed 16/24 dp spacing, not a system-inset consumption. The bottom-navigation branch handles insets differently, so the issue is specific to the secondary layout.
-  Fix: Apply the same safe-content inset policy to the rail NavHost (or consume insets once in a shared root container) and verify nested dialogs/popovers still use correct window insets. Do not double-apply rail insets.
-  Acceptance: Rail layouts in portrait/landscape and both themes keep headers and final scroll content below/above system bars at 100% and large fonts, with screenshot tests covering the inset contract.
-  Confidence: Needs-repro
-  Effort: M
-
-- [ ] P2 — C232 — Fixed navigation-rail width and one-line labels clip localized/large-font text
-  Category: a11y
-  Where: app/src/main/java/com/openlumen/ui/OpenLumenRoot.kt:156-179,226-233 and localized labels in app/src/main/res/values-es/strings.xml:4-8
-  Problem: The rail is fixed at 104 dp and each item's label is maxLines=1 with no overflow/tooltip strategy. Long localized labels such as Spanish "Ajustes predefinidos," and 200% font scaling, can be clipped or ellipsized without an accessible full-name alternative, reducing discoverability and violating the intended readable navigation contract.
-  Evidence: Width and item height are constants; the label has a one-line constraint and no measured adaptive width or content description. The supported Spanish strings already exceed the short English labels.
-  Fix: Make the rail width/label layout adaptive or provide intentionally short localized labels plus an accessible tooltip/content description containing the full name. Verify selected/unselected state remains understandable at large font scales.
-  Acceptance: Supported locales and at least 200% font scale display or expose the full name for every rail item without overlap/clipping, and Compose semantics tests assert the complete accessible labels.
-  Confidence: Likely
-  Effort: M
-
 - [ ] P2 — C233 — Driver screen's Auto explanation disagrees with the service resolver
   Category: ux
   Where: app/src/main/java/com/openlumen/ui/driver/DriverScreen.kt:70-79 and core-engine/src/main/java/com/openlumen/engine/DriverProbe.kt:47-55

@@ -28,11 +28,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -110,6 +115,8 @@ fun OpenLumenRoot() {
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
                         .background(MaterialTheme.colorScheme.background)
                 )
             }
@@ -153,9 +160,10 @@ private fun LumenNavigationRail(
     currentRoute: String?,
     onDestinationSelected: (Dest) -> Unit
 ) {
+    val metrics = navigationRailMetrics(LocalDensity.current.fontScale)
     Surface(
         modifier = Modifier
-            .width(104.dp)
+            .width(metrics.width)
             .fillMaxHeight(),
         color = MaterialTheme.colorScheme.surface
     ) {
@@ -175,7 +183,7 @@ private fun LumenNavigationRail(
                     onClick = { onDestinationSelected(dest) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(76.dp)
+                        .height(metrics.itemHeight)
                 )
             }
         }
@@ -199,6 +207,7 @@ private fun LumenDestinationItem(
                 role = Role.Tab,
                 onClick = onClick
             )
+            .semantics { contentDescription = label }
             .padding(horizontal = 2.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -229,9 +238,23 @@ private fun LumenDestinationItem(
             color = if (selected) selectedColor else unselectedColor,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             textAlign = TextAlign.Center,
-            maxLines = 1
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
+}
+
+internal data class NavigationRailMetrics(
+    val width: Dp,
+    val itemHeight: Dp
+)
+
+internal fun navigationRailMetrics(fontScale: Float): NavigationRailMetrics {
+    val scale = if (fontScale.isFinite()) fontScale.coerceIn(1f, 2f) else 1f
+    return NavigationRailMetrics(
+        width = 120.dp + (88.dp * (scale - 1f)),
+        itemHeight = 76.dp + (36.dp * (scale - 1f))
+    )
 }
 
 @Composable
