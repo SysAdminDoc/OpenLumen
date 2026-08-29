@@ -63,7 +63,8 @@ private sealed class Dest(val route: String, val labelRes: Int, val iconRes: Int
     data object About    : Dest("about",    R.string.nav_about,    R.drawable.ic_nav_about)
 
     companion object {
-        val all = listOf(Home, Schedule, Presets, Driver, About)
+        val all: List<Dest>
+            get() = listOf(Home, Schedule, Presets, Driver, About)
     }
 }
 

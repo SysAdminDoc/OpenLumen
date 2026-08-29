@@ -1,6 +1,6 @@
 # OpenLumen
 
-[![Version](https://img.shields.io/badge/version-0.7.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
+[![Version](https://img.shields.io/badge/version-0.7.1-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE)
 [![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements)
 [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)
@@ -19,12 +19,12 @@ runtime-selectable display drivers.
 
 ## Why OpenLumen?
 
-- **Four display drivers, runtime-detected** — Auto uses a root driver when root is available; non-root devices use Overlay.
+- **Four display drivers, runtime-detected**: Auto uses a root driver when root is available; non-root devices use Overlay.
 - **No INTERNET permission, ever.** Fully offline, F-Droid-clean.
 - **Catppuccin Mocha + AMOLED true-black** Compose UI. Dark by default.
 - **Quick Settings tile** for one-tap toggling. CF.Lumen never shipped a tile.
 - **GPL-3.0-or-later**, aligned with Red Moon's lineage.
-- **Modern Android targets** — minSdk 26, targetSdk 35 (Android 15).
+- **Modern Android targets**: minSdk 26, targetSdk 35 (Android 15).
 - **Stack:** Kotlin · Jetpack Compose · Material 3 · Hilt · DataStore · kotlinx.serialization.
 
 ## Display drivers
@@ -41,22 +41,22 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 ¹ Some builds require granting `WRITE_SECURE_SETTINGS` via:
 `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
 
-The app falls back gracefully — Auto prefers the best available root path
+The app falls back gracefully: Auto prefers the best available root path
 (`SurfaceFlinger`, then `KCAL`). Non-root devices use Overlay by default. If
 you want a specific driver such as `ColorDisplayManager`, Settings → Driver
 lets you pin one; if that pinned driver later probes as unavailable, OpenLumen
 resets to Auto instead of leaving the filter enabled with no visible effect.
 
-## Features (v0.7.0)
+## Features (v0.7.1)
 
 **Color**
 
 - Named presets: Night · Amber · Red · Salmon · Sepia · Grayscale · Deep Sleep · Protan · Deutan · Tritan
 - Custom R/G/B picker on Home with live color preview
-- Kelvin color-temperature slider (1000–10 000 K) with Tanner Helland conversion
-- Per-channel gamma sliders (γR / γG / γB, range 0.5–2.5)
-- Intensity slider (0–100% lerp toward identity) and dim slider (0–95%)
-- Contrast multiplier (0.5–2.0×)
+- Kelvin color-temperature slider (1000 to 10 000 K) with Tanner Helland conversion
+- Per-channel gamma sliders (γR / γG / γB, range 0.5 to 2.5)
+- Intensity slider (0 to 100% lerp toward identity) and dim slider (0 to 95%)
+- Contrast multiplier (0.5 to 2.0×)
 - AMOLED true-black clamp (opt-in; snaps very dim subpixels to fully off)
 - Blue-channel reduction indicator (physical measurement; not a sleep claim)
 
@@ -88,7 +88,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - AlarmManager-driven schedule transitions (`setExactAndAllowWhileIdle`, Doze-resilient)
 - Boot persistence with crash-window safety net (no auto-restart after a recent crash)
 - Profile export / import as JSON via Storage Access Framework, with diff preview
-- Named profile library — save current configuration, load it back later
+- Named profile library: save current configuration, load it back later
 - Portable preset packs with merge preview, custom built-in labels, and alphabetical or recent ordering
 - Previous-preset restore (one-tap undo of a preset change)
 - Local-only crash log + structured diagnostics log (`filesDir/`, viewable in-app)
@@ -102,7 +102,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Cloud backup includes solar coordinates only when Android reports client-side encryption; device transfer and explicit profile export remain available without that capability
 - No accessibility service, no usage-stats permission, no foreground-app detection
 - Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
-- In-app driver report (Copy or Share) with zero PII — captures device, build,
+- In-app driver report (Copy or Share) with zero PII: captures device, build,
   granted permissions, every engine's probe result
 
 ## Privacy
@@ -126,6 +126,7 @@ aapt dump permissions OpenLumen-release.apk | grep INTERNET
 ```bash
 git clone https://github.com/SysAdminDoc/OpenLumen.git
 cd OpenLumen
+export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-21.0.12.8-hotspot"
 ./gradlew assembleRelease
 # Fails unless release signing env vars are present.
 ```
@@ -187,52 +188,52 @@ scaffold is reserved for explicitly unsigned local/F-Droid checks:
 
 ```
 OpenLumen/
-├── app/             — Compose UI, foreground service, tile, boot receiver
-├── core-engine/     — ColorEngine abstraction + 4 driver impls + DriverProbe
-├── core-schedule/   — NOAA solar calculator, schedule modes, light sensor adapter
-└── core-prefs/      — DataStore-backed prefs, JSON serialization
+├── app/            : Compose UI, foreground service, tile, boot receiver
+├── core-engine/    : ColorEngine abstraction + 4 driver impls + DriverProbe
+├── core-schedule/  : NOAA solar calculator, schedule modes, light sensor adapter
+└── core-prefs/     : DataStore-backed prefs, JSON serialization
 ```
 
 ## Documentation
 
 ### For users
 
-- [Troubleshooting](docs/troubleshooting.md) — common driver and overlay problems, recovery from stuck states
-- [Compatibility table](docs/compatibility-table.md) — which engines work on which hardware
-- [Root mode safety and recovery](docs/root-safety.md) — what can go wrong with root drivers, and how to recover
-- [Automation](docs/automation.md) — Tasker / Termux / ADB intent reference
-- [Health and evidence notes](docs/health-evidence.md) — what we will and will not claim
+- [Troubleshooting](docs/troubleshooting.md): common driver and overlay problems, recovery from stuck states
+- [Compatibility table](docs/compatibility-table.md): which engines work on which hardware
+- [Root mode safety and recovery](docs/root-safety.md): what can go wrong with root drivers, and how to recover
+- [Automation](docs/automation.md): Tasker / Termux / ADB intent reference
+- [Health and evidence notes](docs/health-evidence.md): what we will and will not claim
 
 ### For contributors
 
-- [Architecture overview](docs/ARCHITECTURE.md) — modules, runtime flow, engine contract
-- [Contributing](CONTRIBUTING.md) — style, tests, driver-work expectations
-- [Translations and localization](docs/translations.md) — how to contribute a translation
-- [Device validation matrix](docs/device-matrix.md) — per-engine smoke flow, current device coverage
+- [Architecture overview](docs/ARCHITECTURE.md): modules, runtime flow, engine contract
+- [Contributing](CONTRIBUTING.md): style, tests, driver-work expectations
+- [Translations and localization](docs/translations.md): how to contribute a translation
+- [Device validation matrix](docs/device-matrix.md): per-engine smoke flow, current device coverage
 - Driver report matrix helper: `py -3.12 tools/driver_report_matrix.py report.txt`
 - Overlay viewport smoke: `rtk powershell -NoProfile -ExecutionPolicy Bypass -File tools\overlay_viewport_smoke.ps1 -Serial emulator-5554 -Package com.openlumen.debug`
-- [Profile import lineage formats](docs/profile-import-formats.md) — notes for future Red Moon / CF.Lumen importers
+- [Profile import lineage formats](docs/profile-import-formats.md): notes for future Red Moon / CF.Lumen importers
 
 ### For distributors and packagers
 
-- [Release checklist](docs/release-checklist.md) — pre-flight, verification, no-INTERNET assertion
-- [Reproducible build notes](docs/reproducible-build.md) — environment pinning, verification procedure
-- [Play FGS evidence pack](docs/play-fgs-evidence.md) — Play `specialUse` justification
+- [Release checklist](docs/release-checklist.md): pre-flight, verification, no-INTERNET assertion
+- [Reproducible build notes](docs/reproducible-build.md): environment pinning, verification procedure
+- [Play FGS evidence pack](docs/play-fgs-evidence.md): Play `specialUse` justification
 
 ### Security and supply chain
 
-- [Threat model](docs/threat-model.md) — MASVS-lite categories with mitigations
-- [SBOM and advisory scan](docs/sbom-and-advisories.md) — local scan and triage policy
-- [Dependency verification](docs/dependency-verification.md) — Gradle metadata procedure (opt-in)
-- [Wake / alarm / battery audit](docs/wake-and-vitals.md) — what wakes the device and why
+- [Threat model](docs/threat-model.md): MASVS-lite categories with mitigations
+- [SBOM and advisory scan](docs/sbom-and-advisories.md): local scan and triage policy
+- [Dependency verification](docs/dependency-verification.md): Gradle metadata procedure (opt-in)
+- [Wake / alarm / battery audit](docs/wake-and-vitals.md): what wakes the device and why
 
 ### Roadmap and design
 
-- [Roadmap](ROADMAP.md) — source-backed release plan with the candidate inventory
-- [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md) — why per-app behavior is deferred until the trust posture is sorted
-- [Deferred roadmap candidates](docs/deferred-candidates.md) — design sketches for Wear OS / Android TV / etc.
-- [Android 17 readiness](docs/android-17-readiness.md) — forward-looking Android-version migration notes (renamed from `api-36-readiness.md` in rev 4)
-- [Research watchlist](docs/research-watchlist.md) — sources we monitor before release planning
+- [Roadmap](ROADMAP.md): source-backed release plan with the candidate inventory
+- [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md): why per-app behavior is deferred until the trust posture is sorted
+- [Deferred roadmap candidates](docs/deferred-candidates.md): design sketches for Wear OS / Android TV / etc.
+- [Android 17 readiness](docs/android-17-readiness.md): forward-looking Android-version migration notes (renamed from `api-36-readiness.md` in rev 4)
+- [Research watchlist](docs/research-watchlist.md): sources we monitor before release planning
 
 ## Emergency off
 
@@ -259,7 +260,7 @@ shipped; deferred items have design sketches in
 [docs/deferred-candidates.md](docs/deferred-candidates.md) and
 [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md).
 
-Post-v0.7.0 work clusters around:
+Post-v0.7.1 work clusters around:
 
 - A Shizuku-backed privileged path for per-app behavior (C06)
 - Wear OS companion as a separate F-Droid package (C21)
