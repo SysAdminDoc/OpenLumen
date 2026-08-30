@@ -110,9 +110,9 @@ android {
                 storePassword = signingEnv["OPENLUMEN_KEYSTORE_PASSWORD"]
                 keyAlias = signingEnv["OPENLUMEN_KEY_ALIAS"]
                 keyPassword = signingEnv["OPENLUMEN_KEY_PASSWORD"]
-                // v1 = legacy JAR; useful only for API < 24, but we keep it for any future
-                // minSdk lowering. v2 + v3 cover Android 7+ with key-rotation support.
-                enableV1Signing = true
+                // minSdk 26 can use APK Signature Scheme v2 directly. Keep v3 enabled
+                // for newer Android versions and key-rotation support.
+                enableV1Signing = false
                 enableV2Signing = true
                 enableV3Signing = true
             }

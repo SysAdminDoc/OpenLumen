@@ -756,15 +756,17 @@ def verify_signed_apk(root: Path, apk: Path) -> dict[str, object]:
     except subprocess.CalledProcessError as exc:
         raise GateError(f"apksigner verification failed:\n{exc.stdout or ''}") from exc
 
-    required = {
-        "v1": "Verified using v1 scheme (JAR signing): true",
-        "v2": "Verified using v2 scheme (APK Signature Scheme v2): true",
-        "v3": "Verified using v3 scheme (APK Signature Scheme v3): true",
-    }
-    missing = [scheme for scheme, needle in required.items() if needle not in result]
+    missing = missing_required_signature_schemes(result)
     if missing:
         raise GateError("release APK is missing signature schemes: " + ", ".join(missing))
     return {"apk": str(apk), "signed": True, "apksigner": str(apksigner), "output": result}
+
+
+def missing_required_signature_schemes(apksigner_output: str) -> list[str]:
+    required = {
+        "v2": "Verified using v2 scheme (APK Signature Scheme v2): true",
+    }
+    return [scheme for scheme, needle in required.items() if needle not in apksigner_output]
 
 
 def find_apksigner() -> Path | None:

@@ -44,6 +44,23 @@ class LocalReleaseGateTest(unittest.TestCase):
         with self.assertRaises(gate.GateError):
             gate.assert_no_banned_dependencies(gate.parse_gradle_dependencies(DEPENDENCIES))
 
+    def test_signature_gate_accepts_v2_without_legacy_v1(self):
+        output = """
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+"""
+
+        self.assertEqual([], gate.missing_required_signature_schemes(output))
+
+    def test_signature_gate_rejects_an_apk_without_v2(self):
+        output = """
+Verified using v1 scheme (JAR signing): true
+Verified using v2 scheme (APK Signature Scheme v2): false
+"""
+
+        self.assertEqual(["v2"], gate.missing_required_signature_schemes(output))
+
     def test_manifest_permission_scan_accepts_offline_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             manifest = Path(tmp) / "AndroidManifest.xml"
