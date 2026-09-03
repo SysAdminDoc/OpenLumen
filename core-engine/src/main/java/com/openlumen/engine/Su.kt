@@ -104,11 +104,29 @@ object Su {
     internal suspend fun probeAvailabilityForTest(probe: suspend () -> SuResult): Boolean =
         probeAvailability(probe)
 
+    /**
+     * Test-only substitutes for the two shell entry points. Null in production,
+     * where every call spawns a real `su`. They exist because the engines'
+     * apply/clear contracts (C257's kcal_min restore record, for one) are only
+     * observable through the scripts they emit and the exit codes they get
+     * back, and no JVM test can spawn a root shell.
+     */
+    @Volatile internal var commandRunnerForTest: (suspend (String) -> SuResult)? = null
+
+    @Volatile internal var shellRunnerForTest: (suspend (String) -> Int)? = null
+
+    internal fun clearTestRunners() {
+        commandRunnerForTest = null
+        shellRunnerForTest = null
+    }
+
     suspend fun runCommand(commandLine: String): SuResult =
-        runCommandInternal(commandLine, timeoutMs = CMD_TIMEOUT_MS)
+        commandRunnerForTest?.invoke(commandLine)
+            ?: runCommandInternal(commandLine, timeoutMs = CMD_TIMEOUT_MS)
 
     /** Pipe stdinText into su and return the exit code. */
     suspend fun runShell(stdinText: String): Int = withContext(Dispatchers.IO) {
+        shellRunnerForTest?.let { return@withContext it.invoke(stdinText) }
         val proc = try {
             ProcessBuilder("su").redirectErrorStream(true).start()
         } catch (e: IOException) {

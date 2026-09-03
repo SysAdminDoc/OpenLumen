@@ -59,6 +59,11 @@ class KcalEngine : ColorEngine {
     @Volatile private var appliedNonIdentity: Boolean = false
 
     /**
+     * Kept outside [Paths] so `invalidateOnFailure` cannot discard it (C257).
+     */
+    @Volatile private var minRestore: MinRestore? = null
+
+    /**
      * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
      * the driver report can record the exact path the engine is writing to.
      */
@@ -97,17 +102,29 @@ class KcalEngine : ColorEngine {
         val g = toKcalScalar(s[1], appFloor)
         val b = toKcalScalar(s[2], appFloor)
 
-        // C166: only touch kcal_min when the user's original value is
-        // below our safety floor, and only once per probed session. The
-        // `set -e` plus the trailing `|| true` on the min write keeps the
-        // script idempotent if the path raced to be removed between
-        // probe and apply.
+        // C166: only touch kcal_min when the user's original value is below our
+        // safety floor. The `set -e` plus the trailing `|| true` on the min
+        // write keeps the script idempotent if the path raced to be removed
+        // between probe and apply.
+        // C257: adopt any record a previous process left behind first. The min
+        // write is best-effort, so it can silently fail and leave the kernel
+        // still reporting a floor below SAFETY_MIN; the raise is retried in
+        // that case, but the original must stay the value we saw the first
+        // time, never one of our own raises read back.
+        val existingRestore = minRestore ?: readPersistedRestore(context)?.also { minRestore = it }
         val shouldRaiseMin =
             paths.min != null &&
                 paths.originalMin != null &&
-                paths.originalMin < SAFETY_MIN &&
-                !paths.raisedMin.value
+                paths.originalMin < SAFETY_MIN
         val minWriteScript = if (shouldRaiseMin) {
+            // Latch before the script runs, not after it succeeds. The min
+            // write carries `|| true`, so it can land while a later rgb write
+            // fails the script — latching on overall success left the node
+            // raised with no record that we had done it.
+            val record = existingRestore?.takeIf { it.raised }
+                ?: MinRestore(originalMin = paths.originalMin, raised = true)
+            minRestore = record
+            persistRestore(context, record)
             "echo '$SAFETY_MIN' > '${paths.min}' 2>/dev/null || true\n"
         } else ""
 
@@ -118,12 +135,6 @@ class KcalEngine : ColorEngine {
             append("echo '$r $g $b' > '").append(paths.rgb).append("'\n")
         }
         val exit = Su.runShell(script)
-        if (exit == 0 && shouldRaiseMin) {
-            // Latch the per-session "we raised the min" flag so a subsequent
-            // apply doesn't waste a write doing the same thing. clear() reads
-            // this latch to decide whether to restore.
-            paths.raisedMin.value = true
-        }
         invalidateOnFailure(exit, paths, "apply")
         if (exit == 0) {
             if (matrix != LumenMatrix.IDENTITY) appliedNonIdentity = true
@@ -134,21 +145,26 @@ class KcalEngine : ColorEngine {
     }
 
     override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
+        // C166 / C257: read the durable record first. A raised `kcal_min` is
+        // kernel state we own even when the apply that raised it failed, and
+        // `appliedNonIdentity` is only latched on a successful apply — so
+        // gating the re-probe on that alone let the one case C257 exists for
+        // (min raised, rgb write failed, paths invalidated) return early and
+        // strand the node.
+        val record = minRestore ?: readPersistedRestore(context)?.also { minRestore = it }
+        val hasRaisedMin = record?.raised == true
         // C256: invalidateOnFailure drops resolvedPaths after a failed apply,
         // so a panel left tinted was exactly the case this reported as a
         // successful clear. Re-probe once, and report failure if the sysfs
         // surface still cannot be resolved.
         val paths = resolvedPaths
-            ?: (if (appliedNonIdentity) ensureResolvedPaths() else null)
-            ?: return@withContext clearWithoutPaths(appliedNonIdentity)
-        // C166: only restore kcal_min if we actually raised it during this
-        // probed session. If we never touched it, leave the user's kernel
-        // configuration alone.
-        val restoreMin = paths.min != null &&
-            paths.originalMin != null &&
-            paths.raisedMin.value
+            ?: (if (appliedNonIdentity || hasRaisedMin) ensureResolvedPaths() else null)
+            ?: return@withContext clearWithoutPaths(appliedNonIdentity || hasRaisedMin)
+        // Take the original from the durable record rather than from `paths`,
+        // which a failed apply may already have discarded.
+        val restoreMin = paths.min != null && hasRaisedMin
         val minRestoreScript = if (restoreMin) {
-            "echo '${paths.originalMin}' > '${paths.min}' 2>/dev/null || true\n"
+            "echo '${record.originalMin}' > '${paths.min}' 2>/dev/null || true\n"
         } else ""
         val exit = Su.runShell(
             buildString {
@@ -159,7 +175,8 @@ class KcalEngine : ColorEngine {
             }
         )
         if (exit == 0 && restoreMin) {
-            paths.raisedMin.value = false
+            minRestore = null
+            persistRestore(context, null)
         }
         invalidateOnFailure(exit, paths, "clear")
         if (exit == 0) {
@@ -248,11 +265,11 @@ class KcalEngine : ColorEngine {
     }
 
     /**
-     * Probe state. `raisedMin` is a per-session latch — `apply` flips it
-     * to `true` only after we successfully wrote our SAFETY_MIN over a
-     * smaller original; `clear` reads it to decide whether to restore.
-     * Wrapped in a tiny mutable holder so the data class itself stays
-     * immutable for cache identity semantics.
+     * Probe state. The `kcal_min` restore record deliberately does NOT live
+     * here (C257): `invalidateOnFailure` discards `resolvedPaths` on any failed
+     * write, which took the user's original minimum with it and left the
+     * kernel node raised with nothing able to put it back. It lives in
+     * [minRestore] and on disk instead.
      */
     private data class Paths(
         val base: String,
@@ -261,13 +278,57 @@ class KcalEngine : ColorEngine {
         /** Some kernel forks omit kcal_min; null when not present. */
         val min: String?,
         /** Value of `kcal_min` at probe time; null when not readable. */
-        val originalMin: Int?,
-        val raisedMin: BoolHolder = BoolHolder()
+        val originalMin: Int?
     )
 
-    private class BoolHolder { @Volatile var value: Boolean = false }
+    /**
+     * The user's `kcal_min` before OpenLumen raised it, plus whether the raise
+     * actually went out. Survives cache invalidation because it is a separate
+     * field, and survives a process restart because it is mirrored to a file
+     * in `filesDir` — a crash between raising the minimum and restoring it
+     * would otherwise strand the kernel node permanently.
+     */
+    internal data class MinRestore(val originalMin: Int, val raised: Boolean) {
+        fun encode(): String = "$originalMin $raised"
+
+        companion object {
+            fun decode(raw: String): MinRestore? {
+                val parts = raw.trim().split(' ')
+                if (parts.size != 2) return null
+                val value = parts[0].toIntOrNull() ?: return null
+                if (value < 0 || value > MAX_SCALAR) return null
+                val raised = when (parts[1]) {
+                    "true" -> true
+                    "false" -> false
+                    else -> return null
+                }
+                return MinRestore(value, raised)
+            }
+        }
+    }
+
+    private fun restoreFile(context: Context) = java.io.File(context.filesDir, MIN_RESTORE_FILE)
+
+    private fun readPersistedRestore(context: Context): MinRestore? = runCatching {
+        val file = restoreFile(context)
+        if (!file.isFile || file.length() > MAX_RESTORE_FILE_BYTES) null
+        else MinRestore.decode(file.readText())
+    }.getOrNull()
+
+    private fun persistRestore(context: Context, record: MinRestore?) {
+        runCatching {
+            val file = restoreFile(context)
+            if (record == null) file.delete() else file.writeText(record.encode())
+        }.onFailure { Log.w(TAG, "could not persist kcal_min restore record: ${it.message}") }
+    }
 
     companion object {
+
+        /** Durable mirror of the `kcal_min` restore record (C257). */
+        private const val MIN_RESTORE_FILE = "kcal-min-restore"
+
+        /** The record is two short tokens; anything larger is corrupt. */
+        private const val MAX_RESTORE_FILE_BYTES = 64L
 
         /**
          * What `clear()` reports when the sysfs surface cannot be resolved,

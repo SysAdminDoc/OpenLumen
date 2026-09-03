@@ -24,6 +24,10 @@ android {
             // it. Defaults are fine here: nothing in core-engine asserts on a
             // framework return value.
             isReturnDefaultValues = true
+            // C257 needs a real `filesDir` to prove the kcal_min restore record
+            // survives a failed apply, so this module now runs Robolectric the
+            // way `app` already does.
+            isIncludeAndroidResources = true
         }
     }
 }
@@ -39,4 +43,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+    testImplementation(libs.robolectric)
 }
