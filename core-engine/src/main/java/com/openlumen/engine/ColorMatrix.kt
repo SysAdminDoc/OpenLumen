@@ -1,6 +1,29 @@
 package com.openlumen.engine
 
 /**
+ * AOSP's own display colour-correction modes, as written to
+ * `Settings.Secure.accessibility_display_daltonizer`. `ColorDisplayService`
+ * observes that row and installs the matching matrix at the same place in the
+ * pipeline it installs Night Light, so a driver that cannot accept an arbitrary
+ * matrix can still reach real grayscale and colour-vision correction.
+ *
+ * Values are `AccessibilityManager.DALTONIZER_*`: monochromacy is 0 and the
+ * correction modes are 11, 12 and 13. They are not public SDK constants, which
+ * is why they are restated here rather than referenced.
+ *
+ * The matrices AOSP applies for these are Machado 2009; OpenLumen's own
+ * matrix-capable path uses Viénot 1999, so the two paths do not render
+ * identically. That is disclosed rather than hidden: see [EngineCapability].
+ */
+enum class Daltonizer(val secureValue: Int) {
+    NONE(-1),
+    MONOCHROMACY(0),
+    PROTANOMALY(11),
+    DEUTERANOMALY(12),
+    TRITANOMALY(13)
+}
+
+/**
  * 4x5 color matrix in RGBA-out, RGBA-in transform form.
  *
  * SurfaceFlinger's 1015 transaction code accepts a 16-element float[] representing
@@ -30,6 +53,13 @@ data class LumenMatrix(
      */
     val amoledClamp: Boolean = false,
     /**
+     * The system colour-correction mode that most closely matches this
+     * transform, for drivers that can only select one of AOSP's own modes
+     * rather than accept an arbitrary matrix. [Daltonizer.NONE] on everything
+     * except the grayscale and colour-vision presets.
+     */
+    val daltonizer: Daltonizer = Daltonizer.NONE,
+    /**
      * Optional full RGB transform for matrix-capable engines. The scalar
      * [r], [g], and [b] fields remain the fallback for CDM, KCAL, and the
      * rootless overlay path, which cannot consume cross-channel terms.
@@ -47,6 +77,17 @@ data class LumenMatrix(
 ) {
     /** Scale factor [0,1] for a final brightness reduction beyond panel minimum. */
     val effectiveDim: Float get() = dim.finiteIn(0f, 0.95f, default = 0f)
+
+    /**
+     * True when the colour matrix carries no cross-channel terms, so a scalar
+     * driver loses nothing by ignoring it. `withIntensity(0f)` produces exactly
+     * this, which is why the check is on the values rather than on
+     * [hasColorMatrix].
+     */
+    fun isDiagonalMatrix(): Boolean =
+        matrixRg == 0f && matrixRb == 0f &&
+            matrixGr == 0f && matrixGb == 0f &&
+            matrixBr == 0f && matrixBg == 0f
 
     /**
      * Per-channel scalar after dim and per-channel gamma have been folded in.
@@ -186,6 +227,10 @@ data class LumenMatrix(
             gammaG = lerpF(gammaG, target.gammaG, u),
             gammaB = lerpF(gammaB, target.gammaB, u),
             amoledClamp = if (u < 0.5f) amoledClamp else target.amoledClamp,
+            // A correction mode is a discrete selection, so it switches at the
+            // midpoint the way amoledClamp does rather than being averaged into
+            // a mode that is neither end of the ramp.
+            daltonizer = if (u < 0.5f) daltonizer else target.daltonizer,
             hasColorMatrix = useMatrix,
             matrixRr = lerpF(fromMatrix[0], toMatrix[0], u),
             matrixRg = lerpF(fromMatrix[1], toMatrix[1], u),
@@ -203,6 +248,9 @@ data class LumenMatrix(
     fun withIntensity(strength: Float): LumenMatrix {
         val u = strength.coerceIn(0f, 1f)
         val scalar = copy(
+            // A correction mode has no partial setting, so it is either
+            // selected or not. Zero intensity means the preset is off.
+            daltonizer = if (u <= 0f) Daltonizer.NONE else daltonizer,
             r = 1f + (r - 1f) * u,
             g = 1f + (g - 1f) * u,
             b = 1f + (b - 1f) * u,

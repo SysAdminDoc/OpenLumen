@@ -74,6 +74,11 @@
     <string name="preset_detail_active">有効</string>
     <string name="preset_detail_dim">減光: %1$d%%</string>
     <string name="preset_detail_cvd">色覚補正</string>
+    <string name="preset_detail_approximated">このドライバーは%1$sに対応していないため、プリセットは近似で適用されます。完全な効果を得るには「ドライバー」タブで別のドライバーを選んでください。</string>
+    <string name="preset_capability_color_matrix">チャンネル間の色の混合</string>
+    <string name="preset_capability_dim">パネル最小輝度より暗くする調光</string>
+    <string name="preset_capability_gamma">チャンネルごとのガンマ</string>
+    <string name="preset_capability_separator">、</string>
     <string name="preset_detail_empty">プリセットを選択して詳細を表示</string>
     <string name="import_preview_title">インポートしたプロファイルのプレビュー</string>
     <string name="import_preview_apply">適用</string>

@@ -384,7 +384,9 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
     }
 }
 
-private fun EngineKindDto.toEngineKind(): EngineKind? = when (this) {
+/** Shared with PresetsScreen, which needs the same mapping to resolve the
+  * capabilities of the driver that will actually run. */
+internal fun EngineKindDto.toEngineKind(): EngineKind? = when (this) {
     EngineKindDto.Auto -> null
     EngineKindDto.ColorDisplayManager -> EngineKind.COLOR_DISPLAY_MANAGER
     EngineKindDto.SurfaceFlinger -> EngineKind.SURFACE_FLINGER

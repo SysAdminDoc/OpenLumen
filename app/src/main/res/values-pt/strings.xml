@@ -74,6 +74,11 @@
     <string name="preset_detail_active">Ativo</string>
     <string name="preset_detail_dim">Escurecimento: %1$d%%</string>
     <string name="preset_detail_cvd">Ajuste de visão de cores</string>
+    <string name="preset_detail_approximated">Este controlador não consegue reproduzir %1$s, por isso a predefinição é aproximada. Escolha outro controlador no separador Controlador para obter o efeito completo.</string>
+    <string name="preset_capability_color_matrix">a mistura de cor entre canais</string>
+    <string name="preset_capability_dim">o escurecimento abaixo do mínimo do ecrã</string>
+    <string name="preset_capability_gamma">o gama por canal</string>
+    <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Selecione um filtro para ver os detalhes</string>
     <string name="import_preview_title">Visualizar perfil importado</string>
     <string name="import_preview_apply">Aplicar</string>

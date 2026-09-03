@@ -105,6 +105,7 @@ class DriverProbeTest {
         override val kind: EngineKind,
         private val available: Boolean = false
    ) : ColorEngine {
+       override val capabilities: Set<EngineCapability> = emptySet()
        override suspend fun isAvailable(context: Context): Boolean = available
         override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = EngineResult.Success
         override suspend fun clear(context: Context): EngineResult = EngineResult.Success

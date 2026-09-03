@@ -75,6 +75,11 @@
     <string name="preset_detail_active">Active</string>
     <string name="preset_detail_dim">Dim: %1$d%%</string>
     <string name="preset_detail_cvd">Color vision adjustment</string>
+    <string name="preset_detail_approximated">This driver cannot reproduce %1$s, so the preset is approximated. Pin a different driver on the Driver tab for the full effect.</string>
+    <string name="preset_capability_color_matrix">colour mixing between channels</string>
+    <string name="preset_capability_dim">dimming below the panel minimum</string>
+    <string name="preset_capability_gamma">per-channel gamma</string>
+    <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Select a preset to see details</string>
     <string name="presets_sort_label">Sort</string>
     <string name="presets_sort_alphabetical">A–Z</string>

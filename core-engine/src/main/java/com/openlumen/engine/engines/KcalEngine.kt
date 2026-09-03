@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.EngineResult
+import com.openlumen.engine.EngineCapability
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
@@ -47,6 +48,17 @@ import kotlinx.coroutines.withContext
  */
 class KcalEngine : ColorEngine {
     override val kind = EngineKind.KCAL
+
+    /**
+     * A scalar-per-channel kernel driver: no cross-channel terms, so grayscale
+     * and the colour-vision presets fall back to their channel scales. Gamma is
+     * folded into those scales by `LumenMatrix.scaledRgb`, and the panel driver
+     * sits below the backlight so dim reaches past its minimum.
+     */
+    override val capabilities: Set<EngineCapability> = setOf(
+        EngineCapability.PER_CHANNEL_GAMMA,
+        EngineCapability.SUB_MINIMUM_DIM
+    )
 
     @Volatile private var resolvedPaths: Paths? = null
     private val probeMutex = Mutex()

@@ -54,6 +54,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
+import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.EngineCapability
+import com.openlumen.engine.unsupportedBy
 import com.openlumen.engine.Presets
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.presetLabel
@@ -75,6 +78,8 @@ fun PresetsScreen(
     enableSystemActions: Boolean = true
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
+    val probes by vm.probes.collectAsStateWithLifecycle()
+    val driverCapabilities = DriverProbe.activeCapabilities(probes, prefs.engine.toEngineKind())
     val favorites = prefs.favoritePresetKeys.toSet()
     val scope = rememberCoroutineScope()
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
@@ -133,7 +138,8 @@ fun PresetsScreen(
                         isSelected = selectedKey == prefs.activePresetKey,
                         isFavorite = selectedKey in favorites,
                         onFavoriteToggle = { vm.toggleFavorite(selectedKey) },
-                        labelOverride = prefs.presetNameOverrides[selectedKey]
+                        labelOverride = prefs.presetNameOverrides[selectedKey],
+                        driverCapabilities = driverCapabilities
                     )
                 } else if (destination?.startsWith(PROFILE_DESTINATION_PREFIX) == true) {
                     val name = destination.removePrefix(PROFILE_DESTINATION_PREFIX)
@@ -434,7 +440,9 @@ private fun PresetDetailPane(
     isSelected: Boolean,
     isFavorite: Boolean,
     onFavoriteToggle: () -> Unit,
-    labelOverride: String? = null
+    labelOverride: String? = null,
+    /** Null until a driver is resolved; no note is shown while it is unknown. */
+    driverCapabilities: Set<EngineCapability>? = null
 ) {
     val label = presetLabel(entry.key, entry.displayName, labelOverride)
     val m = entry.matrix
@@ -547,8 +555,46 @@ private fun PresetDetailPane(
                 }
             }
         }
+
+        // C282: presets are written against the compositor. Anything less
+        // capable approximates them, and the grayscale preset in particular
+        // used to come out as a flat darkening with nothing saying so.
+        val unsupported = driverCapabilities?.let { m.unsupportedBy(it) }.orEmpty()
+        if (unsupported.isNotEmpty()) {
+            item {
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.preset_detail_approximated,
+                            approximationReason(unsupported)
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        }
     }
 }
+
+/**
+ * Plain-language list of what the active driver will not reproduce. Ordered so
+ * the most visible loss reads first.
+ */
+@Composable
+private fun approximationReason(missing: Set<EngineCapability>): String = listOfNotNull(
+    stringResource(R.string.preset_capability_color_matrix)
+        .takeIf { EngineCapability.COLOR_MATRIX in missing },
+    stringResource(R.string.preset_capability_dim)
+        .takeIf { EngineCapability.SUB_MINIMUM_DIM in missing },
+    stringResource(R.string.preset_capability_gamma)
+        .takeIf { EngineCapability.PER_CHANNEL_GAMMA in missing }
+).joinToString(stringResource(R.string.preset_capability_separator))
 
 @Composable
 private fun ProfileDetailPane(profile: NamedProfile) {

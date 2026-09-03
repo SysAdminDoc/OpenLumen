@@ -7,6 +7,8 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.Daltonizer
+import com.openlumen.engine.EngineCapability
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.EngineResult
 import com.openlumen.engine.Kelvin
@@ -45,6 +47,18 @@ internal fun shouldRestoreReduceBrightColors(
 }
 
 /**
+ * Same ownership question for the system colour correction: only put the user's
+ * mode back if what is on screen is still the correction this session selected.
+ * Anything else means they changed it while the filter was running, and their
+ * choice wins.
+ */
+internal fun shouldRestoreColorCorrection(
+    currentActive: Boolean,
+    currentMode: Int,
+    lastAppliedMode: Int
+): Boolean = currentActive && currentMode == lastAppliedMode
+
+/**
  * Rootless framework-level driver, written against `Settings.Secure`.
  *
  * ### Why this is not a `ColorDisplayManager` driver any more
@@ -77,14 +91,37 @@ internal fun shouldRestoreReduceBrightColors(
  * ### Capabilities
  *
  * Night Light carries chromaticity as a colour temperature, so per-channel gamma
- * and the cross-channel CVD slices cannot ride it — same limitation the reflection
- * driver had. Extra Dim (`reduce_bright_colors_*`, API 31+) carries the dim factor,
- * and unlike the overlay driver it reaches below the panel's minimum backlight
- * without root. It is gated on the device resource `config_reduceBrightColorsAvailable`,
- * so it is probed separately and reported as its own capability state.
+ * and arbitrary cross-channel terms cannot ride it. Extra Dim
+ * (`reduce_bright_colors_*`, API 31+) carries the dim factor, and unlike the
+ * overlay driver it reaches below the panel's minimum backlight without root. It
+ * is gated on the device resource `config_reduceBrightColorsAvailable`, so it is
+ * probed separately and reported as its own capability state.
+ *
+ * Grayscale and the colour-vision presets are the exception to the cross-channel
+ * limit (C282). `ColorDisplayService` also observes
+ * `accessibility_display_daltonizer_enabled` and `accessibility_display_daltonizer`,
+ * so this driver selects AOSP's own correction mode for those four presets
+ * instead of trying to squeeze them into a temperature. Before that they
+ * normalised to white and became a neutral 6500 K Night Light: a visible no-op
+ * reported as success. AOSP's matrices are Machado 2009 where OpenLumen's
+ * matrix-capable path uses Viénot 1999, so the two do not render identically;
+ * [EngineCapability.SYSTEM_COLOR_CORRECTION] is how that is disclosed.
  */
 class SecureSettingsEngine : ColorEngine {
     override val kind = EngineKind.COLOR_DISPLAY_MANAGER
+
+    /**
+     * Night Light carries one colour temperature, so there are no cross-channel
+     * terms and no per-channel curve here. What this driver does have that the
+     * root drivers do not is the system's own correction modes, which cover
+     * grayscale and colour-vision through AOSP's matrices. Extra Dim supplies
+     * sub-minimum dim, but only where the device ships it, so callers should
+     * still check `acceptedKeys`.
+     */
+    override val capabilities: Set<EngineCapability> = setOf(
+        EngineCapability.SUB_MINIMUM_DIM,
+        EngineCapability.SYSTEM_COLOR_CORRECTION
+    )
 
     private val tag = "OpenLumen/SecureSettings"
 
@@ -95,6 +132,15 @@ class SecureSettingsEngine : ColorEngine {
      * never dim must not touch them at all, in either direction.
      */
     @Volatile private var dimOwned: Boolean = false
+
+    /**
+     * True once this session has switched the system colour correction on, and
+     * once it has switched Night Light on. Same ownership rule as [dimOwned]:
+     * a setting the user had before OpenLumen started is never switched off.
+     */
+    @Volatile private var correctionOwned: Boolean = false
+
+    @Volatile private var nightOwned: Boolean = false
 
     /**
      * Which of the two transforms the last probe accepted. Read by
@@ -134,6 +180,13 @@ class SecureSettingsEngine : ColorEngine {
             val temperature = temperatureFor(matrix)
             val dimLevel = reduceBrightColorsLevel(matrix.effectiveDim)
             val dimSupported = supportsReduceBrightColors(context)
+            // A grayscale or colour-vision preset has no tint to carry: its
+            // chromaticity normalises to white, so asking for a colour
+            // temperature produces the neutral 6500 K and switching Night Light
+            // on at that temperature changes nothing the user can see. The
+            // correction mode is what actually renders those presets here.
+            val tinted = !isNeutralChromaticity(matrix)
+            val correction = matrix.daltonizer
 
             try {
                 val cr = context.contentResolver
@@ -148,24 +201,51 @@ class SecureSettingsEngine : ColorEngine {
                             ),
                             nightAutoMode = Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, 0),
                             dimActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1,
-                            dimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
+                            dimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0),
+                            correctionActive =
+                                Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1,
+                            correctionMode = Settings.Secure.getInt(
+                                cr,
+                                KEY_CORRECTION_MODE,
+                                Daltonizer.NONE.secureValue
+                            )
                         ),
                         lastAppliedTemperature = temperature,
-                        lastAppliedDimLevel = dimLevel
+                        lastAppliedDimLevel = dimLevel,
+                        lastAppliedCorrectionMode = correction.secureValue
                     )
                 } else {
                     ownership = ownership?.copy(
                         lastAppliedTemperature = temperature,
-                        lastAppliedDimLevel = dimLevel
+                        lastAppliedDimLevel = dimLevel,
+                        lastAppliedCorrectionMode = correction.secureValue
                     )
                 }
 
-                // The system's own sunset/sunrise rule would fight us for the
-                // activation flag, so park it on manual for the duration and
-                // hand the user's choice back in clear().
-                Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
-                Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, temperature)
-                Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 1)
+                if (tinted) {
+                    // The system's own sunset/sunrise rule would fight us for the
+                    // activation flag, so park it on manual for the duration and
+                    // hand the user's choice back in clear().
+                    Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
+                    Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, temperature)
+                    Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 1)
+                } else if (correctionOwned || nightOwned) {
+                    // Moving from a tinted preset to a neutral one: take our own
+                    // Night Light back off rather than leaving the last tint on.
+                    Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 0)
+                }
+                if (tinted) nightOwned = true
+
+                if (correction != Daltonizer.NONE) {
+                    Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, correction.secureValue)
+                    Settings.Secure.putInt(cr, KEY_CORRECTION_ENABLED, 1)
+                    correctionOwned = true
+                } else if (correctionOwned) {
+                    // Same rule as Extra Dim: only switch off a correction this
+                    // session switched on. A user who had colour correction set
+                    // before OpenLumen started keeps it.
+                    Settings.Secure.putInt(cr, KEY_CORRECTION_ENABLED, 0)
+                }
 
                 if (dimSupported) {
                     if (dimLevel > 0) {
@@ -247,8 +327,32 @@ class SecureSettingsEngine : ColorEngine {
                     Log.i(tag, "Extra Dim changed outside OpenLumen; leaving it untouched")
                 }
             }
+            if (correctionOwned) {
+                val currentMode =
+                    Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
+                val currentActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1
+                if (
+                    shouldRestoreColorCorrection(
+                        currentActive = currentActive,
+                        currentMode = currentMode,
+                        lastAppliedMode = owned.lastAppliedCorrectionMode
+                    )
+                ) {
+                    Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, owned.original.correctionMode)
+                    Settings.Secure.putInt(
+                        cr,
+                        KEY_CORRECTION_ENABLED,
+                        if (owned.original.correctionActive) 1 else 0
+                    )
+                } else {
+                    Log.i(tag, "colour correction changed outside OpenLumen; leaving it untouched")
+                }
+            }
+
             ownership = null
             dimOwned = false
+            correctionOwned = false
+            nightOwned = false
         } catch (t: Throwable) {
             Log.w(tag, "secure-settings clear failed: ${t.message}")
             return@withContext EngineResult.Failure(
@@ -298,6 +402,20 @@ class SecureSettingsEngine : ColorEngine {
         }.getOrDefault(false)
     }
 
+    /**
+     * True when the transform carries no colour cast, so there is no
+     * temperature worth writing. Grayscale and the colour-vision presets are
+     * all neutral: their channel scales are equal or their chromaticity
+     * normalises to white, and asking [Kelvin] for a temperature returns the
+     * neutral one. Writing that and switching Night Light on is a visible no-op
+     * dressed up as a working filter.
+     */
+    internal fun isNeutralChromaticity(matrix: LumenMatrix): Boolean {
+        val c = normalizeChromaticity(matrix.scalarRgb())
+        return kotlin.math.abs(c[0] - c[1]) <= NEUTRAL_EPSILON &&
+            kotlin.math.abs(c[1] - c[2]) <= NEUTRAL_EPSILON
+    }
+
     private fun temperatureFor(matrix: LumenMatrix): Int {
         val chromaticity = normalizeChromaticity(matrix.scalarRgb())
         return kelvinFromRgbScale(chromaticity[0], chromaticity[1], chromaticity[2])
@@ -322,13 +440,16 @@ class SecureSettingsEngine : ColorEngine {
         val nightTemperature: Int,
         val nightAutoMode: Int,
         val dimActive: Boolean,
-        val dimLevel: Int
+        val dimLevel: Int,
+        val correctionActive: Boolean,
+        val correctionMode: Int
     )
 
     private data class Ownership(
         val original: SystemState,
         val lastAppliedTemperature: Int,
-        val lastAppliedDimLevel: Int
+        val lastAppliedDimLevel: Int,
+        val lastAppliedCorrectionMode: Int = Daltonizer.NONE.secureValue
     )
 
     companion object {
@@ -346,6 +467,8 @@ class SecureSettingsEngine : ColorEngine {
         const val KEY_NIGHT_AUTO_MODE = "night_display_auto_mode"
         const val KEY_REDUCE_BRIGHT_ACTIVATED = "reduce_bright_colors_activated"
         const val KEY_REDUCE_BRIGHT_LEVEL = "reduce_bright_colors_level"
+        const val KEY_CORRECTION_ENABLED = "accessibility_display_daltonizer_enabled"
+        const val KEY_CORRECTION_MODE = "accessibility_display_daltonizer"
 
         private const val CONFIG_REDUCE_BRIGHT_AVAILABLE = "config_reduceBrightColorsAvailable"
 
@@ -357,6 +480,15 @@ class SecureSettingsEngine : ColorEngine {
 
         /** `setReduceBrightColorsStrength` documents 0-100 inclusive, where 100 is full strength. */
         const val MAX_REDUCE_BRIGHT_LEVEL: Int = 100
+
+        /**
+         * How close the three normalised channels have to be before the
+         * transform counts as carrying no tint. One 8-bit step is about 0.004,
+         * so this is a couple of steps: tight enough that a real warm preset is
+         * never called neutral, loose enough to absorb the rounding in the
+         * chromaticity projection.
+         */
+        private const val NEUTRAL_EPSILON: Float = 0.01f
 
         /**
          * Map the matrix dim factor (0..0.95) onto the Extra Dim percentage.
@@ -396,7 +528,13 @@ class SecureSettingsEngine : ColorEngine {
             }
             val cleared = mutableListOf<String>()
             val cr = context.contentResolver
-            for (key in listOf(KEY_NIGHT_ACTIVATED, KEY_REDUCE_BRIGHT_ACTIVATED)) {
+            for (
+                key in listOf(
+                    KEY_NIGHT_ACTIVATED,
+                    KEY_REDUCE_BRIGHT_ACTIVATED,
+                    KEY_CORRECTION_ENABLED
+                )
+            ) {
                 runCatching {
                     if (Settings.Secure.getInt(cr, key, 0) == 1) {
                         Settings.Secure.putInt(cr, key, 0)

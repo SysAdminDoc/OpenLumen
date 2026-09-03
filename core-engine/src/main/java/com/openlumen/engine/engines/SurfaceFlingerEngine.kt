@@ -5,6 +5,7 @@ import android.os.Build
 import android.util.Log
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.EngineResult
+import com.openlumen.engine.EngineCapability
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Su
@@ -36,6 +37,16 @@ import kotlinx.coroutines.withContext
  */
 class SurfaceFlingerEngine : ColorEngine {
     override val kind = EngineKind.SURFACE_FLINGER
+
+    /**
+     * The compositor takes the whole affine transform, so nothing in a preset
+     * is lost here. This is the driver presets are designed against.
+     */
+    override val capabilities: Set<EngineCapability> = setOf(
+        EngineCapability.COLOR_MATRIX,
+        EngineCapability.PER_CHANNEL_GAMMA,
+        EngineCapability.SUB_MINIMUM_DIM
+    )
 
     @Volatile private var workingCode: Int? = null
     private val probeMutex = Mutex()

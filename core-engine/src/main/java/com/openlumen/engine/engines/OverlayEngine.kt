@@ -13,6 +13,7 @@ import android.view.View
 import android.view.WindowManager
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.EngineResult
+import com.openlumen.engine.EngineCapability
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,17 @@ import kotlinx.coroutines.withContext
  */
 class OverlayEngine : ColorEngine {
     override val kind = EngineKind.OVERLAY
+
+    /**
+     * A tinted window composited over everything: it can only darken toward a
+     * colour, never mix channels. Gamma rides the scalar projection. The dim
+     * is real darkening rather than a backlight change, so it reaches below the
+     * panel minimum, subject to the Android 12+ alpha cap.
+     */
+    override val capabilities: Set<EngineCapability> = setOf(
+        EngineCapability.PER_CHANNEL_GAMMA,
+        EngineCapability.SUB_MINIMUM_DIM
+    )
 
     private val tag = "OpenLumen/Overlay"
 

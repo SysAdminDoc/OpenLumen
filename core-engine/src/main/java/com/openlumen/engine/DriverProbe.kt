@@ -88,6 +88,23 @@ class DriverProbe(
                 ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }
                     ?.engine?.kind
 
+        /**
+         * What the driver that will actually run can express. [pinned] is the
+         * user's choice, or null for Auto.
+         *
+         * Returns null while nothing is resolved yet — before the first probe,
+         * or when no driver is available — so callers can tell "cannot honour
+         * this preset" apart from "do not know yet" and stay quiet rather than
+         * warning about a driver that may not be the one used.
+         */
+        fun activeCapabilities(
+            probes: List<Probe>,
+            pinned: EngineKind?
+        ): Set<EngineCapability>? {
+            val kind = pinned ?: bestAvailableKind(probes) ?: return null
+            return probes.firstOrNull { it.engine.kind == kind }?.engine?.capabilities
+        }
+
         fun defaultEngines(): List<ColorEngine> = listOf(
             SecureSettingsEngine(),
             SurfaceFlingerEngine(),

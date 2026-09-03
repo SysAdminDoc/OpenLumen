@@ -9,7 +9,31 @@ object Presets {
     val AMBER    = LumenMatrix(r = 1.00f, g = 0.55f, b = 0.10f)
     val SALMON   = LumenMatrix(r = 1.00f, g = 0.40f, b = 0.35f)
     val SEPIA    = LumenMatrix(r = 0.90f, g = 0.72f, b = 0.50f)
-    val GRAY     = LumenMatrix(r = 0.55f, g = 0.55f, b = 0.55f)
+    /**
+     * True desaturation, not a dimming. Every output channel is the Rec. 709
+     * luminance of the input, which is what "grayscale" means; releases through
+     * 0.7.1 shipped a flat 0.55 scale on all three channels, so the preset
+     * darkened the screen by 45% and left the colour alone. The scalar
+     * fallback keeps that darkening for drivers with no cross-channel terms,
+     * because it is the closest a per-channel scale can get, and those drivers
+     * now say so through [com.openlumen.engine.EngineCapability].
+     */
+    val GRAY     = LumenMatrix(
+        r = 0.55f,
+        g = 0.55f,
+        b = 0.55f,
+        daltonizer = Daltonizer.MONOCHROMACY,
+        hasColorMatrix = true,
+        matrixRr = 0.2126f,
+        matrixRg = 0.7152f,
+        matrixRb = 0.0722f,
+        matrixGr = 0.2126f,
+        matrixGg = 0.7152f,
+        matrixGb = 0.0722f,
+        matrixBr = 0.2126f,
+        matrixBg = 0.7152f,
+        matrixBb = 0.0722f
+    )
     val NIGHT    = LumenMatrix(r = 1.00f, g = 0.78f, b = 0.55f) // ~3200K
     val DEEP     = LumenMatrix(r = 1.00f, g = 0.45f, b = 0.20f, dim = 0.30f) // pre-bedtime
     val PWM      = LumenMatrix(r = 1.00f, g = 0.82f, b = 0.60f, dim = 0.20f) // warm tint + overlay dim at high backlight
@@ -20,10 +44,14 @@ object Presets {
      *
      * Matrix-capable engines receive the DaltonLens Viénot 1999 linear-RGB
      * matrices for protan/deutan and the documented single-matrix tritan
-     * approximation. Scalar-only engines keep the older coarse channel-scale
-     * fallbacks so these presets still do something useful on overlay/KCAL/CDM.
+     * approximation. The secure-settings driver cannot take a matrix but can
+     * select AOSP's equivalent correction mode, which is what [Daltonizer]
+     * names. Scalar-only engines keep the older coarse channel-scale fallbacks
+     * so these presets still do something on overlay and KCAL, and say through
+     * [com.openlumen.engine.EngineCapability] that they are approximating.
      */
     val PROTAN   = LumenMatrix(
+        daltonizer = Daltonizer.PROTANOMALY,
         r = 0.85f,
         g = 1.00f,
         b = 0.95f,
@@ -39,6 +67,7 @@ object Presets {
         matrixBb = 1.00000f
     )
     val DEUTAN   = LumenMatrix(
+        daltonizer = Daltonizer.DEUTERANOMALY,
         r = 1.00f,
         g = 0.85f,
         b = 0.95f,
@@ -54,6 +83,7 @@ object Presets {
         matrixBb = 1.00000f
     )
     val TRITAN   = LumenMatrix(
+        daltonizer = Daltonizer.TRITANOMALY,
         r = 1.00f,
         g = 0.95f,
         b = 0.85f,
