@@ -16,19 +16,22 @@ import kotlinx.coroutines.withContext
 /**
  * Applies a 4x4 color matrix at the SurfaceFlinger level via `service call SurfaceFlinger`.
  *
- * The transaction code for setDisplayColorTransform has shifted across AOSP releases.
- * Historically 1015 on most builds, but some OEM forks renumber. We probe a small set
- * of known codes at isAvailable() time and cache the winner.
+ * The colour matrix lives at transaction 1015, unchanged from `android-10.0.0_r1`
+ * through `android-16.0.0_r1` and on `main`. Earlier releases of this file claimed the
+ * code drifts across versions and probed 1023/1030/1036 as fallbacks; none of those was
+ * ever verified against AOSP, and 1023 is the colour mode, not the matrix. The probe
+ * runs at isAvailable() time and caches the winner.
  *
  * SurfaceFlinger's transaction expects an enable flag followed by the 16 matrix slots.
  * Disable is a bare `i32 0`. Each float is written as a 32-bit value in the Parcel;
  * the wire format `service call` expects is `i32 <value>` per int slot, with floats
  * reinterpreted to their IEEE-754 bits.
  *
- * Tied to roadmap candidate **C03** (SurfaceFlinger code registry). The candidate-code
- * list below is the canonical home of known working codes; add a new tuple when a
- * driver report (Driver tab → Share report) shows a device that needs a fresh code.
- * Until we have a more elaborate per-device override mechanism, the cache is
+ * Tied to roadmap candidate **C03** (SurfaceFlinger code registry). [CANDIDATE_CODES] is
+ * the canonical home of known working codes; add one only with a citation to the AOSP
+ * `SurfaceFlinger.cpp` onTransact case that implements it, not from a driver report
+ * alone — [isSuccessfulServiceCall] can now tell a rejected code from an accepted one,
+ * so a wrong guess produces a real failure rather than a silent no-op. The cache is
  * per-process and rebuilt on first probe of each cold start.
  */
 class SurfaceFlingerEngine : ColorEngine {
@@ -44,6 +47,14 @@ class SurfaceFlingerEngine : ColorEngine {
      */
     val activeTransactionCode: Int?
         get() = workingCode
+
+    /**
+     * True once a probe has issued the disable transaction, which resets
+     * SurfaceFlinger's client colour matrix. Surfaced in the driver report so a
+     * user whose other colour tool went neutral can see why.
+     */
+    @Volatile var probeResetClientMatrix: Boolean = false
+        private set
 
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         // Short-circuit if a previous probe already found a working code.
@@ -94,20 +105,32 @@ class SurfaceFlingerEngine : ColorEngine {
     }
 
     /**
-     * Try the disable transaction with each candidate code; the first one that
-     * returns 0 without "Service: SurfaceFlinger not found" is the winner.
-     * Sets [workingCode] on success.
+     * Try the disable transaction with each candidate code; the first one whose
+     * reply parcel is not an error is the winner. Sets [workingCode] on success.
      */
     private suspend fun probeLocked(): Boolean {
         if (!Su.isAvailable()) return false
         val candidates = candidatesFor(Build.VERSION.SDK_INT)
         for (code in candidates) {
+            // The only way to test a backdoor code is to invoke it, and the
+            // cheapest invocation is the disable form. That resets
+            // SurfaceFlinger's *client* colour matrix, so if some other app
+            // (or a previous OpenLumen process) had one set, probing drops it.
+            // Record that rather than doing it silently: the Driver tab and the
+            // driver report surface this so a "my other filter turned itself
+            // off" report is explainable.
+            probeResetClientMatrix = true
+            Log.i(TAG, "probe: issuing disable on code $code; any client color matrix is reset")
             val res = Su.runCommand(buildDisableServiceCallCommand(code))
             if (isSuccessfulServiceCall(res)) {
                 Log.d(TAG, "probe: code $code worked (api ${Build.VERSION.SDK_INT})")
                 workingCode = code
                 return true
             }
+            Log.w(
+                TAG,
+                "probe: code $code rejected (exit=${res.exitCode}, stdout=${res.stdout.take(160)})"
+            )
         }
         Log.w(TAG, "probe: no SurfaceFlinger color-transform code worked (tried ${candidates.toList()})")
         return false
@@ -117,26 +140,21 @@ class SurfaceFlingerEngine : ColorEngine {
         buildServiceCallCommand(code, matrix)
 
     /**
-     * Per-API candidate list for SurfaceFlinger's `setDisplayColorTransform` code.
-     * Exposed as a function (not a constant) so tests can call it without
-     * touching the cached working-code state.
+     * Candidate list for SurfaceFlinger's colour-matrix backdoor. Exposed as a
+     * function (not a constant) so tests can call it without touching the
+     * cached working-code state; the `api` argument is retained because the
+     * list is allowed to become version-dependent again if AOSP ever moves the
+     * code, and callers already pass it.
      *
-     * Ordering matters: we try the most-common-for-this-API code first. The order
-     * below tracks AOSP master at the time of writing; new entries should
-     * preserve "most-common-for-this-API first."
+     * The list is deliberately just [CANDIDATE_CODES]. Earlier releases also
+     * tried 1023, 1030 and 1036, none of which was ever verified against AOSP
+     * as a colour-matrix code — and 1023 demonstrably is not, it is the colour
+     * mode. Those entries were also unreachable, because the old success test
+     * accepted the first candidate unconditionally. Rather than guess, keep the
+     * one code the source confirms and let [isSuccessfulServiceCall] report a
+     * genuine rejection if a future build moves it.
      */
-    internal fun candidatesFor(api: Int): IntArray = when {
-        // Android 16 (API 36) preview shows the same path as 15; if a new code drifts
-        // in the stable release, add it here.
-        api >= 36 -> intArrayOf(1015, 1030, 1036)
-        // Android 13+ added a few new transaction codes; 1030 is the most common
-        // after 1015 on Pixel-family Android 13/14/15 builds.
-        api >= 33 -> intArrayOf(1015, 1030, 1036)
-        // Android 10..12 saw 1023 appear on some OEM forks.
-        api >= 29 -> intArrayOf(1015, 1023, 1030)
-        // Pre-10 reliably uses 1015.
-        else -> intArrayOf(1015)
-    }
+    internal fun candidatesFor(@Suppress("UNUSED_PARAMETER") api: Int): IntArray = CANDIDATE_CODES
 
     private fun invalidateOnFailure(res: Su.SuResult, code: Int, operation: String) {
         if (isSuccessfulServiceCall(res)) return
@@ -156,6 +174,14 @@ class SurfaceFlingerEngine : ColorEngine {
     companion object {
         const val TAG = "OpenLumen/SurfaceFlinger"
 
+        /**
+         * `case 1015` in `services/surfaceflinger/SurfaceFlinger.cpp`, verified
+         * byte-identical from `android-10.0.0_r1` through `android-16.0.0_r1`
+         * and on `main`. Neighbours in the same backdoor range are different
+         * features: 1014 is the daltonizer, 1022 saturation, 1023 colour mode.
+         */
+        val CANDIDATE_CODES: IntArray = intArrayOf(1015)
+
         internal fun buildServiceCallCommand(code: Int, matrix: LumenMatrix): String {
             val m = matrix.toSurfaceFlinger16()
             val sb = StringBuilder("service call SurfaceFlinger ").append(code).append(" i32 1")
@@ -169,8 +195,44 @@ class SurfaceFlingerEngine : ColorEngine {
         internal fun buildDisableServiceCallCommand(code: Int): String =
             "service call SurfaceFlinger $code i32 0"
 
-        internal fun isSuccessfulServiceCall(res: Su.SuResult): Boolean =
-            res.exitCode == 0 && !res.stdout.contains("not found", ignoreCase = true)
+        /**
+         * Decide whether a `service call` actually reached the service.
+         *
+         * The old rule was `exitCode == 0 && !stdout.contains("not found")`,
+         * which is true for *every* call to a service that exists, because
+         * `cmds/service/service.cpp` discards the value of
+         * `service->transact(...)` entirely:
+         *
+         * ```
+         * service->transact(code, data, &reply);
+         * aout << "Result: " << reply << endl;
+         * ```
+         *
+         * `result` stays 0 unless the *service name* could not be resolved, in
+         * which case it becomes 10 and stderr carries "does not exist". So the
+         * exit code says nothing about the transaction.
+         *
+         * The signal is the reply parcel. `Parcel::print` renders
+         * `Error: 0x… "…"` when `errorCheck() != NO_ERROR`, and
+         * `IPCThreadState::waitForResponse` calls `reply->setError(err)` on any
+         * failed transaction — so a rejected code (PERMISSION_DENIED from
+         * SurfaceFlinger's `HARDWARE_TEST` gate, or UNKNOWN_TRANSACTION) prints
+         * `Result: Parcel(Error: …)`.
+         *
+         * Note the inversion against a first reading: `Parcel(NULL)` means
+         * SUCCESS here. `Parcel::print` emits NULL for any empty reply, and
+         * transaction 1015 is a void backdoor that writes nothing back, so an
+         * accepted call produces exactly `Result: Parcel(NULL)`. Treating NULL
+         * as failure would report the one code that works as broken on every
+         * device.
+         */
+        internal fun isSuccessfulServiceCall(res: Su.SuResult): Boolean {
+            if (res.exitCode != 0) return false
+            val out = res.stdout
+            if (out.contains("does not exist", ignoreCase = true)) return false
+            if (out.contains("not found", ignoreCase = true)) return false
+            return !out.contains("Parcel(Error:", ignoreCase = true)
+        }
 
         suspend fun clearKnownColorTransforms(api: Int = Build.VERSION.SDK_INT): List<Int> {
             if (!Su.isAvailable()) return emptyList()

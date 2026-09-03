@@ -163,6 +163,9 @@ object DriverReport {
                         e.activeTransactionCode?.let {
                             appendLine("    transaction code: $it")
                         }
+                        if (e.probeResetClientMatrix) {
+                            appendLine("    probe reset SurfaceFlinger's client color matrix")
+                        }
                     }
                     is KcalEngine -> {
                         e.activeBasePath?.let {
