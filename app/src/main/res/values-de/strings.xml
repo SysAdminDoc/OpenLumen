@@ -151,6 +151,8 @@
     <string name="driver_auto_resolved">Automatisch gewählt: %1$s</string>
     <string name="driver_auto_resolved_none">Automatisch: Kein Treiber verfügbar — installieren Sie den Overlay-Fallback, indem Sie die Overlay-Berechtigung erteilen.</string>
     <string name="driver_color_contract">SurfaceFlinger erhält die vollständige Farbmatrix. System-Nachtlicht, KCAL und Overlay verwenden eine skalare Näherung: Der Kontrast entspricht dem transformierten Weißpunkt, während Schwarz- und Mitteltöne abweichen können.</string>
+    <string name="driver_force_pinned">Diesen Treiber auch nutzen, wenn er nicht verfuegbar wirkt</string>
+    <string name="driver_force_pinned_body">Wer Root vor Apps versteckt, versteckt es auch vor dieser Pruefung, und eine langsam beantwortete Magisk-Abfrage sieht aus wie kein Root. Schalte das ein, um den Treiber trotzdem zu versuchen. Kann er wirklich nicht laufen, meldet der Filter den Fehler, statt zurueck auf Auto zu springen.</string>
     <string name="driver_grant_secure_settings">WRITE_SECURE_SETTINGS über ADB erteilen</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Der Modus „Advanced Protection“ kann auf Bedienungshilfen basierende Funktionen automatisch entziehen. OpenLumen verwendet weder Accessibility noch UsageStats; AAPM hat daher keinen Einfluss auf diese App. Der Treiberbericht erfasst den Plattformstatus, sofern verfügbar.</string>

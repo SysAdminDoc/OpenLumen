@@ -193,7 +193,25 @@ internal class EngineController(
             probe.engineOf(requested)
                 ?.let { engine -> runCatching { engine.isAvailable(context) }.getOrDefault(false) }
             ) == true
-        if (requestedAvailable) return requested
+        if (
+            honourPinnedEngine(
+                forcePinned = prefsSnapshot.forcePinnedEngine,
+                probeSaysAvailable = requestedAvailable
+            )
+        ) {
+            if (!requestedAvailable) {
+                val forced = "selected engine ${requested.name} probed unavailable; " +
+                    "using it anyway because the driver is force-pinned"
+                Log.w(logTag, forced)
+                DiagnosticsLog.logAsync(
+                    context,
+                    DiagnosticsLog.Level.WARN,
+                    DiagnosticsLog.Category.ENGINE,
+                    forced
+                )
+            }
+            return requested
+        }
 
        val fallback = resolveAutoEngineKind()
         if (fallback == null) {
@@ -355,8 +373,24 @@ internal class EngineController(
         }
     }
 
-    private companion object {
+    internal companion object {
         const val MIN_RAMP_STEP_MS = 200L
         const val MAX_RAMP_STEPS = 600
+
+        /**
+         * Whether a pinned (non-Auto) driver should be used for this apply.
+         *
+         * Normally the probe decides. When the user has force-pinned the
+         * driver, their choice wins: `su` detection is unreliable on
+         * root-hiding setups and a probe that times out on an unanswered
+         * Magisk prompt reads as "no root", so an unavailable verdict is not
+         * proof (closed issue #16, roadmap C253). Forcing means the apply
+         * either works or reports a concrete failure, instead of the app
+         * quietly reverting the user's selection to Auto.
+         */
+        internal fun honourPinnedEngine(
+            forcePinned: Boolean,
+            probeSaysAvailable: Boolean
+        ): Boolean = probeSaysAvailable || forcePinned
     }
 }

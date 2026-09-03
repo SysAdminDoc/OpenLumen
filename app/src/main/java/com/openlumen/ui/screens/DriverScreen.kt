@@ -11,6 +11,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.openlumen.ui.components.LumenSwitch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,7 +88,10 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
         choices.forEach { (kind, label) ->
             val availability = kind.toEngineKind()
                 ?.let { engineKind -> probes.firstOrNull { it.engine.kind == engineKind }?.available }
-            val selectable = kind == EngineKindDto.Auto || availability != false
+            // C253: force-pin makes every driver selectable, because the user
+            // is overriding a probe verdict they believe is wrong.
+            val selectable =
+                kind == EngineKindDto.Auto || availability != false || prefs.forcePinnedEngine
             Card(
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
@@ -152,6 +158,44 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
                             )
                         }
                     }
+                }
+            }
+        }
+
+        // C253 / closed issue #16. Root-hiding setups make `su` detection
+        // unreliable, so let the user override a probe verdict rather than
+        // being silently reverted to Auto. Only meaningful with a driver
+        // pinned, so the control is hidden while Auto is selected.
+        if (prefs.engine != EngineKindDto.Auto) {
+            val forceLabel = stringResource(R.string.driver_force_pinned)
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            forceLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        LumenSwitch(
+                            checked = prefs.forcePinnedEngine,
+                            onCheckedChange = { vm.setForcePinnedEngine(it) },
+                            modifier = Modifier.semantics { contentDescription = forceLabel }
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.driver_force_pinned_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

@@ -151,6 +151,8 @@
     <string name="driver_auto_resolved">Auto selectionne : %1$s</string>
     <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Installez le mode Overlay en accordant la permission de superposition.</string>
     <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. Eclairage nocturne systeme, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
+    <string name="driver_force_pinned">Utiliser ce pilote meme s\'il semble indisponible</string>
+    <string name="driver_force_pinned_body">Masquer le root aux applis le masque aussi a cette verification, et une invite Magisk repondue trop tard ressemble a une absence de root. Activez ceci pour essayer quand meme. Si le pilote ne peut vraiment pas tourner, le filtre signale l\'erreur au lieu de revenir en Auto.</string>
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection Android</string>
     <string name="driver_aapm_explanation">Le mode Advanced Protection peut révoquer automatiquement les fonctions basées sur Accessibility. OpenLumen n’utilise ni Accessibility ni UsageStats ; AAPM n’a donc aucun effet sur cette application. Le rapport du pilote indique l’état de la plateforme lorsqu’il est disponible.</string>

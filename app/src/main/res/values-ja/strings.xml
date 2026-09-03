@@ -151,6 +151,8 @@
     <string name="driver_auto_resolved">自動選択: %1$s</string>
     <string name="driver_auto_resolved_none">自動: 利用可能なドライバーがありません — オーバーレイ権限を許可してオーバーレイフォールバックをインストールしてください。</string>
     <string name="driver_color_contract">SurfaceFlinger は完全なカラーマトリクスを保持します。システムの夜間モード、KCAL、Overlay はスカラー近似を使用するため、コントラストは変換後の白色点に一致しますが、黒と中間調は異なる場合があります。</string>
+    <string name="driver_force_pinned">利用不可に見えてもこのドライバを使う</string>
+    <string name="driver_force_pinned_body">アプリから root を隠す設定はこの判定からも隠し、Magisk の許可を遅く押すと root なしに見えます。これをオンにするとそれでも試します。本当に動かない場合は、自動に戻らずエラーを報告します。</string>
     <string name="driver_grant_secure_settings">ADB で WRITE_SECURE_SETTINGS を許可する</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Advanced Protection Mode は Accessibility ベースの機能を自動的に取り消す場合があります。OpenLumen は Accessibility も UsageStats も使用しないため、AAPM はこのアプリに影響しません。利用可能な場合、ドライバーレポートにプラットフォームの状態が記録されます。</string>

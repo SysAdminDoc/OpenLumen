@@ -18,7 +18,15 @@ import kotlinx.coroutines.withContext
  */
 object Su {
     private const val TAG = "OpenLumen/Su"
-    private const val PROBE_TIMEOUT_MS = 8_000L
+    /**
+     * The first `su` call on a device shows a Magisk grant prompt and blocks
+     * until the user answers it. Eight seconds routinely expired before anyone
+     * had noticed the dialog, and the timeout was then cached as a definitive
+     * "no root" (closed issue #16). Twenty seconds covers a prompt the user
+     * notices; a slower answer is handled by treating the timeout as
+     * inconclusive rather than by blocking the Driver tab any longer.
+     */
+    private const val PROBE_TIMEOUT_MS = 20_000L
     private const val CMD_TIMEOUT_MS = 4_000L
     private const val CLEANUP_WAIT_MS = 250L
 
@@ -41,7 +49,23 @@ object Su {
                 // blocked in su. Do not publish that stale result into the new
                 // generation; the next caller will perform one fresh probe.
                 if (cacheGeneration.get() == generation) {
-                    cachedAvailable = ok
+                    if (ok || !isInconclusive(result.exitCode)) {
+                        cachedAvailable = ok
+                    } else {
+                        // The probe timed out or su was not on PATH. Neither
+                        // proves the device has no root — the usual cause is a
+                        // first-time Magisk prompt the user has not answered
+                        // yet, or a hidden-root setup where su appears late.
+                        // Leaving the slot null means the next call re-probes
+                        // instead of the app deciding, permanently, that this
+                        // device is unrooted. This is what closed issue #16
+                        // reported.
+                        Log.i(
+                            TAG,
+                            "su probe inconclusive (exit=" + result.exitCode +
+                                "); leaving availability unknown for a retry"
+                        )
+                    }
                     if (!ok) {
                         Log.d(
                             TAG,
@@ -53,6 +77,13 @@ object Su {
                 ok
             }
         }
+
+    /**
+     * Exit codes that mean "we did not get an answer" rather than "the answer
+     * is no". Kept in sync with [resetCacheIfSuLikelyFailed], which exists for
+     * the same reason on the engines' apply paths.
+     */
+    internal fun isInconclusive(exitCode: Int): Boolean = exitCode == 127 || exitCode == -1
 
     fun resetCache() {
         cacheGeneration.incrementAndGet()

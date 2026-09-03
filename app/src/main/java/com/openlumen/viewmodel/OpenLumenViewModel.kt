@@ -193,7 +193,22 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     override fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
-        prefs.update { it.copy(engine = availableEngineOrAuto(kind)) }
+        prefs.update { current ->
+            // C253: with force-pin on, an unavailable probe result is not
+            // grounds to refuse the selection. The user is deliberately
+            // overriding a detection they believe is wrong.
+            val resolved = if (current.forcePinnedEngine) kind else availableEngineOrAuto(kind)
+            current.copy(engine = resolved)
+        }
+    }
+
+    /**
+     * C253 / closed issue #16. Turning this on while Auto is selected would do
+     * nothing, so it is only stored; the Driver tab hides the control unless a
+     * specific driver is pinned.
+     */
+    override fun setForcePinnedEngine(force: Boolean) = viewModelScope.launch {
+        prefs.update { it.copy(forcePinnedEngine = force) }
     }
 
     override fun setIntensity(value: Float) = viewModelScope.launch {

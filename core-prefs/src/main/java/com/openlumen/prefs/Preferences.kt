@@ -203,7 +203,18 @@ data class Preferences(
      * does. A shared secret is the only mechanism that works across the whole
      * supported API range while still admitting Tasker, Termux and ADB.
      */
-    val automationToken: String = ""
+    val automationToken: String = "",
+    /**
+     * Honour a pinned driver even when its probe reports unavailable (C253,
+     * closed issue #16). Root-hiding setups (Magisk DenyList, Shamiko) make
+     * `su` detection unreliable, and a probe that times out while the user is
+     * still looking at the grant prompt reads as "no root". With this set the
+     * pinned engine is used anyway, so the apply either works or reports a
+     * concrete failure instead of the app silently reverting to Auto.
+     *
+     * Only meaningful when [engine] is not [EngineKindDto.Auto].
+     */
+    val forcePinnedEngine: Boolean = false
 ) {
     companion object {
         /**

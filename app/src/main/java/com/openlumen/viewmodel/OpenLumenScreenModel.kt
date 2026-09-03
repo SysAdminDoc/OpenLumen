@@ -77,4 +77,7 @@ interface OpenLumenScreenModel {
 
     /** C250: mint a fresh automation token, invalidating scripts holding the old one. */
     fun regenerateAutomationToken(): Job = Job()
+
+    /** C253: use a pinned driver even when its probe reports unavailable. */
+    fun setForcePinnedEngine(force: Boolean): Job = Job()
 }
