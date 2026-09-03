@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.StrictMode
 import android.os.UserManager
 import android.util.Log
 import androidx.work.Configuration
@@ -42,10 +43,34 @@ class OpenLumenApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        installStrictModeInDebug()
         if (isUserUnlocked()) {
             CrashLogger.install(this)
             registerNotificationChannel()
         }
+    }
+
+    /**
+     * Debug builds only. This exists to keep disk writes off the main thread
+     * (C263): the diagnostics log used to append, and past its size cap rewrite
+     * the whole file, on whichever thread called it, and the service, the
+     * receivers and three sites in the engine controller all called from Main.
+     *
+     * Logged rather than fatal on purpose. Compose, WorkManager and several
+     * OEM framework paths trip the disk detector on their own, so a penalty
+     * death here would crash a debug build for someone else's I/O and the
+     * signal we want would be lost in the noise.
+     */
+    private fun installStrictModeInDebug() {
+        if (!BuildConfig.DEBUG) return
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectDiskWrites()
+                .detectDiskReads()
+                .detectNetwork()
+                .penaltyLog()
+                .build()
+        )
     }
 
     private fun registerNotificationChannel() {

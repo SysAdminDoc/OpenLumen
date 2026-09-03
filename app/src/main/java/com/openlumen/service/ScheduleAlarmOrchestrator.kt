@@ -67,7 +67,7 @@ internal class ScheduleAlarmOrchestrator(
         var triggerMs = nextTransition.toInstant().toEpochMilli()
         if (triggerMs <= currentMs) {
             Log.w(logTag, "nextTransition() returned a past time, deferring by 60s")
-            DiagnosticsLog.logAsync(
+            DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -75,7 +75,7 @@ internal class ScheduleAlarmOrchestrator(
             )
             triggerMs = currentMs + 60_000L
         } else {
-            DiagnosticsLog.logAsync(
+            DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.INFO,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -101,7 +101,7 @@ internal class ScheduleAlarmOrchestrator(
                 Log.e(logTag, "Both exact and inexact scheduling rejected: ${e2.message}")
                 lastScheduleSignature = null
                 lastScheduledTriggerMs = null
-                DiagnosticsLog.logAsync(
+                DiagnosticsLog.log(
                     context,
                     DiagnosticsLog.Level.ERROR,
                     DiagnosticsLog.Category.SCHEDULE,
@@ -130,7 +130,7 @@ internal class ScheduleAlarmOrchestrator(
         val triggerMs = nowMs() + delayMs.coerceAtLeast(1_000L)
         runCatching {
             alarms.setAndAllowWhileIdle(triggerMs, pi)
-            DiagnosticsLog.logAsync(
+            DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -138,7 +138,7 @@ internal class ScheduleAlarmOrchestrator(
             )
         }.onFailure {
             Log.e(logTag, "could not schedule blocked-service retry: ${it.message}")
-            DiagnosticsLog.logAsync(
+            DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.ERROR,
                 DiagnosticsLog.Category.SCHEDULE,
@@ -206,7 +206,7 @@ internal class ScheduleAlarmOrchestrator(
     }
 
     private fun logExactAlarmFallback(message: String) {
-        DiagnosticsLog.logAsync(
+        DiagnosticsLog.log(
             context,
             DiagnosticsLog.Level.WARN,
             DiagnosticsLog.Category.SCHEDULE,

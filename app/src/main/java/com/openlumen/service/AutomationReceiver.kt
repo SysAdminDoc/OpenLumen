@@ -134,7 +134,7 @@ class AutomationReceiver : BroadcastReceiver() {
         // A hostile app can spam this path, so keep the on-disk log bounded
         // while still leaving the first occurrence visible in diagnostics.
         if (count % 20 == 1L) {
-            DiagnosticsLog.logAsync(
+            DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SERVICE,

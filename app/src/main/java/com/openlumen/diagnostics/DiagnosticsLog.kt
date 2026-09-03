@@ -49,7 +49,14 @@ object DiagnosticsLog {
 
     /** Bounded test-mode override so unit tests can run without a real Context. */
     private val testWriter = AtomicReference<((String) -> Unit)?>(null)
-    private val asyncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    /**
+     * Single-threaded on purpose: the trim rewrites the whole file, and two
+     * writers on a shared pool could otherwise land lines out of the order
+     * their timestamps were taken in.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val writeScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
     enum class Level { DEBUG, INFO, WARN, ERROR }
 
@@ -64,12 +71,46 @@ object DiagnosticsLog {
         PROFILE         // preset switches and previous-restore
     }
 
+    /**
+     * Record an event. The line, timestamp included, is built on the calling
+     * thread; only the file write is handed off (C263).
+     *
+     * The write used to happen inline, which meant an append and, past the
+     * size cap, a whole-file rewrite on whichever thread called.
+     * `LumenService.onCreate`, the screen and unlock receiver path and three
+     * sites in `EngineController` all reach this from the main thread.
+     * Building the line here keeps timestamps in call order even though the
+     * write is deferred, and [writeScope] is single-threaded so the writes
+     * land in that same order.
+     *
+     * Use [logBlocking] where the process may not survive long enough to
+     * drain the queue.
+     */
     fun log(context: Context, level: Level, category: Category, message: String) {
         val line = formatLine(level, category, message)
         testWriter.get()?.let {
             it.invoke(line)
             return
         }
+        val appContext = context.applicationContext
+        writeScope.launch { writeLine(appContext, line) }
+    }
+
+    /**
+     * Write before returning. For shutdown paths, where the process may die
+     * before a queued write runs, and for tests that read the file back
+     * immediately.
+     */
+    fun logBlocking(context: Context, level: Level, category: Category, message: String) {
+        val line = formatLine(level, category, message)
+        testWriter.get()?.let {
+            it.invoke(line)
+            return
+        }
+        writeLine(context, line)
+    }
+
+    private fun writeLine(context: Context, line: String) {
         runCatching {
             val f = File(context.filesDir, FILENAME)
             synchronized(writeLock) {
@@ -77,19 +118,6 @@ object DiagnosticsLog {
                 if (f.length() > MAX_BYTES) trimHeadLocked(f)
             }
         }.onFailure { Log.w(TAG, "log write failed: ${it.message}") }
-    }
-
-    /**
-     * Queue a non-critical diagnostic write away from service/UI paths that
-     * must not block on file I/O. Test writers stay synchronous so deterministic
-     * unit tests can assert emitted lines without a scheduler race.
-     */
-    fun logAsync(context: Context, level: Level, category: Category, message: String) {
-        if (testWriter.get() != null) {
-            log(context, level, category, message)
-        } else {
-            asyncScope.launch { log(context, level, category, message) }
-        }
     }
 
     /** Read a stable snapshot while sharing the writer/trim lock. */

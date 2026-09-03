@@ -672,7 +672,14 @@ class LumenService : LifecycleService() {
     }
 
     override fun onDestroy() {
-        DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onDestroy")
+        // Blocking: the process is going away and a queued write would be
+        // lost, which is exactly the line you want when diagnosing a kill.
+        DiagnosticsLog.logBlocking(
+            this,
+            DiagnosticsLog.Level.INFO,
+            DiagnosticsLog.Category.SERVICE,
+            "onDestroy"
+        )
         if (screenStateReceiverRegistered) {
             runCatching { unregisterReceiver(screenStateReceiver) }
                 .onFailure { Log.w(tag, "unregisterReceiver(SCREEN_OFF): ${it.message}") }

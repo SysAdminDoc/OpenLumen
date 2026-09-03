@@ -203,7 +203,7 @@ internal class EngineController(
                 val forced = "selected engine ${requested.name} probed unavailable; " +
                     "using it anyway because the driver is force-pinned"
                 Log.w(logTag, forced)
-                DiagnosticsLog.logAsync(
+                DiagnosticsLog.log(
                     context,
                     DiagnosticsLog.Level.WARN,
                     DiagnosticsLog.Category.ENGINE,
@@ -367,7 +367,7 @@ internal class EngineController(
     private suspend fun escalateClearFailure(operation: String, result: EngineResult) {
         reportResult(operation, result)
         if (result !is EngineResult.Failure) return
-        DiagnosticsLog.logAsync(
+        DiagnosticsLog.log(
             context,
             DiagnosticsLog.Level.WARN,
             DiagnosticsLog.Category.ENGINE,
