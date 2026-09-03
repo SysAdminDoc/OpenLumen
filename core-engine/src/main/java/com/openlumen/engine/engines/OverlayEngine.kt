@@ -60,6 +60,32 @@ class OverlayEngine : ColorEngine {
     @Volatile private var lastAppliedArgb: Int = 0
     private val viewLock = Any()
 
+    /**
+     * The context whose window token owns the overlay, remembered by the first
+     * successful [installView] (C262).
+     *
+     * `apply` used to reinstall with whatever context the call site passed. The
+     * service holds this engine as a singleton and its own context is the only
+     * one with a token that can carry `TYPE_APPLICATION_OVERLAY`, so a
+     * reinstall from anywhere else either throws or installs a window nothing
+     * owns. Holding the service context is deliberate: this engine's lifetime
+     * is the service's lifetime, and `clear` drops it.
+     */
+    @Volatile private var windowContext: Context? = null
+
+    /**
+     * Bumped every time [runOnMain] gives up waiting. The posted block reads it
+     * after it finishes and tears down anything it installed for a caller that
+     * is no longer listening (C262).
+     *
+     * Without this, a main thread that stalls past the two-second bound leaves
+     * `runOnMain` returning false while the block runs anyway and adds a
+     * full-screen tinted window. `EngineController` reads that false as
+     * "overlay unavailable" and drops the engine, so nothing owns the window
+     * and nothing will ever remove it.
+     */
+    private val abandonedInstalls = java.util.concurrent.atomic.AtomicInteger(0)
+
     override suspend fun isAvailable(context: Context): Boolean = onMain {
         if (Build.VERSION.SDK_INT >= 23) Settings.canDrawOverlays(context) else true
     }
@@ -85,6 +111,20 @@ class OverlayEngine : ColorEngine {
         return runOnMain { synchronized(viewLock) { installViewLocked(serviceContext, initial) } }
     }
 
+    /**
+     * Undo an install whose caller has already been told it failed. Runs on the
+     * main thread, inside the same lock the install held.
+     */
+    private fun discardAbandonedInstallLocked() {
+        val v = hostView ?: return
+        Log.w(tag, "install completed after the caller gave up; removing the orphaned window")
+        runCatching { hostWm?.removeViewImmediate(v) }
+        hostView = null
+        hostWm = null
+        windowContext = null
+        lastAppliedArgb = 0
+    }
+
     /** True if the cached host view is still attached to a window manager. */
     private fun isHostAttached(): Boolean {
         val v = hostView ?: return false
@@ -102,6 +142,10 @@ class OverlayEngine : ColorEngine {
         hostView = null
         hostWm = null
         lastAppliedArgb = 0
+        // windowContext deliberately survives: this means the window died, not
+        // that ownership moved. The reinstall right after this needs to know
+        // which context's token to build against. Only clear() and the
+        // abandoned-install teardown relinquish it.
     }
 
     private fun installViewLocked(serviceContext: Context, initial: LumenMatrix): Boolean {
@@ -146,6 +190,7 @@ class OverlayEngine : ColorEngine {
             wm.addView(view, lp)
             hostView = view
             hostWm = wm
+            windowContext = serviceContext
             lastAppliedArgb = initialArgb
             true
         } catch (t: Throwable) {
@@ -169,7 +214,9 @@ class OverlayEngine : ColorEngine {
                 // got torn down with the process. Already on Main, so go
                 // through the locked installer directly.
                 if (v != null) discardStaleHostLocked()
-                installViewLocked(context, matrix)
+                // C262: reinstall against the context whose token owns overlay
+                // windows, not whatever the call site happened to pass.
+                installViewLocked(windowContext ?: context, matrix)
             }
         }
         if (!installed) {
@@ -194,6 +241,7 @@ class OverlayEngine : ColorEngine {
             }
             hostView = null
             hostWm = null
+            windowContext = null
             lastAppliedArgb = 0
             failure?.let { return@synchronized EngineResult.Failure("overlay clear failed: ${it.message}") }
             EngineResult.Success
@@ -237,15 +285,41 @@ class OverlayEngine : ColorEngine {
         val handler = Handler(Looper.getMainLooper())
         val latch = java.util.concurrent.CountDownLatch(1)
         val result = java.util.concurrent.atomic.AtomicBoolean(false)
+        val generation = abandonedInstalls.get()
         val posted = handler.post {
-            try { result.set(block()) } finally { latch.countDown() }
+            try {
+                val installed = block()
+                result.set(installed)
+                // C262: the caller may already have timed out and reported
+                // failure. Anything installed now belongs to nobody, so take it
+                // back down rather than leaving a full-screen tint on screen.
+                if (installed && abandonedInstalls.get() != generation) {
+                    synchronized(viewLock) { discardAbandonedInstallLocked() }
+                }
+            } finally {
+                latch.countDown()
+            }
         }
         if (!posted) {
             Log.w(tag, "installView: Handler.post rejected (looper exiting?)")
             return false
         }
         // Bounded wait so a wedged main thread can't pin the caller forever.
-        return if (latch.await(2, java.util.concurrent.TimeUnit.SECONDS)) result.get()
-               else { Log.w(tag, "installView: timed out waiting for main thread"); false }
+        return if (latch.await(MAIN_THREAD_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)) {
+            result.get()
+        } else {
+            Log.w(tag, "installView: timed out waiting for main thread")
+            abandonedInstalls.incrementAndGet()
+            false
+        }
+    }
+
+    companion object {
+        /**
+         * How long a caller waits for the main thread before treating the
+         * install as failed. Kept as a constant so the test that exercises the
+         * late-install path can wait past it deterministically.
+         */
+        const val MAIN_THREAD_TIMEOUT_SECONDS: Long = 2
     }
 }
