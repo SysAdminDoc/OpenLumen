@@ -8,6 +8,7 @@ import android.provider.Settings
 import com.openlumen.BuildConfig
 import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.engines.KcalEngine
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
 import com.openlumen.prefs.Preferences
 import com.openlumen.service.ExactAlarmAccess
@@ -167,6 +168,17 @@ object DriverReport {
                         e.activeBasePath?.let {
                             appendLine("    kcal sysfs: $it")
                         }
+                    }
+                    is SecureSettingsEngine -> {
+                        // C251: record which secure keys this device actually
+                        // honoured. Night Light alone and Night Light plus
+                        // Extra Dim are different capability states, and only
+                        // the second reaches below the minimum backlight.
+                        val accepted = e.acceptedKeys
+                        appendLine(
+                            "    secure keys accepted: " +
+                                if (accepted.isEmpty()) "(none)" else accepted.joinToString()
+                        )
                     }
                     else -> Unit
                 }

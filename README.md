@@ -7,8 +7,8 @@
 [![No INTERNET](https://img.shields.io/badge/INTERNET-not%20requested-94e2d5?style=flat-square)](#privacy)
 
 > **Open-source spiritual successor to Chainfire's CF.Lumen.** Brings root-grade
-> display color shifting and overlay-based fallback to modern Android, with the AOSP
-> ColorDisplayManager path that CF.Lumen never had.
+> display color shifting and overlay-based fallback to modern Android, plus a
+> rootless framework-level path that CF.Lumen never had.
 
 CF.Lumen has been dormant since December 2020. Red Moon, the main open-source
 overlay-only competitor, has been unmaintained since August 2022. OpenLumen exists
@@ -33,17 +33,30 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 
 | Driver | Root? | SoC | Quality | Notes |
 |--------|------|-----|---------|-------|
-| `ColorDisplayManager` | No¹ | Any (AOSP-derived) | Framebuffer | Same path the system Night Light uses. API 28+. |
+| `SecureSettings` | No¹ | Any | Framebuffer | Drives system Night Light and Extra Dim through `Settings.Secure`. API 29+. |
 | `SurfaceFlinger` | Yes | Any | Framebuffer | `service call SurfaceFlinger` color-transform. Works on Tensor/Exynos/MediaTek too. |
 | `KCAL` | Yes | Qualcomm | Panel driver | Requires custom kernel exposing `/sys/devices/platform/kcal_ctrl.0/kcal*`. |
 | `Overlay` | No | Any | Compositor blend | Universal fallback. Capped at ~80% opacity by Android 12+ rules. |
 
-¹ Some builds require granting `WRITE_SECURE_SETTINGS` via:
+¹ Requires granting `WRITE_SECURE_SETTINGS` once:
 `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
+
+The secure-settings driver writes the same rows `ColorDisplayService` watches, so
+the tint is applied by the compositor: it covers the status bar, notification
+shade and lock screen, it does not block touches, and screenshots come out
+untinted. On devices that ship Extra Dim (Android 12+, and not every OEM does) it
+also dims below the panel's minimum backlight without root — the one thing the
+overlay driver cannot do. Note it carries chromaticity as a colour temperature, so
+per-channel gamma and the colour-vision presets still need a root driver.
+
+Releases through 0.7.1 shipped a `ColorDisplayManager` driver here that could not
+work on any user install: those APIs need `CONTROL_DISPLAY_COLOR_TRANSFORMS`, which
+is `signature|privileged` and cannot be granted with `pm grant`. If you tried the
+AOSP driver on an older build and saw nothing happen, that was why.
 
 The app falls back gracefully: Auto prefers the best available root path
 (`SurfaceFlinger`, then `KCAL`). Non-root devices use Overlay by default. If
-you want a specific driver such as `ColorDisplayManager`, Settings → Driver
+you want a specific driver such as `SecureSettings`, Settings → Driver
 lets you pin one; if that pinned driver later probes as unavailable, OpenLumen
 resets to Auto instead of leaving the filter enabled with no visible effect.
 
@@ -118,8 +131,9 @@ aapt dump permissions OpenLumen-release.apk | grep INTERNET
 ## Requirements
 
 - Android 8.0 (API 26) or higher
-- For best results: root with Magisk-managed `su`, OR a Pixel / Android-One device
-  whose system Night Light is functional (the AOSP driver piggy-backs on it).
+- For best results: root with Magisk-managed `su`, OR any Android 10+ device with
+  `WRITE_SECURE_SETTINGS` granted over ADB (the secure-settings driver rides the
+  system's own Night Light transform).
 
 ## Build
 

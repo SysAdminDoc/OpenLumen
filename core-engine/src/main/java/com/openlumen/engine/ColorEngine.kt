@@ -7,8 +7,11 @@ import android.content.Context
  *
  * Engines are listed in [EngineKind] roughly best-to-worst on image quality and power cost:
  *
- * - [EngineKind.COLOR_DISPLAY_MANAGER] — AOSP hidden API (the same one system Night Light uses).
- *   No root needed. Works on AOSP-derived ROMs (Pixel, many OEMs). Framebuffer level.
+ * - [EngineKind.COLOR_DISPLAY_MANAGER] — system Night Light and Extra Dim, driven through
+ *   `Settings.Secure` under WRITE_SECURE_SETTINGS. No root needed. API 29+. Framebuffer level.
+ *   The enum name is historical: releases through 0.7.1 reflected on `ColorDisplayManager`,
+ *   which can never work on a user install (see `SecureSettingsEngine`). The identifier is
+ *   kept because it is persisted in `EngineKindDto`.
  * - [EngineKind.SURFACE_FLINGER]      — `service call SurfaceFlinger 1015` via `su`.
  *   Any SoC, framebuffer level, requires root.
  * - [EngineKind.KCAL]                 — `/sys/devices/platform/kcal_ctrl.0/kcal*` writes via `su`.
@@ -45,7 +48,7 @@ sealed interface EngineResult {
 }
 
 enum class EngineKind(val displayName: String, val requiresRoot: Boolean, val rank: Int) {
-    COLOR_DISPLAY_MANAGER("AOSP ColorDisplayManager", requiresRoot = false, rank = 100),
+    COLOR_DISPLAY_MANAGER("System Night Light (secure settings)", requiresRoot = false, rank = 100),
     SURFACE_FLINGER       ("SurfaceFlinger color matrix (root)", requiresRoot = true,  rank = 90),
     KCAL                  ("KCAL kernel driver (root)",          requiresRoot = true,  rank = 70),
     OVERLAY               ("Overlay (rootless fallback)",         requiresRoot = false, rank = 10);

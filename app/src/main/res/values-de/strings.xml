@@ -139,7 +139,7 @@
 
     <string name="driver_title">Displaytreiber</string>
     <string name="driver_auto">Automatisch (bestverfügbar)</string>
-    <string name="driver_color_display">AOSP ColorDisplayManager</string>
+    <string name="driver_color_display">System-Nachtlicht</string>
     <string name="driver_surfaceflinger">SurfaceFlinger (Root)</string>
     <string name="driver_kcal">KCAL Kernel (Root, Qualcomm)</string>
     <string name="driver_overlay">Overlay (ohne Root)</string>
@@ -150,12 +150,12 @@
     <string name="driver_not_available">Auf diesem Gerät nicht verfügbar</string>
     <string name="driver_auto_resolved">Automatisch gewählt: %1$s</string>
     <string name="driver_auto_resolved_none">Automatisch: Kein Treiber verfügbar — installieren Sie den Overlay-Fallback, indem Sie die Overlay-Berechtigung erteilen.</string>
-    <string name="driver_color_contract">SurfaceFlinger erhält die vollständige Farbmatrix. ColorDisplayManager, KCAL und Overlay verwenden eine skalare Näherung: Der Kontrast entspricht dem transformierten Weißpunkt, während Schwarz- und Mitteltöne abweichen können.</string>
+    <string name="driver_color_contract">SurfaceFlinger erhält die vollständige Farbmatrix. System-Nachtlicht, KCAL und Overlay verwenden eine skalare Näherung: Der Kontrast entspricht dem transformierten Weißpunkt, während Schwarz- und Mitteltöne abweichen können.</string>
     <string name="driver_grant_secure_settings">WRITE_SECURE_SETTINGS über ADB erteilen</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Der Modus „Advanced Protection“ kann auf Bedienungshilfen basierende Funktionen automatisch entziehen. OpenLumen verwendet weder Accessibility noch UsageStats; AAPM hat daher keinen Einfluss auf diese App. Der Treiberbericht erfasst den Plattformstatus, sofern verfügbar.</string>
     <string name="driver_grant_status_granted">Auf diesem Gerät erteilt.</string>
-    <string name="driver_grant_status_not_granted">Nicht erteilt. Der ColorDisplayManager-Treiber ist erst verfügbar, wenn diese Berechtigung über den folgenden ADB-Befehl erteilt wird.</string>
+    <string name="driver_grant_status_not_granted">Nicht erteilt. Der System-Nachtlicht-Treiber ist erst verfügbar, wenn diese Berechtigung über den folgenden ADB-Befehl erteilt wird.</string>
     <string name="driver_copy_command">Befehl kopieren</string>
     <string name="driver_copy_report">Bericht kopieren</string>
     <string name="driver_share_report">Bericht teilen</string>
@@ -168,7 +168,7 @@
     <string name="clipboard_emergency_off">OpenLumen Notabschaltung</string>
     <string name="clipboard_automation_token">OpenLumen Automatisierungs-Token</string>
     <string name="overlay_caveats_title">Über den Overlay-Treiber</string>
-    <string name="overlay_alpha_cap_explanation" formatted="false">Die Overlay-Transparenz ist durch Android 12+ auf ca. 80% begrenzt (Untrusted-Touch-Regeln). Für stärkere Abdunklung verwenden Sie ColorDisplayManager oder einen Root-Treiber.</string>
+    <string name="overlay_alpha_cap_explanation" formatted="false">Die Overlay-Transparenz ist durch Android 12+ auf ca. 80% begrenzt (Untrusted-Touch-Regeln). Für stärkere Abdunklung verwenden Sie System-Nachtlicht oder einen Root-Treiber.</string>
     <string name="overlay_touch_pass_explanation">Während das Overlay aktiv ist, blockiert Android möglicherweise Eingaben auf Systeminstallations- oder Berechtigungsdialogen. Dies ist der Tapjacking-Schutz der Plattform, kein OpenLumen-Fehler — deaktivieren Sie den Filter über die Kachel oder Benachrichtigung, bevor Sie Apps installieren.</string>
 
     <string name="about_version">Version</string>

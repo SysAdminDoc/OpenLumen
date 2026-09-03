@@ -47,8 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automation commands now require a token generated in the app, and the external control surface ships off. Every action except `TURN_OFF` needs `com.openlumen.extra.TOKEN`; existing scripts stop working until the user turns on About → Automation access and copies the token. Preference schema is now version 3, and upgrades land in the closed state. `TURN_OFF` stays unauthenticated because it is the emergency escape hatch and can only move the filter toward off. See `docs/automation.md`.
 
+### Added
+
+- The rootless driver now reaches Extra Dim (`reduce_bright_colors_*`, Android 12+ where the OEM ships it), so dim goes below the panel's minimum backlight with no root. The driver report records which secure rows the device accepted, because Night Light alone and Night Light plus Extra Dim are different capability states.
+
 ### Fixed
 
+- The AOSP driver never worked on any user install. It reflected on `ColorDisplayManager`, whose setters require `CONTROL_DISPLAY_COLOR_TRANSFORMS` — `signature|privileged`, so `pm grant` cannot grant it and a sideloaded app can never hold it. Replaced with a `Settings.Secure` driver writing the same rows `ColorDisplayService` observes, which `WRITE_SECURE_SETTINGS` does authorize. Availability is now probed by writing rather than by class presence, so the Driver tab stops reporting a backend that cannot apply anything.
+- The driver's minimum API was documented and coded as 28. `ColorDisplayManager` and the `night_display_*` rows both arrive in 29.
 - The exported automation receiver rejected nothing. It read `Binder.getCallingUid()` inside `onReceive`, which returns the receiving app's own UID rather than the sender's, so the `callingUid == appUid` branch matched for every caller and any installed app could drive the filter. Sender identity is not available to a manifest receiver at all, so the check was replaced with a shared secret rather than repaired.
 - Profile exports no longer contain the automation token, and profile imports no longer carry automation settings in from the file.
 - Solar scheduling now requires a valid location and clearly reports missing location data instead of silently behaving as Always Off.

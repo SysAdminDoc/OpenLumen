@@ -1,7 +1,7 @@
 package com.openlumen.engine
 
 import android.content.Context
-import com.openlumen.engine.engines.ColorDisplayManagerEngine
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.engine.engines.KcalEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
 import kotlinx.coroutines.async
@@ -22,7 +22,7 @@ object DisplayEmergencyReset {
             if (context == null) {
                 false
             } else {
-                ColorDisplayManagerEngine().clear(context)
+                SecureSettingsEngine().clear(context)
                 true
             }
         }

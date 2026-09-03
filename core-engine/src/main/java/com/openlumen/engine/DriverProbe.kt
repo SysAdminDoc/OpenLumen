@@ -1,7 +1,7 @@
 package com.openlumen.engine
 
 import android.content.Context
-import com.openlumen.engine.engines.ColorDisplayManagerEngine
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.engine.engines.KcalEngine
 import com.openlumen.engine.engines.OverlayEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
@@ -89,7 +89,7 @@ class DriverProbe(
                     ?.engine?.kind
 
         fun defaultEngines(): List<ColorEngine> = listOf(
-            ColorDisplayManagerEngine(),
+            SecureSettingsEngine(),
             SurfaceFlingerEngine(),
             KcalEngine(),
             OverlayEngine()

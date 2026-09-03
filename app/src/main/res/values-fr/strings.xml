@@ -139,7 +139,7 @@
 
     <string name="driver_title">Pilote d\'affichage</string>
     <string name="driver_auto">Auto (meilleur disponible)</string>
-    <string name="driver_color_display">AOSP ColorDisplayManager</string>
+    <string name="driver_color_display">Eclairage nocturne systeme</string>
     <string name="driver_surfaceflinger">SurfaceFlinger (root)</string>
     <string name="driver_kcal">KCAL kernel (root, Qualcomm)</string>
     <string name="driver_overlay">Overlay (sans root)</string>
@@ -150,12 +150,12 @@
     <string name="driver_not_available">Non disponible sur cet appareil</string>
     <string name="driver_auto_resolved">Auto selectionne : %1$s</string>
     <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Installez le mode Overlay en accordant la permission de superposition.</string>
-    <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. ColorDisplayManager, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
+    <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. Eclairage nocturne systeme, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection Android</string>
     <string name="driver_aapm_explanation">Le mode Advanced Protection peut révoquer automatiquement les fonctions basées sur Accessibility. OpenLumen n’utilise ni Accessibility ni UsageStats ; AAPM n’a donc aucun effet sur cette application. Le rapport du pilote indique l’état de la plateforme lorsqu’il est disponible.</string>
     <string name="driver_grant_status_granted">Accorde sur cet appareil.</string>
-    <string name="driver_grant_status_not_granted">Non accorde. Le pilote ColorDisplayManager est indisponible tant que cette permission n\'est pas accordee via la commande ADB ci-dessous.</string>
+    <string name="driver_grant_status_not_granted">Non accorde. Le pilote Eclairage nocturne systeme est indisponible tant que cette permission n\'est pas accordee via la commande ADB ci-dessous.</string>
     <string name="driver_copy_command">Copier la commande</string>
     <string name="driver_copy_report">Copier le rapport</string>
     <string name="driver_share_report">Partager le rapport</string>
@@ -168,7 +168,7 @@
     <string name="clipboard_emergency_off">Arret d\'urgence OpenLumen</string>
     <string name="clipboard_automation_token">Jeton d\'automatisation OpenLumen</string>
     <string name="overlay_caveats_title">A propos du pilote Overlay</string>
-    <string name="overlay_alpha_cap_explanation" formatted="false">L\'opacite de l\'overlay est limitee a environ 80% par les regles de toucher non fiable d\'Android 12+. Pour une reduction plus importante, utilisez ColorDisplayManager ou un pilote root.</string>
+    <string name="overlay_alpha_cap_explanation" formatted="false">L\'opacite de l\'overlay est limitee a environ 80% par les regles de toucher non fiable d\'Android 12+. Pour une reduction plus importante, utilisez Eclairage nocturne systeme ou un pilote root.</string>
     <string name="overlay_touch_pass_explanation">Lorsque l\'overlay est actif, Android peut bloquer les appuis sur les dialogues d\'installation ou de permissions systeme. Il s\'agit de la protection anti-detournement de la plateforme, pas d\'un bug d\'OpenLumen. Desactivez le filtre via la tuile ou la notification avant d\'installer des applications.</string>
 
     <string name="about_version">Version</string>

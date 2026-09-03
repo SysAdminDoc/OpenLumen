@@ -139,7 +139,7 @@
 
     <string name="driver_title">Driver de exibicao</string>
     <string name="driver_auto">Automático (melhor disponível)</string>
-    <string name="driver_color_display">AOSP ColorDisplayManager</string>
+    <string name="driver_color_display">Luz noturna do sistema</string>
     <string name="driver_surfaceflinger">SurfaceFlinger (root)</string>
     <string name="driver_kcal">KCAL kernel (root, Qualcomm)</string>
     <string name="driver_overlay">Overlay (sem root)</string>
@@ -150,12 +150,12 @@
     <string name="driver_not_available">Indisponível neste dispositivo</string>
     <string name="driver_auto_resolved">Automático escolheu: %1$s</string>
     <string name="driver_auto_resolved_none">Automático: nenhum driver disponível — instale o Overlay concedendo a permissão de sobreposição.</string>
-    <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. ColorDisplayManager, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
+    <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. Luz noturna do sistema, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection do Android</string>
     <string name="driver_aapm_explanation">O modo Advanced Protection pode revogar automaticamente recursos baseados em Accessibility. O OpenLumen não usa Accessibility nem UsageStats, portanto o AAPM não afeta este app. O relatório do controlador registra o estado da plataforma quando disponível.</string>
     <string name="driver_grant_status_granted">Concedido neste dispositivo.</string>
-    <string name="driver_grant_status_not_granted">Não concedido. O driver ColorDisplayManager fica indisponível até que seja concedido pelo comando ADB abaixo.</string>
+    <string name="driver_grant_status_not_granted">Não concedido. O driver Luz noturna do sistema fica indisponível até que seja concedido pelo comando ADB abaixo.</string>
     <string name="driver_copy_command">Copiar comando</string>
     <string name="driver_copy_report">Copiar relatorio</string>
     <string name="driver_share_report">Compartilhar relatorio</string>
@@ -168,7 +168,7 @@
     <string name="clipboard_emergency_off">Desligamento de emergencia do OpenLumen</string>
     <string name="clipboard_automation_token">Token de automacao do OpenLumen</string>
     <string name="overlay_caveats_title">Sobre o driver Overlay</string>
-    <string name="overlay_alpha_cap_explanation" formatted="false">O alfa do overlay é limitado a ~80% pelas regras de toque não confiável do Android 12+. Para escurecimento mais profundo, use o ColorDisplayManager ou um driver com root.</string>
+    <string name="overlay_alpha_cap_explanation" formatted="false">O alfa do overlay é limitado a ~80% pelas regras de toque não confiável do Android 12+. Para escurecimento mais profundo, use o Luz noturna do sistema ou um driver com root.</string>
     <string name="overlay_touch_pass_explanation">Enquanto o overlay estiver ativo, o Android pode bloquear toques em diálogos do instalador do sistema ou de permissões. Essa é a proteção contra tapjacking da plataforma, não um bug do OpenLumen — desative o filtro pelo tile ou notificação antes de instalar aplicativos.</string>
 
     <string name="about_version">Versão</string>
