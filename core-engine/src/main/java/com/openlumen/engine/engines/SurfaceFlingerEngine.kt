@@ -119,11 +119,17 @@ class SurfaceFlingerEngine : ColorEngine {
             // Record that rather than doing it silently: the Driver tab and the
             // driver report surface this so a "my other filter turned itself
             // off" report is explainable.
-            probeResetClientMatrix = true
-            Log.i(TAG, "probe: issuing disable on code $code; any client color matrix is reset")
             val res = Su.runCommand(buildDisableServiceCallCommand(code))
             if (isSuccessfulServiceCall(res)) {
-                Log.d(TAG, "probe: code $code worked (api ${Build.VERSION.SDK_INT})")
+                // Only a transaction the service accepted actually cleared
+                // anything. Setting this before the call made the report claim
+                // a reset on devices where every candidate was rejected.
+                probeResetClientMatrix = true
+                Log.i(
+                    TAG,
+                    "probe: code $code accepted (api ${Build.VERSION.SDK_INT}); " +
+                        "any client color matrix is now reset"
+                )
                 workingCode = code
                 return true
             }

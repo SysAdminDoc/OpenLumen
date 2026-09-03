@@ -28,12 +28,21 @@ internal fun shouldRestoreNightDisplay(
 /**
  * Same ownership rule for the Extra Dim transform: only hand back a level we
  * are still the author of.
+ *
+ * [lastAppliedLevel] of 0 means the last thing we wrote was a deactivation, so
+ * ownership holds while the transform is still off. Treating that case as
+ * "always ours" would let a session that never dimmed overwrite an Extra Dim
+ * level the user turned on afterwards.
  */
 internal fun shouldRestoreReduceBrightColors(
     currentActive: Boolean,
     currentLevel: Int,
     lastAppliedLevel: Int
-): Boolean = currentActive && currentLevel == lastAppliedLevel
+): Boolean = if (lastAppliedLevel > 0) {
+    currentActive && currentLevel == lastAppliedLevel
+} else {
+    !currentActive
+}
 
 /**
  * Rootless framework-level driver, written against `Settings.Secure`.
@@ -80,6 +89,12 @@ class SecureSettingsEngine : ColorEngine {
     private val tag = "OpenLumen/SecureSettings"
 
     @Volatile private var ownership: Ownership? = null
+
+    /**
+     * True once this session has written the Extra Dim rows. Sessions that
+     * never dim must not touch them at all, in either direction.
+     */
+    @Volatile private var dimOwned: Boolean = false
 
     /**
      * Which of the two transforms the last probe accepted. Read by
@@ -156,7 +171,12 @@ class SecureSettingsEngine : ColorEngine {
                     if (dimLevel > 0) {
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_LEVEL, dimLevel)
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 1)
-                    } else {
+                        dimOwned = true
+                    } else if (dimOwned) {
+                        // Turning off dim we ourselves switched on. If this
+                        // session never dimmed, leave the row alone entirely —
+                        // writing 0 here would silently disable an Extra Dim
+                        // setting the user had on before OpenLumen started.
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0)
                     }
                 } else if (dimLevel > 0) {
@@ -190,17 +210,27 @@ class SecureSettingsEngine : ColorEngine {
             ) {
                 Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, owned.original.nightTemperature)
                 Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, if (owned.original.nightActive) 1 else 0)
-                Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
             } else {
                 Log.i(tag, "Night Light changed outside OpenLumen; leaving it untouched")
             }
 
-            if (supportsReduceBrightColors(context)) {
+            // The auto-mode restore is deliberately outside that branch. apply()
+            // always parks auto mode on manual, so tying its restore to the
+            // activation check strands a user who had "sunset to sunrise" set
+            // and then toggled Night Light by hand: the branch is skipped, the
+            // ownership record is dropped, and their schedule never runs again.
+            // Restore whenever nothing else has moved it since we did.
+            val currentAutoMode = Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
+            if (currentAutoMode == AUTO_MODE_MANUAL &&
+                owned.original.nightAutoMode != AUTO_MODE_MANUAL
+            ) {
+                Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
+            }
+
+            if (dimOwned && supportsReduceBrightColors(context)) {
                 val currentDimActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1
                 val currentDimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
-                val weOwnDim = owned.lastAppliedDimLevel > 0
                 if (
-                    !weOwnDim ||
                     shouldRestoreReduceBrightColors(
                         currentActive = currentDimActive,
                         currentLevel = currentDimLevel,
@@ -218,6 +248,7 @@ class SecureSettingsEngine : ColorEngine {
                 }
             }
             ownership = null
+            dimOwned = false
         } catch (t: Throwable) {
             Log.w(tag, "secure-settings clear failed: ${t.message}")
             return@withContext EngineResult.Failure(
@@ -239,7 +270,12 @@ class SecureSettingsEngine : ColorEngine {
     private fun rewriteInPlace(context: Context, key: String): Boolean = runCatching {
         val cr = context.contentResolver
         val current = Settings.Secure.getInt(cr, key, 0)
-        Settings.Secure.putInt(cr, key, current)
+        if (!Settings.Secure.putInt(cr, key, current)) return@runCatching false
+        // Read back rather than trusting the write's return value. A provider
+        // that accepts the call and drops the row would otherwise pass the
+        // probe and then apply nothing, which is exactly the failure mode the
+        // old class-presence check had.
+        Settings.Secure.getInt(cr, key, Int.MIN_VALUE) == current
     }.getOrElse {
         Log.d(tag, "probe write rejected for $key: ${it.message}")
         false
@@ -253,7 +289,10 @@ class SecureSettingsEngine : ColorEngine {
     internal fun supportsReduceBrightColors(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < REDUCE_BRIGHT_COLORS_MIN_API) return false
         return runCatching {
-            val res = Resources.getSystem()
+            // context.resources, not Resources.getSystem(): AOSP's own
+            // isReduceBrightColorsAvailable reads through a Context, so a
+            // runtime resource overlay that flips this config is honoured.
+            val res = context.resources
             val id = res.getIdentifier(CONFIG_REDUCE_BRIGHT_AVAILABLE, "bool", "android")
             id != 0 && res.getBoolean(id)
         }.getOrDefault(false)
@@ -327,6 +366,45 @@ class SecureSettingsEngine : ColorEngine {
             if (!dim.isFinite() || dim <= 0f) return 0
             return Math.round(dim.coerceIn(0f, 1f) * MAX_REDUCE_BRIGHT_LEVEL)
                 .coerceIn(0, MAX_REDUCE_BRIGHT_LEVEL)
+        }
+
+        /**
+         * Blunt reset for the emergency-off path, mirroring
+         * `SurfaceFlingerEngine.clearKnownColorTransforms` and
+         * `KcalEngine.clearKnownPaths`.
+         *
+         * Ownership lives in an engine instance, so it does not survive a
+         * process kill — but unlike the old reflection driver, this one leaves
+         * *persistent* rows behind. Without this, a filter left on when the
+         * process died would keep tinting the display with no OpenLumen
+         * running, and the documented ADB escape hatch would clear
+         * SurfaceFlinger and KCAL while silently skipping the transform that
+         * was actually on screen.
+         *
+         * Deliberately does not restore a previous user setting: nothing on
+         * this path knows what it was. It switches the transforms off, which is
+         * the direction the emergency hatch exists to move in.
+         */
+        fun clearKnownSecureState(context: Context): List<String> {
+            if (Build.VERSION.SDK_INT < MIN_API) return emptyList()
+            if (
+                context.checkSelfPermission(
+                    android.Manifest.permission.WRITE_SECURE_SETTINGS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return emptyList()
+            }
+            val cleared = mutableListOf<String>()
+            val cr = context.contentResolver
+            for (key in listOf(KEY_NIGHT_ACTIVATED, KEY_REDUCE_BRIGHT_ACTIVATED)) {
+                runCatching {
+                    if (Settings.Secure.getInt(cr, key, 0) == 1) {
+                        Settings.Secure.putInt(cr, key, 0)
+                        cleared += key
+                    }
+                }
+            }
+            return cleared
         }
     }
 }

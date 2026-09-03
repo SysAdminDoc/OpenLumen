@@ -71,6 +71,22 @@ class AutomationReceiver : BroadcastReceiver() {
         }
         val presentedToken = intent.getStringExtra(EXTRA_TOKEN)
 
+        // Throttle before anything expensive. Reading preferences means a
+        // DataStore hit plus a JSON decode, migrations and sanitize, and this
+        // receiver is exported: a hostile app can broadcast in a tight loop.
+        // Doing the rate check first keeps a flood down to a map lookup, and
+        // caps how many goAsync() results can be pending at once.
+        val now = SystemClock.elapsedRealtime()
+        val lastForwarded = lastForwardedMs.getOrDefault(action, 0L)
+        if (now - lastForwarded < THROTTLE_MS) {
+            val count = throttleCount.incrementAndGet()
+            if (count % 20 == 1L) {
+                Log.d(tag, "throttled $action ($count total)")
+            }
+            return
+        }
+        lastForwardedMs[action] = now
+
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
             try {
@@ -86,22 +102,15 @@ class AutomationReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                val now = SystemClock.elapsedRealtime()
-                val lastForwarded = lastForwardedMs.getOrDefault(action, 0L)
-                if (now - lastForwarded < THROTTLE_MS) {
-                    val count = throttleCount.incrementAndGet()
-                    if (count % 20 == 1L) {
-                        Log.d(tag, "throttled $action ($count total)")
-                        DiagnosticsLog.logAsync(
-                            context,
-                            DiagnosticsLog.Level.INFO,
-                            DiagnosticsLog.Category.SERVICE,
-                            "automation throttled: $count intents dropped"
-                        )
-                    }
+                // TURN_OFF is unauthenticated by design, and the service's
+                // handler hard-clears the root backends, which spawns `su`.
+                // Repeating that when the filter is already off gives any local
+                // app a way to spin root-shell launches and Magisk prompts, so
+                // drop the redundant one.
+                if (action == LumenService.ACTION_TURN_OFF && current?.enabled == false) {
+                    Log.d(tag, "TURN_OFF ignored: filter is already off")
                     return@launch
                 }
-                lastForwardedMs[action] = now
 
                 val forward = Intent(context, LumenService::class.java).setAction(action)
                 presetKey?.let { forward.putExtra(LumenService.EXTRA_PRESET_KEY, it) }

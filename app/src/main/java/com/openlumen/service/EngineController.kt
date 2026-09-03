@@ -123,7 +123,7 @@ internal class EngineController(
                         context,
                         DiagnosticsLog.Level.INFO,
                         DiagnosticsLog.Category.ENGINE,
-                        "$reason: hard reset CDM=${if (result.colorDisplayManagerAttempted) "attempted" else "skipped"} " +
+                        "$reason: hard reset secure=${result.secureSettingsKeys.joinToString().ifBlank { "none" }} " +
                             "SF=${result.surfaceFlingerCodes.joinToString().ifBlank { "none" }} " +
                             "KCAL=${result.kcalPaths.joinToString().ifBlank { "none" }}"
                     )

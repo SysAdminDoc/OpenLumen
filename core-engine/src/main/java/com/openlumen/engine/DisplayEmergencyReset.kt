@@ -18,25 +18,25 @@ import kotlinx.coroutines.coroutineScope
  */
 object DisplayEmergencyReset {
     suspend fun clearRootTransforms(context: Context? = null): Result = coroutineScope {
-        val colorDisplayManager = async {
-            if (context == null) {
-                false
-            } else {
-                SecureSettingsEngine().clear(context)
-                true
-            }
+        val secureSettings = async {
+            // Ownership lives in an engine instance and does not survive a
+            // process kill, so an instance clear() here would report success
+            // having written nothing. The secure-settings driver leaves
+            // persistent rows behind, so the emergency path has to switch them
+            // off directly.
+            if (context == null) emptyList() else SecureSettingsEngine.clearKnownSecureState(context)
         }
         val surfaceFlinger = async { SurfaceFlingerEngine.clearKnownColorTransforms() }
         val kcal = async { KcalEngine.clearKnownPaths() }
         Result(
-            colorDisplayManagerAttempted = colorDisplayManager.await(),
+            secureSettingsKeys = secureSettings.await(),
             surfaceFlingerCodes = surfaceFlinger.await(),
             kcalPaths = kcal.await()
         )
     }
 
     data class Result(
-        val colorDisplayManagerAttempted: Boolean,
+        val secureSettingsKeys: List<String>,
         val surfaceFlingerCodes: List<Int>,
         val kcalPaths: List<String>
     )

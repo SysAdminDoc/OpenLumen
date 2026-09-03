@@ -14,37 +14,13 @@ class SurfaceFlingerEngineTest {
 
     private val engine = SurfaceFlingerEngine()
 
-    @Test fun `candidate list always starts with 1015 (the historical default)`() {
-        for (api in API_LADDER) {
-            val candidates = engine.candidatesFor(api)
-            assertThat(candidates).asList().isNotEmpty()
-            assertThat(candidates.first()).isEqualTo(1015)
-        }
-    }
-
-    @Test fun `candidate list contains only distinct codes per API`() {
-        for (api in API_LADDER) {
-            val candidates = engine.candidatesFor(api).toList()
-            assertThat(candidates.size).isEqualTo(candidates.distinct().size)
-        }
-    }
-
-    @Test fun `candidate list grows or stays the same as API increases`() {
-        // We never *shrink* the candidate list as Android versions move forward —
-        // older transaction codes still need to be tried because OEMs may carry them.
-        val sizes = API_LADDER.map { engine.candidatesFor(it).size }
-        sizes.zipWithNext().forEach { (a, b) ->
-            assertThat(b).isAtLeast(a)
-        }
-    }
-
-    @Test fun `pre-29 API only tries 1015`() {
-        // Probing extra codes on very old Android wastes a su call per candidate.
-        assertThat(engine.candidatesFor(26).toList()).containsExactly(1015)
-        assertThat(engine.candidatesFor(28).toList()).containsExactly(1015)
-    }
-
-    @Test fun `only the AOSP-verified colour matrix code is a candidate`() {
+    @Test fun `only the AOSP-verified colour matrix code is a candidate on every API`() {
+        // Replaces four earlier assertions (list starts with 1015, entries are
+        // distinct, the list never shrinks, pre-29 tries only 1015). Those were
+        // written against a per-API ladder; with the ladder reduced to a single
+        // sourced code they can no longer fail, so they were removed rather
+        // than left as decoration.
+        //
         // 1014 is the daltonizer, 1022 saturation, 1023 colour mode. Earlier
         // releases listed 1023, 1030 and 1036 with no source behind them.
         for (api in API_LADDER) {

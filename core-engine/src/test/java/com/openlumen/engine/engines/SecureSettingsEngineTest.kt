@@ -91,6 +91,30 @@ class SecureSettingsEngineTest {
         ).isTrue()
     }
 
+    @Test fun `Extra Dim switched on by the user after we deactivated is left alone`() {
+        // Session applied dim 0, so the last thing written was a deactivation.
+        // The user then turns Extra Dim on at 70 in system Settings. Restoring
+        // the captured original here would silently switch their setting back
+        // off, which is the one thing the ownership rule exists to prevent.
+        assertThat(
+            shouldRestoreReduceBrightColors(
+                currentActive = true,
+                currentLevel = 70,
+                lastAppliedLevel = 0
+            )
+        ).isFalse()
+    }
+
+    @Test fun `a deactivation we wrote is still ours while it stays off`() {
+        assertThat(
+            shouldRestoreReduceBrightColors(
+                currentActive = false,
+                currentLevel = 0,
+                lastAppliedLevel = 0
+            )
+        ).isTrue()
+    }
+
     @Test fun `dim maps onto the documented 0 to 100 Extra Dim percentage`() {
         assertThat(SecureSettingsEngine.reduceBrightColorsLevel(0f)).isEqualTo(0)
         assertThat(SecureSettingsEngine.reduceBrightColorsLevel(0.25f)).isEqualTo(25)
