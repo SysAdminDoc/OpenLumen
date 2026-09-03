@@ -166,6 +166,7 @@
     <string name="clipboard_adb_grant">OpenLumen ADB-Berechtigung</string>
     <string name="clipboard_driver_report">OpenLumen Treiberbericht</string>
     <string name="clipboard_emergency_off">OpenLumen Notabschaltung</string>
+    <string name="clipboard_automation_token">OpenLumen Automatisierungs-Token</string>
     <string name="overlay_caveats_title">Über den Overlay-Treiber</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">Die Overlay-Transparenz ist durch Android 12+ auf ca. 80% begrenzt (Untrusted-Touch-Regeln). Für stärkere Abdunklung verwenden Sie ColorDisplayManager oder einen Root-Treiber.</string>
     <string name="overlay_touch_pass_explanation">Während das Overlay aktiv ist, blockiert Android möglicherweise Eingaben auf Systeminstallations- oder Berechtigungsdialogen. Dies ist der Tapjacking-Schutz der Plattform, kein OpenLumen-Fehler — deaktivieren Sie den Filter über die Kachel oder Benachrichtigung, bevor Sie Apps installieren.</string>
@@ -192,6 +193,15 @@
     <string name="about_view_crash_log">Absturzprotokoll anzeigen</string>
     <string name="about_crash_log_title">Absturzprotokoll</string>
     <string name="about_crash_log_empty">Keine Abstürze aufgezeichnet.</string>
+    <string name="about_automation_title">Automatisierungszugriff</string>
+    <string name="about_automation_body">Andere Apps koennen OpenLumen nur steuern, wenn du das hier einschaltest und ihnen den Token unten gibst. Zum Ausschalten des Filters wird nie ein Token gebraucht, der Notfallbefehl funktioniert also immer.</string>
+    <string name="about_automation_enable">Steuerung durch andere Apps erlauben</string>
+    <string name="about_automation_token_label">Token</string>
+    <string name="about_automation_token_pending">Wird erzeugt …</string>
+    <string name="about_automation_token_warning">Behandle das wie ein Passwort. Wer ihn hat, kann deinen Filter aendern. Profil-Exporte enthalten ihn nie.</string>
+    <string name="about_automation_copy_token">Token kopieren</string>
+    <string name="about_automation_regenerate">Neuer Token</string>
+    <string name="about_automation_token_copied">Token kopiert</string>
     <string name="about_emergency_off_title">Notabschaltung</string>
     <string name="about_emergency_off_body">Falls der Filter jemals hängen bleibt und die Kachel / Benachrichtigung nicht erreichbar ist, können Sie ihn über ADB von einem Computer aus erzwingen:</string>
     <string name="about_emergency_off_copy">ADB-Befehl kopieren</string>

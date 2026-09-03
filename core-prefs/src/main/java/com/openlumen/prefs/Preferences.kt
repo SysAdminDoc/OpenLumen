@@ -181,7 +181,29 @@ data class Preferences(
      * normalized names (trimmed, case-insensitive) are unique within the
      * list and capped at [MAX_PROFILES] to keep the persisted blob bounded.
      */
-    val savedProfiles: List<NamedProfile> = emptyList()
+    val savedProfiles: List<NamedProfile> = emptyList(),
+    /**
+     * Master switch for the exported automation surface (C250). Off by
+     * default: a fresh install accepts no configuration commands from other
+     * apps at all. `ACTION_TURN_OFF` stays reachable regardless — it is the
+     * documented emergency escape hatch and can only move the filter toward
+     * off.
+     */
+    val automationEnabled: Boolean = false,
+    /**
+     * Shared secret an inbound automation broadcast must present in
+     * `AutomationReceiver.EXTRA_TOKEN` (C250). Blank until the user first
+     * opens the automation section, which generates one.
+     *
+     * A broadcast receiver cannot identify its sender: `Binder.getCallingUid()`
+     * returns the *receiving* app's UID because a manifest receiver runs after
+     * the binder transaction has ended, and `getSentFromUid()` (API 34+) only
+     * reports a real UID when the sender opts in via
+     * `BroadcastOptions.setShareIdentityEnabled`, which no automation app
+     * does. A shared secret is the only mechanism that works across the whole
+     * supported API range while still admitting Tasker, Termux and ADB.
+     */
+    val automationToken: String = ""
 ) {
     companion object {
         /**
@@ -194,12 +216,21 @@ data class Preferences(
          * - v1 (v0.5.0+): introduced `schemaVersion` and
          *   `favoritePresetKeys`. Both have defaults, so v0 blobs upgrade
          *   transparently on the next read.
-         * - v2 (current): root driver selections from pre-recovery builds
-         *   reset to Auto once so upgraded installs do not keep silently using
-         *   a risky display backend. Users can still pin root drivers manually
-         *   after the migration.
+         * - v2: root driver selections from pre-recovery builds reset to Auto
+         *   once so upgraded installs do not keep silently using a risky
+         *   display backend. Users can still pin root drivers manually after
+         *   the migration.
+         * - v3 (current): the automation surface became token-authenticated
+         *   and opt-in (C250). Upgrading installs land with
+         *   `automationEnabled = false` and no token, so previously working
+         *   third-party automation stops until the user enables it and copies
+         *   the generated token. This is a deliberate breaking change to the
+         *   contract in `docs/automation.md`.
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 2
+        const val CURRENT_SCHEMA_VERSION: Int = 3
+
+        /** Hex characters in a generated automation token (128 bits). */
+        const val AUTOMATION_TOKEN_LENGTH: Int = 32
 
         /** Canonical no-op preset key from the engine preset catalog. */
         const val OFF_PRESET_KEY: String = "off"

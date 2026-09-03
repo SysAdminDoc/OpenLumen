@@ -190,6 +190,7 @@
     <string name="clipboard_adb_grant">OpenLumen adb grant</string>
     <string name="clipboard_driver_report">OpenLumen driver report</string>
     <string name="clipboard_emergency_off">OpenLumen emergency off</string>
+    <string name="clipboard_automation_token">OpenLumen automation token</string>
     <string name="overlay_caveats_title">About the Overlay driver</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">Overlay alpha is capped at ~80% by Android 12+ untrusted-touch rules. For deeper dim, use ColorDisplayManager or a root driver.</string>
     <string name="overlay_touch_pass_explanation">While the overlay is on, Android may block taps on system installer / permission dialogs. This is the platform\'s tapjacking protection, not an OpenLumen bug — disable the filter via tile or notification before installing apps.</string>
@@ -218,6 +219,15 @@
     <string name="about_view_crash_log">View crash log</string>
     <string name="about_crash_log_title">Crash log</string>
     <string name="about_crash_log_empty">No crashes recorded.</string>
+    <string name="about_automation_title">Automation access</string>
+    <string name="about_automation_body">Other apps can only control OpenLumen when you turn this on and give them the token below. Turning the filter off never needs a token, so the emergency command always works.</string>
+    <string name="about_automation_enable">Allow control from other apps</string>
+    <string name="about_automation_token_label">Token</string>
+    <string name="about_automation_token_pending">Generating…</string>
+    <string name="about_automation_token_warning">Treat this like a password. Anyone who has it can change your filter. Profile exports never include it.</string>
+    <string name="about_automation_copy_token">Copy token</string>
+    <string name="about_automation_regenerate">New token</string>
+    <string name="about_automation_token_copied">Token copied</string>
     <string name="about_emergency_off_title">Emergency off</string>
     <string name="about_emergency_off_body">If the filter ever sticks and the tile / notification is unreachable, you can force-clear from a computer via ADB:</string>
     <string name="about_emergency_off_copy">Copy ADB command</string>

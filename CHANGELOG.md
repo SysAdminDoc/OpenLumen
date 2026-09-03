@@ -43,8 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+
+- Automation commands now require a token generated in the app, and the external control surface ships off. Every action except `TURN_OFF` needs `com.openlumen.extra.TOKEN`; existing scripts stop working until the user turns on About → Automation access and copies the token. Preference schema is now version 3, and upgrades land in the closed state. `TURN_OFF` stays unauthenticated because it is the emergency escape hatch and can only move the filter toward off. See `docs/automation.md`.
+
 ### Fixed
 
+- The exported automation receiver rejected nothing. It read `Binder.getCallingUid()` inside `onReceive`, which returns the receiving app's own UID rather than the sender's, so the `callingUid == appUid` branch matched for every caller and any installed app could drive the filter. Sender identity is not available to a manifest receiver at all, so the check was replaced with a shared secret rather than repaired.
+- Profile exports no longer contain the automation token, and profile imports no longer carry automation settings in from the file.
 - Solar scheduling now requires a valid location and clearly reports missing location data instead of silently behaving as Always Off.
 - Profile import confirmation now applies the exact sanitized preview snapshot instead of rereading mutable external documents.
 - Corrupt saved preferences now remain recoverable with bounded export/reset actions instead of being silently overwritten by defaults.

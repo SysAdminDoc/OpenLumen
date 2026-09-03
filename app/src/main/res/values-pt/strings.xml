@@ -166,6 +166,7 @@
     <string name="clipboard_adb_grant">Concessao ADB do OpenLumen</string>
     <string name="clipboard_driver_report">Relatorio de driver do OpenLumen</string>
     <string name="clipboard_emergency_off">Desligamento de emergencia do OpenLumen</string>
+    <string name="clipboard_automation_token">Token de automacao do OpenLumen</string>
     <string name="overlay_caveats_title">Sobre o driver Overlay</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">O alfa do overlay é limitado a ~80% pelas regras de toque não confiável do Android 12+. Para escurecimento mais profundo, use o ColorDisplayManager ou um driver com root.</string>
     <string name="overlay_touch_pass_explanation">Enquanto o overlay estiver ativo, o Android pode bloquear toques em diálogos do instalador do sistema ou de permissões. Essa é a proteção contra tapjacking da plataforma, não um bug do OpenLumen — desative o filtro pelo tile ou notificação antes de instalar aplicativos.</string>
@@ -192,6 +193,15 @@
     <string name="about_view_crash_log">Ver registro de falhas</string>
     <string name="about_crash_log_title">Registro de falhas</string>
     <string name="about_crash_log_empty">Nenhuma falha registrada.</string>
+    <string name="about_automation_title">Acesso de automacao</string>
+    <string name="about_automation_body">Outros apps so controlam o OpenLumen se voce ligar isto e passar o token abaixo. Desligar o filtro nunca pede token, entao o comando de emergencia sempre funciona.</string>
+    <string name="about_automation_enable">Permitir controle por outros apps</string>
+    <string name="about_automation_token_label">Token</string>
+    <string name="about_automation_token_pending">Gerando…</string>
+    <string name="about_automation_token_warning">Trate como uma senha. Quem tiver ele pode mudar seu filtro. Exportacoes de perfil nunca incluem o token.</string>
+    <string name="about_automation_copy_token">Copiar token</string>
+    <string name="about_automation_regenerate">Novo token</string>
+    <string name="about_automation_token_copied">Token copiado</string>
     <string name="about_emergency_off_title">Desligamento de emergencia</string>
     <string name="about_emergency_off_body">Se o filtro ficar preso e o tile ou a notificacao estiver inacessivel, voce pode forcar a limpeza pelo computador via ADB:</string>
     <string name="about_emergency_off_copy">Copiar comando ADB</string>

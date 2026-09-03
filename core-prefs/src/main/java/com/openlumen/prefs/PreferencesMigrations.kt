@@ -67,6 +67,20 @@ object PreferencesMigrations {
                     EngineKindDto.Overlay -> p.engine
                 }
             )
+        },
+        // v2 -> v3.
+        //
+        // C250: the exported automation surface used to accept any local
+        // broadcast, so an upgrading install has an implicit "anyone may
+        // drive this app" posture recorded nowhere. Land every upgrade in
+        // the closed state with no token, exactly like a fresh install. The
+        // user re-enables it and copies the generated token from the app.
+        Migration(from = 2, to = 3) { p ->
+            p.copy(
+                schemaVersion = 3,
+                automationEnabled = false,
+                automationToken = ""
+            )
         }
         // Future migrations append here.
     )

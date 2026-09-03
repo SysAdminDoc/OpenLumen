@@ -3,13 +3,21 @@ package com.openlumen.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Binder
-import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import com.openlumen.diagnostics.DiagnosticsLog
+import com.openlumen.prefs.AutomationToken
+import com.openlumen.prefs.PreferencesStore
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Exported entrypoint for ADB and automation tools.
@@ -19,82 +27,155 @@ import java.util.concurrent.atomic.AtomicLong
  * automation actions and re-enters the app under OpenLumen's UID, where the
  * service can update prefs and, for TURN_OFF, hard-clear root display backends.
  *
+ * **Authentication (roadmap C250).** A broadcast receiver cannot identify its
+ * sender. `Binder.getCallingUid()` returns the *receiving* app's UID, because a
+ * manifest receiver runs on the main looper after the binder transaction has
+ * already ended, and `BroadcastReceiver.getSentFromUid()` (API 34+) reports a
+ * real UID only when the sender opted in through
+ * `BroadcastOptions.setShareIdentityEnabled`, which Tasker, Termux and `am
+ * broadcast` do not do. Earlier builds compared `Binder.getCallingUid()` against
+ * the app's own UID, which is trivially always equal, so every local app was
+ * trusted. The replacement is a shared secret the user copies out of the app,
+ * gated behind an opt-in preference that is off on a fresh install.
+ *
+ * [LumenService.ACTION_TURN_OFF] is deliberately exempt from both checks. It is
+ * the documented emergency escape hatch for a display left in an unreadable
+ * state, it only ever moves the filter toward off, and requiring a token the
+ * user would have to read off that unreadable screen would defeat the point.
+ *
  * Rate limiting: any local app can spam value-setting intents and thrash the
  * display engine with rapid su subprocess spawns. Intents arriving within
  * [THROTTLE_MS] of the previous forwarded intent for the same action are
  * silently dropped. This keeps legitimate Tasker sequences responsive while
  * blocking abuse.
  */
+@AndroidEntryPoint
 class AutomationReceiver : BroadcastReceiver() {
+
+    @Inject lateinit var prefs: PreferencesStore
+
     override fun onReceive(context: Context, intent: Intent) {
-        val callingUid = Binder.getCallingUid()
-        val callerPackages = context.packageManager.getPackagesForUid(callingUid)
-        if (!isTrustedCaller(callingUid, context.applicationInfo.uid, callerPackages)) {
-            Log.w(tag, "rejected automation caller uid=$callingUid packages=${callerPackages?.contentToString()}")
-            return
-        }
         val action = intent.action?.takeIf { it in supportedActions } ?: return
 
-        val now = SystemClock.elapsedRealtime()
-        val lastForwarded = lastForwardedMs.getOrDefault(action, 0L)
-        if (now - lastForwarded < THROTTLE_MS) {
-            val count = throttleCount.incrementAndGet()
-            if (count % 20 == 1L) {
-                Log.d(tag, "throttled $action ($count total)")
-                DiagnosticsLog.log(
-                    context,
-                    DiagnosticsLog.Level.INFO,
-                    DiagnosticsLog.Category.SERVICE,
-                    "automation throttled: $count intents dropped"
-                )
-            }
-            return
-        }
-        lastForwardedMs[action] = now
-
-        // Forward ONLY the two documented extras rather than replaceExtras(intent).
+        // Read only the two documented extras rather than replaceExtras(intent).
         // This receiver is exported, so the inbound bundle is untrusted: a hostile
         // local app could attach arbitrary or oversized extras that we would
         // otherwise copy verbatim into the service intent. The service itself
         // still validates the values (preset key existence, NaN/range on VALUE);
         // this just bounds the surface to what we actually consume.
-        val forward = Intent(context, LumenService::class.java).setAction(action)
-        intent.getStringExtra(LumenService.EXTRA_PRESET_KEY)?.let {
-            forward.putExtra(LumenService.EXTRA_PRESET_KEY, it)
+        val presetKey = intent.getStringExtra(LumenService.EXTRA_PRESET_KEY)
+        val value = if (intent.hasExtra(LumenService.EXTRA_VALUE)) {
+            intent.getFloatExtra(LumenService.EXTRA_VALUE, Float.NaN)
+        } else {
+            null
         }
-        if (intent.hasExtra(LumenService.EXTRA_VALUE)) {
-            forward.putExtra(
-                LumenService.EXTRA_VALUE,
-                intent.getFloatExtra(LumenService.EXTRA_VALUE, Float.NaN)
+        val presentedToken = intent.getStringExtra(EXTRA_TOKEN)
+
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+            try {
+                val current = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) { prefs.flow.first() }
+                val decision = authorize(
+                    action = action,
+                    presentedToken = presentedToken,
+                    automationEnabled = current?.automationEnabled ?: false,
+                    storedToken = current?.automationToken.orEmpty()
+                )
+                if (decision != Decision.Allowed) {
+                    reject(context, action, decision)
+                    return@launch
+                }
+
+                val now = SystemClock.elapsedRealtime()
+                val lastForwarded = lastForwardedMs.getOrDefault(action, 0L)
+                if (now - lastForwarded < THROTTLE_MS) {
+                    val count = throttleCount.incrementAndGet()
+                    if (count % 20 == 1L) {
+                        Log.d(tag, "throttled $action ($count total)")
+                        DiagnosticsLog.logAsync(
+                            context,
+                            DiagnosticsLog.Level.INFO,
+                            DiagnosticsLog.Category.SERVICE,
+                            "automation throttled: $count intents dropped"
+                        )
+                    }
+                    return@launch
+                }
+                lastForwardedMs[action] = now
+
+                val forward = Intent(context, LumenService::class.java).setAction(action)
+                presetKey?.let { forward.putExtra(LumenService.EXTRA_PRESET_KEY, it) }
+                value?.let { forward.putExtra(LumenService.EXTRA_VALUE, it) }
+
+                val result = LumenServiceStarter.start(context, forward, tag)
+                if (!result.started) {
+                    Log.w(tag, "automation service start failed: ${result.error?.message ?: "unknown"}")
+                }
+            } catch (t: Throwable) {
+                Log.e(tag, "automation receiver failed: ${t.message}", t)
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+
+    private fun reject(context: Context, action: String, decision: Decision) {
+        Log.w(tag, "rejected automation $action: ${decision.reason}")
+        val count = rejectionCount.incrementAndGet()
+        // A hostile app can spam this path, so keep the on-disk log bounded
+        // while still leaving the first occurrence visible in diagnostics.
+        if (count % 20 == 1L) {
+            DiagnosticsLog.logAsync(
+                context,
+                DiagnosticsLog.Level.WARN,
+                DiagnosticsLog.Category.SERVICE,
+                "automation rejected ($count total): ${decision.reason}"
             )
         }
+    }
 
-        val result = LumenServiceStarter.start(context, forward, tag)
-        if (!result.started) {
-            Log.w(tag, "automation service start failed: ${result.error?.message ?: "unknown"}")
-        }
+    /** Why an inbound automation broadcast was accepted or dropped. */
+    internal enum class Decision(val reason: String) {
+        Allowed("allowed"),
+        DisabledByUser("external control is turned off"),
+        NoTokenConfigured("no automation token has been generated"),
+        MissingToken("no token supplied"),
+        BadToken("token did not match")
     }
 
     companion object {
         const val tag = "OpenLumen/Automation"
         const val THROTTLE_MS = 200L
-        private val trustedAutomationPackages = setOf(
-            "net.dinglisch.android.taskerm",
-            "com.termux",
-            "com.termux.api",
-            "com.arlosoft.macrodroid",
-            "com.llamalab.automate"
-        )
 
-        internal fun isTrustedCaller(
-            callingUid: Int,
-            appUid: Int,
-            packages: Array<String>?
-        ): Boolean =
-            callingUid == appUid ||
-                callingUid == Process.SHELL_UID ||
-                callingUid == Process.ROOT_UID ||
-                packages.orEmpty().any { it in trustedAutomationPackages }
+        /** String extra carrying the shared secret shown in the app's automation section. */
+        const val EXTRA_TOKEN = "com.openlumen.extra.TOKEN"
+
+        private const val PREFERENCES_TIMEOUT_MS = 8_000L
+
+        /**
+         * Decide whether an inbound broadcast may act.
+         *
+         * Pure so the whole matrix is unit-testable without a Context: see
+         * `AutomationReceiverTest`.
+         */
+        internal fun authorize(
+            action: String,
+            presentedToken: String?,
+            automationEnabled: Boolean,
+            storedToken: String
+        ): Decision {
+            // Emergency escape hatch: only ever turns the filter off, and must
+            // stay reachable when the screen is too tinted to read a token off.
+            if (action == LumenService.ACTION_TURN_OFF) return Decision.Allowed
+            if (!automationEnabled) return Decision.DisabledByUser
+            if (storedToken.isEmpty()) return Decision.NoTokenConfigured
+            if (presentedToken.isNullOrEmpty()) return Decision.MissingToken
+            return if (AutomationToken.matches(presentedToken, storedToken)) {
+                Decision.Allowed
+            } else {
+                Decision.BadToken
+            }
+        }
 
         val supportedActions = setOf(
             LumenService.ACTION_TURN_OFF,
@@ -110,5 +191,6 @@ class AutomationReceiver : BroadcastReceiver() {
 
         val lastForwardedMs = ConcurrentHashMap<String, Long>()
         val throttleCount = AtomicLong()
+        val rejectionCount = AtomicLong()
     }
 }

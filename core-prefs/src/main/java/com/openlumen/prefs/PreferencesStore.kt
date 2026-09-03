@@ -118,10 +118,41 @@ class PreferencesStore(
         }
     }
 
-    /** Pretty-prints the current preferences to the URI returned by ACTION_CREATE_DOCUMENT. */
+    /**
+     * Turn the exported automation surface on or off (C250). Enabling mints a
+     * token if the install does not have one yet, so the user never sees an
+     * enabled surface with no secret to present.
+     */
+    suspend fun setAutomationEnabled(enabled: Boolean) = update { current ->
+        current.copy(
+            automationEnabled = enabled,
+            automationToken = if (enabled && current.automationToken.isEmpty()) {
+                AutomationToken.generate()
+            } else {
+                current.automationToken
+            }
+        )
+    }
+
+    /**
+     * Mint a fresh automation token, invalidating every script that holds the
+     * old one.
+     */
+    suspend fun regenerateAutomationToken() = update { current ->
+        current.copy(automationToken = AutomationToken.generate())
+    }
+
+    /**
+     * Pretty-prints the current preferences to the URI returned by
+     * ACTION_CREATE_DOCUMENT.
+     *
+     * The automation credentials are redacted (C250): an exported profile is
+     * meant to be shared, and the token is the only thing standing between a
+     * hostile local app and full control of the filter.
+     */
     suspend fun exportTo(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val current = flow.first()
+            val current = flow.first().copy(automationEnabled = false, automationToken = "")
             val body = json.encodeToString(Preferences.serializer(), current)
             context.contentResolver.openOutputStream(uri, "wt").use { out ->
                 checkNotNull(out) { "openOutputStream returned null for $uri" }
@@ -327,7 +358,8 @@ class PreferencesStore(
         presetNameOverrides = sanitizePresetNameOverrides(p.presetNameOverrides),
         transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
         contrast = p.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f),
-        savedProfiles = sanitizeProfiles(p.savedProfiles)
+        savedProfiles = sanitizeProfiles(p.savedProfiles),
+        automationToken = AutomationToken.sanitize(p.automationToken)
     )
 
     private fun sanitizeImport(p: Preferences, enabled: Boolean = p.enabled): ImportSummary =
@@ -340,7 +372,17 @@ class PreferencesStore(
         var appliedSummary: ImportSummary? = null
         update { current ->
             ImportSummary(
-                preferences = sanitize(summary.preferences, enabled = current.enabled),
+                // C250: automation credentials are device-local, never imported.
+                // A profile file is shared freely, so honouring the fields it
+                // carries would let anyone who hands the user a file open the
+                // automation surface and know the secret that drives it.
+                preferences = sanitize(
+                    summary.preferences.copy(
+                        automationEnabled = current.automationEnabled,
+                        automationToken = current.automationToken
+                    ),
+                    enabled = current.enabled
+                ),
                 droppedDuplicateNames = summary.droppedDuplicateNames
             ).also { appliedSummary = it }.preferences
         }

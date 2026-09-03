@@ -166,6 +166,7 @@
     <string name="clipboard_adb_grant">OpenLumen ADB 許可</string>
     <string name="clipboard_driver_report">OpenLumen ドライバーレポート</string>
     <string name="clipboard_emergency_off">OpenLumen 緊急オフ</string>
+    <string name="clipboard_automation_token">OpenLumen 自動化トークン</string>
     <string name="overlay_caveats_title">オーバーレイドライバーについて</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">Android 12以降の非信頼タッチ制限により、オーバーレイの透過度は約80%に制限されています。より深い減光には ColorDisplayManager またはrootドライバーをご使用ください。</string>
     <string name="overlay_touch_pass_explanation">オーバーレイ表示中、Androidがシステムインストーラーや権限ダイアログへのタップをブロックすることがあります。これはプラットフォームのタップジャッキング保護であり、OpenLumen の不具合ではありません — アプリをインストールする前にタイルまたは通知からフィルターを無効にしてください。</string>
@@ -192,6 +193,15 @@
     <string name="about_view_crash_log">クラッシュログを表示</string>
     <string name="about_crash_log_title">クラッシュログ</string>
     <string name="about_crash_log_empty">クラッシュの記録はありません。</string>
+    <string name="about_automation_title">自動化アクセス</string>
+    <string name="about_automation_body">これをオンにして下のトークンを渡したアプリだけが OpenLumen を操作できます。フィルターをオフにするのにトークンは不要なので、緊急コマンドは常に使えます。</string>
+    <string name="about_automation_enable">他のアプリからの操作を許可</string>
+    <string name="about_automation_token_label">トークン</string>
+    <string name="about_automation_token_pending">生成中…</string>
+    <string name="about_automation_token_warning">パスワードと同じように扱ってください。知っている人はフィルターを変更できます。プロファイルの書き出しには含まれません。</string>
+    <string name="about_automation_copy_token">トークンをコピー</string>
+    <string name="about_automation_regenerate">新しいトークン</string>
+    <string name="about_automation_token_copied">トークンをコピーしました</string>
     <string name="about_emergency_off_title">緊急オフ</string>
     <string name="about_emergency_off_body">フィルターが解除できず、タイルや通知にアクセスできない場合は、パソコンから ADB で強制解除できます:</string>
     <string name="about_emergency_off_copy">ADB コマンドをコピー</string>

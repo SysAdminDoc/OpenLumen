@@ -312,6 +312,14 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    override fun setAutomationEnabled(enabled: Boolean) = viewModelScope.launch {
+        prefs.setAutomationEnabled(enabled)
+    }
+
+    override fun regenerateAutomationToken() = viewModelScope.launch {
+        prefs.regenerateAutomationToken()
+    }
+
     override fun refreshProbes() = viewModelScope.launch {
         // Keep repeated taps single-flight at the UI boundary. DriverProbe
         // also serializes this generation with service-side resolution.

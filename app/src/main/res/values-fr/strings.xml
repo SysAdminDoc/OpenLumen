@@ -166,6 +166,7 @@
     <string name="clipboard_adb_grant">Commande ADB OpenLumen</string>
     <string name="clipboard_driver_report">Rapport pilote OpenLumen</string>
     <string name="clipboard_emergency_off">Arret d\'urgence OpenLumen</string>
+    <string name="clipboard_automation_token">Jeton d\'automatisation OpenLumen</string>
     <string name="overlay_caveats_title">A propos du pilote Overlay</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">L\'opacite de l\'overlay est limitee a environ 80% par les regles de toucher non fiable d\'Android 12+. Pour une reduction plus importante, utilisez ColorDisplayManager ou un pilote root.</string>
     <string name="overlay_touch_pass_explanation">Lorsque l\'overlay est actif, Android peut bloquer les appuis sur les dialogues d\'installation ou de permissions systeme. Il s\'agit de la protection anti-detournement de la plateforme, pas d\'un bug d\'OpenLumen. Desactivez le filtre via la tuile ou la notification avant d\'installer des applications.</string>
@@ -192,6 +193,15 @@
     <string name="about_view_crash_log">Voir le journal de plantages</string>
     <string name="about_crash_log_title">Journal de plantages</string>
     <string name="about_crash_log_empty">Aucun plantage enregistre.</string>
+    <string name="about_automation_title">Acces automatisation</string>
+    <string name="about_automation_body">Les autres applis ne peuvent piloter OpenLumen que si vous activez ceci et leur donnez le jeton ci-dessous. Eteindre le filtre ne demande jamais de jeton, la commande d\'urgence marche donc toujours.</string>
+    <string name="about_automation_enable">Autoriser le controle par d\'autres applis</string>
+    <string name="about_automation_token_label">Jeton</string>
+    <string name="about_automation_token_pending">Generation…</string>
+    <string name="about_automation_token_warning">Traitez-le comme un mot de passe. Qui l\'a peut modifier votre filtre. Les exports de profil ne le contiennent jamais.</string>
+    <string name="about_automation_copy_token">Copier le jeton</string>
+    <string name="about_automation_regenerate">Nouveau jeton</string>
+    <string name="about_automation_token_copied">Jeton copie</string>
     <string name="about_emergency_off_title">Arret d\'urgence</string>
     <string name="about_emergency_off_body">Si le filtre reste bloque et que la tuile ou la notification est inaccessible, vous pouvez forcer la desactivation depuis un ordinateur via ADB :</string>
     <string name="about_emergency_off_copy">Copier la commande ADB</string>

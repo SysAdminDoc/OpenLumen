@@ -137,6 +137,15 @@
             </intent-filter>
         </receiver>
 
+        <!--
+            Exported on purpose: ADB, Tasker, Termux and Macrodroid all need to
+            reach it. It carries no android:permission because a signature
+            permission would exclude exactly those callers, and a normal one is
+            self-granting. Access control is the shared token checked in
+            AutomationReceiver.authorize() (roadmap C250) — see
+            docs/automation.md. TURN_OFF stays open as the emergency escape
+            hatch.
+        -->
        <receiver
            android:name=".service.AutomationReceiver"
             android:exported="true">

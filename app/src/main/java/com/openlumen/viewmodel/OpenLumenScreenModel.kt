@@ -71,4 +71,10 @@ interface OpenLumenScreenModel {
     fun beginPresetPackPreview(uri: Uri): Job = Job()
     fun confirmPendingPresetPack(): Job = Job()
     fun cancelPendingPresetPack() = Unit
+
+    /** C250: opt in or out of the exported automation surface. */
+    fun setAutomationEnabled(enabled: Boolean): Job = Job()
+
+    /** C250: mint a fresh automation token, invalidating scripts holding the old one. */
+    fun regenerateAutomationToken(): Job = Job()
 }

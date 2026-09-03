@@ -46,9 +46,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -67,6 +70,7 @@ import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
+import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -123,6 +127,10 @@ fun AboutScreen(
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
     val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
     val undoActionLabel = stringResource(R.string.action_undo)
+    val automationEnableLabel = stringResource(R.string.about_automation_enable)
+    val automationTokenPending = stringResource(R.string.about_automation_token_pending)
+    val automationTokenCopied = stringResource(R.string.about_automation_token_copied)
+    val clipboardAutomationToken = stringResource(R.string.clipboard_automation_token)
 
     fun submitProfileSave(name: String) {
         val cleanName = name.trim()
@@ -392,6 +400,72 @@ fun AboutScreen(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            // Automation surface (C250). Off on a fresh install: a broadcast
+            // receiver cannot identify its sender, so the only workable gate
+            // across the supported API range is a secret the user hands to
+            // their own scripts.
+            Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.about_automation_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        stringResource(R.string.about_automation_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(R.string.about_automation_enable),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        LumenSwitch(
+                            checked = currentPrefs.automationEnabled,
+                            onCheckedChange = { vm.setAutomationEnabled(it) },
+                            modifier = Modifier.semantics {
+                                contentDescription = automationEnableLabel
+                            }
+                        )
+                    }
+                    if (currentPrefs.automationEnabled) {
+                        val token = currentPrefs.automationToken
+                        Text(
+                            stringResource(R.string.about_automation_token_label),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        CommandBlock(text = token.ifEmpty { automationTokenPending })
+                        Text(
+                            stringResource(R.string.about_automation_token_warning),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LumenOutlinedButton(
+                                onClick = {
+                                    copyToClipboardAbout(ctx, clipboardAutomationToken, token)
+                                    Toast.makeText(ctx, automationTokenCopied, Toast.LENGTH_SHORT).show()
+                                },
+                                enabled = token.isNotEmpty(),
+                                modifier = Modifier.weight(1f)
+                            ) { Text(stringResource(R.string.about_automation_copy_token)) }
+                            LumenOutlinedButton(
+                                onClick = { vm.regenerateAutomationToken() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text(stringResource(R.string.about_automation_regenerate)) }
                         }
                     }
                 }
