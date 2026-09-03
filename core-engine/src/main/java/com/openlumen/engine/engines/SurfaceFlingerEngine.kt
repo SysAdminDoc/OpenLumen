@@ -56,6 +56,13 @@ class SurfaceFlingerEngine : ColorEngine {
     @Volatile var probeResetClientMatrix: Boolean = false
         private set
 
+    /**
+     * True while a non-identity transform this engine applied is believed to
+     * still be on the display. Drives [clear]'s decision to re-probe rather
+     * than report a success it did not perform (C256).
+     */
+    @Volatile private var appliedNonIdentity: Boolean = false
+
     override suspend fun isAvailable(context: Context): Boolean = withContext(Dispatchers.IO) {
         // Short-circuit if a previous probe already found a working code.
         // Without this, a slider drag on an Auto-mode preference (which
@@ -80,6 +87,7 @@ class SurfaceFlingerEngine : ColorEngine {
         val res = Su.runCommand(buildServiceCall(code, matrix))
         invalidateOnFailure(res, code, "apply")
         if (isSuccessfulServiceCall(res)) {
+            if (matrix != LumenMatrix.IDENTITY) appliedNonIdentity = true
             EngineResult.Success
         } else {
             EngineResult.Failure("SurfaceFlinger apply failed for code $code")
@@ -87,10 +95,18 @@ class SurfaceFlingerEngine : ColorEngine {
     }
 
     override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
-        val code = workingCode ?: return@withContext EngineResult.Success
+        // C256: a failed apply nulls workingCode via invalidateOnFailure, so
+        // the state that most needs clearing is exactly the state where this
+        // used to return Success without issuing anything. Re-probe once, and
+        // if the code still cannot be resolved, say so — the service escalates
+        // a clear failure to the hard-reset path.
+        val code = workingCode
+            ?: (if (appliedNonIdentity) ensureWorkingCode() else null)
+            ?: return@withContext clearWithoutCode(appliedNonIdentity)
         val res = Su.runCommand(buildDisableServiceCallCommand(code))
         invalidateOnFailure(res, code, "clear")
         if (isSuccessfulServiceCall(res)) {
+            appliedNonIdentity = false
             EngineResult.Success
         } else {
             EngineResult.Failure("SurfaceFlinger clear failed for code $code")
@@ -197,6 +213,25 @@ class SurfaceFlingerEngine : ColorEngine {
             }
             return sb.toString()
         }
+
+        /**
+         * What `clear()` reports when no transaction code can be resolved,
+         * even after a re-probe (C256).
+         *
+         * Success is only honest when this engine never put anything on the
+         * display. If it did, the transform is still there and nothing holds a
+         * handle to it, so the service has to hear about it and escalate —
+         * reporting Success is how a user ends up with a tint no control
+         * removes.
+         */
+        internal fun clearWithoutCode(appliedNonIdentity: Boolean): EngineResult =
+            if (appliedNonIdentity) {
+                EngineResult.Failure(
+                    "SurfaceFlinger transform is applied but no working transaction code could be resolved"
+                )
+            } else {
+                EngineResult.Success
+            }
 
         internal fun buildDisableServiceCallCommand(code: Int): String =
             "service call SurfaceFlinger $code i32 0"

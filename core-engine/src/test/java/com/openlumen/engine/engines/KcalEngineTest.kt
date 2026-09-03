@@ -1,9 +1,25 @@
 package com.openlumen.engine.engines
 
 import com.google.common.truth.Truth.assertThat
+import com.openlumen.engine.EngineResult
 import org.junit.Test
 
 class KcalEngineTest {
+
+    @Test fun `an untouched engine reports an unnecessary clear as success`() {
+        assertThat(KcalEngine.clearWithoutPaths(appliedNonIdentity = false))
+            .isEqualTo(EngineResult.Success)
+    }
+
+    @Test fun `clearing a written panel with no resolvable sysfs path reports failure`() {
+        // C256: invalidateOnFailure drops resolvedPaths after a failed write,
+        // which is exactly when the panel is still tinted. Returning Success
+        // there told the service the panel was clean when it was not.
+        val result = KcalEngine.clearWithoutPaths(appliedNonIdentity = true)
+
+        assertThat(result).isInstanceOf(EngineResult.Failure::class.java)
+        assertThat((result as EngineResult.Failure).message).contains("no sysfs path")
+    }
 
     @Test fun `KCAL scalar uses standard 0 to 255 range`() {
         assertThat(KcalEngine.toKcalScalar(1f, 0)).isEqualTo(255)

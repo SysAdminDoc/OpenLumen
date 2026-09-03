@@ -52,6 +52,13 @@ class KcalEngine : ColorEngine {
     private val probeMutex = Mutex()
 
     /**
+     * True while a non-identity transform this engine wrote is believed to
+     * still be on the panel. Drives [clear]'s decision to re-probe rather than
+     * report a success it did not perform (C256).
+     */
+    @Volatile private var appliedNonIdentity: Boolean = false
+
+    /**
      * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
      * the driver report can record the exact path the engine is writing to.
      */
@@ -119,6 +126,7 @@ class KcalEngine : ColorEngine {
         }
         invalidateOnFailure(exit, paths, "apply")
         if (exit == 0) {
+            if (matrix != LumenMatrix.IDENTITY) appliedNonIdentity = true
             EngineResult.Success
         } else {
             EngineResult.Failure("KCAL apply failed with exit code $exit")
@@ -126,7 +134,13 @@ class KcalEngine : ColorEngine {
     }
 
     override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
-        val paths = resolvedPaths ?: return@withContext EngineResult.Success
+        // C256: invalidateOnFailure drops resolvedPaths after a failed apply,
+        // so a panel left tinted was exactly the case this reported as a
+        // successful clear. Re-probe once, and report failure if the sysfs
+        // surface still cannot be resolved.
+        val paths = resolvedPaths
+            ?: (if (appliedNonIdentity) ensureResolvedPaths() else null)
+            ?: return@withContext clearWithoutPaths(appliedNonIdentity)
         // C166: only restore kcal_min if we actually raised it during this
         // probed session. If we never touched it, leave the user's kernel
         // configuration alone.
@@ -149,6 +163,7 @@ class KcalEngine : ColorEngine {
         }
         invalidateOnFailure(exit, paths, "clear")
         if (exit == 0) {
+            appliedNonIdentity = false
             EngineResult.Success
         } else {
             EngineResult.Failure("KCAL clear failed with exit code $exit")
@@ -253,6 +268,22 @@ class KcalEngine : ColorEngine {
     private class BoolHolder { @Volatile var value: Boolean = false }
 
     companion object {
+
+        /**
+         * What `clear()` reports when the sysfs surface cannot be resolved,
+         * even after a re-probe (C256).
+         *
+         * Success is only honest when this engine never wrote to the panel. If
+         * it did, the panel is still tinted and `invalidateOnFailure` has
+         * dropped the paths, so the service has to hear about it and escalate.
+         */
+        internal fun clearWithoutPaths(appliedNonIdentity: Boolean): EngineResult =
+            if (appliedNonIdentity) {
+                EngineResult.Failure("KCAL transform is applied but no sysfs path could be resolved")
+            } else {
+                EngineResult.Success
+            }
+
         const val TAG = "OpenLumen/KCAL"
 
         /**

@@ -119,6 +119,26 @@ class SurfaceFlingerEngineTest {
         assertThat(command).isEqualTo("service call SurfaceFlinger 1015 i32 0")
     }
 
+    @Test fun `an untouched engine reports an unnecessary clear as success`() {
+        // Nothing was applied, so there is nothing on screen and no handle is
+        // needed. This must stay Success or every startup with no root would
+        // escalate to the emergency reset.
+        assertThat(SurfaceFlingerEngine.clearWithoutCode(appliedNonIdentity = false))
+            .isEqualTo(EngineResult.Success)
+    }
+
+    @Test fun `clearing an applied transform with no resolvable code reports failure`() {
+        // C256: apply() latches that a transform is live, and any failed write
+        // nulls the code cache through invalidateOnFailure. That combination
+        // used to return Success without issuing anything, so the display
+        // stayed tinted while the service believed it was clean.
+        val result = SurfaceFlingerEngine.clearWithoutCode(appliedNonIdentity = true)
+
+        assertThat(result).isInstanceOf(EngineResult.Failure::class.java)
+        assertThat((result as EngineResult.Failure).message)
+            .contains("no working transaction code")
+    }
+
     private companion object {
         val API_LADDER = listOf(26, 28, 29, 30, 31, 32, 33, 34, 35, 36)
     }

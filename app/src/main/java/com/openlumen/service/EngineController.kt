@@ -55,7 +55,7 @@ internal class EngineController(
             if (current != null) {
                 cancelTransition()
                 applyMutex.withLock {
-                    reportResult("engine.clear() while no driver is available", runCatching {
+                    escalateClearFailure("engine.clear() while no driver is available", runCatching {
                         current.clear(context)
                     }.getOrElse { EngineResult.Failure(it.message ?: "exception") })
                     engine = null
@@ -71,7 +71,7 @@ internal class EngineController(
         cancelTransition()
         applyMutex.withLock {
             current?.let {
-                reportResult("engine.clear() during switch", runCatching {
+                escalateClearFailure("engine.clear() during switch", runCatching {
                     it.clear(context)
                 }.getOrElse { error -> EngineResult.Failure(error.message ?: "exception") })
             }
@@ -353,6 +353,28 @@ internal class EngineController(
         if (result is EngineResult.Failure) {
             Log.w(logTag, operation + " failed: " + result.message)
         }
+    }
+
+    /**
+     * C256: a clear that reports failure means a transform may still be on the
+     * display with nothing left holding a handle to it. Logging that and
+     * moving on is how a user ends up staring at a tint no control can remove,
+     * so fall through to the same blunt reset the emergency-off path uses.
+     *
+     * Callers already hold [applyMutex], so this deliberately does not go
+     * through [hardClearOutputs], which takes it.
+     */
+    private suspend fun escalateClearFailure(operation: String, result: EngineResult) {
+        reportResult(operation, result)
+        if (result !is EngineResult.Failure) return
+        DiagnosticsLog.logAsync(
+            context,
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.ENGINE,
+            "$operation failed (${result.message}); running the emergency display reset"
+        )
+        runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
+            .onFailure { Log.w(logTag, "escalated hard reset failed: ${it.message}") }
     }
 
     private suspend fun directBootEngineFor(engine: EngineKindDto): ColorEngine {
