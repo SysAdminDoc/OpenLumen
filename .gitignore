@@ -46,6 +46,11 @@ CODEX_CHANGELOG.md
 .cursor/
 .aider*
 
+# JVM crash debris. Gradle and Kotlin daemons drop these at the repo root,
+# and a replay log runs to megabytes.
+hs_err_pid*.log
+replay_pid*.log
+
 # Misc
 *.bak
 *.log

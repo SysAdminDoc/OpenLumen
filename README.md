@@ -190,6 +190,10 @@ export OPENLUMEN_KEY_PASSWORD=...
 ./gradlew assembleRelease
 ```
 
+Those four variables are the only place the build looks. There is no
+`keystore.properties`, `signing.properties` or `local.properties` path, and
+adding one would be ignored.
+
 Unsigned release output is only for local reproducibility or F-Droid rebuild checks:
 
 ```bash
