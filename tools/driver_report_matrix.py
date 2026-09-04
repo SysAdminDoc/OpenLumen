@@ -15,6 +15,17 @@ from typing import Any
 REPORT_MARKER = "OpenLumen driver report"
 NO_RESPONSE = {"", "_No response_", "No response", "n/a", "N/A"}
 
+# A driver report is a stranger's text on its way into a committed document.
+# Anyone can open an issue, so every field that comes from one is bounded and
+# stripped of the characters that would otherwise let it close a table cell,
+# open a code span, inject raw HTML, or plant a link on a maintainer.
+MAX_FIELD_CHARS = 80
+MAX_CELL_CHARS = 400
+# Parentheses are deliberately absent. A link needs its brackets, and every
+# second device string reads "Pixel 8 (shiba)" or "15 (API 35)": escaping
+# those would cost the table's readability and buy nothing.
+MARKDOWN_ACTIVE = "`<>[]"
+
 ISSUE_LABELS = {
     "openlumen version": "version",
     "device": "device",
@@ -247,8 +258,8 @@ def render_suggestion(parsed: ParsedInput) -> str:
 def build_row(parsed: ParsedInput) -> str:
     device = choose(parsed, "device") or "review"
     android = choose(parsed, "android") or "review"
-    oem = parsed.issue.get("rom") or choose(parsed, "manufacturer") or choose(parsed, "brand") or "review"
-    root = parsed.issue.get("root") or "review"
+    oem = reported(parsed, "rom") or choose(parsed, "manufacturer") or choose(parsed, "brand") or "review"
+    root = reported(parsed, "root") or "review"
     release = normalize_version(choose(parsed, "version") or "review")
     notes = build_notes(parsed)
     cells = [
@@ -268,12 +279,15 @@ def build_row(parsed: ParsedInput) -> str:
 
 def build_notes(parsed: ParsedInput) -> str:
     notes: list[str] = []
-    engine = parsed.issue.get("engine")
-    status = parsed.issue.get("status")
+    engine = reported(parsed, "engine")
+    status = reported(parsed, "status")
     if engine or status:
         notes.append(f"review reported {engine or 'engine'}: {status or 'status missing'}")
     if parsed.probes:
-        probe_bits = [f"{engine} {state}" for engine, state in sorted(parsed.probes.items())]
+        probe_bits = [
+            f"{truncate(engine, MAX_FIELD_CHARS)} {truncate(state, MAX_FIELD_CHARS)}"
+            for engine, state in sorted(parsed.probes.items())
+        ]
         notes.append("probes: " + ", ".join(probe_bits))
     fingerprint = choose(parsed, "fingerprint")
     if fingerprint:
@@ -303,7 +317,8 @@ def build_flags(parsed: ParsedInput) -> list[str]:
 
 
 def choose(parsed: ParsedInput, key: str) -> str:
-    return parsed.issue.get(key) or parsed.report.get(key) or ""
+    value = parsed.issue.get(key) or parsed.report.get(key) or ""
+    return truncate(value, MAX_FIELD_CHARS)
 
 
 def source_values(parsed: ParsedInput, key: str) -> list[str]:
@@ -332,8 +347,31 @@ def normalize_version(value: str) -> str:
     return version
 
 
-def escape_cell(value: str) -> str:
-    return " ".join(value.replace("|", "/").split())
+def escape_cell(value: str, limit: int = MAX_CELL_CHARS) -> str:
+    # Whitespace first: collapsing folds any newline the reporter used to
+    # break out of the row. Then cut, then escape. The bound is on what the
+    # reporter wrote, so escapes must not count toward it, and a cut taken
+    # afterwards can split an escape from the character it was escaping and
+    # leave a backslash standing on its own.
+    collapsed = " ".join(value.replace("|", "/").split())
+    return escape_markdown(truncate(collapsed, limit))
+
+
+def escape_markdown(value: str) -> str:
+    return "".join(
+        "\\" + ch if ch == "\\" or ch in MARKDOWN_ACTIVE else ch for ch in value
+    )
+
+
+def truncate(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    return value[: max(limit - 3, 0)].rstrip() + "..."
+
+
+def reported(parsed: ParsedInput, key: str) -> str:
+    """A field straight from the issue body, bounded before it is used."""
+    return truncate(value_or_empty(parsed.issue.get(key)), MAX_FIELD_CHARS)
 
 
 if __name__ == "__main__":
