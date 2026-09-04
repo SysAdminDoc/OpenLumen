@@ -168,7 +168,7 @@ Build-tooling migrations, not user-visible features.
 
 Status: shipped 2026-05-17.
 
-OpenLumen now uses AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21, KSP 2.3.8,
+OpenLumen now uses AGP 9.2.1, Gradle 9.4.1, Kotlin 2.4.10, KSP 2.3.11,
 and AGP 9 built-in Kotlin support. The Android modules no longer apply
 `org.jetbrains.kotlin.android`; Kotlin source compilation is provided by
 AGP, while the app still applies the Compose and serialization Kotlin
@@ -183,7 +183,7 @@ AndroidX Hilt moved `hiltViewModel()` from `androidx.hilt:hilt-navigation-compos
 to `androidx.hilt:hilt-lifecycle-viewmodel-compose` and package
 `androidx.hilt.lifecycle.viewmodel.compose`.
 
-Status: shipped 2026-05-17. The app now uses Dagger/Hilt 2.59.2 and
+Status: shipped 2026-05-17. The app now uses Dagger/Hilt 2.60.1 and
 `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`; the five Compose
 screens that request `OpenLumenViewModel` import the new package.
 

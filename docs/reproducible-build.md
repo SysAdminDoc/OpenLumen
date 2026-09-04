@@ -17,7 +17,7 @@ twice and get a different APK, that's a bug — file it.
 | Android SDK | Build-tools 36, Platform 36 | Auto-installed by AGP for `compileSdk = 36` |
 | Gradle | 9.4.1 | `gradle/wrapper/gradle-wrapper.properties` |
 | AGP | 9.2.1 | `gradle/libs.versions.toml` |
-| Kotlin | 2.3.21 | `gradle/libs.versions.toml` |
+| Kotlin | 2.4.10 | `gradle/libs.versions.toml` |
 
 All version-pinning happens in checked-in files. The Gradle wrapper
 distribution SHA is in `gradle/wrapper/gradle-wrapper.properties`; the
