@@ -92,6 +92,25 @@ class OverlayEngineInstallTest {
         assertThat(attachedOverlayCount()).isEqualTo(1)
     }
 
+    @Test fun `installing again after the window was torn down builds a fresh one`() {
+        // Hilt holds this engine as a singleton, so it outlives a foreground
+        // service the system kills. The window goes with the service but the
+        // engine's own fields do not, and reporting that stale view as still
+        // installed would leave the next service with no overlay at all.
+        val engine = OverlayEngine()
+        engine.installView(context, Presets.OFF)
+        val shadow = shadowOf(windowManager()) as ShadowWindowManagerImpl
+        val first = shadow.views.single()
+        shadow.views.toList().forEach { shadow.removeView(it) }
+        assertThat(attachedOverlayCount()).isEqualTo(0)
+
+        val result = engine.installView(context, Presets.OFF)
+
+        assertThat(result).isTrue()
+        assertThat(attachedOverlayCount()).isEqualTo(1)
+        assertThat(shadow.views.single()).isNotSameInstanceAs(first)
+    }
+
     @Test fun `clearing removes the window`() = kotlinx.coroutines.runBlocking {
         val engine = OverlayEngine()
         engine.installView(context, Presets.OFF)
