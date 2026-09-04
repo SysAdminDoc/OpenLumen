@@ -49,6 +49,7 @@ import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.ExactAlarmAccess
+import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LightSensorCard
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LocationEntryDialog
@@ -76,6 +77,15 @@ fun ScheduleScreen(
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefs by vm.state.collectAsStateWithLifecycle()
+    // Nothing to draw yet. Without this the first frame after a cold start
+    // showed `Preferences()`: the master switch read Off and every slider sat
+    // at its default before the screen jumped to the user's values (C329).
+    val preferencesLoaded by vm.preferencesLoaded.collectAsStateWithLifecycle()
+    if (!preferencesLoaded) {
+        PreferencesPlaceholder()
+        return
+    }
+
     val lux by vm.lux.collectAsStateWithLifecycle()
     val lightSensorAvailable by vm.lightSensorAvailable.collectAsStateWithLifecycle()
 

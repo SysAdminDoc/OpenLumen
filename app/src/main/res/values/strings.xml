@@ -269,6 +269,7 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_close">Close</string>
+    <string name="loading_preferences">Loading your settings</string>
     <string name="action_clear">Clear</string>
     <string name="action_undo">Undo</string>
 

@@ -238,6 +238,7 @@
     <string name="action_save">Speichern</string>
     <string name="action_cancel">Abbrechen</string>
     <string name="action_close">Schließen</string>
+    <string name="loading_preferences">Einstellungen werden geladen</string>
     <string name="action_clear">Löschen</string>
     <string name="action_undo">Rückgängig</string>
 

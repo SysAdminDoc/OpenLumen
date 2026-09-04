@@ -65,6 +65,7 @@ import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.presetLabel
+import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.OverlayPermissionCard
@@ -91,6 +92,15 @@ fun HomeScreen(
     enableSystemActions: Boolean = true
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
+    // Nothing to draw yet. Without this the first frame after a cold start
+    // showed `Preferences()`: the master switch read Off and every slider sat
+    // at its default before the screen jumped to the user's values (C329).
+    val preferencesLoaded by vm.preferencesLoaded.collectAsStateWithLifecycle()
+    if (!preferencesLoaded) {
+        PreferencesPlaceholder()
+        return
+    }
+
     val preset = Presets.byKey(prefs.activePresetKey)
     val activePresetLabel = presetLabel(
         key = prefs.activePresetKey,

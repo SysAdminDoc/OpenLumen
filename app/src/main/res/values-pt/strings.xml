@@ -238,6 +238,7 @@
     <string name="action_save">Salvar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_close">Fechar</string>
+    <string name="loading_preferences">A carregar as suas definições</string>
     <string name="action_clear">Limpar</string>
     <string name="action_undo">Desfazer</string>
 

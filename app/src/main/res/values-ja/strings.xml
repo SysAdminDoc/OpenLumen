@@ -238,6 +238,7 @@
     <string name="action_save">保存</string>
     <string name="action_cancel">キャンセル</string>
     <string name="action_close">閉じる</string>
+    <string name="loading_preferences">設定を読み込んでいます</string>
     <string name="action_clear">クリア</string>
     <string name="action_undo">元に戻す</string>
 

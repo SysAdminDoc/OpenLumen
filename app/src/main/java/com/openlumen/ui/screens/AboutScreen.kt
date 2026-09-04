@@ -74,6 +74,7 @@ import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Profiles
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
@@ -157,6 +158,15 @@ fun AboutScreen(
     val pendingPresetPack by vm.pendingPresetPack.collectAsStateWithLifecycle()
     val preferenceRecovery by vm.preferenceRecovery.collectAsStateWithLifecycle()
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
+    // Nothing to draw yet. Without this the first frame after a cold start
+    // showed `Preferences()`: the automation surface read as closed and the
+    // saved profiles read as none before the screen jumped (C329).
+    val preferencesLoaded by vm.preferencesLoaded.collectAsStateWithLifecycle()
+    if (!preferencesLoaded) {
+        PreferencesPlaceholder()
+        return
+    }
+
     val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
     val undoActionLabel = stringResource(R.string.action_undo)
     val crashLogClearedMessage = stringResource(R.string.about_crash_log_cleared)

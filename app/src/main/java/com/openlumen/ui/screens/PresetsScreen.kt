@@ -73,6 +73,7 @@ import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.NamedProfile
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PresetSortOrder
+import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LumenFilterChip
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.ui.theme.lumenChannelColors
@@ -88,6 +89,15 @@ fun PresetsScreen(
     enableSystemActions: Boolean = true
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
+    // Nothing to draw yet. Without this the first frame after a cold start
+    // showed `Preferences()`: the master switch read Off and every slider sat
+    // at its default before the screen jumped to the user's values (C329).
+    val preferencesLoaded by vm.preferencesLoaded.collectAsStateWithLifecycle()
+    if (!preferencesLoaded) {
+        PreferencesPlaceholder()
+        return
+    }
+
     val probes by vm.probes.collectAsStateWithLifecycle()
     val driverCapabilities = DriverProbe.activeCapabilities(
         probes = probes,

@@ -28,6 +28,7 @@ import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +52,13 @@ class OpenLumenViewModel @Inject constructor(
 
     override val state: StateFlow<Preferences> = prefs.flow
         .stateIn(viewModelScope, SharingStarted.Eagerly, Preferences())
+
+    // False until the first emission lands, which is what the screens wait on
+    // rather than drawing `Preferences()` and correcting themselves a frame
+    // later (C329). Derived from the same flow, so it cannot disagree with it.
+    override val preferencesLoaded: StateFlow<Boolean> = prefs.flow
+        .map { true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     override val preferenceRecovery: StateFlow<PreferencesRecovery?> = prefs.recovery
 
     private val _probes = MutableStateFlow<List<DriverProbe.Probe>>(emptyList())

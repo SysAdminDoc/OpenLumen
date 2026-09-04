@@ -238,6 +238,7 @@
     <string name="action_save">Guardar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_close">Cerrar</string>
+    <string name="loading_preferences">Cargando tus ajustes</string>
     <string name="action_clear">Borrar</string>
     <string name="action_undo">Deshacer</string>
 

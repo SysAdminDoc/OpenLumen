@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LumenSwitch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -62,6 +63,15 @@ import com.openlumen.viewmodel.OpenLumenViewModel
 fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>()) {
     val ctx = LocalContext.current
     val prefs by vm.state.collectAsStateWithLifecycle()
+    // Nothing to draw yet. Without this the first frame after a cold start
+    // showed `Preferences()`: the master switch read Off and every slider sat
+    // at its default before the screen jumped to the user's values (C329).
+    val preferencesLoaded by vm.preferencesLoaded.collectAsStateWithLifecycle()
+    if (!preferencesLoaded) {
+        PreferencesPlaceholder()
+        return
+    }
+
     val probes by vm.probes.collectAsStateWithLifecycle()
     val probesRefreshing by vm.probesRefreshing.collectAsStateWithLifecycle()
     val probeError by vm.probeError.collectAsStateWithLifecycle()

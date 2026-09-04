@@ -37,6 +37,20 @@ interface OpenLumenScreenModel {
      */
     val serviceStartError: StateFlow<String?>
         get() = NO_SERVICE_START_ERROR
+    /**
+     * Whether the stored preferences have arrived.
+     *
+     * DataStore is a file read, so the first frame after a cold start had
+     * nothing to draw and drew the defaults: the master switch read Off and
+     * every slider sat at its default before jumping to the user's values a
+     * frame later. A screen that has nothing to show yet should say so.
+     *
+     * Defaults to true, so a preview or a screenshot harness that hands over
+     * a ready set of preferences is not gated behind a state it never leaves.
+     */
+    val preferencesLoaded: StateFlow<Boolean>
+        get() = ALWAYS_LOADED
+
     val pendingImport: StateFlow<OpenLumenViewModel.PendingImport?>
     val pendingPresetPack: StateFlow<OpenLumenViewModel.PendingPresetPack?>
         get() = NO_PENDING_PRESET_PACK
@@ -106,5 +120,6 @@ interface OpenLumenScreenModel {
         private val NO_SERVICE_START_ERROR: StateFlow<String?> = MutableStateFlow(null)
         private val NO_PENDING_PRESET_PACK: StateFlow<OpenLumenViewModel.PendingPresetPack?> =
             MutableStateFlow(null)
+        private val ALWAYS_LOADED: StateFlow<Boolean> = MutableStateFlow(true)
     }
 }

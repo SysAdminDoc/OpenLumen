@@ -238,6 +238,7 @@
     <string name="action_save">Enregistrer</string>
     <string name="action_cancel">Annuler</string>
     <string name="action_close">Fermer</string>
+    <string name="loading_preferences">Chargement de vos réglages</string>
     <string name="action_clear">Effacer</string>
     <string name="action_undo">Annuler</string>
 

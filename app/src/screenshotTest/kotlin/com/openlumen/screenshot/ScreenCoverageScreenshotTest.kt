@@ -30,6 +30,22 @@ import androidx.compose.runtime.Composable
  * deterministic state and no-op actions; the layout, navigation scaffold,
  * insets, dialogs, and theme all come from the app's real screens.
  */
+/**
+ * C329. The frame between the app starting and DataStore answering. It used to
+ * draw the defaults, so the master switch read Off on a device where the
+ * filter was on.
+ */
+@PreviewTest
+@Preview(name = "Production home while preferences load", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionHomeLoading() {
+    ProductionScreenPreview(
+        route = "home",
+        darkTheme = false,
+        model = PreviewScreenModel(preferences = Preferences(), loaded = false)
+    )
+}
+
 @PreviewTest
 @Preview(name = "Production home light phone", showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
@@ -219,7 +235,8 @@ private class PreviewScreenModel(
     probesValue: List<DriverProbe.Probe> = availableProbes(),
     refreshing: Boolean = false,
     probeFailure: String? = null,
-    pending: OpenLumenViewModel.PendingImport? = null
+    pending: OpenLumenViewModel.PendingImport? = null,
+    loaded: Boolean = true
 ) : OpenLumenScreenModel {
     private val _state = MutableStateFlow(preferences)
     private val _preferenceRecovery = MutableStateFlow<PreferencesRecovery?>(null)
@@ -242,6 +259,7 @@ private class PreviewScreenModel(
     override val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
     override val pendingImport: StateFlow<OpenLumenViewModel.PendingImport?> =
         _pendingImport.asStateFlow()
+    override val preferencesLoaded: StateFlow<Boolean> = MutableStateFlow(loaded)
 
     override fun setEnabled(enabled: Boolean) = Unit
     override fun selectPreset(key: String): Job = Job()
