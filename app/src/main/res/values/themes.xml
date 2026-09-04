@@ -4,6 +4,12 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowBackground">@android:color/black</item>
+        <!--
+            Latte Base. This is what shows on cold start before Compose
+            draws and behind any gap the content leaves, so black here
+            flashed the light theme with a dark window. values-night keeps
+            black, which is the AMOLED ground the dark scheme is built on.
+        -->
+        <item name="android:windowBackground">@color/window_background_light</item>
     </style>
 </resources>

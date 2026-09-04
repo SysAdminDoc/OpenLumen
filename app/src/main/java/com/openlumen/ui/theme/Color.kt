@@ -35,6 +35,13 @@ internal object Catppuccin {
     val Mantle    = Color(0xFF181825)
     val Crust     = Color(0xFF11111B)
     val Amoled    = Color(0xFF000000)
+
+    // Warning and error card fills. Peach and Red at roughly 18 percent
+    // over Surface0, precomputed so the roles stay plain colours and the
+    // card reads as a warning next to a plain one rather than identical
+    // to it.
+    val PeachContainer = Color(0xFF463A3B)
+    val RedContainer   = Color(0xFF44303E)
 }
 
 /**
@@ -70,6 +77,10 @@ internal object Latte {
     val Base      = Color(0xFFEFF1F5)
     val Mantle    = Color(0xFFE6E9EF)
     val Crust     = Color(0xFFDCE0E8)
+
+    // Same idea as Mocha's, over Latte Crust.
+    val PeachContainer = Color(0xFFF7DCC8)
+    val RedContainer   = Color(0xFFF3CBD1)
 }
 
 /**
