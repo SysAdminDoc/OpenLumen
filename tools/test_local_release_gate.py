@@ -427,22 +427,31 @@ Verified using v2 scheme (APK Signature Scheme v2): false
                 today=date(2026, 8, 10),
             )
 
-    def test_advisory_policy_rejects_unallowlisted_critical_and_expired_entry(self):
+    def test_advisory_policy_rejects_an_expired_allowlist_entry(self):
+        # This case and the one below used to be a single test whose only
+        # assertion was "something raised". The expired entry raises during
+        # loading, so the CRITICAL branch never ran and mutating it to pass
+        # kept the test green. Each now asserts its own message.
         with tempfile.TemporaryDirectory() as tmp:
-            allowlist = Path(tmp) / "allowlist.json"
-            allowlist.write_text(
-                json.dumps(
-                    [{
-                        "advisory_id": "OSV-1",
-                        "dependency": "x:y:1.0",
-                        "reason": "Temporary exception.",
-                        "reviewer": "release-team",
-                        "expires": "2026-08-09",
-                    }]
-                ),
-                encoding="utf-8",
-            )
-            with self.assertRaises(gate.GateError):
+            allowlist = self._write_allowlist(tmp, expires="2026-08-09")
+            with self.assertRaisesRegex(gate.GateError, "expired on 2026-08-09"):
+                gate.assert_advisory_policy(
+                    {
+                        "status": "ok",
+                        "vulnerabilities": [{"id": "OSV-1", "dependency": "x:y:1.0", "severity": "HIGH"}],
+                    },
+                    mode="query",
+                    allow_unsigned_release=False,
+                    allowlist_path=allowlist,
+                    today=date(2026, 8, 10),
+                )
+
+    def test_advisory_policy_rejects_a_critical_nobody_signed_off(self):
+        # The allowlist is live and covers a different advisory, so loading
+        # succeeds and the severity check is what has to refuse.
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = self._write_allowlist(tmp, expires="2026-12-31")
+            with self.assertRaisesRegex(gate.GateError, "OSV-2"):
                 gate.assert_advisory_policy(
                     {
                         "status": "ok",
@@ -453,6 +462,40 @@ Verified using v2 scheme (APK Signature Scheme v2): false
                     allowlist_path=allowlist,
                     today=date(2026, 8, 10),
                 )
+
+    def test_an_allowlist_entry_that_is_live_on_the_injected_date_is_accepted(self):
+        # Positive control for the expiry case, and the reason the date has to
+        # be injected all the way down: read from the wall clock, this starts
+        # failing on 2027-01-01 whatever the test asks for.
+        with tempfile.TemporaryDirectory() as tmp:
+            allowlist = self._write_allowlist(tmp, expires="2026-08-11")
+
+            gate.assert_advisory_policy(
+                {
+                    "status": "ok",
+                    "vulnerabilities": [{"id": "OSV-1", "dependency": "x:y:1.0", "severity": "HIGH"}],
+                },
+                mode="query",
+                allow_unsigned_release=False,
+                allowlist_path=allowlist,
+                today=date(2026, 8, 10),
+            )
+
+    def _write_allowlist(self, tmp, expires):
+        allowlist = Path(tmp) / "allowlist.json"
+        allowlist.write_text(
+            json.dumps(
+                [{
+                    "advisory_id": "OSV-1",
+                    "dependency": "x:y:1.0",
+                    "reason": "Not reachable from the offline app surface.",
+                    "reviewer": "release-team",
+                    "expires": expires,
+                }]
+            ),
+            encoding="utf-8",
+        )
+        return allowlist
 
     def test_offline_advisory_mode_requires_unsigned_release(self):
         with tempfile.TemporaryDirectory() as tmp:

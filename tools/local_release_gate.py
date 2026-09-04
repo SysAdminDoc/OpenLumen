@@ -700,7 +700,7 @@ def cvss_score_severity(score: float) -> str:
     return "LOW"
 
 
-def load_advisory_allowlist(path: Path) -> list[dict[str, str]]:
+def load_advisory_allowlist(path: Path, today: date | None = None) -> list[dict[str, str]]:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -727,7 +727,7 @@ def load_advisory_allowlist(path: Path) -> list[dict[str, str]]:
             raise GateError(
                 f"OSV advisory allowlist entry {index} expiry must be YYYY-MM-DD"
             ) from exc
-        if expiry < date.today():
+        if expiry < (today or date.today()):
             raise GateError(
                 f"OSV advisory allowlist entry {index} expired on {expiry.isoformat()}"
             )
@@ -755,14 +755,11 @@ def assert_advisory_policy(
             "OSV advisory query was incomplete; signed/query-mode releases require a complete response"
         )
 
-    entries = load_advisory_allowlist(allowlist_path)
-    effective_today = today or date.today()
-    for entry in entries:
-        expiry = datetime.strptime(entry["expires"], "%Y-%m-%d").date()
-        if expiry < effective_today:
-            raise GateError(
-                f"OSV advisory allowlist entry for {entry['advisory_id']} expired on {expiry.isoformat()}"
-            )
+    # The loader does the expiry check, against the same date, so an injected
+    # clock reaches every comparison. It used to read date.today() directly,
+    # which made the tests below pass or fail on the wall clock no matter what
+    # they injected.
+    entries = load_advisory_allowlist(allowlist_path, today=today)
 
     vulnerabilities = report.get("vulnerabilities", [])
     if not isinstance(vulnerabilities, list):
