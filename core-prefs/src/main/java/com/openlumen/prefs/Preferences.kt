@@ -79,7 +79,14 @@ data class MatrixDto(
     val matrixGb: Float = 0f,
     val matrixBr: Float = 0f,
     val matrixBg: Float = 0f,
-    val matrixBb: Float = 1f
+    val matrixBb: Float = 1f,
+    /**
+     * Name of the system colour-correction mode the matrix names, or null for
+     * none. Carried as a string rather than the engine enum because core-prefs
+     * does not depend on core-engine, and so that a mode written by a newer
+     * build degrades to none instead of failing the whole decode.
+     */
+    val daltonizer: String? = null
 )
 
 @Serializable

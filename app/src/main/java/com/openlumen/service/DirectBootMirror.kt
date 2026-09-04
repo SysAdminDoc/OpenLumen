@@ -1,6 +1,7 @@
 package com.openlumen.service
 
 import android.util.Log
+import com.openlumen.engine.Daltonizer
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.DirectBootState
 import com.openlumen.prefs.DirectBootStateStore
@@ -71,7 +72,12 @@ internal fun LumenMatrix.toMatrixDto(): MatrixDto = MatrixDto(
     matrixGb = matrixGb,
     matrixBr = matrixBr,
     matrixBg = matrixBg,
-    matrixBb = matrixBb
+    matrixBb = matrixBb,
+    // The rootless driver renders grayscale and the colour-vision presets
+    // through this mode rather than through the matrix, so a mirror without it
+    // restored those presets as no filter at all between locked boot and
+    // unlock. The root drivers were unaffected because they take the matrix.
+    daltonizer = daltonizer.takeIf { it != Daltonizer.NONE }?.name
 )
 
 internal fun DirectBootState.toLumenMatrix(): LumenMatrix = LumenMatrix(
@@ -95,5 +101,7 @@ internal fun DirectBootState.toLumenMatrix(): LumenMatrix = LumenMatrix(
     matrixGb = matrix.matrixGb,
     matrixBr = matrix.matrixBr,
     matrixBg = matrix.matrixBg,
-    matrixBb = matrix.matrixBb
+    matrixBb = matrix.matrixBb,
+    daltonizer = Daltonizer.entries.firstOrNull { it.name == matrix.daltonizer }
+        ?: Daltonizer.NONE
 )

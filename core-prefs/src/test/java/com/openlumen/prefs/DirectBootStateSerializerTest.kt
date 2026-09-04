@@ -112,6 +112,35 @@ class DirectBootStateSerializerTest {
         assertThat(decoded.matrix.matrixBb).isEqualTo(-4f)
     }
 
+    @Test fun `a malformed correction mode name is dropped before persist`() = runBlocking {
+        // The name is resolved against the engine's enum on the way out, which
+        // already degrades an unknown value to none. This bounds the shape so
+        // a tampered mirror cannot carry an arbitrary string that far.
+        val out = ByteArrayOutputStream()
+        DirectBootStateSerializer.writeTo(
+            DirectBootState(matrix = MatrixDto(daltonizer = "a".repeat(64))),
+            out
+        )
+
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(out.toByteArray()))
+
+        assertThat(decoded.matrix.daltonizer).isNull()
+    }
+
+    @Test fun `a well-formed correction mode name survives persist`() = runBlocking {
+        // Positive control: the check above has to reject the shape, not the
+        // field.
+        val out = ByteArrayOutputStream()
+        DirectBootStateSerializer.writeTo(
+            DirectBootState(matrix = MatrixDto(daltonizer = "MONOCHROMACY")),
+            out
+        )
+
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(out.toByteArray()))
+
+        assertThat(decoded.matrix.daltonizer).isEqualTo("MONOCHROMACY")
+    }
+
     @Test fun `unreadable bytes decode to safe default rather than throwing`() = runBlocking {
         val garbage = "{ this is not json :: }".toByteArray()
 

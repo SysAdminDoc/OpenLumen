@@ -131,11 +131,20 @@ private fun sanitizeDirectBootMatrix(matrix: MatrixDto): MatrixDto = matrix.copy
     matrixGb = matrix.matrixGb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
     matrixBr = matrix.matrixBr.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
     matrixBg = matrix.matrixBg.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 0f),
-    matrixBb = matrix.matrixBb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f)
+    matrixBb = matrix.matrixBb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f),
+    // The mode is resolved against the engine's enum on the way out, which
+    // already degrades an unknown name to none. Bounding the shape here keeps
+    // a malformed mirror from carrying an arbitrary string as far as that.
+    daltonizer = matrix.daltonizer?.takeIf { name ->
+        name.isNotEmpty() &&
+            name.length <= MAX_CORRECTION_MODE_NAME &&
+            name.all { it in 'A'..'Z' || it == '_' }
+    }
 )
 
 private const val MATRIX_COEFF_MIN = -4f
 private const val MATRIX_COEFF_MAX = 4f
+private const val MAX_CORRECTION_MODE_NAME = 32
 
 private fun Float.finiteIn(min: Float, max: Float, default: Float): Float =
     if (isFinite()) coerceIn(min, max) else default
