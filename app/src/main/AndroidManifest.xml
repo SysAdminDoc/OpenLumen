@@ -226,4 +226,34 @@
         </receiver>
 
     </application>
+
+    <!--
+        Package visibility filtering applies to resolveActivity from API 30, and
+        the launcher pre-resolves so it can say "could not open that screen"
+        instead of throwing. Without these the resolve returns null even though
+        startActivity would have worked, so the button reported a failure that
+        was not one. Launching never needed visibility; only asking did.
+
+        The Settings actions are here rather than left to the automatic
+        visibility of system packages, because that set is documented as
+        depending on the device.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.APP_NOTIFICATION_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.REQUEST_SCHEDULE_EXACT_ALARM" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.action.MANAGE_OVERLAY_PERMISSION" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.APPLICATION_DETAILS_SETTINGS" />
+        </intent>
+    </queries>
 </manifest>
