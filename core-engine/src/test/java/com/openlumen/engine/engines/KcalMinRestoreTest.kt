@@ -66,6 +66,17 @@ class KcalMinRestoreTest {
         File(RuntimeEnvironment.getApplication().filesDir, "kcal-min-restore").delete()
     }
 
+    /**
+     * Every shell the run issued, as one string.
+     *
+     * A clear that restores `kcal_min` now runs two: the tint reset on its
+     * own first, because `onDestroy` caps the clear at two seconds and one
+     * `su` round-trip can take four, and the floor restore after it. These
+     * assertions are about which writes happen, not how many shells carry
+     * them.
+     */
+    private fun allScripts() = scripts.joinToString("\n")
+
     @Test fun `a failed apply that already raised the minimum still restores it on clear`() =
         runBlocking {
             val context = RuntimeEnvironment.getApplication()
@@ -77,7 +88,7 @@ class KcalMinRestoreTest {
             val applied = engine.apply(context, LumenMatrix(r = 1f, g = 0.7f, b = 0.4f))
 
             assertThat(applied).isInstanceOf(EngineResult.Failure::class.java)
-            assertThat(scripts.single()).contains("echo '${KcalEngine.SAFETY_MIN}' > '$base/kcal_min'")
+            assertThat(allScripts()).contains("echo '${KcalEngine.SAFETY_MIN}' > '$base/kcal_min'")
 
             // The failure invalidated the path cache, taking `originalMin` with
             // it, and never latched `appliedNonIdentity`. clear() has to find
@@ -87,7 +98,7 @@ class KcalMinRestoreTest {
             val cleared = engine.clear(context)
 
             assertThat(cleared).isEqualTo(EngineResult.Success)
-            assertThat(scripts.single()).contains("echo '$originalMin' > '$base/kcal_min'")
+            assertThat(allScripts()).contains("echo '$originalMin' > '$base/kcal_min'")
         }
 
     @Test fun `the record is dropped once the minimum is back, so a second clear leaves it alone`() =
@@ -102,7 +113,7 @@ class KcalMinRestoreTest {
 
             engine.clear(context)
 
-            assertThat(scripts.single()).doesNotContain("kcal_min")
+            assertThat(allScripts()).doesNotContain("kcal_min")
         }
 
     @Test fun `a partly applied raise is not mistaken for the user's original`() = runBlocking {
@@ -123,13 +134,13 @@ class KcalMinRestoreTest {
         shellExit = 0
         restarted.apply(context, LumenMatrix(r = 1f, g = 0.7f, b = 0.4f))
 
-        assertThat(scripts.single())
+        assertThat(allScripts())
             .contains("echo '${KcalEngine.SAFETY_MIN}' > '$base/kcal_min'")
 
         scripts.clear()
         restarted.clear(context)
 
-        assertThat(scripts.single()).contains("echo '$originalMin' > '$base/kcal_min'")
+        assertThat(allScripts()).contains("echo '$originalMin' > '$base/kcal_min'")
     }
 
     @Test fun `the persisted record outlives the object that wrote it`() = runBlocking {
@@ -148,7 +159,7 @@ class KcalMinRestoreTest {
         shellExit = 0
         KcalEngine().clear(context)
 
-        assertThat(scripts.single()).contains("echo '$originalMin' > '$base/kcal_min'")
+        assertThat(allScripts()).contains("echo '$originalMin' > '$base/kcal_min'")
         assertThat(File(context.filesDir, "kcal-min-restore").exists()).isFalse()
     }
 
@@ -172,6 +183,6 @@ class KcalMinRestoreTest {
         engine.clear(context)
 
         assertThat(scripts).hasSize(2)
-        assertThat(scripts.none { it.contains("kcal_min") }).isTrue()
+        assertThat(allScripts()).doesNotContain("kcal_min")
     }
 }

@@ -145,7 +145,12 @@ class ReporterTextIsInert(unittest.TestCase):
 
         self.assertIn(r"\<img src=x onerror=alert(1)\>", row)
 
-    def test_a_link_is_neutralised(self):
+    def test_link_syntax_is_neutralised(self):
+        # The brackets are what make a link carry someone else's words as its
+        # text. The bare URL that is left over still autolinks, because GFM
+        # autolinks any URL in a cell and no escape stops it. What this buys
+        # is that the destination is visible rather than hidden behind
+        # "click me".
         row = self.row_for("[click me](https://evil.example/)")
 
         self.assertIn(r"\[click me\](https://evil.example/)", row)
@@ -163,6 +168,36 @@ class ReporterTextIsInert(unittest.TestCase):
         cell = drm.escape_cell("x" * 9 + "`" + "y" * 20, limit=13)
 
         self.assertEqual(cell, "x" * 9 + "\\`...")
+
+    def suggestion_for(self, status):
+        body = ISSUE_BODY.format(report=RAW_REPORT).replace(
+            "Works with caveats", status
+        )
+        return drm.render_suggestion(drm.parse_input(json.dumps({"body": body})))
+
+    def test_reporter_text_cannot_plant_a_second_row_in_the_flags(self):
+        # The flags block sits in the same output a maintainer copies, and it
+        # took the reported status raw. A newline in it planted a complete,
+        # unescaped row three lines under the real one.
+        planted = (
+            "ok\n\n| Pixel 9 | 16 | stock | rooted | ok | ok | ok | ok "
+            "| v0.8.0 | verified by maintainer |"
+        )
+        output = self.suggestion_for(planted)
+
+        rows = [line for line in output.splitlines() if line.startswith("| ")]
+        self.assertEqual(len(rows), 1)
+        self.assertNotIn("verified by maintainer |", rows[0])
+
+    def test_markdown_in_the_flags_is_neutralised_too(self):
+        output = self.suggestion_for("ok `code` <img src=x> [link](https://evil.example/)")
+
+        flags = "\n".join(
+            line for line in output.splitlines() if line.startswith("- reported status")
+        )
+        self.assertIn(r"\`code\`", flags)
+        self.assertIn(r"\<img src=x\>", flags)
+        self.assertIn(r"\[link\]", flags)
 
     def test_ordinary_text_is_left_readable(self):
         # Positive control. Escaping everything in sight would pass every

@@ -75,6 +75,17 @@ class KcalStaleRecordTest {
         shellExit = 0
     }
 
+    /**
+     * Every shell the run issued, as one string.
+     *
+     * A clear that restores `kcal_min` now runs two: the tint reset on its
+     * own first, because `onDestroy` caps the clear at two seconds and one
+     * `su` round-trip can take four, and the floor restore after it. These
+     * assertions are about which writes happen, not how many shells carry
+     * them.
+     */
+    private fun allScripts() = scripts.joinToString("\n")
+
     @Test fun `a floor the user raised past the safety minimum retires the old record`() =
         runBlocking {
             recordARaise()
@@ -87,7 +98,7 @@ class KcalStaleRecordTest {
             scripts.clear()
             engine.clear(context)
 
-            assertThat(scripts.single()).doesNotContain("kcal_min")
+            assertThat(allScripts()).doesNotContain("kcal_min")
             assertThat(recordFile.exists()).isFalse()
         }
 
@@ -103,7 +114,7 @@ class KcalStaleRecordTest {
         scripts.clear()
         engine.clear(context)
 
-        assertThat(scripts.single()).contains("echo '$originalMin' > '$base/kcal_min'")
+        assertThat(allScripts()).contains("echo '$originalMin' > '$base/kcal_min'")
     }
 
     @Test fun `a record for a floor the kernel no longer exposes is retired`() = runBlocking {
@@ -123,7 +134,7 @@ class KcalStaleRecordTest {
         scripts.clear()
         engine.clear(context)
 
-        assertThat(scripts.single()).doesNotContain("kcal_min")
+        assertThat(allScripts()).doesNotContain("kcal_min")
         assertThat(recordFile.exists()).isFalse()
     }
 
@@ -136,7 +147,7 @@ class KcalStaleRecordTest {
 
         KcalEngine().clear(context)
 
-        assertThat(scripts.single()).doesNotContain("kcal_min")
+        assertThat(allScripts()).doesNotContain("kcal_min")
         assertThat(recordFile.exists()).isFalse()
     }
 
@@ -151,7 +162,7 @@ class KcalStaleRecordTest {
 
         engine.clear(context)
 
-        assertThat(scripts.single()).doesNotContain("kcal_min")
+        assertThat(allScripts()).doesNotContain("kcal_min")
     }
 
     @Test fun `our own raise read back live still restores the user's value`() = runBlocking {
@@ -165,7 +176,7 @@ class KcalStaleRecordTest {
 
         engine.clear(context)
 
-        assertThat(scripts.single()).contains("echo '$originalMin' > '$base/kcal_min'")
+        assertThat(allScripts()).contains("echo '$originalMin' > '$base/kcal_min'")
     }
 
     @Test fun `a clear that lands inside an apply cannot erase the record`() = runBlocking {
@@ -203,6 +214,61 @@ class KcalStaleRecordTest {
         assertThat(recordFile.exists()).isFalse()
     }
 
+    @Test fun `the tint reset goes first, with no su call in front of it`() = runBlocking {
+        // onDestroy caps the whole clear at two seconds and one su round-trip
+        // has a four-second timeout of its own, so anything that spawns a
+        // shell before the tint reset can spend the entire budget and leave
+        // the panel tinted. The floor is brightness, not tint, and can wait
+        // for the next clear.
+        val trace = mutableListOf<String>()
+        val commandRunner = Su.commandRunnerForTest!!
+        Su.commandRunnerForTest = { command ->
+            trace += "command: $command"
+            commandRunner(command)
+        }
+        Su.shellRunnerForTest = { script ->
+            trace += if (script.contains("kcal_min")) "shell: floor" else "shell: tint"
+            scripts += script
+            shellExit
+        }
+        // One engine, so the sysfs probe happens on the apply and the clear
+        // starts with its paths already resolved. A fresh engine would probe
+        // first, which is a cost C256 accepts and this test is not about.
+        val engine = KcalEngine()
+        engine.apply(context, tint)
+        trace.clear()
+
+        engine.clear(context)
+
+        assertThat(trace.first()).isEqualTo("shell: tint")
+        assertThat(trace.filter { it.startsWith("shell: ") })
+            .containsExactly("shell: tint", "shell: floor").inOrder()
+        // And the read that decides the floor comes after the tint reset.
+        assertThat(trace.indexOfFirst { it.startsWith("command: cat") })
+            .isGreaterThan(trace.indexOf("shell: tint"))
+    }
+
+    @Test fun `a floor it cannot read is left alone and the record is kept`() = runBlocking {
+        // The read is what tells the user's floor from ours. Falling back to
+        // the value cached at probe time would overwrite their floor on
+        // exactly the evidence this call exists to distrust, and keeping the
+        // record means the next clear tries again.
+        recordARaise()
+        Su.commandRunnerForTest = { command ->
+            when {
+                command.startsWith("cat") -> Su.SuResult(1, "", "")
+                command.contains("$base/kcal_min") -> Su.SuResult(0, "ok", "")
+                command.contains("$base/kcal_enable") -> Su.SuResult(0, "ok", "")
+                else -> Su.SuResult(1, "", "")
+            }
+        }
+
+        KcalEngine().clear(context)
+
+        assertThat(allScripts()).doesNotContain("kcal_min")
+        assertThat(recordFile.exists()).isTrue()
+    }
+
     @Test fun `retiring a record does not disturb a panel that never had one`() = runBlocking {
         // Nothing on disk, a floor already above the safety minimum: the engine
         // has no business writing kcal_min in either direction.
@@ -214,7 +280,7 @@ class KcalStaleRecordTest {
         engine.clear(context)
 
         assertThat(scripts).hasSize(2)
-        assertThat(scripts.none { it.contains("kcal_min") }).isTrue()
+        assertThat(allScripts()).doesNotContain("kcal_min")
         assertThat(recordFile.exists()).isFalse()
     }
 }

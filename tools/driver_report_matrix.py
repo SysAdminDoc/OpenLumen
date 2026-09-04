@@ -300,17 +300,28 @@ def build_notes(parsed: ParsedInput) -> str:
 
 
 def build_flags(parsed: ParsedInput) -> list[str]:
+    # Every reporter-derived value here goes through the same escape as the
+    # row cells. This block sits in the same output a maintainer copies, and
+    # it used to take the text raw: a newline in the reported status planted a
+    # complete, unescaped table row three lines under the real one, claiming
+    # whatever the reporter wanted it to claim.
     flags = [f"input: {parsed.source}"]
-    flags.extend(parsed.flags)
+    flags.extend(escape_cell(flag) for flag in parsed.flags)
     if parsed.report.get("report_version"):
-        flags.append(f"driver report version: {parsed.report['report_version']}")
+        flags.append(f"driver report version: {escape_cell(parsed.report['report_version'])}")
     version_sources = source_values(parsed, "version")
     if len(set(version_sources)) > 1:
-        flags.append("version mismatch: " + " vs ".join(version_sources))
-    engine = parsed.issue.get("engine")
-    status = parsed.issue.get("status")
+        flags.append(
+            "version mismatch: " + " vs ".join(escape_cell(v) for v in version_sources)
+        )
+    engine = reported(parsed, "engine")
+    status = reported(parsed, "status")
     if engine or status:
-        flags.append(f"reported status preserved for review: {engine or 'engine missing'} - {status or 'status missing'}")
+        flags.append(
+            "reported status preserved for review: "
+            f"{escape_cell(engine) or 'engine missing'} - "
+            f"{escape_cell(status) or 'status missing'}"
+        )
     flags.append("engine result cells intentionally left as ?")
     flags.append("do not commit this row until a maintainer verifies the smoke flow")
     return flags

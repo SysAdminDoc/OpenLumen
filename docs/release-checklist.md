@@ -15,7 +15,9 @@ Tied to roadmap candidate **C45**.
 - [ ] Dependency review: run `python tools/dependency_update_review.py`
       and inspect the official release-note URL, compatibility-risk note,
       required commands, and verification-metadata impact for every
-      `update-available` entry. Resolve metadata failures and document any
+      `update-available` entry. The command exits 1 if any reference is
+      `unresolved`, which means the review could not be trusted rather than
+      that an update is waiting. Resolve metadata failures and document any
       exact-version intentional hold in `tools/dependency_update_policy.json`.
       No transitive advisories newer than 30 days uncategorized.
 - [ ] Artifact provenance cadence: for every published release retain the

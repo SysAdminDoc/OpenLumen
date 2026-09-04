@@ -126,6 +126,18 @@ class NegationMustReachTheClaim(unittest.TestCase):
 
         self.assertEqual(len(violations), 1)
 
+    def test_a_denial_of_something_else_does_not_cover_the_claim(self):
+        # Each of these has a real denial in front of the claim, and in each
+        # one the denial belongs to a different clause. A lookbehind that only
+        # stopped at a full stop let all three through.
+        for line in (
+            "OpenLumen, no exaggeration, improves sleep.\n",
+            "There is no cure for insomnia, but OpenLumen improves sleep.\n",
+            "We make no medical claims, and OpenLumen protects your eyes.\n",
+        ):
+            with self.subTest(line=line):
+                self.assertEqual(len(self.violations_for(line)), 1)
+
     def test_a_denial_of_the_claim_itself_still_passes(self):
         # Positive control. These are the sentences the exemption exists for,
         # and every one of them has to keep passing.
@@ -134,8 +146,11 @@ class NegationMustReachTheClaim(unittest.TestCase):
             "OpenLumen does not improve sleep.\n",
             "This is not a treatment for eye strain.\n",
             "Avoid saying it helps you sleep.\n",
-            "A colour filter rather than a sleep aid: it does not, on its own, "
-            "improve sleep.\n",
+            # A parenthetical between the denial and the claim is a separate
+            # clause and no longer exempts it, which is how the three bypasses
+            # above worked. Write the aside first: this is the same sentence,
+            # reordered, and it passes.
+            "On its own, a colour filter does not improve sleep.\n",
         ):
             with self.subTest(line=line):
                 self.assertEqual(self.violations_for(line), [])
@@ -193,10 +208,28 @@ class KotlinStringsAreScanned(unittest.TestCase):
             # denied the claim would pass on the negation rule instead of
             # on the masking, and prove nothing about reading Kotlin.
             "// Copy review: the headline here used to say OpenLumen helps you sleep.\n"
+            # And the same phrase in quotes, which is how anyone would
+            # actually write that note. A regex over the raw text kept the
+            # quoted run and flagged the comment documenting the ban.
+            '// Never write "sleep better" in user copy.\n'
+            "/** The phrase \"helps you sleep\" is banned; see the evidence doc. */\n"
             'val headline = "Warmer at night"\n'
         )
 
         self.assertEqual(violations, [])
+
+    def test_a_char_literal_does_not_swallow_the_rest_of_the_line(self):
+        # A lone quote in a char literal opened a string as far as a regex was
+        # concerned, and everything to the next quote was blanked out, taking
+        # a real claim with it.
+        violations = self.violations_for(
+            "package com.openlumen.ui\n\n"
+            "val quote = '\"'\n"
+            'val headline = "helps you sleep"\n'
+        )
+
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0].line_number, 4)
 
     def test_kotlin_line_numbers_survive_the_blanking(self):
         violations = self.violations_for(

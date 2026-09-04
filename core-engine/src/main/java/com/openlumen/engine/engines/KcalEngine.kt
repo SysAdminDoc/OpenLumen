@@ -82,18 +82,6 @@ class KcalEngine : ColorEngine {
     @Volatile private var minRestore: MinRestore? = null
     private val restoreMutex = Mutex()
 
-    /**
-     * The record this apply is relying on, re-asserted once its script is done.
-     *
-     * `clearActiveEngineForShutdown` cannot take a lock (it runs from
-     * `onDestroy` on a parked main Looper), so a clear can land between the
-     * record write and the script: it restores a floor that has not been
-     * raised yet, then deletes the record the raise is about to depend on, and
-     * the node ends up at the safety floor with nothing saying the user's
-     * value was ever different. Writing the record again after the script
-     * closes that window without a lock (C326).
-     */
-    @Volatile private var pendingRaiseRecord: MinRestore? = null
 
     /**
      * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
@@ -167,6 +155,11 @@ class KcalEngine : ColorEngine {
             Log.i(TAG, "retiring a kcal_min record this panel has outgrown")
             storeRestore(context, null)
         }
+        // A local, not a field. As a field it survived a cancelled apply,
+        // because `withContext` rethrows on completion and the line that
+        // cleared it never ran, and the next apply on the same cached engine
+        // then wrote a raise record it had not made.
+        var raiseRecord: MinRestore? = null
         val minWriteScript = if (shouldRaiseMin) {
             // Latch before the script runs, not after it succeeds. The min
             // write carries `|| true`, so it can land while a later rgb write
@@ -175,7 +168,7 @@ class KcalEngine : ColorEngine {
             val record = existingRestore?.takeIf { it.raised }
                 ?: MinRestore(originalMin = paths.originalMin, raised = true)
             storeRestore(context, record)
-            pendingRaiseRecord = record
+            raiseRecord = record
             "echo '$SAFETY_MIN' > '${paths.min}' 2>/dev/null || true\n"
         } else ""
 
@@ -186,8 +179,12 @@ class KcalEngine : ColorEngine {
             append("echo '$r $g $b' > '").append(paths.rgb).append("'\n")
         }
         val exit = Su.runShell(script)
-        pendingRaiseRecord?.let { storeRestore(context, it) }
-        pendingRaiseRecord = null
+        // Again, after the script. The record goes in before it so a crash
+        // between the two cannot strand the node, and a clear that lands in
+        // that window restores a floor the script has not raised yet and
+        // deletes the record the raise depends on. `clearActiveEngineForShutdown`
+        // cannot take a lock, so writing it twice is what closes the window.
+        raiseRecord?.let { storeRestore(context, it) }
         invalidateOnFailure(exit, paths, "apply")
         if (exit == 0) {
             if (matrix != LumenMatrix.IDENTITY) appliedNonIdentity = true
@@ -213,38 +210,20 @@ class KcalEngine : ColorEngine {
         val paths = resolvedPaths
             ?: (if (appliedNonIdentity || hasRaisedMin) ensureResolvedPaths() else null)
             ?: return@withContext clearWithoutPaths(appliedNonIdentity || hasRaisedMin)
-        // Take the original from the durable record rather than from `paths`,
-        // which a failed apply may already have discarded.
-        //
-        // C326: and check it against the floor the panel actually has now. The
-        // same rule in `apply` is bypassed by every early return there, and it
-        // reads a probe value that was cached before the user touched
-        // anything, so this is the check that has to hold: a floor above the
-        // safety minimum is the user's own, and writing an older value over it
-        // is the thing C166 refuses to do on the way in. Our own raise writes
-        // exactly SAFETY_MIN, which is why the test is strictly greater.
-        val currentMin = if (hasRaisedMin && paths.min != null) {
-            readIntOrNull("cat '${paths.min}'") ?: paths.originalMin
-        } else null
-        val userRaisedItThemselves = currentMin != null && currentMin > SAFETY_MIN
-        if (userRaisedItThemselves) {
-            Log.i(TAG, "kcal_min is $currentMin, above the safety floor; leaving the user's value")
-            storeRestore(context, null)
-        }
-        val restoreMin = paths.min != null && hasRaisedMin && !userRaisedItThemselves
-        val minRestoreScript = if (restoreMin) {
-            "echo '${record.originalMin}' > '${paths.min}' 2>/dev/null || true\n"
-        } else ""
+        // The tint first, on its own, and nothing in front of it. `onDestroy`
+        // caps this whole call at two seconds and one `su` round-trip can take
+        // four, so anything that spawns a shell before this can spend the
+        // budget and leave the panel tinted. The brightness floor is a
+        // separate concern and can wait for the next clear.
         val exit = Su.runShell(
             buildString {
                 append("set -e\n")
                 append("echo '$MAX_SCALAR $MAX_SCALAR $MAX_SCALAR' > '").append(paths.rgb).append("'\n")
                 append("echo '0' > '").append(paths.enable).append("'\n")
-                append(minRestoreScript)
             }
         )
-        if (exit == 0 && restoreMin) {
-            storeRestore(context, null)
+        if (exit == 0 && hasRaisedMin && paths.min != null && record != null) {
+            restoreMinIfStillOurs(context, paths, record)
         }
 
         invalidateOnFailure(exit, paths, "clear")
@@ -323,6 +302,40 @@ class KcalEngine : ColorEngine {
      * value doesn't parse. Used only by the probe path so we can be
      * relaxed about failures.
      */
+    /**
+     * Put the user's `kcal_min` back, unless the floor on the panel is theirs.
+     *
+     * Read live. The probe value was cached before the user could have touched
+     * anything, and the same check in `apply` is bypassed by every early
+     * return there. A floor above [SAFETY_MIN] is the user's own; our raise
+     * writes exactly [SAFETY_MIN], which is why the test is strictly greater.
+     *
+     * A read that fails writes nothing and keeps the record. Falling back to
+     * the cached value would overwrite the user's floor on exactly the
+     * evidence this call exists to distrust, and the record surviving means
+     * the next clear tries again.
+     */
+    private suspend fun restoreMinIfStillOurs(
+        context: Context,
+        paths: Paths,
+        record: MinRestore
+    ) {
+        val currentMin = readIntOrNull("cat '${paths.min}'")
+        if (currentMin == null) {
+            Log.w(TAG, "could not read kcal_min; leaving the floor and keeping the record")
+            return
+        }
+        if (currentMin > SAFETY_MIN) {
+            Log.i(TAG, "kcal_min is $currentMin, above the safety floor; leaving the user's value")
+            storeRestore(context, null)
+            return
+        }
+        val exit = Su.runShell(
+            "echo '${record.originalMin}' > '${paths.min}' 2>/dev/null || true\n"
+        )
+        if (exit == 0) storeRestore(context, null)
+    }
+
     private suspend fun readIntOrNull(cmd: String): Int? {
         val r = Su.runCommand(cmd)
         if (r.exitCode != 0) return null

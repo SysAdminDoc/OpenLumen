@@ -21,22 +21,33 @@ DEFAULT_TARGETS = (
 )
 # Kotlin is scanned for its string literals alone. Identifiers and comments are
 # the developers' own words, and a comment recording why a phrase is banned
-# would otherwise trip the rule it documents.
-KOTLIN_STRING_RE = re.compile(r'"""(?:.|\n)*?"""|"(?:\\.|[^"\\\n])*"')
+# would otherwise trip the rule it documents. See kotlin_string_spans.
 APPROVED_EVIDENCE_PATHS = {
     Path("docs/health-evidence.md"),
 }
-# A denial has to reach the phrase it denies. The old rule exempted a whole
-# line containing any of these words anywhere, so "OpenLumen improves sleep, no
-# question." passed the lint that exists to catch exactly that sentence.
+# A denial has to reach the phrase it denies. Exempting a whole line that
+# contains one of these anywhere let "OpenLumen improves sleep, no question."
+# through, and a 60-character lookbehind that stopped only at a full stop let
+# "OpenLumen, no exaggeration, improves sleep." through as well.
+#
+# Not English-only: a localised disclaimer has to be able to pass too, and the
+# claim rules cover five other languages. Japanese negation is a verb ending
+# rather than a word, so the Japanese rules have no exemption at all and a
+# Japanese denial has to be worded to avoid the flagged phrase.
 NEGATION_RE = re.compile(
     r"\b(?:no|not|never|without|avoid|avoids|don't|doesn't|isn't|aren't|"
-    r"forbids?|unsupported|rather than|instead of)\b"
+    r"forbids?|unsupported|rather than|instead of|"
+    r"ne|pas|jamais|sans|aucun|aucune|"
+    r"nicht|kein|keine|niemals|ohne|"
+    r"nunca|sin|ningun|ninguna|ningún|ninguna|"
+    r"nao|não|nem|sem)\b"
 )
-# How far back a denial reaches. Long enough for "does not, on its own,
-# improve sleep"; short enough that an unrelated clause cannot cover a claim.
-NEGATION_WINDOW = 60
-SENTENCE_BREAK_RE = re.compile(r"[.;:!?]")
+# What may sit between the denial and the phrase it denies. Enough for
+# `No "improves your sleep" claims` and `Avoid saying it helps you sleep`, and
+# nothing with a comma or a sentence break in it: a parenthetical between the
+# two is a different clause, which is how every bypass above worked.
+NEGATION_GAP = 24
+GAP_BREAK_RE = re.compile(r"[,;:!?.]")
 KCAL_RECOVERY_RE = re.compile(
     r"(?i)\becho\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+>[^\n]*\bkcal\b"
 )
@@ -220,11 +231,75 @@ def scannable_lines(path: Path, text: str) -> list[str]:
     if path.suffix.lower() != ".kt":
         return text.splitlines()
     kept = [" " if char != "\n" else "\n" for char in text]
-    for match in KOTLIN_STRING_RE.finditer(text):
-        for index in range(match.start(), match.end()):
+    for start, end in kotlin_string_spans(text):
+        for index in range(start, end):
             if text[index] != "\n":
                 kept[index] = text[index]
     return "".join(kept).splitlines()
+
+
+def kotlin_string_spans(text: str) -> list[tuple[int, int]]:
+    """Where the string literals are, walking the file rather than pattern
+    matching it.
+
+    A regex over the raw text cannot tell a quote in a comment from a quote in
+    code, so `// Never write "improves sleep" here` kept its quoted phrase and
+    tripped the rule the comment was there to document. It also cannot tell a
+    quote inside a char literal from the start of a string, which swallowed
+    the rest of the line.
+    """
+    spans: list[tuple[int, int]] = []
+    index = 0
+    length = len(text)
+    block_depth = 0
+    while index < length:
+        char = text[index]
+        if block_depth:
+            if text.startswith("/*", index):
+                block_depth += 1
+                index += 2
+            elif text.startswith("*/", index):
+                block_depth -= 1
+                index += 2
+            else:
+                index += 1
+            continue
+        if text.startswith("//", index):
+            end = text.find("\n", index)
+            index = length if end < 0 else end
+            continue
+        if text.startswith("/*", index):
+            block_depth = 1
+            index += 2
+            continue
+        if text.startswith('"""', index):
+            end = text.find('"""', index + 3)
+            end = length if end < 0 else end + 3
+            spans.append((index, end))
+            index = end
+            continue
+        if char == '"':
+            end = index + 1
+            while end < length and text[end] != '"':
+                if text[end] == "\\":
+                    end += 1
+                elif text[end] == "\n":
+                    break
+                end += 1
+            end = min(end + 1, length)
+            spans.append((index, end))
+            index = end
+            continue
+        if char == "'":
+            end = index + 1
+            while end < length and text[end] != "'":
+                if text[end] == "\\":
+                    end += 1
+                end += 1
+            index = min(end + 1, length)
+            continue
+        index += 1
+    return spans
 
 
 def iter_scan_files(root: Path, targets: Iterable[str]) -> Iterable[Path]:
@@ -246,12 +321,19 @@ def should_scan(path: Path) -> bool:
 
 
 def is_negated(normalized_line: str, start: int) -> bool:
-    """Whether a denial immediately before [start] covers the match there."""
-    window = normalized_line[max(0, start - NEGATION_WINDOW):start]
-    # A sentence boundary ends a denial's reach. "No sleep claims. OpenLumen
-    # improves sleep." is two statements, and only the first one is a denial.
-    reachable = SENTENCE_BREAK_RE.split(window)[-1]
-    return bool(NEGATION_RE.search(reachable))
+    """Whether a denial directly before [start] covers the match there.
+
+    Directly: the last denial in front of the phrase, with nothing but a short
+    run of connecting words between the two. A comma, a colon or a full stop
+    in that gap means the denial belongs to another clause and says nothing
+    about this claim.
+    """
+    window = normalized_line[max(0, start - NEGATION_GAP - 16):start]
+    matches = list(NEGATION_RE.finditer(window))
+    if not matches:
+        return False
+    gap = window[matches[-1].end():]
+    return len(gap) <= NEGATION_GAP and not GAP_BREAK_RE.search(gap)
 
 
 def normalize_text(text: str) -> str:

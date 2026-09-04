@@ -115,9 +115,18 @@ for every stable update:
 - the expected `gradle/verification-metadata.xml` checksum/signature impact.
 
 The report classifies entries as `update-available`, `current`,
-`unresolved`, `pre-release-only`, or `held`. A metadata/network error never
-classifies a version as `current`; investigate `unresolved` entries before
-release. Add an intentional hold only when the policy records the exact
+`unresolved`, `pre-release-only`, or `held`. A metadata or network error never
+classifies a version as `current`, and it never classifies one as
+`update-available` either: a partial answer that happens to contain a newer
+version is still a partial answer.
+
+**The command exits 1 when any entry is `unresolved`**, so a run that could
+not gather its evidence fails rather than reading as clean. That is a
+different code from the 2 that `--fail-on-updates` returns, so a caller can
+tell "there is work to do" from "this review could not be trusted".
+A `pre-release-only` entry is neither and still exits 0.
+
+Investigate `unresolved` entries before release. Add an intentional hold only when the policy records the exact
 current catalog version and a reason, so a later catalog edit cannot silently
 turn a stale hold into an approved dependency state.
 
