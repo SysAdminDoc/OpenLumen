@@ -356,4 +356,6 @@
     <string name="shortcut_emergency_off_short">Apagar</string>
     <string name="shortcut_emergency_off_long">Forzar el apagado del filtro</string>
     <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
+    <string name="widget_preset_slot">Ajuste %1$s</string>
+    <string name="widget_preset_slot_active">Ajuste %1$s, activo</string>
 </resources>

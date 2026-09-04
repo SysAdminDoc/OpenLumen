@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Slightly translucent rounded rectangle so the widget reads on both light
-    and dark launchers. The host typically draws its own backplate too;
-    this just gives us a consistent inner edge.
+    The widget's own backplate. This was 20 percent black, which on a dark
+    launcher is nearly invisible and on a light one is a grey smudge. It now
+    takes a real surface colour with a night variant, so it matches the
+    Glance widgets and the picker preview.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#33000000" />
+    <solid android:color="@color/widget_surface" />
     <corners android:radius="12dp" />
 </shape>

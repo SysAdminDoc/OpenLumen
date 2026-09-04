@@ -7,12 +7,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.action.Action
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionSendBroadcast
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import androidx.glance.background
@@ -26,6 +28,8 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -160,6 +164,7 @@ private fun EmptyPresetWidget(hint: String, openAppAction: Action) {
 
 @androidx.compose.runtime.Composable
 private fun PresetSlots(slots: List<PresetSlotUi>) {
+    val context = LocalContext.current
     Row(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -180,6 +185,12 @@ private fun PresetSlots(slots: List<PresetSlotUi>) {
                     .defaultWeight()
                     .fillMaxHeight()
                     .padding(4.dp)
+                    // Without this the slot is a coloured square and a word,
+                    // and TalkBack has no way to say which preset it is or
+                    // whether it is the one running.
+                    .semantics {
+                        contentDescription = slotDescription(context, slot)
+                    }
                     .clickable(slot.action),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -188,12 +199,14 @@ private fun PresetSlots(slots: List<PresetSlotUi>) {
                     Box(
                         modifier = GlanceModifier
                             .size(24.dp)
+                            .cornerRadius(WidgetColors.SwatchCornerRadius)
                             .background(WidgetColors.ActiveRing),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = GlanceModifier
                                 .size(16.dp)
+                                .cornerRadius(WidgetColors.SwatchCornerRadius)
                                 .background(ColorProvider(slot.color))
                         ) {}
                     }
@@ -201,6 +214,7 @@ private fun PresetSlots(slots: List<PresetSlotUi>) {
                     Box(
                         modifier = GlanceModifier
                             .size(20.dp)
+                            .cornerRadius(WidgetColors.SwatchCornerRadius)
                             .background(ColorProvider(slot.color))
                     ) {}
                 }
@@ -221,3 +235,14 @@ private fun PresetSlots(slots: List<PresetSlotUi>) {
 private const val SLOT_COUNT = 4
 
 private val PresetWidgetUpdateScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+/**
+ * What a screen reader says for one preset slot: its name, and whether it is
+ * the preset currently applied.
+ */
+private fun slotDescription(context: Context, slot: PresetSlotUi): String =
+    if (slot.isActive) {
+        context.getString(R.string.widget_preset_slot_active, slot.label)
+    } else {
+        context.getString(R.string.widget_preset_slot, slot.label)
+    }

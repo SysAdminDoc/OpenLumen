@@ -20,7 +20,8 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:contentDescription="@string/home_toggle"
-        android:src="@drawable/ic_lumen_tile" />
+        android:src="@drawable/ic_lumen_tile"
+        android:tint="@color/widget_on_surface" />
 
     <TextView
         android:id="@+id/widget_label"
@@ -29,6 +30,7 @@
         android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:gravity="center"
+        android:textColor="@color/widget_on_surface"
         android:textSize="11sp"
         android:singleLine="true"
         android:text="@string/tile_off" />

@@ -356,4 +356,6 @@
     <string name="shortcut_emergency_off_short">Forçar</string>
     <string name="shortcut_emergency_off_long">Forçar o desligamento do filtro</string>
     <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
+    <string name="widget_preset_slot">Predefinição %1$s</string>
+    <string name="widget_preset_slot_active">Predefinição %1$s, ativa</string>
 </resources>

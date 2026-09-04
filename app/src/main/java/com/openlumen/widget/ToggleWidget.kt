@@ -12,9 +12,11 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionSendBroadcast
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import androidx.glance.background
+import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
@@ -25,10 +27,10 @@ import androidx.glance.layout.size
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import com.openlumen.MainActivity
 import com.openlumen.R
 import com.openlumen.ui.theme.Catppuccin
+import com.openlumen.ui.theme.Latte
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -88,6 +90,7 @@ private class ToggleGlanceWidget : GlanceAppWidget() {
             Column(
                 modifier = GlanceModifier
                     .fillMaxSize()
+                    .cornerRadius(WidgetColors.CornerRadius)
                     .background(WidgetColors.Surface)
                     .padding(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -114,11 +117,25 @@ private class ToggleGlanceWidget : GlanceAppWidget() {
     }
 }
 
+/**
+ * Widget colours, per launcher theme.
+ *
+ * These were fixed Mocha, so a light launcher got two dark tiles sitting in a
+ * pale tray. Glance's two-argument ColorProvider picks by the host's own
+ * configuration, which is the launcher's, not the app's.
+ *
+ * The active ring is Mauve rather than a surface tone: as Surface1 on Base it
+ * was about 1.6:1 against the tile, which is not a ring anyone can see.
+ */
 internal object WidgetColors {
-    val Surface = ColorProvider(Catppuccin.Base)
-    val Text = ColorProvider(Catppuccin.Text)
-    val MutedText = ColorProvider(Catppuccin.Subtext0)
-    val ActiveRing = ColorProvider(Catppuccin.Surface1)
+    val Surface = ColorProvider(Latte.Base, Catppuccin.Base)
+    val Text = ColorProvider(Latte.Text, Catppuccin.Text)
+    val MutedText = ColorProvider(Latte.Subtext0, Catppuccin.Subtext0)
+    val ActiveRing = ColorProvider(Latte.Mauve, Catppuccin.Mauve)
+
+    /** Rounded corners on every filled box, so the tiles are not raw squares. */
+    val CornerRadius = 12.dp
+    val SwatchCornerRadius = 6.dp
 }
 
 internal const val WIDGET_READ_TIMEOUT_MS = 1_000L

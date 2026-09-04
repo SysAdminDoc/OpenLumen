@@ -356,4 +356,6 @@
     <string name="shortcut_emergency_off_short">Arrêt</string>
     <string name="shortcut_emergency_off_long">Forcer l\'arrêt du filtre</string>
     <string name="about_diag_log_timeline_state">De %1$s à %2$s</string>
+    <string name="widget_preset_slot">Préréglage %1$s</string>
+    <string name="widget_preset_slot_active">Préréglage %1$s, actif</string>
 </resources>

@@ -353,4 +353,6 @@
     <string name="shortcut_emergency_off_short">強制オフ</string>
     <string name="shortcut_emergency_off_long">フィルターを強制的に切る</string>
     <string name="about_diag_log_timeline_state">%1$s から %2$s まで</string>
+    <string name="widget_preset_slot">プリセット %1$s</string>
+    <string name="widget_preset_slot_active">プリセット %1$s、適用中</string>
 </resources>

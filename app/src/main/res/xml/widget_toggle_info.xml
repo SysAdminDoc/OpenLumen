@@ -23,7 +23,7 @@
     android:targetCellHeight="1"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_toggle"
-    android:previewImage="@drawable/ic_lumen_tile"
+    android:previewImage="@drawable/ic_widget_preview"
     android:previewLayout="@layout/widget_toggle"
     android:resizeMode="none"
     android:widgetCategory="home_screen|keyguard"
