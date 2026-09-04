@@ -420,7 +420,14 @@ class LumenService : LifecycleService() {
                 }
             else -> null
         }
-        val contentText = if (detail == null) status else "$status · $detail"
+        // The separator lives in a resource: a language that does not use a
+        // middle dot, or wants the parts the other way round, cannot change a
+        // literal baked into the code.
+        val contentText = if (detail == null) {
+            status
+        } else {
+            getString(R.string.notif_status_detail, status, detail)
+        }
 
         runCatching {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager

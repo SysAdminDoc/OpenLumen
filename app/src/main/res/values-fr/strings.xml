@@ -81,14 +81,14 @@
     <string name="preset_capability_system_correction">le mélange de couleurs propre à OpenLumen, auquel la correction des couleurs du système se substitue</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Sélectionnez un filtre pour voir les détails</string>
-    <string name="import_preview_title">Apercu du profil importe</string>
+    <string name="import_preview_title">Aperçu de la sauvegarde importée</string>
     <string name="import_preview_apply">Appliquer</string>
     <string name="import_preview_cancel">Annuler</string>
     <string name="import_preview_unchanged">Aucune modification</string>
     <string name="import_preview_duplicate_profiles">Profils en double ignores : %1$s</string>
-    <string name="diff_line">%1$s : %2$s -> %3$s</string>
+    <string name="diff_line">%1$s : de %2$s à %3$s</string>
     <string name="diff_active_preset">Preset actif</string>
-    <string name="diff_engine">Moteur</string>
+    <string name="diff_engine">Pilote</string>
     <string name="diff_schedule_mode">Mode de programmation</string>
     <string name="diff_schedule_start">Debut de programmation</string>
     <string name="diff_schedule_end">Fin de programmation</string>
@@ -99,8 +99,8 @@
     <string name="diff_light_sensor_threshold">Seuil du capteur (lux)</string>
     <string name="diff_contrast">Contraste</string>
     <string name="diff_amoled_clamp">Noir profond AMOLED</string>
-    <string name="diff_sunset_offset">Decalage coucher de soleil (m)</string>
-    <string name="diff_sunrise_offset">Decalage lever de soleil (m)</string>
+    <string name="diff_sunset_offset">Décalage du coucher (min)</string>
+    <string name="diff_sunrise_offset">Décalage du lever (min)</string>
     <string name="diff_favorites">Favoris</string>
     <string name="diff_transition">Transition</string>
     <string name="value_unset">non defini</string>
@@ -114,7 +114,7 @@
     <string name="schedule_off">Desactive</string>
     <string name="schedule_always">Toujours</string>
     <string name="schedule_fixed">Heure fixe</string>
-    <string name="schedule_solar">Coucher -> lever de soleil</string>
+    <string name="schedule_solar">Du coucher au lever du soleil</string>
     <string name="schedule_until_next_alarm">Jusqu\'au prochain reveil</string>
     <string name="schedule_until_alarm_hint">S\'active a l\'heure de debut et se desactive au declenchement de votre prochain reveil. Si aucun reveil n\'est defini, s\'arrete 12 heures apres le debut.</string>
     <string name="schedule_start">Debut</string>
@@ -122,7 +122,7 @@
     <string name="schedule_time_value">%1$s: %2$s</string>
     <string name="schedule_location_value">Position : %1$s</string>
     <string name="schedule_equal_times_error">Le début et la fin doivent être différents. Choisissez « Toujours » pour un programme actif toute la journée.</string>
-    <string name="schedule_timezone">Les programmations suivent l\'horloge de votre appareil (%1$s).</string>
+    <string name="schedule_timezone">Les programmations utilisent l\'horloge de l\'appareil (%1$s).</string>
     <string name="schedule_solar_timezone">Les transitions solaires utilisent l\'heure du lieu sélectionné (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Les alarmes exactes sont désactivées</string>
     <string name="schedule_exact_alarm_warning_body">Les changements programmés peuvent être en retard, car Android n\'autorise que des alarmes approximatives pour OpenLumen.</string>
@@ -131,8 +131,8 @@
     <string name="schedule_solar_location_required_short">Position requise</string>
     <string name="schedule_solar_location_required_title">Le programme solaire nécessite une position</string>
     <string name="schedule_solar_location_required_body">Saisissez une latitude et une longitude valides avant de choisir Solaire. Le filtre reste désactivé jusque-là.</string>
-    <string name="schedule_sunset_offset">Decalage coucher de soleil : %1$d m</string>
-    <string name="schedule_sunrise_offset">Decalage lever de soleil : %1$d m</string>
+    <string name="schedule_sunset_offset">Décalage du coucher : %1$d min</string>
+    <string name="schedule_sunrise_offset">Décalage du lever : %1$d min</string>
     <string name="schedule_sunset_offset_name">Décalage du coucher du soleil</string>
     <string name="schedule_sunrise_offset_name">Décalage du lever du soleil</string>
     <string name="schedule_offset_state">%1$s %2$d minutes</string>
@@ -156,13 +156,13 @@
     <string name="driver_available">Disponible</string>
     <string name="driver_not_available">Non disponible sur cet appareil</string>
     <string name="driver_auto_resolved">Auto selectionne : %1$s</string>
-    <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Installez le mode Overlay en accordant la permission de superposition.</string>
+    <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Accorder l\'autorisation de superposition installe la solution de repli.</string>
     <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. Eclairage nocturne systeme, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
     <string name="driver_force_pinned">Utiliser ce pilote meme s\'il semble indisponible</string>
     <string name="driver_force_pinned_body">Masquer le root aux applis le masque aussi a cette verification, et une invite Magisk repondue trop tard ressemble a une absence de root. Activez ceci pour essayer quand meme. Si le pilote ne peut vraiment pas tourner, le filtre signale l\'erreur au lieu de revenir en Auto.</string>
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection Android</string>
-    <string name="driver_aapm_explanation">Le mode Advanced Protection peut révoquer automatiquement les fonctions basées sur Accessibility. OpenLumen n’utilise ni Accessibility ni UsageStats ; AAPM n’a donc aucun effet sur cette application. Le rapport du pilote indique l’état de la plateforme lorsqu’il est disponible.</string>
+    <string name="driver_aapm_explanation">Le mode de protection avancée peut désactiver les fonctions qui reposent sur l\'accessibilité. OpenLumen n\'utilise ni l\'accessibilité ni l\'accès aux données d\'utilisation, il n\'est donc pas concerné. Le rapport de pilote note l\'état de la plateforme lorsque l\'appareil l\'expose.</string>
     <string name="driver_grant_status_granted">Accorde sur cet appareil.</string>
     <string name="driver_grant_status_not_granted">Non accorde. Le pilote Eclairage nocturne systeme est indisponible tant que cette permission n\'est pas accordee via la commande ADB ci-dessous.</string>
     <string name="driver_copy_command">Copier la commande</string>
@@ -171,25 +171,25 @@
     <string name="driver_report_subject">Rapport pilote OpenLumen</string>
     <string name="command_copied">Commande copiee</string>
     <string name="report_copied">Rapport copie</string>
-    <string name="toast_service_start_failed">Impossible de demarrer le service OpenLumen. Verifiez que la permission de superposition est accordee ou choisissez un autre pilote dans les reglages.</string>
+    <string name="toast_service_start_failed">Impossible de démarrer OpenLumen. Vérifiez l\'autorisation de superposition ou choisissez un autre pilote dans l\'onglet Pilote.</string>
     <string name="clipboard_adb_grant">Commande ADB OpenLumen</string>
     <string name="clipboard_driver_report">Rapport pilote OpenLumen</string>
     <string name="clipboard_emergency_off">Arret d\'urgence OpenLumen</string>
     <string name="clipboard_automation_token">Jeton d\'automatisation OpenLumen</string>
     <string name="overlay_caveats_title">A propos du pilote Overlay</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">L\'opacite de l\'overlay est limitee a environ 80% par les regles de toucher non fiable d\'Android 12+. Pour une reduction plus importante, utilisez Eclairage nocturne systeme ou un pilote root.</string>
-    <string name="overlay_touch_pass_explanation">Lorsque l\'overlay est actif, Android peut bloquer les appuis sur les dialogues d\'installation ou de permissions systeme. Il s\'agit de la protection anti-detournement de la plateforme, pas d\'un bug d\'OpenLumen. Desactivez le filtre via la tuile ou la notification avant d\'installer des applications.</string>
+    <string name="overlay_touch_pass_explanation">Tant que la superposition est active, Android peut bloquer les appuis sur les boîtes de dialogue d\'installation et d\'autorisation. C\'est la protection anti-tapjacking de la plateforme, pas un bogue d\'OpenLumen. Désactivez le filtre depuis la tuile ou la notification avant d\'installer des applications.</string>
 
     <string name="about_version">Version</string>
     <string name="about_license">Licence : GPL-3.0-or-later</string>
     <string name="about_source">Source : github.com/SysAdminDoc/OpenLumen</string>
-    <string name="about_offline" formatted="false">100% hors-ligne -- aucune permission INTERNET demandee.</string>
+    <string name="about_offline" formatted="false">100 % hors ligne. Aucune autorisation INTERNET n\'est demandée.</string>
     <string name="about_backup_title">Sauvegarde</string>
     <string name="about_backup_body">Enregistrez ou restaurez vos preferences sous forme de fichier JSON. Utile pour migrer entre appareils ou partager des presets.</string>
-    <string name="about_export_profile">Exporter le profil</string>
-    <string name="about_import_profile">Importer un profil</string>
+    <string name="about_export_profile">Exporter la sauvegarde</string>
+    <string name="about_import_profile">Importer la sauvegarde</string>
     <string name="backup_recovery_title">Les préférences enregistrées doivent être récupérées</string>
-    <string name="backup_recovery_body">OpenLumen ne peut pas lire les réglages enregistrés (%1$d caractères). Des valeurs sûres par défaut sont utilisées. Exportez une copie de récupération limitée (%2$d caractères) avant la réinitialisation.</string>
+    <string name="backup_recovery_body">OpenLumen n\'a pas pu lire ses réglages enregistrés (%1$d caractères) et fonctionne donc avec les valeurs par défaut. Exportez ce qui reste lisible (%2$d caractères) avant de réinitialiser.</string>
     <string name="backup_recovery_export">Exporter la copie de récupération</string>
     <string name="backup_recovery_reset_action">Rétablir les valeurs par défaut</string>
     <string name="backup_recovery_reset_title">Réinitialiser les préférences illisibles ?</string>
@@ -248,13 +248,13 @@
     <string name="notif_title_filtering">OpenLumen filtre</string>
     <string name="notif_title_standby">OpenLumen en veille</string>
     <string name="notif_status_filtering">Filtre actif</string>
-    <string name="notif_status_standby">En veille — filtre non appliqué</string>
+    <string name="notif_status_standby">En veille, filtre non appliqué</string>
     <string name="notif_action_off">Desactiver</string>
     <string name="notif_action_cycle">Preset suivant</string>
-    <string name="notif_alarm_countdown">%1$d h %2$d m avant le reveil</string>
+    <string name="notif_alarm_countdown">%1$d h %2$d min avant l\'alarme</string>
     <string name="notif_solar_location_required">Le programme solaire nécessite une position valide</string>
     <string name="notif_permission_title">Les notifications sont désactivées</string>
-    <string name="notif_permission_rationale">Autorisez les notifications pour qu’OpenLumen affiche l’état du service et les actions de récupération.</string>
+    <string name="notif_permission_rationale">Autorisez les notifications pour qu\'OpenLumen puisse afficher son état et ses actions de récupération.</string>
     <string name="notif_permission_settings_body">Android a bloqué une nouvelle demande. Activez les notifications d’OpenLumen dans les réglages système.</string>
     <string name="notif_permission_retry">Réessayer</string>
     <string name="notif_permission_settings">Ouvrir les réglages des notifications</string>
@@ -303,7 +303,7 @@
     <string name="backup_import_failed">Échec de l\'importation : %1$s</string>
     <string name="error_unknown">Erreur inconnue</string>
     <string name="presets_sort_label">Trier</string>
-    <string name="presets_sort_alphabetical">A–Z</string>
+    <string name="presets_sort_alphabetical">De A à Z</string>
     <string name="presets_sort_recent">Récentes</string>
     <string name="presets_saved_title">Préréglages enregistrés</string>
     <string name="preset_saved_badge">Enregistré</string>
@@ -313,11 +313,11 @@
     <string name="preset_rename_label">Nom du préréglage</string>
     <string name="preset_rename_reset">Réinitialiser</string>
     <string name="preset_pack_preview_title">Aperçu du pack</string>
-    <string name="preset_pack_preview_summary">Ce pack ajoute %1$d préréglage(s) enregistré(s) et remplace %2$d nom(s) existant(s).</string>
+    <string name="preset_pack_preview_summary">Préréglages ajoutés : %1$d. Noms remplacés : %2$d.</string>
     <string name="preset_pack_preview_replaced">Remplacés : %1$s</string>
     <string name="preset_pack_preview_safe">Seuls les préréglages enregistrés et les noms intégrés sont importés. Le filtre actif, la programmation et les autorisations restent inchangés.</string>
     <string name="backup_preset_pack_exported">Pack de préréglages exporté</string>
-    <string name="backup_preset_pack_imported">Pack importé : %1$d ajouté(s), %2$d remplacé(s)</string>
+    <string name="backup_preset_pack_imported">Pack importé : %1$d ajoutés, %2$d remplacés</string>
     <string name="backup_preset_pack_import_failed">Échec de l’importation du pack : %1$s</string>
     <string name="about_export_preset_pack">Exporter un pack de préréglages</string>
     <string name="about_import_preset_pack">Importer un pack de préréglages</string>
@@ -325,4 +325,18 @@
     <string name="about_profiles_rename_title">Renommer le profil</string>
     <string name="about_diag_log_timeline">Plage temporelle</string>
     <string name="about_diag_log_search">Rechercher dans les lignes filtrées</string>
+    <string name="notif_status_detail">%1$s · %2$s</string>
+    <string name="about_version_value">Version %1$s</string>
+    <string name="diag_level_debug">Débogage</string>
+    <string name="diag_level_info">Info</string>
+    <string name="diag_level_warn">Avertissement</string>
+    <string name="diag_level_error">Erreur</string>
+    <string name="diag_category_service">Service</string>
+    <string name="diag_category_engine">Pilote</string>
+    <string name="diag_category_schedule">Programmation</string>
+    <string name="diag_category_sensor">Capteur</string>
+    <string name="diag_category_prefs">Réglages</string>
+    <string name="diag_category_widget">Widget</string>
+    <string name="diag_category_tile">Tuile</string>
+    <string name="diag_category_profile">Préréglage</string>
 </resources>

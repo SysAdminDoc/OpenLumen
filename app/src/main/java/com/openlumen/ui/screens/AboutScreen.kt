@@ -6,6 +6,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -181,7 +182,7 @@ fun AboutScreen(
         ) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
             Text(
-                "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
+                stringResource(R.string.about_version_value, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodyLarge
             )
             Text(stringResource(R.string.about_license), style = MaterialTheme.typography.bodyMedium)
@@ -1067,7 +1068,7 @@ private fun DiagnosticsLogDialog(
                                                      else selectedLevels + lvl.name
                                 },
                                 shape = MaterialTheme.shapes.small,
-                                label = { Text(lvl.name) }
+                                label = { Text(stringResource(diagLevelLabel(lvl))) }
                             )
                         }
                     }
@@ -1088,7 +1089,7 @@ private fun DiagnosticsLogDialog(
                                                          else selectedCategories + cat.name
                                 },
                                 shape = MaterialTheme.shapes.small,
-                                label = { Text(cat.name) }
+                                label = { Text(stringResource(diagCategoryLabel(cat))) }
                             )
                         }
                     }
@@ -1208,4 +1209,30 @@ internal fun profileRenameCollides(
 ): Boolean {
     val existing = Profiles.findByName(current, newName.trim()) ?: return false
     return !existing.name.equals(oldName, ignoreCase = true)
+}
+
+/**
+ * The diagnostics filter chips used to render the enum constant name, so they
+ * read DEBUG and PREFS in every language, and could not be translated at all.
+ * The `when` is exhaustive on purpose: a new level or category is then a
+ * compile error rather than a chip that quietly says its enum name again.
+ */
+@StringRes
+private fun diagLevelLabel(level: DiagnosticsLog.Level): Int = when (level) {
+    DiagnosticsLog.Level.DEBUG -> R.string.diag_level_debug
+    DiagnosticsLog.Level.INFO -> R.string.diag_level_info
+    DiagnosticsLog.Level.WARN -> R.string.diag_level_warn
+    DiagnosticsLog.Level.ERROR -> R.string.diag_level_error
+}
+
+@StringRes
+private fun diagCategoryLabel(category: DiagnosticsLog.Category): Int = when (category) {
+    DiagnosticsLog.Category.SERVICE -> R.string.diag_category_service
+    DiagnosticsLog.Category.ENGINE -> R.string.diag_category_engine
+    DiagnosticsLog.Category.SCHEDULE -> R.string.diag_category_schedule
+    DiagnosticsLog.Category.SENSOR -> R.string.diag_category_sensor
+    DiagnosticsLog.Category.PREFS -> R.string.diag_category_prefs
+    DiagnosticsLog.Category.WIDGET -> R.string.diag_category_widget
+    DiagnosticsLog.Category.TILE -> R.string.diag_category_tile
+    DiagnosticsLog.Category.PROFILE -> R.string.diag_category_profile
 }

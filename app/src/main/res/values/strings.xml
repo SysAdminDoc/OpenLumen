@@ -83,7 +83,7 @@
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Select a preset to see details</string>
     <string name="presets_sort_label">Sort</string>
-    <string name="presets_sort_alphabetical">A–Z</string>
+    <string name="presets_sort_alphabetical">A to Z</string>
     <string name="presets_sort_recent">Recent</string>
     <string name="presets_saved_title">Saved presets</string>
     <string name="preset_saved_badge">Saved</string>
@@ -93,10 +93,10 @@
     <string name="preset_rename_label">Preset name</string>
     <string name="preset_rename_reset">Reset</string>
     <string name="preset_pack_preview_title">Preview preset pack</string>
-    <string name="preset_pack_preview_summary">This pack adds %1$d saved preset(s) and replaces %2$d existing name(s).</string>
+    <string name="preset_pack_preview_summary">Saved presets added: %1$d. Existing names replaced: %2$d.</string>
     <string name="preset_pack_preview_replaced">Replaced: %1$s</string>
     <string name="preset_pack_preview_safe">Only saved presets and built-in labels are imported. The active filter, schedule, and permissions stay unchanged.</string>
-    <string name="import_preview_title">Preview imported profile</string>
+    <string name="import_preview_title">Preview imported backup</string>
     <string name="import_preview_apply">Apply</string>
     <string name="import_preview_cancel">Cancel</string>
     <string name="import_preview_unchanged">No changes</string>
@@ -110,9 +110,9 @@
     <string name="backup_preset_pack_imported">Preset pack imported: %1$d added, %2$d replaced</string>
     <string name="backup_preset_pack_import_failed">Preset pack import failed: %1$s</string>
     <string name="error_unknown">Unknown error</string>
-    <string name="diff_line">%1$s: %2$s -> %3$s</string>
+    <string name="diff_line">%1$s: %2$s to %3$s</string>
     <string name="diff_active_preset">Active preset</string>
-    <string name="diff_engine">Engine</string>
+    <string name="diff_engine">Driver</string>
     <string name="diff_schedule_mode">Schedule mode</string>
     <string name="diff_schedule_start">Schedule start</string>
     <string name="diff_schedule_end">Schedule end</string>
@@ -123,8 +123,8 @@
     <string name="diff_light_sensor_threshold">Light sensor threshold (lux)</string>
     <string name="diff_contrast">Contrast</string>
     <string name="diff_amoled_clamp">AMOLED true-black</string>
-    <string name="diff_sunset_offset">Sunset offset (m)</string>
-    <string name="diff_sunrise_offset">Sunrise offset (m)</string>
+    <string name="diff_sunset_offset">Sunset offset (min)</string>
+    <string name="diff_sunrise_offset">Sunrise offset (min)</string>
     <string name="diff_favorites">Favorites</string>
     <string name="diff_transition">Transition</string>
     <string name="value_unset">unset</string>
@@ -138,7 +138,7 @@
     <string name="schedule_off">Off</string>
     <string name="schedule_always">Always</string>
     <string name="schedule_fixed">Fixed time</string>
-    <string name="schedule_solar">Sunset → sunrise</string>
+    <string name="schedule_solar">Sunset to sunrise</string>
     <string name="schedule_until_next_alarm">Until my next alarm</string>
     <string name="schedule_until_alarm_hint">Engages at the start time and clears when your next alarm clock fires. If no alarm is set, falls back to 12 hours after start.</string>
     <string name="schedule_start">Start</string>
@@ -146,7 +146,7 @@
     <string name="schedule_time_value">%1$s: %2$s</string>
     <string name="schedule_location_value">Location: %1$s</string>
     <string name="schedule_equal_times_error">Start and end must be different. Choose Always for an all-day schedule.</string>
-    <string name="schedule_timezone">Schedules fire against your device clock (%1$s).</string>
+    <string name="schedule_timezone">Schedules use your device clock (%1$s).</string>
     <string name="schedule_solar_timezone">Solar transitions use the selected location clock (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Exact alarms are off</string>
     <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>
@@ -155,8 +155,8 @@
     <string name="schedule_solar_location_required_short">Location required</string>
     <string name="schedule_solar_location_required_title">Solar schedule needs a location</string>
     <string name="schedule_solar_location_required_body">Enter a valid latitude and longitude before choosing Solar. The filter stays off until a location is set.</string>
-    <string name="schedule_sunset_offset">Sunset offset: %1$d m</string>
-    <string name="schedule_sunrise_offset">Sunrise offset: %1$d m</string>
+    <string name="schedule_sunset_offset">Sunset offset: %1$d min</string>
+    <string name="schedule_sunrise_offset">Sunrise offset: %1$d min</string>
     <string name="schedule_sunset_offset_name">Sunset offset</string>
     <string name="schedule_sunrise_offset_name">Sunrise offset</string>
     <string name="schedule_offset_state">%1$s %2$d minutes</string>
@@ -180,13 +180,13 @@
     <string name="driver_available">Available</string>
     <string name="driver_not_available">Not available on this device</string>
     <string name="driver_auto_resolved">Auto picks: %1$s</string>
-    <string name="driver_auto_resolved_none">Auto: no driver available — install the Overlay fallback by granting overlay permission.</string>
+    <string name="driver_auto_resolved_none">Auto: no driver available. Granting overlay permission installs the Overlay fallback.</string>
     <string name="driver_color_contract">SurfaceFlinger preserves the full color matrix. System Night Light, KCAL, and Overlay use a scalar approximation: contrast matches the transformed white point, while black and midtones may differ.</string>
     <string name="driver_force_pinned">Use this driver even if it looks unavailable</string>
     <string name="driver_force_pinned_body">Hiding root from apps also hides it from this check, and a slow Magisk prompt reads as no root. Turn this on to try the driver anyway. If it really cannot run, the filter reports the error instead of switching back to Auto.</string>
     <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
-    <string name="driver_aapm_explanation">Advanced Protection Mode may auto-revoke Accessibility-based features. OpenLumen does not use Accessibility or UsageStats, so AAPM has no effect on this app. The driver report records the platform state when available.</string>
+    <string name="driver_aapm_explanation">Advanced Protection Mode can switch off features that rely on Accessibility. OpenLumen uses neither Accessibility nor usage access, so it is unaffected. The driver report records the platform state where the device exposes it.</string>
     <string name="driver_grant_status_granted">Granted on this device.</string>
     <string name="driver_grant_status_not_granted">Not granted. The System Night Light driver is unavailable until this is granted via the ADB command below.</string>
     <string name="driver_copy_command">Copy command</string>
@@ -195,27 +195,27 @@
     <string name="driver_report_subject">OpenLumen driver report</string>
     <string name="command_copied">Command copied</string>
     <string name="report_copied">Report copied</string>
-    <string name="toast_service_start_failed">Could not start OpenLumen service. Check that overlay permission is granted, or pick a different driver in Settings.</string>
+    <string name="toast_service_start_failed">Could not start OpenLumen. Check that overlay permission is granted, or pick a different driver on the Driver tab.</string>
     <string name="clipboard_adb_grant">OpenLumen adb grant</string>
     <string name="clipboard_driver_report">OpenLumen driver report</string>
     <string name="clipboard_emergency_off">OpenLumen emergency off</string>
     <string name="clipboard_automation_token">OpenLumen automation token</string>
     <string name="overlay_caveats_title">About the Overlay driver</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">Overlay alpha is capped at ~80% by Android 12+ untrusted-touch rules. For deeper dim, use System Night Light (with Extra Dim) or a root driver.</string>
-    <string name="overlay_touch_pass_explanation">While the overlay is on, Android may block taps on system installer / permission dialogs. This is the platform\'s tapjacking protection, not an OpenLumen bug — disable the filter via tile or notification before installing apps.</string>
+    <string name="overlay_touch_pass_explanation">While the overlay is on, Android may block taps on system installer and permission dialogs. That is the platform\'s tapjacking protection, not an OpenLumen bug. Turn the filter off from the tile or the notification before installing apps.</string>
 
     <string name="about_version">Version</string>
     <string name="about_license">License: GPL-3.0-or-later</string>
     <string name="about_source">Source: github.com/SysAdminDoc/OpenLumen</string>
-    <string name="about_offline" formatted="false">100% offline — no INTERNET permission requested.</string>
+    <string name="about_offline" formatted="false">100% offline. No INTERNET permission is requested.</string>
     <string name="about_backup_title">Backup</string>
     <string name="about_backup_body">Save or restore your preferences as a JSON file. Useful for moving between devices or sharing presets.</string>
-    <string name="about_export_profile">Export profile</string>
-    <string name="about_import_profile">Import profile</string>
+    <string name="about_export_profile">Export backup</string>
+    <string name="about_import_profile">Import backup</string>
     <string name="about_export_preset_pack">Export preset pack</string>
     <string name="about_import_preset_pack">Import preset pack</string>
     <string name="backup_recovery_title">Saved preferences need recovery</string>
-    <string name="backup_recovery_body">OpenLumen could not read its saved settings (%1$d characters). It is using safe defaults. Export a bounded recovery copy (%2$d characters) before resetting.</string>
+    <string name="backup_recovery_body">OpenLumen could not read its saved settings (%1$d characters), so it is running on defaults. Export what can still be read (%2$d characters) before you reset.</string>
     <string name="backup_recovery_export">Export recovery copy</string>
     <string name="backup_recovery_reset_action">Reset to defaults</string>
     <string name="backup_recovery_reset_title">Reset unreadable preferences?</string>
@@ -283,13 +283,13 @@
     <string name="notif_title_filtering">OpenLumen filtering</string>
     <string name="notif_title_standby">OpenLumen standby</string>
     <string name="notif_status_filtering">Filtering active</string>
-    <string name="notif_status_standby">Standby — filter not applied</string>
+    <string name="notif_status_standby">Standby, filter not applied</string>
     <string name="notif_action_off">Turn off</string>
     <string name="notif_action_cycle">Next preset</string>
-    <string name="notif_alarm_countdown">%1$d h %2$d m until alarm</string>
+    <string name="notif_alarm_countdown">%1$d h %2$d min until alarm</string>
     <string name="notif_solar_location_required">Solar schedule needs a valid location</string>
     <string name="notif_permission_title">Notifications are off</string>
-    <string name="notif_permission_rationale">Allow notifications so OpenLumen can show the foreground-service status and recovery actions.</string>
+    <string name="notif_permission_rationale">Allow notifications so OpenLumen can show its status and its recovery actions.</string>
     <string name="notif_permission_settings_body">Android has blocked another prompt. Enable OpenLumen notifications in system settings to keep the service status visible.</string>
     <string name="notif_permission_retry">Try again</string>
     <string name="notif_permission_settings">Open notification settings</string>
@@ -331,4 +331,18 @@
     <string name="location_search_cities">Search cities</string>
     <string name="location_no_city_matches">No cities match this search.</string>
     <string name="location_use_city">Use</string>
+    <string name="notif_status_detail">%1$s · %2$s</string>
+    <string name="about_version_value">Version %1$s</string>
+    <string name="diag_level_debug">Debug</string>
+    <string name="diag_level_info">Info</string>
+    <string name="diag_level_warn">Warning</string>
+    <string name="diag_level_error">Error</string>
+    <string name="diag_category_service">Service</string>
+    <string name="diag_category_engine">Driver</string>
+    <string name="diag_category_schedule">Schedule</string>
+    <string name="diag_category_sensor">Sensor</string>
+    <string name="diag_category_prefs">Settings</string>
+    <string name="diag_category_widget">Widget</string>
+    <string name="diag_category_tile">Tile</string>
+    <string name="diag_category_profile">Preset</string>
 </resources>

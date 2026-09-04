@@ -81,14 +81,14 @@
     <string name="preset_capability_system_correction">OpenLumen 独自の色の混合（システムの色彩補正が代わりに適用されます）</string>
     <string name="preset_capability_separator">、</string>
     <string name="preset_detail_empty">プリセットを選択して詳細を表示</string>
-    <string name="import_preview_title">インポートしたプロファイルのプレビュー</string>
+    <string name="import_preview_title">読み込むバックアップを確認</string>
     <string name="import_preview_apply">適用</string>
     <string name="import_preview_cancel">キャンセル</string>
     <string name="import_preview_unchanged">変更なし</string>
     <string name="import_preview_duplicate_profiles">重複するプロファイル名をスキップしました: %1$s</string>
-    <string name="diff_line">%1$s: %2$s -> %3$s</string>
+    <string name="diff_line">%1$s: %2$s から %3$s</string>
     <string name="diff_active_preset">有効なプリセット</string>
-    <string name="diff_engine">エンジン</string>
+    <string name="diff_engine">ドライバー</string>
     <string name="diff_schedule_mode">スケジュールモード</string>
     <string name="diff_schedule_start">スケジュール開始</string>
     <string name="diff_schedule_end">スケジュール終了</string>
@@ -99,8 +99,8 @@
     <string name="diff_light_sensor_threshold">照度センサーしきい値 (lux)</string>
     <string name="diff_contrast">コントラスト</string>
     <string name="diff_amoled_clamp">AMOLED 完全黒</string>
-    <string name="diff_sunset_offset">日没オフセット (分)</string>
-    <string name="diff_sunrise_offset">日の出オフセット (分)</string>
+    <string name="diff_sunset_offset">日の入りのオフセット（分）</string>
+    <string name="diff_sunrise_offset">日の出のオフセット（分）</string>
     <string name="diff_favorites">お気に入り</string>
     <string name="diff_transition">トランジション</string>
     <string name="value_unset">未設定</string>
@@ -114,7 +114,7 @@
     <string name="schedule_off">オフ</string>
     <string name="schedule_always">常にオン</string>
     <string name="schedule_fixed">時刻指定</string>
-    <string name="schedule_solar">日没 → 日の出</string>
+    <string name="schedule_solar">日の入りから日の出まで</string>
     <string name="schedule_until_next_alarm">次のアラームまで</string>
     <string name="schedule_until_alarm_hint">開始時刻に有効になり、次のアラームが鳴ると解除されます。アラームが設定されていない場合は、開始から12時間後に解除されます。</string>
     <string name="schedule_start">開始</string>
@@ -122,7 +122,7 @@
     <string name="schedule_time_value">%1$s: %2$s</string>
     <string name="schedule_location_value">位置: %1$s</string>
     <string name="schedule_equal_times_error">開始時刻と終了時刻は異なる必要があります。終日有効にするには「常にオン」を選択してください。</string>
-    <string name="schedule_timezone">スケジュールはデバイスの時計 (%1$s) に基づいて実行されます。</string>
+    <string name="schedule_timezone">スケジュールは端末の時計（%1$s）を使います。</string>
     <string name="schedule_solar_timezone">太陽時刻の切り替えには選択した場所の時計 (%1$s) を使用します。</string>
     <string name="schedule_exact_alarm_warning_title">正確なアラームがオフです</string>
     <string name="schedule_exact_alarm_warning_body">Android が OpenLumen に不正確なアラームのみを許可しているため、時刻指定の切り替えが遅れることがあります。</string>
@@ -131,8 +131,8 @@
     <string name="schedule_solar_location_required_short">位置情報が必要です</string>
     <string name="schedule_solar_location_required_title">ソーラースケジュールには位置情報が必要です</string>
     <string name="schedule_solar_location_required_body">ソーラーを選択する前に、有効な緯度と経度を入力してください。位置情報を設定するまでフィルターはオフのままです。</string>
-    <string name="schedule_sunset_offset">日没オフセット: %1$d分</string>
-    <string name="schedule_sunrise_offset">日の出オフセット: %1$d分</string>
+    <string name="schedule_sunset_offset">日の入りのオフセット: %1$d 分</string>
+    <string name="schedule_sunrise_offset">日の出のオフセット: %1$d 分</string>
     <string name="schedule_sunset_offset_name">日没オフセット</string>
     <string name="schedule_sunrise_offset_name">日の出オフセット</string>
     <string name="schedule_offset_state">%1$s %2$d分</string>
@@ -156,13 +156,13 @@
     <string name="driver_available">利用可能</string>
     <string name="driver_not_available">このデバイスでは利用できません</string>
     <string name="driver_auto_resolved">自動選択: %1$s</string>
-    <string name="driver_auto_resolved_none">自動: 利用可能なドライバーがありません — オーバーレイ権限を許可してオーバーレイフォールバックをインストールしてください。</string>
+    <string name="driver_auto_resolved_none">自動: 利用できるドライバーがありません。オーバーレイ権限を許可するとオーバーレイの代替ドライバーを使えます。</string>
     <string name="driver_color_contract">SurfaceFlinger は完全なカラーマトリクスを保持します。システムの夜間モード、KCAL、Overlay はスカラー近似を使用するため、コントラストは変換後の白色点に一致しますが、黒と中間調は異なる場合があります。</string>
     <string name="driver_force_pinned">利用不可に見えてもこのドライバを使う</string>
     <string name="driver_force_pinned_body">アプリから root を隠す設定はこの判定からも隠し、Magisk の許可を遅く押すと root なしに見えます。これをオンにするとそれでも試します。本当に動かない場合は、自動に戻らずエラーを報告します。</string>
     <string name="driver_grant_secure_settings">ADB で WRITE_SECURE_SETTINGS を許可する</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
-    <string name="driver_aapm_explanation">Advanced Protection Mode は Accessibility ベースの機能を自動的に取り消す場合があります。OpenLumen は Accessibility も UsageStats も使用しないため、AAPM はこのアプリに影響しません。利用可能な場合、ドライバーレポートにプラットフォームの状態が記録されます。</string>
+    <string name="driver_aapm_explanation">高度な保護モードは、ユーザー補助機能に依存する機能を無効にすることがあります。OpenLumen はユーザー補助機能も使用状況へのアクセスも使わないため、影響を受けません。ドライバーレポートには、端末が公開している場合に限りプラットフォームの状態を記録します。</string>
     <string name="driver_grant_status_granted">このデバイスで許可済みです。</string>
     <string name="driver_grant_status_not_granted">未許可です。以下の ADB コマンドで許可するまで システムの夜間モード ドライバーは利用できません。</string>
     <string name="driver_copy_command">コマンドをコピー</string>
@@ -171,25 +171,25 @@
     <string name="driver_report_subject">OpenLumen ドライバーレポート</string>
     <string name="command_copied">コマンドをコピーしました</string>
     <string name="report_copied">レポートをコピーしました</string>
-    <string name="toast_service_start_failed">OpenLumen サービスを開始できませんでした。オーバーレイ権限が許可されているか確認するか、設定から別のドライバーを選択してください。</string>
+    <string name="toast_service_start_failed">OpenLumen を起動できませんでした。オーバーレイ権限を確認するか、「ドライバー」タブで別のドライバーを選んでください。</string>
     <string name="clipboard_adb_grant">OpenLumen ADB 許可</string>
     <string name="clipboard_driver_report">OpenLumen ドライバーレポート</string>
     <string name="clipboard_emergency_off">OpenLumen 緊急オフ</string>
     <string name="clipboard_automation_token">OpenLumen 自動化トークン</string>
     <string name="overlay_caveats_title">オーバーレイドライバーについて</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">Android 12以降の非信頼タッチ制限により、オーバーレイの透過度は約80%に制限されています。より深い減光には システムの夜間モード またはrootドライバーをご使用ください。</string>
-    <string name="overlay_touch_pass_explanation">オーバーレイ表示中、Androidがシステムインストーラーや権限ダイアログへのタップをブロックすることがあります。これはプラットフォームのタップジャッキング保護であり、OpenLumen の不具合ではありません — アプリをインストールする前にタイルまたは通知からフィルターを無効にしてください。</string>
+    <string name="overlay_touch_pass_explanation">オーバーレイが有効な間、Android はインストーラーや権限のダイアログへのタップを防ぐことがあります。これはプラットフォームのタップジャック対策であり、OpenLumen の不具合ではありません。アプリを入れる前に、タイルか通知からフィルターを切ってください。</string>
 
     <string name="about_version">バージョン</string>
     <string name="about_license">ライセンス: GPL-3.0-or-later</string>
     <string name="about_source">ソース: github.com/SysAdminDoc/OpenLumen</string>
-    <string name="about_offline" formatted="false">100%オフライン — INTERNET権限は要求しません。</string>
+    <string name="about_offline" formatted="false">100% オフライン。INTERNET 権限は要求しません。</string>
     <string name="about_backup_title">バックアップ</string>
     <string name="about_backup_body">設定をJSONファイルとして保存・復元できます。デバイス間の移行やプリセットの共有に便利です。</string>
-    <string name="about_export_profile">プロファイルをエクスポート</string>
-    <string name="about_import_profile">プロファイルをインポート</string>
+    <string name="about_export_profile">バックアップを書き出す</string>
+    <string name="about_import_profile">バックアップを読み込む</string>
     <string name="backup_recovery_title">保存した設定の復旧が必要です</string>
-    <string name="backup_recovery_body">OpenLumenは保存した設定（%1$d文字）を読み込めませんでした。安全な初期値を使用しています。リセットする前に、制限付きの復旧コピー（%2$d文字）をエクスポートしてください。</string>
+    <string name="backup_recovery_body">OpenLumen は保存された設定（%1$d 文字）を読み取れなかったため、既定値で動作しています。リセットする前に、読み取れる分（%2$d 文字）を書き出してください。</string>
     <string name="backup_recovery_export">復旧コピーをエクスポート</string>
     <string name="backup_recovery_reset_action">初期値にリセット</string>
     <string name="backup_recovery_reset_title">読み込めない設定をリセットしますか？</string>
@@ -248,13 +248,13 @@
     <string name="notif_title_filtering">OpenLumen フィルタ適用中</string>
     <string name="notif_title_standby">OpenLumen 待機中</string>
     <string name="notif_status_filtering">フィルタ適用中</string>
-    <string name="notif_status_standby">待機中 — フィルタ未適用</string>
+    <string name="notif_status_standby">待機中、フィルターは未適用</string>
     <string name="notif_action_off">オフにする</string>
     <string name="notif_action_cycle">次のプリセット</string>
-    <string name="notif_alarm_countdown">アラームまで %1$d時間%2$d分</string>
+    <string name="notif_alarm_countdown">アラームまで %1$d 時間 %2$d 分</string>
     <string name="notif_solar_location_required">ソーラースケジュールには有効な位置情報が必要です</string>
     <string name="notif_permission_title">通知がオフです</string>
-    <string name="notif_permission_rationale">通知を許可すると、OpenLumenのフォアグラウンドサービス状態と復旧操作を表示できます。</string>
+    <string name="notif_permission_rationale">OpenLumen が状態と復旧操作を表示できるよう、通知を許可してください。</string>
     <string name="notif_permission_settings_body">Androidが再度の確認をブロックしました。システム設定でOpenLumenの通知を有効にしてください。</string>
     <string name="notif_permission_retry">再試行</string>
     <string name="notif_permission_settings">通知設定を開く</string>
@@ -303,7 +303,7 @@
     <string name="backup_import_failed">インポートに失敗しました: %1$s</string>
     <string name="error_unknown">不明なエラー</string>
     <string name="presets_sort_label">並べ替え</string>
-    <string name="presets_sort_alphabetical">A–Z</string>
+    <string name="presets_sort_alphabetical">A から Z</string>
     <string name="presets_sort_recent">最近使用</string>
     <string name="presets_saved_title">保存済みプリセット</string>
     <string name="preset_saved_badge">保存済み</string>
@@ -313,7 +313,7 @@
     <string name="preset_rename_label">プリセット名</string>
     <string name="preset_rename_reset">リセット</string>
     <string name="preset_pack_preview_title">プリセットパックの確認</string>
-    <string name="preset_pack_preview_summary">このパックは保存済みプリセットを%1$d件追加し、既存の名前を%2$d件置き換えます。</string>
+    <string name="preset_pack_preview_summary">追加される保存済みプリセット: %1$d。置き換えられる名前: %2$d。</string>
     <string name="preset_pack_preview_replaced">置き換え: %1$s</string>
     <string name="preset_pack_preview_safe">保存済みプリセットと組み込みラベルだけを取り込みます。現在のフィルター、スケジュール、権限は変更されません。</string>
     <string name="backup_preset_pack_exported">プリセットパックをエクスポートしました</string>
@@ -325,4 +325,18 @@
     <string name="about_profiles_rename_title">プロファイル名を変更</string>
     <string name="about_diag_log_timeline">時間範囲</string>
     <string name="about_diag_log_search">フィルター済み行を検索</string>
+    <string name="notif_status_detail">%1$s · %2$s</string>
+    <string name="about_version_value">バージョン %1$s</string>
+    <string name="diag_level_debug">デバッグ</string>
+    <string name="diag_level_info">情報</string>
+    <string name="diag_level_warn">警告</string>
+    <string name="diag_level_error">エラー</string>
+    <string name="diag_category_service">サービス</string>
+    <string name="diag_category_engine">ドライバー</string>
+    <string name="diag_category_schedule">スケジュール</string>
+    <string name="diag_category_sensor">センサー</string>
+    <string name="diag_category_prefs">設定</string>
+    <string name="diag_category_widget">ウィジェット</string>
+    <string name="diag_category_tile">タイル</string>
+    <string name="diag_category_profile">プリセット</string>
 </resources>
