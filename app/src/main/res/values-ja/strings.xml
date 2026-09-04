@@ -196,6 +196,7 @@
     <string name="about_view_crash_log">クラッシュログを表示</string>
     <string name="about_crash_log_title">クラッシュログ</string>
     <string name="about_crash_log_empty">クラッシュの記録はありません。</string>
+    <string name="about_crash_log_cleared">クラッシュログを消去しました</string>
     <string name="about_automation_title">自動化アクセス</string>
     <string name="about_automation_body">これをオンにして下のトークンを渡したアプリだけが OpenLumen を操作できます。フィルターをオフにするのにトークンは不要なので、緊急コマンドは常に使えます。</string>
     <string name="about_automation_enable">他のアプリからの操作を許可</string>
@@ -203,6 +204,7 @@
     <string name="about_automation_token_pending">生成中…</string>
     <string name="about_automation_token_warning">パスワードと同じように扱ってください。知っている人はフィルターを変更できます。プロファイルの書き出しには含まれません。</string>
     <string name="about_automation_copy_token">トークンをコピー</string>
+    <string name="about_automation_token_regenerated">新しいトークンを生成しました。以前のトークンを使っていたものを更新してください。</string>
     <string name="about_automation_regenerate">新しいトークン</string>
     <string name="about_automation_token_copied">トークンをコピーしました</string>
     <string name="about_emergency_off_title">緊急オフ</string>
@@ -215,6 +217,9 @@
     <string name="about_diag_log_filter_level">レベル</string>
     <string name="about_diag_log_filter_category">カテゴリ</string>
     <string name="about_diag_log_no_matches">現在のフィルターに一致する行はありません。</string>
+    <string name="about_diag_log_copy">行をコピー</string>
+    <string name="about_diag_log_copied">絞り込んだ行をコピーしました</string>
+    <string name="about_diag_log_cleared">診断ログを消去しました</string>
     <string name="about_profiles_title">プロファイル</string>
     <string name="about_profiles_body">現在のプリセット、スケジュール、強度、減光、お気に入りを名前を付けてプロファイルとして保存できます。後からこのリストから読み込めます。</string>
     <string name="about_profiles_save">現在の設定を保存…</string>
@@ -275,6 +280,7 @@
     <string name="light_sensor_threshold_state">%1$d lux しきい値</string>
     <string name="light_sensor_threshold_name">環境光のしきい値</string>
     <string name="light_sensor_hysteresis">%1$d lux 未満で適用、ちらつき防止のため %2$d lux 超で解除</string>
+    <string name="light_sensor_threshold_set">しきい値を %1$d ルクスに設定しました</string>
     <string name="light_sensor_calibrate">キャリブレーション: 現在の読み取り値をしきい値に設定</string>
 
     <string name="location_title">位置情報を設定</string>
@@ -304,6 +310,7 @@
     <string name="preset_rename_action">名前を変更</string>
     <string name="preset_rename_title">プリセット名を変更</string>
     <string name="preset_rename_label">プリセット名</string>
+    <string name="preset_name_reset">名前をリセットしました</string>
     <string name="preset_rename_reset">リセット</string>
     <string name="preset_pack_preview_title">プリセットパックの確認</string>
     <string name="preset_pack_preview_summary">%1$s。%2$s。</string>

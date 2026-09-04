@@ -56,6 +56,20 @@ object CrashLogger {
         }
     }
 
+    /** Put back a snapshot [read] returned, for the undo on Clear. */
+    fun restore(context: Context, snapshot: String): Boolean {
+        if (snapshot.isBlank()) return false
+        return runCatching {
+            val f = File(context.filesDir, FILENAME)
+            synchronized(writeLock) {
+                val since = if (f.exists()) f.readText() else ""
+                f.writeText(snapshot.trimEnd('\n') + "\n" + since)
+                if (f.length() > MAX_BYTES) trimHeadLocked(f)
+            }
+            true
+        }.getOrDefault(false)
+    }
+
     fun clear(context: Context): Boolean {
         val f = File(context.filesDir, FILENAME)
         synchronized(writeLock) {

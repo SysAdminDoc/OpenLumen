@@ -196,6 +196,7 @@
     <string name="about_view_crash_log">Absturzprotokoll anzeigen</string>
     <string name="about_crash_log_title">Absturzprotokoll</string>
     <string name="about_crash_log_empty">Keine Abstürze aufgezeichnet.</string>
+    <string name="about_crash_log_cleared">Absturzprotokoll gelöscht</string>
     <string name="about_automation_title">Automatisierungszugriff</string>
     <string name="about_automation_body">Andere Apps koennen OpenLumen nur steuern, wenn du das hier einschaltest und ihnen den Token unten gibst. Zum Ausschalten des Filters wird nie ein Token gebraucht, der Notfallbefehl funktioniert also immer.</string>
     <string name="about_automation_enable">Steuerung durch andere Apps erlauben</string>
@@ -203,6 +204,7 @@
     <string name="about_automation_token_pending">Wird erzeugt …</string>
     <string name="about_automation_token_warning">Behandle das wie ein Passwort. Wer ihn hat, kann deinen Filter aendern. Profil-Exporte enthalten ihn nie.</string>
     <string name="about_automation_copy_token">Token kopieren</string>
+    <string name="about_automation_token_regenerated">Neues Token erstellt. Aktualisieren Sie alles, was das alte verwendet hat.</string>
     <string name="about_automation_regenerate">Neuer Token</string>
     <string name="about_automation_token_copied">Token kopiert</string>
     <string name="about_emergency_off_title">Notabschaltung</string>
@@ -215,6 +217,9 @@
     <string name="about_diag_log_filter_level">Stufen</string>
     <string name="about_diag_log_filter_category">Kategorien</string>
     <string name="about_diag_log_no_matches">Keine Zeilen entsprechen dem aktuellen Filter.</string>
+    <string name="about_diag_log_copy">Zeilen kopieren</string>
+    <string name="about_diag_log_copied">Gefilterte Zeilen kopiert</string>
+    <string name="about_diag_log_cleared">Diagnoseprotokoll gelöscht</string>
     <string name="about_profiles_title">Profile</string>
     <string name="about_profiles_body">Speichern Sie die aktuelle Vorlage, den Zeitplan, die Intensität, Abdunklung und Favoriten als benanntes Profil. Laden Sie es später aus dieser Liste.</string>
     <string name="about_profiles_save">Aktuelles speichern als…</string>
@@ -275,6 +280,7 @@
     <string name="light_sensor_threshold_state">%1$d Lux Schwellenwert</string>
     <string name="light_sensor_threshold_name">Schwellenwert für Umgebungslicht</string>
     <string name="light_sensor_hysteresis">Aktivierung unter %1$d Lux; Deaktivierung über %2$d Lux gegen Flackern</string>
+    <string name="light_sensor_threshold_set">Schwelle auf %1$d Lux gesetzt</string>
     <string name="light_sensor_calibrate">Kalibrieren: aktuellen Messwert als Schwellenwert verwenden</string>
 
     <string name="location_title">Standort festlegen</string>
@@ -304,6 +310,7 @@
     <string name="preset_rename_action">Umbenennen</string>
     <string name="preset_rename_title">Preset umbenennen</string>
     <string name="preset_rename_label">Preset-Name</string>
+    <string name="preset_name_reset">Name zurückgesetzt</string>
     <string name="preset_rename_reset">Zurücksetzen</string>
     <string name="preset_pack_preview_title">Preset-Paket prüfen</string>
     <string name="preset_pack_preview_summary">%1$s. %2$s.</string>

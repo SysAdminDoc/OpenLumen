@@ -196,6 +196,7 @@
     <string name="about_view_crash_log">Voir le journal de plantages</string>
     <string name="about_crash_log_title">Journal de plantages</string>
     <string name="about_crash_log_empty">Aucun plantage enregistré.</string>
+    <string name="about_crash_log_cleared">Journal de plantage effacé</string>
     <string name="about_automation_title">Accès pour l\'automatisation</string>
     <string name="about_automation_body">Les autres applis ne peuvent piloter OpenLumen que si vous activez ceci et leur donnez le jeton ci-dessous. Éteindre le filtre ne demande jamais de jeton, la commande d\'urgence marche donc toujours.</string>
     <string name="about_automation_enable">Autoriser le contrôle par d\'autres applis</string>
@@ -203,6 +204,7 @@
     <string name="about_automation_token_pending">Generation…</string>
     <string name="about_automation_token_warning">Traitez-le comme un mot de passe. Qui l\'a peut modifier votre filtre. Les sauvegardes exportées ne le contiennent jamais.</string>
     <string name="about_automation_copy_token">Copier le jeton</string>
+    <string name="about_automation_token_regenerated">Nouveau jeton généré. Mettez à jour tout ce qui utilisait l\'ancien.</string>
     <string name="about_automation_regenerate">Nouveau jeton</string>
     <string name="about_automation_token_copied">Jeton copie</string>
     <string name="about_emergency_off_title">Arrêt d\'urgence</string>
@@ -215,6 +217,9 @@
     <string name="about_diag_log_filter_level">Niveaux</string>
     <string name="about_diag_log_filter_category">Categories</string>
     <string name="about_diag_log_no_matches">Aucune ligne ne correspond au filtre actuel.</string>
+    <string name="about_diag_log_copy">Copier les lignes</string>
+    <string name="about_diag_log_copied">Lignes filtrées copiées</string>
+    <string name="about_diag_log_cleared">Journal de diagnostic effacé</string>
     <string name="about_profiles_title">Profils</string>
     <string name="about_profiles_body">Enregistrez le préréglage actuel, la programmation, l\'intensité, la réduction et les favoris sous un profil nommé. Rechargez-le ensuite depuis cette liste.</string>
     <string name="about_profiles_save">Enregistrer sous…</string>
@@ -275,6 +280,7 @@
     <string name="light_sensor_threshold_state">Seuil de %1$d lux</string>
     <string name="light_sensor_threshold_name">Seuil de lumière ambiante</string>
     <string name="light_sensor_hysteresis">Activation sous %1$d lux ; désactivation au-dessus de %2$d lux pour éviter le scintillement</string>
+    <string name="light_sensor_threshold_set">Seuil réglé sur %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrer : utiliser la mesure actuelle comme seuil</string>
 
     <string name="location_title">Définir la position</string>
@@ -304,6 +310,7 @@
     <string name="preset_rename_action">Renommer</string>
     <string name="preset_rename_title">Renommer le préréglage</string>
     <string name="preset_rename_label">Nom du préréglage</string>
+    <string name="preset_name_reset">Nom réinitialisé</string>
     <string name="preset_rename_reset">Réinitialiser</string>
     <string name="preset_pack_preview_title">Aperçu du pack</string>
     <string name="preset_pack_preview_summary">%1$s. %2$s.</string>

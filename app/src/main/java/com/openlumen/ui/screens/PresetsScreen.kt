@@ -1,5 +1,6 @@
 package com.openlumen.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -92,6 +94,8 @@ fun PresetsScreen(
         pinned = prefs.engine.toEngineKind(),
         forcePinned = prefs.forcePinnedEngine
     )
+    val ctx = LocalContext.current
+    val nameResetMessage = stringResource(R.string.preset_name_reset)
     val favorites = prefs.favoritePresetKeys.toSet()
     val scope = rememberCoroutineScope()
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
@@ -201,6 +205,7 @@ fun PresetsScreen(
                             onClick = {
                                 vm.renamePreset(key, "")
                                 renamePresetKey = null
+                                Toast.makeText(ctx, nameResetMessage, Toast.LENGTH_SHORT).show()
                             }
                         ) { Text(stringResource(R.string.preset_rename_reset)) }
                     }

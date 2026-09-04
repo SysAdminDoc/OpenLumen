@@ -87,6 +87,7 @@
     <string name="preset_rename_action">Rename</string>
     <string name="preset_rename_title">Rename preset</string>
     <string name="preset_rename_label">Preset name</string>
+    <string name="preset_name_reset">Name reset</string>
     <string name="preset_rename_reset">Reset</string>
     <string name="preset_pack_preview_title">Preview preset pack</string>
     <string name="preset_pack_preview_summary">%1$s. %2$s.</string>
@@ -222,6 +223,7 @@
     <string name="about_view_crash_log">View crash log</string>
     <string name="about_crash_log_title">Crash log</string>
     <string name="about_crash_log_empty">No crashes recorded.</string>
+    <string name="about_crash_log_cleared">Crash log cleared</string>
     <string name="about_automation_title">Automation access</string>
     <string name="about_automation_body">Other apps can only control OpenLumen when you turn this on and give them the token below. Turning the filter off never needs a token, so the emergency command always works.</string>
     <string name="about_automation_enable">Allow control from other apps</string>
@@ -229,6 +231,7 @@
     <string name="about_automation_token_pending">Generating…</string>
     <string name="about_automation_token_warning">Treat this like a password. Anyone who has it can change your filter. Profile exports never include it.</string>
     <string name="about_automation_copy_token">Copy token</string>
+    <string name="about_automation_token_regenerated">New token generated. Update anything that used the old one.</string>
     <string name="about_automation_regenerate">New token</string>
     <string name="about_automation_token_copied">Token copied</string>
     <string name="about_emergency_off_title">Emergency off</string>
@@ -243,6 +246,9 @@
     <string name="about_diag_log_timeline">Timeline range</string>
     <string name="about_diag_log_search">Search filtered lines</string>
     <string name="about_diag_log_no_matches">No lines match the current filter.</string>
+    <string name="about_diag_log_copy">Copy lines</string>
+    <string name="about_diag_log_copied">Filtered lines copied</string>
+    <string name="about_diag_log_cleared">Diagnostics log cleared</string>
     <string name="about_profiles_title">Profiles</string>
     <string name="about_profiles_body">Save the current preset, schedule, intensity, dim, and favorites as a named profile. Load it later from this list.</string>
     <string name="about_profiles_save">Save current as…</string>
@@ -310,6 +316,7 @@
     <string name="light_sensor_threshold_state">%1$d lux threshold</string>
     <string name="light_sensor_threshold_name">Ambient-light threshold</string>
     <string name="light_sensor_hysteresis">Engages below %1$d lux; disengages above %2$d lux to prevent flicker</string>
+    <string name="light_sensor_threshold_set">Threshold set to %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrate: use current reading as threshold</string>
 
     <string name="location_title">Set location</string>

@@ -196,6 +196,7 @@
     <string name="about_view_crash_log">Ver registro de falhas</string>
     <string name="about_crash_log_title">Registro de falhas</string>
     <string name="about_crash_log_empty">Nenhuma falha registrada.</string>
+    <string name="about_crash_log_cleared">Registo de falhas apagado</string>
     <string name="about_automation_title">Acesso para automação</string>
     <string name="about_automation_body">Outras apps só controlam o OpenLumen se ativar isto e lhes passar o token abaixo. Desligar o filtro nunca pede token, por isso o comando de emergência funciona sempre.</string>
     <string name="about_automation_enable">Permitir controle por outros apps</string>
@@ -203,6 +204,7 @@
     <string name="about_automation_token_pending">Gerando…</string>
     <string name="about_automation_token_warning">Trate-o como uma palavra-passe. Quem o tiver pode alterar o seu filtro. As cópias exportadas nunca o contêm.</string>
     <string name="about_automation_copy_token">Copiar token</string>
+    <string name="about_automation_token_regenerated">Novo token gerado. Atualize tudo o que usava o anterior.</string>
     <string name="about_automation_regenerate">Novo token</string>
     <string name="about_automation_token_copied">Token copiado</string>
     <string name="about_emergency_off_title">Desligamento de emergência</string>
@@ -215,6 +217,9 @@
     <string name="about_diag_log_filter_level">Níveis</string>
     <string name="about_diag_log_filter_category">Categorias</string>
     <string name="about_diag_log_no_matches">Nenhuma linha corresponde ao filtro atual.</string>
+    <string name="about_diag_log_copy">Copiar linhas</string>
+    <string name="about_diag_log_copied">Linhas filtradas copiadas</string>
+    <string name="about_diag_log_cleared">Registo de diagnóstico apagado</string>
     <string name="about_profiles_title">Perfis</string>
     <string name="about_profiles_body">Salve o predefinido atual, agendamento, intensidade, escurecimento e favoritos como um perfil nomeado. Carregue-o depois a partir desta lista.</string>
     <string name="about_profiles_save">Salvar atual como…</string>
@@ -275,6 +280,7 @@
     <string name="light_sensor_threshold_state">limiar de %1$d lux</string>
     <string name="light_sensor_threshold_name">Limiar de luz ambiente</string>
     <string name="light_sensor_hysteresis">Ativa abaixo de %1$d lux; desativa acima de %2$d lux para evitar cintilação</string>
+    <string name="light_sensor_threshold_set">Limiar definido em %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrar: usar leitura atual como limiar</string>
 
     <string name="location_title">Definir localização</string>
@@ -304,6 +310,7 @@
     <string name="preset_rename_action">Mudar nome</string>
     <string name="preset_rename_title">Mudar nome da predefinição</string>
     <string name="preset_rename_label">Nome da predefinição</string>
+    <string name="preset_name_reset">Nome reposto</string>
     <string name="preset_rename_reset">Repor</string>
     <string name="preset_pack_preview_title">Pré-visualizar pacote</string>
     <string name="preset_pack_preview_summary">%1$s. %2$s.</string>

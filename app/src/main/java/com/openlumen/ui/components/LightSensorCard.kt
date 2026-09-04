@@ -1,5 +1,6 @@
 package com.openlumen.ui.components
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,6 +47,12 @@ fun LightSensorCard(
     onThresholdChange: (Float) -> Unit,
     onUseCurrent: () -> Unit
 ) {
+    val ctx = LocalContext.current
+    // Read here rather than in the click lambda: a Context captured in a lambda
+    // does not re-read its resources when the configuration changes, so the
+    // message would keep the language the card was first composed in.
+    val thresholdSetMessage =
+        stringResource(R.string.light_sensor_threshold_set, currentLux.roundToInt())
     var thresholdDraft by remember { mutableFloatStateOf(threshold) }
     LaunchedEffect(threshold) {
         thresholdDraft = threshold
@@ -119,7 +128,14 @@ fun LightSensorCard(
             )
 
             LumenOutlinedButton(
-                onClick = onUseCurrent,
+                onClick = {
+                    onUseCurrent()
+                    // The button reads "Calibrate" and the slider it moves is
+                    // above the fold on a short screen, so without this the tap
+                    // looked like it had done nothing. It also gives TalkBack
+                    // the new value, which the slider alone does not announce.
+                    Toast.makeText(ctx, thresholdSetMessage, Toast.LENGTH_SHORT).show()
+                },
                 enabled = enabled && available && currentLux >= 0,
                 modifier = Modifier.fillMaxWidth()
             ) {

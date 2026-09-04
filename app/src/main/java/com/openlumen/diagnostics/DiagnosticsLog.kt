@@ -130,6 +130,27 @@ object DiagnosticsLog {
         }
     }
 
+    /**
+     * Put back a snapshot [read] returned, for the undo on Clear.
+     *
+     * Anything logged since the clear is kept and the snapshot goes in front of
+     * it. Overwriting would throw away lines the user never asked to lose, and
+     * the timeline is ordered by the stamp on each line rather than by position
+     * in the file, so the order still reads correctly.
+     */
+    fun restore(context: Context, snapshot: String): Boolean {
+        if (snapshot.isBlank()) return false
+        return runCatching {
+            val f = File(context.filesDir, FILENAME)
+            synchronized(writeLock) {
+                val since = if (f.exists()) f.readText() else ""
+                f.writeText(snapshot.trimEnd('\n') + "\n" + since)
+                if (f.length() > MAX_BYTES) trimHeadLocked(f)
+            }
+            true
+        }.getOrDefault(false)
+    }
+
     fun clear(context: Context): Boolean {
         val f = File(context.filesDir, FILENAME)
         synchronized(writeLock) {

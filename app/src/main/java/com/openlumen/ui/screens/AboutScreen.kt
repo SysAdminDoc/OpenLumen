@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -158,6 +159,9 @@ fun AboutScreen(
     val currentPrefs by vm.state.collectAsStateWithLifecycle()
     val profileDeletedMessage = stringResource(R.string.about_profiles_deleted)
     val undoActionLabel = stringResource(R.string.action_undo)
+    val crashLogClearedMessage = stringResource(R.string.about_crash_log_cleared)
+    val diagLogClearedMessage = stringResource(R.string.about_diag_log_cleared)
+    val tokenRegeneratedMessage = stringResource(R.string.about_automation_token_regenerated)
     val automationEnableLabel = stringResource(R.string.about_automation_enable)
     val automationTokenPending = stringResource(R.string.about_automation_token_pending)
     val automationTokenCopied = stringResource(R.string.about_automation_token_copied)
@@ -501,7 +505,15 @@ fun AboutScreen(
                                 modifier = Modifier.weight(1f)
                             ) { Text(stringResource(R.string.about_automation_copy_token)) }
                             LumenOutlinedButton(
-                                onClick = { vm.regenerateAutomationToken() },
+                                onClick = {
+                                    vm.regenerateAutomationToken()
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = tokenRegeneratedMessage,
+                                            withDismissAction = true
+                                        )
+                                    }
+                                },
                                 modifier = Modifier.weight(1f)
                             ) { Text(stringResource(R.string.about_automation_regenerate)) }
                         }
@@ -687,7 +699,19 @@ fun AboutScreen(
     if (showDiagLog) {
         DiagnosticsLogDialog(
             ctx = ctx,
-            onDismiss = { showDiagLog = false }
+            onDismiss = { showDiagLog = false },
+            onCleared = { snapshot ->
+                scope.launch {
+                    val result = snackbarHostState.showSnackbar(
+                        message = diagLogClearedMessage,
+                        actionLabel = undoActionLabel,
+                        withDismissAction = true
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        DiagnosticsLog.restore(ctx, snapshot)
+                    }
+                }
+            }
         )
     }
 
@@ -723,8 +747,19 @@ fun AboutScreen(
             },
             dismissButton = {
                 LumenTextButton(onClick = {
+                    val snapshot = CrashLogger.read(ctx)
                     CrashLogger.clear(ctx)
                     showCrashLog = false
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = crashLogClearedMessage,
+                            actionLabel = undoActionLabel,
+                            withDismissAction = true
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            CrashLogger.restore(ctx, snapshot)
+                        }
+                    }
                 }) {
                     Text(
                         stringResource(R.string.action_clear),
@@ -1027,8 +1062,11 @@ private fun copyToClipboardAbout(context: Context, label: String, text: String) 
 @Composable
 private fun DiagnosticsLogDialog(
     ctx: Context,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onCleared: (snapshot: String) -> Unit
 ) {
+    val diagLogClipboardLabel = stringResource(R.string.about_diag_log_title)
+    val diagLogCopiedMessage = stringResource(R.string.about_diag_log_copied)
     val rawLog = remember { DiagnosticsLog.read(ctx) }
     val rawLines = remember(rawLog) {
         if (rawLog.isBlank()) emptyList() else rawLog.lineSequence().filter { it.isNotBlank() }.toList()
@@ -1216,13 +1254,32 @@ private fun DiagnosticsLogDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
-                        Text(
-                            filteredLines.joinToString("\n"),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontFamily = FontFamily.Monospace,
-                            softWrap = false,
-                            modifier = Modifier.horizontalScroll(rememberScrollState())
-                        )
+                        // Selectable and copyable. The only other way to get
+                        // this text off the device was the 3 KB tail the driver
+                        // report carries, and a user reporting an issue needs
+                        // the lines they are looking at, not the last few.
+                        SelectionContainer {
+                            Text(
+                                filteredLines.joinToString("\n"),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = FontFamily.Monospace,
+                                softWrap = false,
+                                modifier = Modifier.horizontalScroll(rememberScrollState())
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        LumenTextButton(
+                            onClick = {
+                                copyToClipboardAbout(
+                                    ctx,
+                                    diagLogClipboardLabel,
+                                    filteredLines.joinToString("\n")
+                                )
+                                Toast.makeText(ctx, diagLogCopiedMessage, Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Text(stringResource(R.string.about_diag_log_copy))
+                        }
                     }
                 }
             }
@@ -1236,6 +1293,7 @@ private fun DiagnosticsLogDialog(
             LumenTextButton(onClick = {
                 DiagnosticsLog.clear(ctx)
                 onDismiss()
+                onCleared(rawLog)
             }) {
                 Text(
                     stringResource(R.string.action_clear),

@@ -36,10 +36,10 @@ interface OpenLumenScreenModel {
      * About, with nothing at all on Home.
      */
     val serviceStartError: StateFlow<String?>
-        get() = MutableStateFlow(null)
+        get() = NO_SERVICE_START_ERROR
     val pendingImport: StateFlow<OpenLumenViewModel.PendingImport?>
     val pendingPresetPack: StateFlow<OpenLumenViewModel.PendingPresetPack?>
-        get() = MutableStateFlow(null)
+        get() = NO_PENDING_PRESET_PACK
 
     fun setEnabled(enabled: Boolean)
     fun selectPreset(key: String): Job
@@ -97,4 +97,14 @@ interface OpenLumenScreenModel {
 
     /** C253: use a pinned driver even when its probe reports unavailable. */
     fun setForcePinnedEngine(force: Boolean): Job = Job()
+
+    companion object {
+        // Shared and permanently empty. `get() = MutableStateFlow(null)` handed
+        // out a new flow on every read, so anything collecting one of these in
+        // composition re-subscribed on every recomposition and never saw the
+        // same instance twice (C334).
+        private val NO_SERVICE_START_ERROR: StateFlow<String?> = MutableStateFlow(null)
+        private val NO_PENDING_PRESET_PACK: StateFlow<OpenLumenViewModel.PendingPresetPack?> =
+            MutableStateFlow(null)
+    }
 }
