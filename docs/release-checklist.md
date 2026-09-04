@@ -65,6 +65,18 @@ tests, lint, screenshot validation, Roborazzi verification, merged-manifest
 permission checks, release-classpath checks, SBOM and advisory output,
 SHA-256 sums, and APK signature verification.
 
+It refuses to report success on an empty result. A classpath that resolves
+to zero dependencies fails, because that produces an SBOM with no packages
+and an advisory scan that checks nothing. Any report it promises but leaves
+empty fails too.
+
+On the signed path it also pins the signing certificate. `apksigner`
+verifying an APK proves it is signed, not that it is signed with this
+project's key, so the gate compares the signer's SHA-256 against
+`tools/release-signing-certificate.json`. If that file is absent the gate
+fails and prints the observed fingerprint, so recording it is a deliberate
+one-time step rather than something that can be skipped by accident.
+
 - [ ] `./gradlew clean` — confirm a clean slate.
 - [ ] `py -3 tools/local_release_gate.py` succeeds with signing
       environment set.

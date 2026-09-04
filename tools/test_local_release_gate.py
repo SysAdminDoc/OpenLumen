@@ -196,21 +196,177 @@ Verified using v2 scheme (APK Signature Scheme v2): false
                     allowlist_path=allowlist,
                 )
 
+    def test_zero_resolved_dependencies_fails_the_gate(self):
+        # An empty resolution is silent downstream: no SBOM packages, an OSV
+        # loop that never runs, and an advisory status of "ok".
+        with self.assertRaises(gate.GateError):
+            gate.assert_dependencies_resolved([])
+
+    def test_a_populated_resolution_passes(self):
+        gate.assert_dependencies_resolved(["x:y:1.0"])
+
+    def test_an_empty_report_file_fails_the_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report_dir = Path(tmp)
+            for name in gate.REQUIRED_REPORTS:
+                (report_dir / name).write_text("content", encoding="utf-8")
+            (report_dir / "sbom.spdx.json").write_text("", encoding="utf-8")
+
+            with self.assertRaises(gate.GateError) as caught:
+                gate.assert_reports_are_populated(report_dir)
+
+        self.assertIn("sbom.spdx.json", str(caught.exception))
+
+    def test_a_missing_report_file_fails_the_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report_dir = Path(tmp)
+            for name in gate.REQUIRED_REPORTS:
+                (report_dir / name).write_text("content", encoding="utf-8")
+            (report_dir / "SHA256SUMS").unlink()
+
+            with self.assertRaises(gate.GateError) as caught:
+                gate.assert_reports_are_populated(report_dir)
+
+        self.assertIn("SHA256SUMS", str(caught.exception))
+
+    def test_spdx_document_carries_a_namespace_and_describes_every_package(self):
+        metadata = {
+            "x:y:1.0": {
+                "license": "Apache-2.0",
+                "source": "https://example.invalid/x.pom",
+                "reason": "fixture",
+            }
+        }
+        document = gate.build_spdx(["x:y:1.0"], metadata=metadata)
+
+        self.assertTrue(document["documentNamespace"].startswith("https://"))
+        self.assertEqual(
+            document["relationships"],
+            [
+                {
+                    "spdxElementId": "SPDXRef-DOCUMENT",
+                    "relationshipType": "DESCRIBES",
+                    "relatedSpdxElement": document["packages"][0]["SPDXID"],
+                }
+            ],
+        )
+
+    def test_osv_paging_follows_the_next_page_token(self):
+        pages = [
+            {"vulns": [{"id": "OSV-1"}], "next_page_token": "second"},
+            {"vulns": [{"id": "OSV-2"}]},
+        ]
+        seen = []
+
+        def fetch(query):
+            seen.append(query.get("page_token"))
+            return pages[len(seen) - 1]
+
+        found = gate.osv_query_all_pages({"package": {"name": "x:y"}}, fetch=fetch)
+
+        self.assertEqual([item["id"] for item in found], ["OSV-1", "OSV-2"])
+        self.assertEqual(seen, [None, "second"])
+
+    def test_osv_paging_gives_up_rather_than_looping_forever(self):
+        # A server that always returns a token would otherwise pin the gate.
+        def fetch(_query):
+            return {"vulns": [], "next_page_token": "always"}
+
+        with self.assertRaises(gate.GateError):
+            gate.osv_query_all_pages({"package": {"name": "x:y"}}, fetch=fetch)
+
+    def test_a_rate_limited_query_is_retried_and_then_succeeds(self):
+        attempts = []
+
+        def urlopen(request, timeout=None):
+            attempts.append(1)
+            if len(attempts) < 3:
+                raise gate.urllib.error.HTTPError(
+                    "https://api.osv.dev/v1/query", 429, "Too Many Requests", {}, None
+                )
+            return self._Response({"vulns": []})
+
+        with patch.object(gate.urllib.request, "urlopen", urlopen):
+            with patch.object(gate.time, "sleep", lambda _s: None):
+                result = gate.osv_post_query({"package": {"name": "x:y"}})
+
+        self.assertEqual(result, {"vulns": []})
+        self.assertEqual(len(attempts), 3)
+
+    def test_a_query_that_stays_rate_limited_is_an_error_not_an_empty_result(self):
+        def urlopen(request, timeout=None):
+            raise gate.urllib.error.HTTPError(
+                "https://api.osv.dev/v1/query", 429, "Too Many Requests", {}, None
+            )
+
+        with patch.object(gate.urllib.request, "urlopen", urlopen):
+            with patch.object(gate.time, "sleep", lambda _s: None):
+                with self.assertRaises(gate.GateError):
+                    gate.osv_post_query({"package": {"name": "x:y"}})
+
+    def test_a_client_error_is_not_retried(self):
+        attempts = []
+
+        def urlopen(request, timeout=None):
+            attempts.append(1)
+            raise gate.urllib.error.HTTPError(
+                "https://api.osv.dev/v1/query", 400, "Bad Request", {}, None
+            )
+
+        with patch.object(gate.urllib.request, "urlopen", urlopen):
+            with self.assertRaises(gate.GateError):
+                gate.osv_post_query({"package": {"name": "x:y"}})
+
+        self.assertEqual(len(attempts), 1)
+
+    def test_an_unpinned_signing_certificate_is_reported_as_absent(self):
+        # apksigner verifying an APK only proves it is signed, not that it is
+        # signed with this project's key.
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIsNone(gate.load_expected_certificate(Path(tmp)))
+
+    def test_a_pinned_certificate_is_read_with_or_without_colons(self):
+        digest = "ab" * 32
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools").mkdir()
+            (root / gate.CERTIFICATE_PIN).write_text(
+                json.dumps({"sha256": ":".join(digest[i : i + 2] for i in range(0, 64, 2))}),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(gate.load_expected_certificate(root), digest)
+
+    def test_a_malformed_certificate_pin_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools").mkdir()
+            (root / gate.CERTIFICATE_PIN).write_text('{"sha256": "nope"}', encoding="utf-8")
+
+            with self.assertRaises(gate.GateError):
+                gate.load_expected_certificate(root)
+
+    def test_the_certificate_digest_is_read_out_of_apksigner_output(self):
+        digest = "cd" * 32
+        output = (
+            "Verified using v2 scheme (APK Signature Scheme v2): true\n"
+            f"Signer #1 certificate SHA-256 digest: {digest}\n"
+        )
+
+        self.assertEqual(gate.apksigner_certificate_sha256(output), digest)
+        self.assertIsNone(gate.apksigner_certificate_sha256("no certificate here"))
+
     def test_advisory_report_preserves_osv_severity(self):
         with patch.object(
             gate.urllib.request,
             "urlopen",
             return_value=self._Response(
                 {
-                    "results": [
+                    "vulns": [
                         {
-                            "vulns": [
-                                {
-                                    "id": "OSV-1",
-                                    "summary": "fixture",
-                                    "database_specific": {"severity": "HIGH"},
-                                }
-                            ]
+                            "id": "OSV-1",
+                            "summary": "fixture",
+                            "database_specific": {"severity": "HIGH"},
                         }
                     ]
                 }

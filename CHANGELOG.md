@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The rootless driver now reaches Extra Dim (`reduce_bright_colors_*`, Android 12+ where the OEM ships it), so dim goes below the panel's minimum backlight with no root. The driver report records which secure rows the device accepted, because Night Light alone and Night Light plus Extra Dim are different capability states.
 
+### Changed
+
+- The local release gate no longer reports success on a run that checked nothing. A classpath resolving to zero dependencies produces an empty SBOM and an advisory scan with nothing to scan, and both used to pass; so did a run that left one of its own reports empty. The advisory scan now queries OSV one package at a time so severities actually come back populated, follows the paging token, and treats a rate-limited response as an error rather than as an all-clear. The SBOM is valid SPDX 2.3. On the signed path the gate pins the signing certificate, because verifying an APK only proves it is signed and not that it is signed with this project's key.
+
 ### Removed
 
 - The overlay viewport smoke script is gone, along with the debug-only probe activity it drove. It picked whatever device happened to be attached, force-stopped Settings, granted app ops and issued blind taps at fixed fractions of the screen. It had no exit statement, so every failure it hit was silent and the run still reported success, and its one real assertion matched the probe activity against its own name, which is true by construction. A check that cannot fail is worse than no check. The probe activity was also exported with no permission, so any app on a debug install could put it on screen.

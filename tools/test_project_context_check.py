@@ -56,9 +56,14 @@ class ProjectContextCheckTest(unittest.TestCase):
         self.assertTrue(any("main version" in error for error in errors))
         self.assertTrue(any("context schema" in error for error in errors))
 
-    def test_missing_local_context_is_optional(self):
+    def test_a_missing_context_is_reported_rather_than_passing(self):
+        # The release gate calls this to confirm the documented contracts still
+        # match the code. With no document there are no contracts to confirm,
+        # so returning no errors was the check failing open.
         with tempfile.TemporaryDirectory() as tmp:
-            self.assertEqual(check.validate_project_context(Path(tmp)), [])
+            errors = check.validate_project_context(Path(tmp))
+
+        self.assertTrue(any("PROJECT_CONTEXT.md is missing" in error for error in errors))
 
 
 def write(path: Path, text: str) -> None:

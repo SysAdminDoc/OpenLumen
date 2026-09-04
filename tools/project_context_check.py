@@ -24,11 +24,17 @@ DRIVER_SOURCE = Path(
 
 
 def validate_project_context(root: Path) -> list[str]:
-    """Return consistency errors; an absent local-only context is optional."""
+    """Return consistency errors.
+
+    An absent context used to pass. That made the check fail open in the one
+    case it cannot recover from: the release gate calls it to confirm the
+    documented contracts still match the code, and with no document there are
+    no contracts to confirm.
+    """
 
     context_path = root / "PROJECT_CONTEXT.md"
     if not context_path.exists():
-        return []
+        return [f"PROJECT_CONTEXT.md is missing at {context_path}"]
 
     context = context_path.read_text(encoding="utf-8")
     normalized_context = re.sub(r"\s+", " ", context)

@@ -14,12 +14,13 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 from project_context_check import validate_project_context
 
@@ -72,6 +73,12 @@ LICENSE_NAME_MAP = {
     "mpl 2 0": "MPL-2.0",
     "zlib": "Zlib",
 }
+
+
+OSV_MAX_PAGES = 50
+OSV_MAX_ATTEMPTS = 4
+OSV_BACKOFF_SECONDS = 1.0
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 
 class GateError(RuntimeError):
@@ -131,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         dependency_output = collect_dependencies(root, args.gradle_timeout_seconds)
         dependencies = parse_gradle_dependencies(dependency_output)
+        assert_dependencies_resolved(dependencies)
         write_text(report_dir / "releaseRuntimeClasspath.txt", dependency_output)
         write_json(report_dir / "sbom.spdx.json", build_spdx(dependencies, root=root))
         advisory_report = build_advisory_report(dependencies, args.advisory_mode)
@@ -157,13 +165,98 @@ def main(argv: list[str] | None = None) -> int:
                 },
             )
         else:
-            write_json(report_dir / "signature-report.json", verify_signed_apk(root, apk))
+            write_json(
+                report_dir / "signature-report.json",
+                verify_signed_apk(root, apk, expected=load_expected_certificate(root)),
+            )
+        write_json(
+            report_dir / "gate-run.json",
+            {
+                "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "allow_unsigned_release": args.allow_unsigned_release,
+                "advisory_mode": args.advisory_mode,
+                # Recorded because a run that skipped the screenshot lanes is
+                # not a release-acceptance run, and the artifacts alone cannot
+                # otherwise be told apart.
+                "skip_screenshots": args.skip_screenshots,
+                "dependency_count": len(dependencies),
+            },
+        )
+        assert_reports_are_populated(report_dir)
     except GateError as exc:
         print(f"release gate failed: {exc}", file=sys.stderr)
         return 1
 
     print(f"OpenLumen release gate passed. Reports: {report_dir}")
     return 0
+
+
+REQUIRED_REPORTS = (
+    "releaseRuntimeClasspath.txt",
+    "sbom.spdx.json",
+    "advisory-report.json",
+    "SHA256SUMS",
+    "signature-report.json",
+    "gate-run.json",
+)
+
+CERTIFICATE_PIN = "tools/release-signing-certificate.json"
+
+
+def assert_dependencies_resolved(dependencies: list[str]) -> None:
+    """A gate that checked nothing must not report success.
+
+    An empty resolution is silent everywhere downstream: the SBOM has no
+    packages, the OSV loop never executes, and the advisory status is "ok".
+    A release build always has dependencies, so zero means the report failed
+    to parse rather than that the app has none.
+    """
+    if not dependencies:
+        raise GateError(
+            "releaseRuntimeClasspath resolved to zero dependencies, so the SBOM and "
+            "advisory scan would both have checked nothing"
+        )
+
+
+def assert_reports_are_populated(report_dir: Path) -> None:
+    """Every artifact the gate promises has to exist and hold something."""
+    missing = []
+    for name in REQUIRED_REPORTS:
+        path = report_dir / name
+        if not path.is_file():
+            missing.append(f"{name} (not written)")
+        elif path.stat().st_size == 0:
+            missing.append(f"{name} (empty)")
+    if missing:
+        raise GateError("release gate reports are incomplete: " + ", ".join(missing))
+
+
+def load_expected_certificate(root: Path) -> str | None:
+    """The signing certificate this project's releases are expected to carry.
+
+    Returns None only when the pin file is absent, which the signed path
+    treats as a failure: an APK signed with the wrong key verifies perfectly
+    well, so "apksigner said it is signed" is not the same as "signed by us".
+    """
+    path = root / CERTIFICATE_PIN
+    if not path.is_file():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GateError(f"signing certificate pin could not be read: {path}: {exc}") from exc
+    fingerprint = raw.get("sha256") if isinstance(raw, dict) else None
+    if not isinstance(fingerprint, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", fingerprint.replace(":", "")):
+        raise GateError(f"{CERTIFICATE_PIN} must hold a 64-character hex sha256 field")
+    return fingerprint.replace(":", "").lower()
+
+
+def apksigner_certificate_sha256(apksigner_output: str) -> str | None:
+    match = re.search(
+        r"Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F]{64})",
+        apksigner_output,
+    )
+    return match.group(1).lower() if match else None
 
 
 def gradle_executable(root: Path) -> Path:
@@ -306,16 +399,31 @@ def build_spdx(
                 ],
             }
         )
+    created = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
         "spdxVersion": "SPDX-2.3",
         "dataLicense": "CC0-1.0",
         "SPDXID": "SPDXRef-DOCUMENT",
         "name": "OpenLumen releaseRuntimeClasspath",
+        # Required by SPDX 2.3 and has to be unique per document, or two SBOMs
+        # cannot be told apart by a consumer.
+        "documentNamespace": (
+            "https://github.com/SysAdminDoc/OpenLumen/spdx/releaseRuntimeClasspath-"
+            + created.replace(":", "").replace("-", "")
+        ),
         "creationInfo": {
-            "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "created": created,
             "creators": ["Tool: tools/local_release_gate.py"],
         },
         "packages": packages,
+        "relationships": [
+            {
+                "spdxElementId": "SPDXRef-DOCUMENT",
+                "relationshipType": "DESCRIBES",
+                "relatedSpdxElement": package["SPDXID"],
+            }
+            for package in packages
+        ],
     }
 
 
@@ -446,7 +554,11 @@ def _xml_child_text(element: ET.Element, name: str) -> str:
     return ""
 
 
-def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, object]:
+def build_advisory_report(
+    dependencies: list[str],
+    mode: str,
+    fetch: "Callable[[dict[str, object]], dict[str, object]] | None" = None,
+) -> dict[str, object]:
     report: dict[str, object] = {
         "mode": mode,
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -458,53 +570,20 @@ def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, objec
         report["note"] = "OSV was not queried; use this SBOM as the advisory review input."
         return report
 
-    queries = []
+    vulnerabilities: list[dict[str, object]] = []
+    errors: list[str] = []
     for coord in dependencies:
         group, name, version = coord.split(":", 2)
-        queries.append({"package": {"ecosystem": "Maven", "name": f"{group}:{name}"}, "version": version})
-
-    vulnerabilities = []
-    errors = []
-    for start in range(0, len(queries), 100):
-        batch = queries[start : start + 100]
-        payload = json.dumps({"queries": batch}).encode("utf-8")
-        request = urllib.request.Request(
-            "https://api.osv.dev/v1/querybatch",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
+        query = {
+            "package": {"ecosystem": "Maven", "name": f"{group}:{name}"},
+            "version": version,
+        }
         try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            errors.append(str(exc))
-            continue
-
-        results = data.get("results") if isinstance(data, dict) else None
-        if not isinstance(results, list) or len(results) != len(batch):
-            errors.append(
-                f"OSV returned {len(results) if isinstance(results, list) else 'no'} results "
-                f"for {len(batch)} queries"
-            )
-            continue
-
-        for query_index, result in enumerate(results, start=start):
-            if not isinstance(result, dict):
-                errors.append(f"OSV returned a malformed result for query {query_index}")
-                continue
-            raw_vulnerabilities = result.get("vulns", []) or []
-            if not isinstance(raw_vulnerabilities, list):
-                errors.append(f"OSV returned a malformed vulnerability list for query {query_index}")
-                continue
-            for vuln in raw_vulnerabilities:
-                if not isinstance(vuln, dict):
-                    errors.append(f"OSV returned a malformed vulnerability for query {query_index}")
-                    continue
+            for vuln in osv_query_all_pages(query, fetch=fetch):
                 severity, severity_detail = advisory_severity(vuln)
                 vulnerabilities.append(
                     {
-                        "dependency": dependencies[query_index],
+                        "dependency": coord,
                         "id": vuln.get("id"),
                         "summary": vuln.get("summary"),
                         "modified": vuln.get("modified"),
@@ -513,12 +592,74 @@ def build_advisory_report(dependencies: list[str], mode: str) -> dict[str, objec
                         "severity_detail": severity_detail,
                     }
                 )
+        except GateError as exc:
+            errors.append(f"{coord}: {exc}")
 
     report["vulnerabilities"] = vulnerabilities
     report["status"] = "ok" if not errors else "partial"
     if errors:
         report["errors"] = errors
     return report
+
+
+def osv_query_all_pages(
+    query: dict[str, object],
+    fetch: "Callable[[dict[str, object]], dict[str, object]] | None" = None,
+) -> list[dict[str, object]]:
+    """Every vulnerability OSV holds for one package, across every page.
+
+    `/v1/query` returns whole vulnerability objects, unlike `/v1/querybatch`
+    which returns only `{id, modified}`. The batch endpoint is cheaper, but the
+    severity tiering built on top of it could never fire: every advisory came
+    back UNKNOWN because the field was simply not in the response.
+    """
+    fetch = fetch or osv_post_query
+    collected: list[dict[str, object]] = []
+    page = dict(query)
+    for _ in range(OSV_MAX_PAGES):
+        data = fetch(page)
+        raw = data.get("vulns", []) or []
+        if not isinstance(raw, list):
+            raise GateError("OSV returned a malformed vulnerability list")
+        for vuln in raw:
+            if not isinstance(vuln, dict):
+                raise GateError("OSV returned a malformed vulnerability")
+            collected.append(vuln)
+        token = data.get("next_page_token")
+        if not token:
+            return collected
+        page = dict(query)
+        page["page_token"] = token
+    raise GateError(f"OSV paging did not terminate within {OSV_MAX_PAGES} pages")
+
+
+def osv_post_query(query: dict[str, object]) -> dict[str, object]:
+    """POST one query, retrying while OSV is rate limiting us.
+
+    A 429 used to be indistinguishable from a clean empty result, which turned
+    a throttled scan into a silent pass.
+    """
+    payload = json.dumps(query).encode("utf-8")
+    last_error = "unknown"
+    for attempt in range(OSV_MAX_ATTEMPTS):
+        request = urllib.request.Request(
+            "https://api.osv.dev/v1/query",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            last_error = f"HTTP {exc.code}"
+            if exc.code not in RETRYABLE_STATUS:
+                raise GateError(last_error) from exc
+        except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            last_error = str(exc)
+        if attempt + 1 < OSV_MAX_ATTEMPTS:
+            time.sleep(OSV_BACKOFF_SECONDS * (2**attempt))
+    raise GateError(f"OSV query failed after {OSV_MAX_ATTEMPTS} attempts: {last_error}")
 
 
 def advisory_severity(vulnerability: dict[str, object]) -> tuple[str, str]:
@@ -747,19 +888,44 @@ def write_sha256(path: Path, apk: Path) -> None:
     path.write_text(f"{digest}  {apk.name}\n", encoding="utf-8")
 
 
-def verify_signed_apk(root: Path, apk: Path) -> dict[str, object]:
+def verify_signed_apk(root: Path, apk: Path, expected: str | None = None) -> dict[str, object]:
     apksigner = find_apksigner()
     if apksigner is None:
         raise GateError("apksigner was not found in PATH, ANDROID_HOME, or ANDROID_SDK_ROOT")
     try:
-        result = run([str(apksigner), "verify", "-v", str(apk)], root, capture=True).stdout
+        result = run(
+            [str(apksigner), "verify", "--print-certs", "-v", str(apk)],
+            root,
+            capture=True,
+        ).stdout
     except subprocess.CalledProcessError as exc:
         raise GateError(f"apksigner verification failed:\n{exc.stdout or ''}") from exc
 
     missing = missing_required_signature_schemes(result)
     if missing:
         raise GateError("release APK is missing signature schemes: " + ", ".join(missing))
-    return {"apk": str(apk), "signed": True, "apksigner": str(apksigner), "output": result}
+
+    observed = apksigner_certificate_sha256(result)
+    if observed is None:
+        raise GateError("apksigner did not report a signer certificate SHA-256 digest")
+    if expected is None:
+        raise GateError(
+            "no signing certificate is pinned, so this gate cannot tell our key from any "
+            f"other. Record the expected fingerprint in {CERTIFICATE_PIN} as "
+            f'{{"sha256": "{observed}"}} once you have confirmed it is the release key.'
+        )
+    if observed != expected:
+        raise GateError(
+            f"release APK is signed with an unexpected certificate: {observed}, "
+            f"expected {expected}"
+        )
+    return {
+        "apk": str(apk),
+        "signed": True,
+        "apksigner": str(apksigner),
+        "certificate_sha256": observed,
+        "output": result,
+    }
 
 
 def missing_required_signature_schemes(apksigner_output: str) -> list[str]:

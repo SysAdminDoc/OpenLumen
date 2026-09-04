@@ -9,10 +9,23 @@ For every release:
 
 1. **SPDX-JSON SBOM** of the release classpath. Captures every
    transitive dependency the production APK is built against. Written
-   to `build/reports/openlumen-release-gate/sbom.spdx.json`.
+   to `build/reports/openlumen-release-gate/sbom.spdx.json`. The document
+   is valid SPDX 2.3: it carries a unique `documentNamespace` and a
+   `DESCRIBES` relationship for every package.
 2. **Advisory scan** of the release classpath against OSV's public API.
    Output is written to
-   `build/reports/openlumen-release-gate/advisory-report.json`.
+   `build/reports/openlumen-release-gate/advisory-report.json`. Each
+   package is queried through `/v1/query`, one at a time, following
+   `next_page_token` until the results run out. That is slower than the
+   batch endpoint the gate used to call, but the batch endpoint returns
+   only an id and a modification date, so every advisory came back with an
+   unknown severity and the tiering below could never fire. A rate-limited
+   response is retried with backoff rather than being read as "no
+   advisories".
+3. **Run record** at `build/reports/openlumen-release-gate/gate-run.json`,
+   which says how the gate was invoked. A run with `--skip-screenshots` is
+   not a release-acceptance run, and the other artifacts cannot be told
+   apart without this.
 
 The gate records advisory findings for maintainer review instead of
 auto-failing on every advisory. The practical exposure for an offline
