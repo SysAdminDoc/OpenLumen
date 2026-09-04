@@ -349,4 +349,10 @@
         <item quantity="one">Mostrando %1$d de %2$d línea</item>
         <item quantity="other">Mostrando %1$d de %2$d líneas</item>
     </plurals>
+    <string name="shortcut_toggle_short">Activar</string>
+    <string name="shortcut_toggle_long">Activar o desactivar el filtro</string>
+    <string name="shortcut_next_preset_short">Siguiente</string>
+    <string name="shortcut_next_preset_long">Siguiente ajuste favorito</string>
+    <string name="shortcut_emergency_off_short">Apagar</string>
+    <string name="shortcut_emergency_off_long">Forzar el apagado del filtro</string>
 </resources>

@@ -59,7 +59,24 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!--
+            Dispatch target for the launcher shortcuts. Exported because the
+            launcher starts it, and it accepts nothing beyond its own three
+            actions: everything else is logged and dropped. It draws no UI, so
+            the emergency shortcut still works when the screen does not.
+        -->
+        <activity
+            android:name=".ShortcutActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
 
         <service
             android:name=".service.LumenService"

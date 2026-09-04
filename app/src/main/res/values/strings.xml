@@ -355,4 +355,10 @@
         <item quantity="one">Showing %1$d of %2$d line</item>
         <item quantity="other">Showing %1$d of %2$d lines</item>
     </plurals>
+    <string name="shortcut_toggle_short">Toggle</string>
+    <string name="shortcut_toggle_long">Toggle the filter</string>
+    <string name="shortcut_next_preset_short">Next</string>
+    <string name="shortcut_next_preset_long">Next favourite preset</string>
+    <string name="shortcut_emergency_off_short">Force off</string>
+    <string name="shortcut_emergency_off_long">Force the filter off</string>
 </resources>

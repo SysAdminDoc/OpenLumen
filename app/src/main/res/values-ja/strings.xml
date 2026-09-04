@@ -346,4 +346,10 @@
     <plurals name="about_diag_log_count">
         <item quantity="other">%2$d 行中 %1$d 行を表示</item>
     </plurals>
+    <string name="shortcut_toggle_short">切替</string>
+    <string name="shortcut_toggle_long">フィルターを切り替える</string>
+    <string name="shortcut_next_preset_short">次へ</string>
+    <string name="shortcut_next_preset_long">次のお気に入りプリセット</string>
+    <string name="shortcut_emergency_off_short">強制オフ</string>
+    <string name="shortcut_emergency_off_long">フィルターを強制的に切る</string>
 </resources>

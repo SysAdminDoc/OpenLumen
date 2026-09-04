@@ -349,4 +349,10 @@
         <item quantity="one">%1$d von %2$d Zeile angezeigt</item>
         <item quantity="other">%1$d von %2$d Zeilen angezeigt</item>
     </plurals>
+    <string name="shortcut_toggle_short">Umschalten</string>
+    <string name="shortcut_toggle_long">Filter umschalten</string>
+    <string name="shortcut_next_preset_short">Weiter</string>
+    <string name="shortcut_next_preset_long">Nächstes Favoriten-Preset</string>
+    <string name="shortcut_emergency_off_short">Aus</string>
+    <string name="shortcut_emergency_off_long">Filter erzwungen ausschalten</string>
 </resources>

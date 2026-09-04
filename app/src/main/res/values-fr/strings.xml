@@ -349,4 +349,10 @@
         <item quantity="one">Affichage de %1$d ligne sur %2$d</item>
         <item quantity="other">Affichage de %1$d lignes sur %2$d</item>
     </plurals>
+    <string name="shortcut_toggle_short">Basculer</string>
+    <string name="shortcut_toggle_long">Activer ou désactiver le filtre</string>
+    <string name="shortcut_next_preset_short">Suivant</string>
+    <string name="shortcut_next_preset_long">Préréglage favori suivant</string>
+    <string name="shortcut_emergency_off_short">Arrêt</string>
+    <string name="shortcut_emergency_off_long">Forcer l\'arrêt du filtre</string>
 </resources>
