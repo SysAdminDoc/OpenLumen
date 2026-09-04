@@ -229,12 +229,34 @@ class SecureSettingsEngine : ColorEngine {
                     Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
                     Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, temperature)
                     Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 1)
-                } else if (correctionOwned || nightOwned) {
-                    // Moving from a tinted preset to a neutral one: take our own
-                    // Night Light back off rather than leaving the last tint on.
-                    Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 0)
+                    nightOwned = true
+                } else if (nightOwned) {
+                    // Moving from a tinted preset to a neutral one. Hand Night
+                    // Light back to whatever the user had instead of writing a
+                    // flat 0 — the same restore clear() performs, just earlier,
+                    // because from here on the row is theirs again.
+                    //
+                    // C293: this used to read `correctionOwned || nightOwned`.
+                    // `correctionOwned` says nothing about Night Light, so the
+                    // second apply of a neutral preset (a ramp step, a slider,
+                    // or the identity apply every schedule-off performs) switched
+                    // off a Night Light the user had turned on themselves, and
+                    // clear() then saw a row it no longer recognised and left it
+                    // off for good.
+                    val original = ownership?.original
+                    Settings.Secure.putInt(
+                        cr,
+                        KEY_NIGHT_TEMPERATURE,
+                        original?.nightTemperature ?: DEFAULT_TEMPERATURE
+                    )
+                    Settings.Secure.putInt(
+                        cr,
+                        KEY_NIGHT_ACTIVATED,
+                        if (original?.nightActive == true) 1 else 0
+                    )
+                    original?.nightAutoMode?.let { Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, it) }
+                    nightOwned = false
                 }
-                if (tinted) nightOwned = true
 
                 if (correction != Daltonizer.NONE) {
                     Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, correction.secureValue)

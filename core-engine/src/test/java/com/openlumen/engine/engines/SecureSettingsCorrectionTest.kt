@@ -155,6 +155,46 @@ class SecureSettingsCorrectionTest {
         assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
     }
 
+    @Test fun `a neutral preset applied twice leaves the user's own Night Light on`() = runBlocking {
+        // C293. The user runs system Night Light themselves. Grayscale carries
+        // no tint, so this driver never owns that row and must not switch it
+        // off — not on the first apply, and not on the ramp step, slider move
+        // or schedule-off identity apply that follows.
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4000)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+        val engine = SecureSettingsEngine()
+        engine.apply(context, Presets.GRAY)
+        engine.apply(context, Presets.GRAY)
+
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+
+        engine.clear(context)
+
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(4000)
+    }
+
+    @Test fun `switching from a warm preset to a neutral one hands Night Light back`() = runBlocking {
+        // C293. Our own tint comes off, but the row goes back to the user's
+        // value rather than to a flat off, because from that moment it is
+        // theirs again and clear() would no longer recognise it.
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4000)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+        val engine = SecureSettingsEngine()
+        engine.apply(context, Presets.NIGHT)
+        engine.apply(context, Presets.GRAY)
+
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(4000)
+
+        engine.clear(context)
+
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(4000)
+    }
+
     @Test fun `the emergency reset switches the correction off too`() = runBlocking {
         SecureSettingsEngine().apply(context, Presets.GRAY)
 
