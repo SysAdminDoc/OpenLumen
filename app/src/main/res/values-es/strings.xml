@@ -159,7 +159,7 @@
     <string name="driver_auto_resolved_none">Auto: no hay ningún controlador disponible. Conceder el permiso de superposición instala la alternativa de superposición.</string>
     <string name="driver_color_contract">SurfaceFlinger conserva la matriz de color completa. Luz nocturna del sistema, KCAL y Overlay usan una aproximación escalar: el contraste coincide en el punto blanco transformado, pero los negros y medios tonos pueden diferir.</string>
     <string name="driver_force_pinned">Usar este controlador aunque parezca no disponible</string>
-    <string name="driver_force_pinned_body">Ocultar el root a las apps tambien lo oculta a esta comprobacion, y un aviso de Magisk contestado tarde parece falta de root. Activa esto para intentarlo igualmente. Si de verdad no puede funcionar, el filtro informa del error en vez de volver a Auto.</string>
+    <string name="driver_force_pinned_body">Ocultar el root a las apps también lo oculta a esta comprobación, y un aviso de Magisk respondido tarde parece falta de root. Activa esto para intentarlo igualmente. Si el controlador realmente no puede funcionar, el filtro informa del error en vez de volver a Auto.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS mediante ADB</string>
     <string name="driver_aapm_title">Advanced Protection de Android</string>
     <string name="driver_aapm_explanation">El modo de protección avanzada puede desactivar funciones basadas en accesibilidad. OpenLumen no usa accesibilidad ni acceso al uso, así que no le afecta. El informe del controlador registra el estado de la plataforma cuando el dispositivo lo expone.</string>
@@ -203,7 +203,7 @@
     <string name="about_crash_log_title">Registro de errores</string>
     <string name="about_crash_log_empty">No se han registrado errores.</string>
     <string name="about_automation_title">Acceso de automatizacion</string>
-    <string name="about_automation_body">Otras apps solo pueden controlar OpenLumen si activas esto y les das el token de abajo. Apagar el filtro nunca necesita token, asi que el comando de emergencia siempre funciona.</string>
+    <string name="about_automation_body">Otras apps solo pueden controlar OpenLumen si activas esto y les das el token de abajo. Apagar el filtro nunca pide token, así que el comando de emergencia siempre funciona.</string>
     <string name="about_automation_enable">Permitir control desde otras apps</string>
     <string name="about_automation_token_label">Token</string>
     <string name="about_automation_token_pending">Generando…</string>
@@ -303,7 +303,7 @@
     <string name="backup_import_failed">Error al importar: %1$s</string>
     <string name="error_unknown">Error desconocido</string>
     <string name="presets_sort_label">Ordenar</string>
-    <string name="presets_sort_alphabetical">De la A a la Z</string>
+    <string name="presets_sort_alphabetical">Orden alfabético</string>
     <string name="presets_sort_recent">Recientes</string>
     <string name="presets_saved_title">Preajustes guardados</string>
     <string name="preset_saved_badge">Guardado</string>

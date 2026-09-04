@@ -92,7 +92,7 @@
     <string name="diff_schedule_mode">Modo de agendamento</string>
     <string name="diff_schedule_start">Início do agendamento</string>
     <string name="diff_schedule_end">Fim do agendamento</string>
-    <string name="diff_location">Localizacao</string>
+    <string name="diff_location">Localização</string>
     <string name="diff_intensity">Intensidade</string>
     <string name="diff_dim">Escurecimento</string>
     <string name="diff_light_sensor">Sensor de luz</string>
@@ -102,7 +102,7 @@
     <string name="diff_sunset_offset">Desvio do pôr do sol (min)</string>
     <string name="diff_sunrise_offset">Desvio do nascer do sol (min)</string>
     <string name="diff_favorites">Favoritos</string>
-    <string name="diff_transition">Transicao</string>
+    <string name="diff_transition">Transição</string>
     <string name="value_unset">não definido</string>
     <string name="value_enabled">ativado</string>
     <string name="value_disabled">desativado</string>
@@ -127,7 +127,7 @@
     <string name="schedule_exact_alarm_warning_title">Alarmes exatos desativados</string>
     <string name="schedule_exact_alarm_warning_body">As mudanças programadas podem atrasar porque o Android permite apenas alarmes inexatos para o OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Abrir configuracoes de alarmes exatos</string>
-    <string name="schedule_set_location">Definir localizacao</string>
+    <string name="schedule_set_location">Definir localização</string>
     <string name="schedule_solar_location_required_short">Localização necessária</string>
     <string name="schedule_solar_location_required_title">O agendamento solar precisa de uma localização</string>
     <string name="schedule_solar_location_required_body">Insira uma latitude e longitude válidas antes de escolher Solar. O filtro permanece desligado até lá.</string>
@@ -136,7 +136,7 @@
     <string name="schedule_sunset_offset_name">Deslocamento do pôr do sol</string>
     <string name="schedule_sunrise_offset_name">Deslocamento do nascer do sol</string>
     <string name="schedule_offset_state">%1$s %2$d minutos</string>
-    <string name="transition_duration_title">Duracao da transicao</string>
+    <string name="transition_duration_title">Duração da transição</string>
     <string name="transition_duration_subtitle">Velocidade com que o filtro aparece ou desaparece nos limites do agendamento. Alteracoes manuais (controles deslizantes, toques em predefinidos) permanecem instantaneas.</string>
     <string name="transition_instant">Instantaneo</string>
     <string name="transition_30s">30 segundos</string>
@@ -158,8 +158,8 @@
     <string name="driver_auto_resolved">Automático escolheu: %1$s</string>
     <string name="driver_auto_resolved_none">Auto: nenhum controlador disponível. Conceder a permissão de sobreposição instala a alternativa de sobreposição.</string>
     <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. Luz noturna do sistema, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
-    <string name="driver_force_pinned">Usar este driver mesmo que pareca indisponivel</string>
-    <string name="driver_force_pinned_body">Esconder o root dos apps tambem esconde dessa verificacao, e um aviso do Magisk respondido devagar parece falta de root. Ligue isto para tentar assim mesmo. Se realmente nao der, o filtro informa o erro em vez de voltar para Auto.</string>
+    <string name="driver_force_pinned">Usar este controlador mesmo que pareça indisponível</string>
+    <string name="driver_force_pinned_body">Esconder o root das apps também o esconde desta verificação, e um aviso do Magisk respondido tarde parece falta de root. Active isto para tentar mesmo assim. Se o controlador não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection do Android</string>
     <string name="driver_aapm_explanation">O modo de protecção avançada pode desligar funcionalidades que dependem da acessibilidade. O OpenLumen não usa acessibilidade nem acesso à utilização, por isso não é afectado. O relatório do controlador regista o estado da plataforma quando o dispositivo o disponibiliza.</string>
@@ -174,8 +174,8 @@
     <string name="toast_service_start_failed">Não foi possível iniciar o OpenLumen. Verifique a permissão de sobreposição ou escolha outro controlador no separador Controlador.</string>
     <string name="clipboard_adb_grant">Concessao ADB do OpenLumen</string>
     <string name="clipboard_driver_report">Relatorio de driver do OpenLumen</string>
-    <string name="clipboard_emergency_off">Desligamento de emergencia do OpenLumen</string>
-    <string name="clipboard_automation_token">Token de automacao do OpenLumen</string>
+    <string name="clipboard_emergency_off">Desligamento de emergência do OpenLumen</string>
+    <string name="clipboard_automation_token">Token de automação do OpenLumen</string>
     <string name="overlay_caveats_title">Sobre o driver Overlay</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">O alfa do overlay é limitado a ~80% pelas regras de toque não confiável do Android 12+. Para escurecimento mais profundo, use o Luz noturna do sistema ou um driver com root.</string>
     <string name="overlay_touch_pass_explanation">Enquanto a sobreposição está activa, o Android pode bloquear os toques nas caixas do instalador e de permissões. É a protecção contra tapjacking da plataforma, não um erro do OpenLumen. Desligue o filtro pelo mosaico ou pela notificação antes de instalar aplicações.</string>
@@ -198,23 +198,23 @@
     <string name="backup_recovery_exported">Cópia de recuperação exportada</string>
     <string name="backup_recovery_reset">Preferências redefinidas para os padrões</string>
     <string name="about_diagnostics_title">Diagnósticos</string>
-    <string name="about_diagnostics_body">O OpenLumen mantem um registro local de falhas no armazenamento privado do aplicativo. Ele nunca sai do dispositivo.</string>
+    <string name="about_diagnostics_body">O OpenLumen mantém um registo local de falhas no armazenamento privado da aplicação. Nunca sai do dispositivo.</string>
     <string name="about_view_crash_log">Ver registro de falhas</string>
     <string name="about_crash_log_title">Registro de falhas</string>
     <string name="about_crash_log_empty">Nenhuma falha registrada.</string>
-    <string name="about_automation_title">Acesso de automacao</string>
-    <string name="about_automation_body">Outros apps so controlam o OpenLumen se voce ligar isto e passar o token abaixo. Desligar o filtro nunca pede token, entao o comando de emergencia sempre funciona.</string>
+    <string name="about_automation_title">Acesso para automação</string>
+    <string name="about_automation_body">Outras apps só controlam o OpenLumen se activar isto e lhes passar o token abaixo. Desligar o filtro nunca pede token, por isso o comando de emergência funciona sempre.</string>
     <string name="about_automation_enable">Permitir controle por outros apps</string>
     <string name="about_automation_token_label">Token</string>
     <string name="about_automation_token_pending">Gerando…</string>
-    <string name="about_automation_token_warning">Trate como uma senha. Quem tiver ele pode mudar seu filtro. Exportacoes de perfil nunca incluem o token.</string>
+    <string name="about_automation_token_warning">Trate-o como uma palavra-passe. Quem o tiver pode alterar o seu filtro. As cópias exportadas nunca o contêm.</string>
     <string name="about_automation_copy_token">Copiar token</string>
     <string name="about_automation_regenerate">Novo token</string>
     <string name="about_automation_token_copied">Token copiado</string>
-    <string name="about_emergency_off_title">Desligamento de emergencia</string>
-    <string name="about_emergency_off_body">Se o filtro ficar preso e o tile ou a notificacao estiver inacessivel, voce pode forcar a limpeza pelo computador via ADB:</string>
+    <string name="about_emergency_off_title">Desligamento de emergência</string>
+    <string name="about_emergency_off_body">Se o filtro ficar preso e o mosaico ou a notificação estiverem inacessíveis, pode forçar o desligamento a partir de um computador com ADB:</string>
     <string name="about_emergency_off_copy">Copiar comando ADB</string>
-    <string name="about_emergency_off_copied">Comando de emergencia copiado</string>
+    <string name="about_emergency_off_copied">Comando de emergência copiado</string>
     <string name="about_view_diag_log">Ver registro de diagnósticos</string>
     <string name="about_diag_log_title">Registro de diagnósticos</string>
     <string name="about_diag_log_empty">Nenhum evento registrado ainda.</string>
@@ -276,7 +276,7 @@
 
     <string name="light_sensor_title">Acionamento por luz ambiente</string>
     <string name="light_sensor_no_hardware">Este dispositivo não tem sensor de luz ambiente. O acionamento está desativado.</string>
-    <string name="light_sensor_unavailable">Sensor indisponivel ou sem leitura ainda</string>
+    <string name="light_sensor_unavailable">Sensor indisponível ou ainda sem leitura</string>
     <string name="light_sensor_now">Atual: %1$d lux</string>
     <string name="light_sensor_threshold">Limiar: %1$d lux</string>
     <string name="light_sensor_threshold_state">limiar de %1$d lux</string>
@@ -284,7 +284,7 @@
     <string name="light_sensor_hysteresis">Ativa abaixo de %1$d lux; desativa acima de %2$d lux para evitar cintilação</string>
     <string name="light_sensor_calibrate">Calibrar: usar leitura atual como limiar</string>
 
-    <string name="location_title">Definir localizacao</string>
+    <string name="location_title">Definir localização</string>
     <string name="location_decimal_degrees_help">Graus decimais. Latitude deve ser de -90 a 90, longitude de -180 a 180.</string>
     <string name="location_timezone_help">Escolha uma cidade para que as transições solares usem o fuso horário desse local. Coordenadas manuais usam o fuso do dispositivo.</string>
     <string name="location_timezone_selected">Fuso horário solar: %1$s</string>
@@ -303,7 +303,7 @@
     <string name="backup_import_failed">Falha na importação: %1$s</string>
     <string name="error_unknown">Erro desconhecido</string>
     <string name="presets_sort_label">Ordenar</string>
-    <string name="presets_sort_alphabetical">De A a Z</string>
+    <string name="presets_sort_alphabetical">Ordem alfabética</string>
     <string name="presets_sort_recent">Recentes</string>
     <string name="presets_saved_title">Predefinições guardadas</string>
     <string name="preset_saved_badge">Guardada</string>
