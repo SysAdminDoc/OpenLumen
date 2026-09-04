@@ -60,6 +60,22 @@ class SecureSettingsCorrectionTest {
         }
     }
 
+    @Test fun `a colour-vision preset writes no colour temperature of its own`() = runBlocking {
+        // C298. These presets carry scalar fallbacks for drivers that cannot
+        // mix channels, and those fallbacks are not neutral. Reading a
+        // temperature off them switched Night Light on underneath the system
+        // correction: Protan's fallback is cool, so the screen went bluer than
+        // running no filter at all.
+        for (key in listOf("protan", "deutan", "tritan")) {
+            val engine = SecureSettingsEngine()
+            engine.apply(context, Presets.byKey(key)!!.matrix)
+
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(MISSING)
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(MISSING)
+            assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
+        }
+    }
+
     @Test fun `a neutral preset writes no colour temperature and no Night Light`() = runBlocking {
         SecureSettingsEngine().apply(context, Presets.GRAY)
 

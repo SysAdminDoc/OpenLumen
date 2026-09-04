@@ -195,7 +195,14 @@ class SecureSettingsEngine : ColorEngine {
             // temperature produces the neutral 6500 K and switching Night Light
             // on at that temperature changes nothing the user can see. The
             // correction mode is what actually renders those presets here.
-            val tinted = !isNeutralChromaticity(matrix)
+            // A preset that names a correction mode is rendered by that mode,
+            // not by a colour temperature. The colour-vision presets carry
+            // scalar fallbacks for drivers with no cross-channel terms, and
+            // those fallbacks are not neutral, so this used to switch Night
+            // Light on underneath the correction at a temperature nobody asked
+            // for. Protan's fallback reads as cool, which pushed the screen
+            // bluer than no filter at all (C298).
+            val tinted = matrix.daltonizer == Daltonizer.NONE && !isNeutralChromaticity(matrix)
             val correction = matrix.daltonizer
 
             try {
