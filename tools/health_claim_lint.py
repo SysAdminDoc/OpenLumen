@@ -11,21 +11,32 @@ from pathlib import Path
 from typing import Iterable
 
 
-TEXT_SUFFIXES = {".md", ".txt", ".xml"}
+TEXT_SUFFIXES = {".md", ".txt", ".xml", ".kt"}
 DEFAULT_TARGETS = (
     "README.md",
     "app/src/main/res",
+    "app/src/main/java",
     "fastlane/metadata/android",
     "docs",
 )
+# Kotlin is scanned for its string literals alone. Identifiers and comments are
+# the developers' own words, and a comment recording why a phrase is banned
+# would otherwise trip the rule it documents.
+KOTLIN_STRING_RE = re.compile(r'"""(?:.|\n)*?"""|"(?:\\.|[^"\\\n])*"')
 APPROVED_EVIDENCE_PATHS = {
     Path("docs/health-evidence.md"),
 }
-ALLOW_CONTEXT_RE = re.compile(
-    r"(?i)\b(?:no|not|never|without|avoid|avoids|do not|don't|does not|doesn't|forbids?|"
-    r"unsupported|not supported|not a|not medical|not health|not treatment|not a treatment|"
-    r"not a sleep claim|not medical advice|rather than a sleep|no .{0,80}claims?)\b"
+# A denial has to reach the phrase it denies. The old rule exempted a whole
+# line containing any of these words anywhere, so "OpenLumen improves sleep, no
+# question." passed the lint that exists to catch exactly that sentence.
+NEGATION_RE = re.compile(
+    r"\b(?:no|not|never|without|avoid|avoids|don't|doesn't|isn't|aren't|"
+    r"forbids?|unsupported|rather than|instead of)\b"
 )
+# How far back a denial reaches. Long enough for "does not, on its own,
+# improve sleep"; short enough that an unrelated clause cannot cover a claim.
+NEGATION_WINDOW = 60
+SENTENCE_BREAK_RE = re.compile(r"[.;:!?]")
 KCAL_RECOVERY_RE = re.compile(
     r"(?i)\becho\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+>[^\n]*\bkcal\b"
 )
@@ -172,27 +183,48 @@ def scan(root: Path, targets: Iterable[str], rules: list[Rule]) -> list[Violatio
         if relative in APPROVED_EVIDENCE_PATHS:
             continue
         try:
-            lines = path.read_text(encoding="utf-8").splitlines()
+            lines = scannable_lines(path, path.read_text(encoding="utf-8"))
         except UnicodeDecodeError:
             continue
         for index, line in enumerate(lines, start=1):
             normalized = normalize_text(line)
-            if not normalized or is_allowed_context(normalized):
+            if not normalized:
                 continue
             for rule in rules:
                 if rule.name == "kcal-recovery-scalar-range":
                     match = KCAL_RECOVERY_RE.search(normalized)
                     if not match:
                         continue
+                    # No negation exemption here: this one is a numeric range,
+                    # not a claim, and a "not" elsewhere on the line says
+                    # nothing about whether the scalars are in range.
                     if any(
                         not 0 <= int(value) <= KCAL_MAX_SCALAR
                         for value in match.groups()
                     ):
                         violations.append(Violation(path, index, rule, line))
                     continue
-                if rule.pattern.search(normalized):
+                for match in rule.pattern.finditer(normalized):
+                    if is_negated(normalized, match.start()):
+                        continue
                     violations.append(Violation(path, index, rule, line))
+                    break
     return violations
+
+
+def scannable_lines(path: Path, text: str) -> list[str]:
+    """The lines to lint, with everything that is not user-facing blanked out.
+
+    Line numbers are preserved so a violation still points at the right line.
+    """
+    if path.suffix.lower() != ".kt":
+        return text.splitlines()
+    kept = [" " if char != "\n" else "\n" for char in text]
+    for match in KOTLIN_STRING_RE.finditer(text):
+        for index in range(match.start(), match.end()):
+            if text[index] != "\n":
+                kept[index] = text[index]
+    return "".join(kept).splitlines()
 
 
 def iter_scan_files(root: Path, targets: Iterable[str]) -> Iterable[Path]:
@@ -213,8 +245,13 @@ def should_scan(path: Path) -> bool:
     return path.suffix.lower() in TEXT_SUFFIXES
 
 
-def is_allowed_context(normalized_line: str) -> bool:
-    return bool(ALLOW_CONTEXT_RE.search(normalized_line))
+def is_negated(normalized_line: str, start: int) -> bool:
+    """Whether a denial immediately before [start] covers the match there."""
+    window = normalized_line[max(0, start - NEGATION_WINDOW):start]
+    # A sentence boundary ends a denial's reach. "No sleep claims. OpenLumen
+    # improves sleep." is two statements, and only the first one is a denial.
+    reachable = SENTENCE_BREAK_RE.split(window)[-1]
+    return bool(NEGATION_RE.search(reachable))
 
 
 def normalize_text(text: str) -> str:
