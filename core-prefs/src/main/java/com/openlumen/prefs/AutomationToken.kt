@@ -6,8 +6,14 @@ import java.security.SecureRandom
  * Shared secret for the exported automation surface (roadmap **C250**).
  *
  * A `BroadcastReceiver` cannot learn who sent it a broadcast, so the token is
- * the authentication mechanism. It is generated locally, never leaves the
- * device except when the user copies it, and is redacted from profile exports.
+ * the authentication mechanism. It is generated locally and is never sent
+ * anywhere: no network call carries it, and the profile export redacts it
+ * so a shared backup file cannot hand it to anyone.
+ *
+ * It does ride Android's own backup and device transfer, because it lives
+ * in the preferences blob those copy. A restored install is detected by a
+ * marker in the no-backup directory and closes the surface rather than
+ * inheriting the previous device's token. See AutomationRestoreGuard.
  */
 object AutomationToken {
 

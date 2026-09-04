@@ -641,6 +641,14 @@ class LumenService : LifecycleService() {
     private fun ensurePreferencesObserved() {
         if (preferencesObserved || !isUserUnlocked()) return
         CrashLogger.install(this)
+        // Before anything reads the automation surface: preferences restored
+        // from another device carry that device's token, and the contract
+        // everywhere else is that the token never leaves the device it was
+        // minted on.
+        lifecycleScope.launch {
+            runCatching { AutomationRestoreGuard.reconcile(this@LumenService, prefs) }
+                .onFailure { Log.w(tag, "automation restore check failed: ${it.message}") }
+        }
         observePreferences()
     }
 

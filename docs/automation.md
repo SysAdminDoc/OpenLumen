@@ -51,8 +51,14 @@ UID, which is always equal, so every app on the device was trusted. Treat any
 build older than 0.8.0 as having an open automation surface.
 
 The token is device-local. It is never sent anywhere, and profile exports
-redact it — a `.json` you share with someone else carries no token and lands
+redact it: a `.json` you share with someone else carries no token and lands
 with automation switched off.
+
+It does travel in Android's own backup and phone-to-phone transfer, because
+it sits in the preferences those copy. OpenLumen notices that a restored
+install is not the one that minted the token, closes the automation surface
+and drops it, so a new phone starts with automation off and no inherited
+secret. Turn it back on there and you get a fresh token.
 
 If you think a token has leaked, hit **New token**. Every script holding the
 old one stops working immediately.

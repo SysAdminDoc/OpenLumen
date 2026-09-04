@@ -7,6 +7,11 @@
       datastore/  — user preferences (filter, schedule, profiles)
       sharedpref/ — notification-prompt one-shot flags
 
+    The automation token shares the DataStore blob, so it is copied
+    too. A restored install detects that through a marker in the
+    no-backup directory and closes the automation surface instead of
+    inheriting the previous device's token (AutomationRestoreGuard).
+
     Excluded by omission:
       crash.log        — device-local crash log, per privacy policy
       diagnostics.log  — device-local event log, per privacy policy
