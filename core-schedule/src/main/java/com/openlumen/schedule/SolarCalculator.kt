@@ -20,6 +20,7 @@ import kotlin.math.tan
  */
 object SolarCalculator {
     private const val OFFICIAL_ZENITH = 90.833 // degrees, accounts for atmospheric refraction
+    private val UTC = ZoneId.of("UTC")
 
     /**
      * Whether the requested date has a regular sunrise/sunset pair, or
@@ -154,7 +155,7 @@ object SolarCalculator {
         var instant = LocalDateTime.of(
             date.plusDays(initialDayShift),
             java.time.LocalTime.of(hours, minutes, seconds)
-        ).atZone(ZoneId.of("UTC")).withZoneSameInstant(zoneId)
+        ).atZone(UTC).withZoneSameInstant(zoneId)
 
         // Caller asked "what is sunrise/sunset for [date] in [zoneId]?" —
         // i.e. they expect the returned ZonedDateTime's local date to
@@ -168,7 +169,15 @@ object SolarCalculator {
         if (instant.toLocalDate() != date) {
             val drift = instant.toLocalDate().toEpochDay() - date.toEpochDay()
             if (drift != 0L) {
-                instant = instant.minusDays(drift)
+                // Move the UTC day stamp, not a local day. Only the stamp is
+                // wrong: the UT time of day computed above is the answer. A
+                // local day is 23 or 25 hours across a daylight-saving change,
+                // so shifting one in `zoneId` holds the wall clock and moves
+                // the event itself by an hour, which put the solar transition
+                // alarm an hour out on those two days a year (C327).
+                instant = instant.withZoneSameInstant(UTC)
+                    .minusDays(drift)
+                    .withZoneSameInstant(zoneId)
             }
         }
         return instant
