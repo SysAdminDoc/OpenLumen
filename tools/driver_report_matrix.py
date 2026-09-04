@@ -32,6 +32,10 @@ ENGINE_LABELS = {
     "COLOR_DISPLAY_MANAGER": "CDM",
     "ColorDisplayManager (CDM)": "CDM",
     "ColorDisplayManager": "CDM",
+    # The issue template calls it what the Driver tab calls it now. The
+    # enum name stays in the label so this mapping cannot go stale again.
+    "System Night Light (COLOR_DISPLAY_MANAGER)": "CDM",
+    "System Night Light": "CDM",
     "SurfaceFlinger": "SF",
     "SURFACE_FLINGER": "SF",
     "KCAL": "KCAL",

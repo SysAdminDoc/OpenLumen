@@ -1,6 +1,8 @@
 OpenLumen ist ein Offline-Farbfilter fuer Android-Displays. Die App laeuft als Vordergrunddienst, steuert die Display-Farbtransformation und wechselt je nach Geraet auf den passenden Treiber:
 
-* AOSP ColorDisplayManager (ohne Root, Framebuffer-Transformation)
+* Systemeigenes Nachtlicht und Extra Dim über sichere Einstellungen (ohne
+  Root; der Farbton deckt Statusleiste, Benachrichtigungen und Sperrbildschirm
+  ab). Erfordert einmalig WRITE_SECURE_SETTINGS per adb.
 * SurfaceFlinger-Farbmatrix (Root)
 * KCAL-Kernel-Treiber (Root, kompatible Qualcomm-Panels)
 * Overlay (ohne Root, universeller Fallback mit Android-12+-Grenzen)

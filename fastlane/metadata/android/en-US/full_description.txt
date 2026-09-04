@@ -2,8 +2,9 @@ OpenLumen is an offline display color filter for Android. It runs as a
 foreground service, owns the display color transform, and falls back
 gracefully across four drivers depending on what your device supports:
 
-* AOSP ColorDisplayManager (rootless, framebuffer transform — same path the
-  built-in Night Light uses)
+* System Night Light and Extra Dim, through secure settings (rootless, and
+  the tint covers the status bar, the shade and the lock screen). Needs
+  WRITE_SECURE_SETTINGS granted once over adb.
 * SurfaceFlinger color matrix (root, framebuffer transform)
 * KCAL kernel driver (root, Qualcomm panels with KCAL kernels)
 * Overlay (rootless, universal fallback — capped at ~80% opacity by

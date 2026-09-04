@@ -55,7 +55,7 @@ body:
     attributes:
       label: Engine
       options:
-        - ColorDisplayManager (CDM)
+        - System Night Light (COLOR_DISPLAY_MANAGER)
         - SurfaceFlinger
         - KCAL
         - Overlay

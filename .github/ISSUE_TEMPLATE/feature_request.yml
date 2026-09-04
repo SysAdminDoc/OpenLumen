@@ -1,17 +1,19 @@
 name: Feature request
-description: Suggest a new feature or change. Read ROADMAP.md first.
+description: Suggest a new feature or change.
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Before opening this, check **ROADMAP.md**:
+        Two things worth checking first:
 
-        - If your idea is in the **Now / Next / Later** sections, comment on the
-          existing tracking issue (or open one and link to the roadmap row).
-        - If your idea is in **Rejected**, it's probably not coming back —
-          mention what's changed in the world that would justify reopening.
-        - If your idea isn't listed, this is the right place.
+        - The [feature list](https://github.com/SysAdminDoc/OpenLumen#features)
+          in the README, in case it is already there under another name.
+        - [docs/deferred-candidates.md](https://github.com/SysAdminDoc/OpenLumen/blob/main/docs/deferred-candidates.md),
+          which records the things that were considered and parked, and why.
+
+        The working roadmap is not published, so there is no row to link to.
+        Describe what you want and what you would do with it.
 
   - type: textarea
     id: problem

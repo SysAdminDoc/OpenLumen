@@ -1,6 +1,6 @@
 OpenLumen は Android 向けのオフライン画面カラーフィルターです。フォアグラウンドサービスとして動作し、端末が対応する方式に応じて表示の色変換ドライバーを切り替えます。
 
-* AOSP ColorDisplayManager（root 不要、フレームバッファ変換）
+* システムの夜間モードと暗さの追加調整をセキュア設定経由で利用（root 不要。ステータスバーやロック画面にも適用されます）。adb で WRITE_SECURE_SETTINGS を一度許可する必要があります。
 * SurfaceFlinger 色行列（root）
 * KCAL カーネルドライバー（root、対応 Qualcomm パネル）
 * Overlay（root 不要、Android 12+ の制限を受ける汎用フォールバック）

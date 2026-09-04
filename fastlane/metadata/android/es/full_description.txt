@@ -1,6 +1,8 @@
 OpenLumen es un filtro de color de pantalla sin conexion para Android. Se ejecuta como servicio en primer plano, aplica transformaciones de color de pantalla y cambia de driver segun lo que admita el dispositivo:
 
-* AOSP ColorDisplayManager (sin root, transformacion de framebuffer)
+* Luz nocturna y Atenuación extra del sistema, mediante ajustes seguros (sin
+  root; el tono cubre la barra de estado, las notificaciones y la pantalla de
+  bloqueo). Requiere conceder WRITE_SECURE_SETTINGS una vez por adb.
 * matriz de color SurfaceFlinger (root)
 * driver de kernel KCAL (root, paneles Qualcomm compatibles)
 * Overlay (sin root, respaldo universal limitado por las reglas de Android 12+)
