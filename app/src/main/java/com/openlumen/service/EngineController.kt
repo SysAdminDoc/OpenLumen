@@ -44,6 +44,25 @@ internal class EngineController(
     @Volatile private var cachedAutoKind: EngineKind? = null
     @Volatile private var lastEngineSelection: EngineKindDto? = null
 
+    /**
+     * True once the blind root sweep has run with nothing applied since (C325).
+     *
+     * One turn-off reaches that sweep three times: the command runs it, the
+     * `enabled = false` the command writes lands on the preference collector
+     * and runs it again through `clearAndStop`, and `stopSelf` runs it a third
+     * time on the way down. Every pass issues the same SurfaceFlinger disable
+     * transaction and the same KCAL probes, and each one spawns `su` -- a stall
+     * the user sees, and on some managers a prompt. The repeats cannot find
+     * anything the first pass left behind, because nothing applies a transform
+     * in between.
+     *
+     * Deliberately scoped to this controller instance. A fresh process starts
+     * with it false, so the recovery case the sweep exists for -- a tinted
+     * display that no live engine has a handle on -- always sweeps. Any apply
+     * puts a transform back and arms it again.
+     */
+    @Volatile private var rootTransformsSwept = false
+
     suspend fun ensureEngineFor(prefs: Preferences) {
         if (prefs.engine != lastEngineSelection) {
             cachedAutoKind = null
@@ -138,15 +157,25 @@ internal class EngineController(
             }
             runCatching { (probe.engineOf(EngineKind.OVERLAY) as? OverlayEngine)?.clear(context) }
                 .onFailure { Log.w(logTag, "overlay hard clear failed: ${it.message}") }
-            runCatching { DisplayEmergencyReset.clearRootTransforms(context.takeIf { blunt }) }
+            val sweepRoots = !rootTransformsSwept
+            runCatching {
+                DisplayEmergencyReset.clearRootTransforms(
+                    context = context.takeIf { blunt },
+                    roots = sweepRoots
+                )
+            }
                 .onSuccess { result ->
+                    // Only the root half is latched. The secure half still runs
+                    // on every blunt pass: it is a different family, it costs no
+                    // su, and an ordinary disable never touches it (C291).
+                    rootTransformsSwept = true
                     DiagnosticsLog.log(
                         context,
                         DiagnosticsLog.Level.INFO,
                         DiagnosticsLog.Category.ENGINE,
                         "$reason: hard reset secure=${result.secureSettingsKeys.joinToString().ifBlank { "none" }} " +
-                            "SF=${result.surfaceFlingerCodes.joinToString().ifBlank { "none" }} " +
-                            "KCAL=${result.kcalPaths.joinToString().ifBlank { "none" }}"
+                            "SF=${result.surfaceFlingerCodes.rootField(sweepRoots)} " +
+                            "KCAL=${result.kcalPaths.rootField(sweepRoots)}"
                     )
                 }
                 .onFailure { Log.w(logTag, "root hard clear failed: ${it.message}") }
@@ -176,6 +205,7 @@ internal class EngineController(
             when (result) {
                 EngineResult.Success -> {
                     lastApplied = matrix
+                    rootTransformsSwept = false
                     applyGate.commit(state.active, matrix)
                     DiagnosticsLog.log(
                         context,
@@ -208,7 +238,23 @@ internal class EngineController(
      * rows are deliberately left out of this pass (C291).
      */
     suspend fun clearRootTransformsForShutdown() {
+        // stopSelf() follows a hard clear by milliseconds on the ordinary
+        // paths, so this is usually the third identical sweep of one turn-off
+        // (C325). It still runs when the service is stopped some other way.
+        if (rootTransformsSwept) return
         runCatching { DisplayEmergencyReset.clearRootTransforms(context = null) }
+            .onSuccess { result ->
+                rootTransformsSwept = true
+                DiagnosticsLog.log(
+                    context,
+                    DiagnosticsLog.Level.INFO,
+                    DiagnosticsLog.Category.ENGINE,
+                    "shutdown: hard reset secure=none " +
+                        "SF=${result.surfaceFlingerCodes.joinToString().ifBlank { "none" }} " +
+                        "KCAL=${result.kcalPaths.joinToString().ifBlank { "none" }}"
+                )
+            }
+            .onFailure { Log.w(logTag, "shutdown hard clear failed: ${it.message}") }
     }
 
     private suspend fun resolveDesiredEngineKind(prefsSnapshot: Preferences): EngineKind? {
@@ -363,6 +409,7 @@ internal class EngineController(
                 when (result) {
                     EngineResult.Success -> {
                         lastApplied = matrix
+                        rootTransformsSwept = false
                         return@withLock true
                     }
                     is EngineResult.Failure -> {
@@ -374,6 +421,14 @@ internal class EngineController(
            }
        }
    }
+
+    /**
+     * A sweep that was skipped reported nothing, which is not the same as a
+     * sweep that ran and found nothing. "none" for both would make the
+     * diagnostics timeline claim the second reading.
+     */
+    private fun <T> List<T>.rootField(swept: Boolean): String =
+        if (!swept) "already swept" else joinToString().ifBlank { "none" }
 
     private fun reportResult(operation: String, result: EngineResult) {
         if (result is EngineResult.Failure) {
