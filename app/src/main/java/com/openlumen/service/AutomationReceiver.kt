@@ -90,7 +90,10 @@ class AutomationReceiver : BroadcastReceiver() {
         }
         lastForwardedMs[action] = now
 
-        val pending = goAsync()
+        // Null when this receiver was not reached through a real broadcast
+        // dispatch, which is the case in a unit test. The work below is what
+        // matters; the pending result only keeps the process alive for it.
+        val pending: PendingResult? = goAsync()
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
             try {
                 val current = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) { prefs.flow.first() }
@@ -140,7 +143,7 @@ class AutomationReceiver : BroadcastReceiver() {
             } catch (t: Throwable) {
                 Log.e(tag, "automation receiver failed: ${t.message}", t)
             } finally {
-                pending.finish()
+                pending?.finish()
             }
         }
     }
