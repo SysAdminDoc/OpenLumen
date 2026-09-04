@@ -1,5 +1,6 @@
 package com.openlumen.ui.components
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -10,6 +11,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.openlumen.R
@@ -30,7 +32,9 @@ fun TimePickerDialog(
     val state = rememberTimePickerState(
         initialHour = initialHour.coerceIn(0, 23),
         initialMinute = initialMinute.coerceIn(0, 59),
-        is24Hour = true
+        // The device's own 12/24 setting. Hard-wiring true gave a user on a
+        // 12-hour clock a dial they could not enter their time on.
+        is24Hour = DateFormat.is24HourFormat(LocalContext.current)
     )
 
     AlertDialog(

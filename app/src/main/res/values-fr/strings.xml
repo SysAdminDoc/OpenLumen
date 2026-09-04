@@ -119,7 +119,8 @@
     <string name="schedule_until_alarm_hint">S\'active a l\'heure de debut et se desactive au declenchement de votre prochain reveil. Si aucun reveil n\'est defini, s\'arrete 12 heures apres le debut.</string>
     <string name="schedule_start">Debut</string>
     <string name="schedule_end">Fin</string>
-    <string name="schedule_time_value">%1$s : %2$02d:%3$02d</string>
+    <string name="schedule_time_value">%1$s: %2$s</string>
+    <string name="schedule_location_value">Position : %1$s</string>
     <string name="schedule_equal_times_error">Le début et la fin doivent être différents. Choisissez « Toujours » pour un programme actif toute la journée.</string>
     <string name="schedule_timezone">Les programmations suivent l\'horloge de votre appareil (%1$s).</string>
     <string name="schedule_solar_timezone">Les transitions solaires utilisent l\'heure du lieu sélectionné (%1$s).</string>

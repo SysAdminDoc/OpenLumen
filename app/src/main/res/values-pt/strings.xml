@@ -119,7 +119,8 @@
     <string name="schedule_until_alarm_hint">Ativa no horário de início e desliga quando o próximo alarme tocar. Se não houver alarme, desativa 12 horas após o início.</string>
     <string name="schedule_start">Início</string>
     <string name="schedule_end">Fim</string>
-    <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
+    <string name="schedule_time_value">%1$s: %2$s</string>
+    <string name="schedule_location_value">Localização: %1$s</string>
     <string name="schedule_equal_times_error">O início e o fim devem ser diferentes. Escolha “Sempre” para um agendamento ativo o dia todo.</string>
     <string name="schedule_timezone">Os agendamentos seguem o relogio do dispositivo (%1$s).</string>
     <string name="schedule_solar_timezone">As transições solares usam o relógio do local selecionado (%1$s).</string>

@@ -119,7 +119,8 @@
     <string name="schedule_until_alarm_hint">Aktiviert sich zur Startzeit und schaltet sich ab, wenn der nächste Wecker klingelt. Wenn kein Wecker gestellt ist, endet der Filter 12 Stunden nach dem Start.</string>
     <string name="schedule_start">Start</string>
     <string name="schedule_end">Ende</string>
-    <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
+    <string name="schedule_time_value">%1$s: %2$s</string>
+    <string name="schedule_location_value">Standort: %1$s</string>
     <string name="schedule_equal_times_error">Start und Ende müssen unterschiedlich sein. Wählen Sie „Immer“ für einen ganztägigen Zeitplan.</string>
     <string name="schedule_timezone">Zeitpläne richten sich nach der Geräteuhr (%1$s).</string>
     <string name="schedule_solar_timezone">Solarübergänge verwenden die Uhr des ausgewählten Standorts (%1$s).</string>

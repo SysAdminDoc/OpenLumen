@@ -1,7 +1,9 @@
 package com.openlumen.ui.screens
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,9 +53,13 @@ import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.viewmodel.OpenLumenViewModel
 import com.openlumen.viewmodel.OpenLumenScreenModel
+import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import kotlin.math.roundToInt
 
 @Composable
@@ -126,17 +132,27 @@ fun ScheduleScreen(
         // Fixed-time schedules follow the device zone. A city-selected solar
         // schedule keeps the city's IANA zone so its wall-clock sunrise and
         // sunset remain stable when the device travels.
-        val zoneLabel = ZoneId.systemDefault().id
+        val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+        val use24Hour = DateFormat.is24HourFormat(LocalContext.current)
         val solarTimezone = prefs.schedule.solarTimezone
+        val shownZone = solarTimezone
+            ?.let { runCatching { ZoneId.of(it) }.getOrNull() }
+            ?.takeIf { prefs.schedule.mode == ScheduleModeDto.Solar }
+        val deviceZone = ZoneId.systemDefault()
+        val zone = shownZone ?: deviceZone
+        val zoneName = zoneDisplayName(zone, locale, Instant.now())
         Text(
-            if (prefs.schedule.mode == ScheduleModeDto.Solar &&
-                solarTimezone != null
-            ) {
-                stringResource(R.string.schedule_solar_timezone, solarTimezone)
+            if (shownZone != null) {
+                stringResource(R.string.schedule_solar_timezone, zoneName)
             } else {
-                stringResource(R.string.schedule_timezone, zoneLabel)
+                stringResource(R.string.schedule_timezone, zoneName)
             },
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            zone.id,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -235,8 +251,12 @@ fun ScheduleScreen(
                             stringResource(
                                 R.string.schedule_time_value,
                                 stringResource(R.string.schedule_start),
-                                prefs.schedule.startHour,
-                                prefs.schedule.startMinute
+                                formatScheduleTime(
+                                    prefs.schedule.startHour,
+                                    prefs.schedule.startMinute,
+                                    use24Hour,
+                                    locale
+                                )
                             )
                         )
                     }
@@ -248,8 +268,12 @@ fun ScheduleScreen(
                             stringResource(
                                 R.string.schedule_time_value,
                                 stringResource(R.string.schedule_end),
-                                prefs.schedule.endHour,
-                                prefs.schedule.endMinute
+                                formatScheduleTime(
+                                    prefs.schedule.endHour,
+                                    prefs.schedule.endMinute,
+                                    use24Hour,
+                                    locale
+                                )
                             )
                         )
                     }
@@ -277,7 +301,10 @@ fun ScheduleScreen(
                             if (lat == null || lng == null)
                                 stringResource(R.string.schedule_set_location)
                             else
-                                String.format(Locale.ROOT, "%.3f, %.3f", lat, lng)
+                                stringResource(
+                                    R.string.schedule_location_value,
+                                    String.format(Locale.ROOT, "%.3f, %.3f", lat, lng)
+                                )
                         )
                     }
 
@@ -345,8 +372,12 @@ fun ScheduleScreen(
                             stringResource(
                                 R.string.schedule_time_value,
                                 stringResource(R.string.schedule_start),
-                                prefs.schedule.startHour,
-                                prefs.schedule.startMinute
+                                formatScheduleTime(
+                                    prefs.schedule.startHour,
+                                    prefs.schedule.startMinute,
+                                    use24Hour,
+                                    locale
+                                )
                             )
                         )
                     }
@@ -567,3 +598,37 @@ internal fun shouldWarnAboutSolarLocation(
     mode: ScheduleModeDto,
     locationValid: Boolean
 ): Boolean = mode == ScheduleModeDto.Solar && !locationValid
+
+/**
+ * A schedule time as this device would write it.
+ *
+ * The tab printed `21:30` to everyone and the picker was hard-wired to a
+ * 24-hour dial, so a user whose device is set to 12-hour time saw a clock they
+ * do not use, in a picker that would not let them enter one.
+ * [android.text.format.DateFormat.getBestDateTimePattern] gives the locale's
+ * own arrangement of the hour and minute, so this is not "HH:mm or h:mm a"
+ * with a language guess bolted on.
+ */
+internal fun formatScheduleTime(
+    hour: Int,
+    minute: Int,
+    use24Hour: Boolean,
+    locale: Locale
+): String {
+    val pattern = DateFormat.getBestDateTimePattern(locale, if (use24Hour) "Hm" else "hm")
+    return LocalTime.of(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
+        .format(DateTimeFormatter.ofPattern(pattern, locale))
+}
+
+/**
+ * A timezone as a person would name it, e.g. "Eastern Daylight Time" rather
+ * than "America/New_York". The id is still shown, underneath, because it is
+ * what the user picked and what a support conversation needs.
+ *
+ * [now] decides whether the daylight or standard name applies, so this is
+ * correct across a DST boundary instead of being right for half the year.
+ */
+internal fun zoneDisplayName(zone: ZoneId, locale: Locale, now: Instant): String {
+    val timeZone = TimeZone.getTimeZone(zone)
+    return timeZone.getDisplayName(timeZone.inDaylightTime(Date.from(now)), TimeZone.LONG, locale)
+}

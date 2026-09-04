@@ -119,7 +119,8 @@
     <string name="schedule_until_alarm_hint">開始時刻に有効になり、次のアラームが鳴ると解除されます。アラームが設定されていない場合は、開始から12時間後に解除されます。</string>
     <string name="schedule_start">開始</string>
     <string name="schedule_end">終了</string>
-    <string name="schedule_time_value">%1$s: %2$02d:%3$02d</string>
+    <string name="schedule_time_value">%1$s: %2$s</string>
+    <string name="schedule_location_value">位置: %1$s</string>
     <string name="schedule_equal_times_error">開始時刻と終了時刻は異なる必要があります。終日有効にするには「常にオン」を選択してください。</string>
     <string name="schedule_timezone">スケジュールはデバイスの時計 (%1$s) に基づいて実行されます。</string>
     <string name="schedule_solar_timezone">太陽時刻の切り替えには選択した場所の時計 (%1$s) を使用します。</string>
