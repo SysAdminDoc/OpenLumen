@@ -557,7 +557,11 @@ class LumenService : LifecycleService() {
         } else {
             directBootMirror.markDisabled()
         }
-        engineController.hardClearOutputs("turn off from $source")
+        // An explicit turn-off command is the emergency path: it is what the
+        // documented ADB escape hatch and the notification's Turn off action
+        // reach, and it must clear a transform even when nothing in this
+        // process still owns it (C291).
+        engineController.hardClearOutputs("turn off from $source", blunt = true)
         stopSelf()
     }
 

@@ -107,7 +107,20 @@ internal class EngineController(
         }
     }
 
-    suspend fun hardClearOutputs(reason: String) {
+    /**
+     * Drop every output this process can reach.
+     *
+     * [blunt] decides whether the secure-settings rows are switched off without
+     * regard to who owns them (C291). They are persistent system settings the
+     * user may have had on before OpenLumen ever ran, and
+     * `SecureSettingsEngine.clearKnownSecureState` cannot tell the difference,
+     * so only the emergency paths may use it: an explicit turn-off command, or
+     * a `clear()` that failed and left a transform on the display with nothing
+     * holding a handle to it. An ordinary disable runs the engine's own
+     * `clear()` just above, which restores the user's values, and a blunt pass
+     * afterwards would zero exactly what that restore put back.
+     */
+    suspend fun hardClearOutputs(reason: String, blunt: Boolean = false) {
         cancelTransition()
         applyMutex.withLock {
             engine?.let {
@@ -117,7 +130,7 @@ internal class EngineController(
             }
             runCatching { (probe.engineOf(EngineKind.OVERLAY) as? OverlayEngine)?.clear(context) }
                 .onFailure { Log.w(logTag, "overlay hard clear failed: ${it.message}") }
-            runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
+            runCatching { DisplayEmergencyReset.clearRootTransforms(context.takeIf { blunt }) }
                 .onSuccess { result ->
                     DiagnosticsLog.log(
                         context,
@@ -181,8 +194,13 @@ internal class EngineController(
         runCatching { current.clear(context) }
     }
 
+    /**
+     * Shutdown is not an emergency: [clearActiveEngineForShutdown] has already
+     * given the active engine a chance to restore what it owns, so the secure
+     * rows are deliberately left out of this pass (C291).
+     */
     suspend fun clearRootTransformsForShutdown() {
-        runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
+        runCatching { DisplayEmergencyReset.clearRootTransforms(context = null) }
     }
 
     private suspend fun resolveDesiredEngineKind(prefsSnapshot: Preferences): EngineKind? {
