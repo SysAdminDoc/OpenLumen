@@ -14,13 +14,14 @@
             <corners android:radius="12dp" />
         </shape>
     </item>
+    <!--
+        drawable, not bitmap: ic_lumen_tile is a vector, and a bitmap element
+        decodes its src as a raster image and throws when that fails. The
+        first attempt at this preview would not have rendered at all.
+    -->
     <item
+        android:drawable="@drawable/ic_lumen_tile"
         android:gravity="center"
         android:width="32dp"
-        android:height="32dp">
-        <bitmap
-            android:src="@drawable/ic_lumen_tile"
-            android:tint="@color/widget_on_surface"
-            android:gravity="center" />
-    </item>
+        android:height="32dp" />
 </layer-list>

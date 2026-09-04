@@ -1,47 +1,12 @@
 # Changelog
 
-## [0.7.1] (2026-08-29)
-
-- New app icon: adaptive, themed (monochrome) and legacy variants regenerated from the 2026-08 icon set.
-- Raised the local Gradle heap and Metaspace ceilings so the release shrinker completes alongside the full test and lint workload.
-- Build the destination list on access so R8 full mode cannot capture uninitialized navigation singletons and crash the signed app at startup.
-
-## [0.7.0] (2026-08-11)
-
-- Reject equal fixed-schedule start and end times in the editor and normalize imported or persisted equal-time schedules to the explicit Off mode.
-- Preserve the selected offline city's IANA timezone for solar schedules, while keeping manually entered coordinates on the device timezone.
-- Ambient-light activation now uses a visible hysteresis band, preventing lux readings near the threshold from repeatedly restarting filter transitions.
-- Foreground notifications now refresh after schedule reevaluation and distinguish active filtering from standby while retaining the next-alarm countdown.
-- Notification permission denials now distinguish retryable and permanent states, with an in-app Retry or notification-settings recovery action instead of a silent one-time failure.
-- Kelvin control state now follows the current RGB and is explicitly disabled for named presets that are not editable temperature profiles, preventing stale-value jumps.
-- Previous-preset restore now records only named presets; custom-to-named changes consistently omit the restore affordance instead of offering a key without its exact RGB snapshot.
-- Explicit Off and AlwaysOff selections now remain stable standby states while the service is enabled; only the master-switch turn-on action restores an active schedule/preset.
-- Settings and driver-report share actions now resolve external activities defensively and show localized recovery guidance when an OEM or managed profile cannot launch them.
-- Location entry now uses an IME-aware bounded scroll region, keeping coordinate fields, city results, validation text, and dialog actions reachable on short viewports.
-- Navigation-rail layouts now apply safe top/bottom insets, adapt rail sizing for large font scales, and expose complete destination labels through accessibility semantics.
-- Auto driver explanations now use the same shared root → CDM → Overlay resolver as the service, including the no-driver state.
-- Driver re-probing is now single-flight across the UI and service, preserves the last known result during refresh, and exposes a localized retry state when probing fails.
-- Profile saves now require explicit confirmation before replacing a trimmed, case-insensitive name collision; canceling leaves the original snapshot untouched.
-- Screenshot coverage now renders the production navigation root and real screens with deterministic state, including light/dark themes, phone/rail layouts, loading/error/empty states, and an import dialog.
-- Adjustable sliders now expose localized control names alongside live value descriptions for TalkBack and keyboard users.
-- Exact schedule alarms now target the foreground service directly, while inexact fallback alarms retain bounded blocked-start retries and cancel legacy alarm identities during reconciliation.
-- Android 13+ per-app language settings now expose exactly the shipped English, German, Spanish, French, Japanese, and Portuguese locales, with automated string-key parity checks.
-- Dependency-update review now reports official release-note endpoints, compatibility risks, required verification commands, checksum impact, unresolved metadata, and explicit intentional holds.
-- KCAL emergency recovery documentation now uses the engine's valid 0 to 255 scalar range, with documentation lint rejecting out-of-range recovery examples.
-- PROJECT_CONTEXT.md now reflects the v0.6.6 release metadata, preference schema 2, and nullable Auto driver resolution, with a local consistency gate for future drift.
-- Sensor callback backpressure and diagnostics-log locking comments now match the live lossy-buffer and shared-lock implementations, with a concurrency regression test for reader locking.
-- Tile and widget foreground-service starts now retain the requested enabled state through a blocked-start recovery handoff, retrying from the visible app after overlay permission is granted.
-- Supply-chain documentation now records the current protobuf CVE-2024-7254 triage against the release SBOM/OSV report and makes artifact provenance cadence explicit.
-- The Driver tab now explains Android Advanced Protection's irrelevant impact on OpenLumen and the driver report has a regression contract for its platform-state output.
-- Preset v2 now supports portable JSON preset packs, user-renamable built-in labels and saved profiles, plus persistent alphabetical or recency ordering without importing runtime state.
-- Added comfort-only PWM workflow guidance covering OpenLumen's Overlay/PWM Comfort path and safe comparison with OLED Saver or Iris, without health claims.
-- Diagnostics now supports a timeline range scrubber and case-insensitive text search over the active level/category-filtered log subset, with pure timestamp/filter regression tests.
-
 All notable changes to OpenLumen are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.8.0] (2026-09-04)
 
 ### Breaking
 
@@ -114,6 +79,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Root command execution now uses hard process-level deadlines and guaranteed
   stream/process cleanup instead of relying only on coroutine cancellation.
+### Added
+
+- Launcher long-press shortcuts for toggling the filter, moving to the next favourite preset, and forcing the filter off. The last one matters most: until now the only documented way out of a stuck filter was reading an adb command off a screen that may be the thing that is broken. Each shortcut goes through the component that already owns the behaviour, so it cannot drift from what the tile and the notification do.
+- The Schedule tab shows times the way your device does, in 12-hour or 24-hour form, and names timezones as people name them rather than as `America/New_York`.
+
+### Changed
+
+- Colour-vision presets no longer switch the system Night Light on underneath them at a temperature nobody asked for.
+- The Intensity slider moves Grayscale and the colour-vision presets on the rootless driver. It used to do nothing at all between full strength and one percent, then snap the preset off at zero.
+- Presets now say when the driver in use is standing in for them with the system's own colour correction, instead of reporting the preset as rendered exactly.
+- The rootless driver stops claiming it can dim below the panel minimum on devices that do not ship Extra Dim.
+- The whole app's colours were checked against WCAG AA, and the ones that failed were fixed. Half the Material roles had never been set, so cards, dialogs and sliders were painting themselves from Material's own greys rather than the palette; warning cards shared a fill with ordinary ones; and in the light theme several pieces of text and two slider colours were unreadable against what they sat on. The light window no longer flashes black on a cold start.
+- Widgets follow the launcher's theme instead of always being dark, the active preset is visible, and the widget-picker preview is no longer a white glyph on nothing.
+- In-app text was rewritten against the project's own writing rules, and the French, Spanish and Portuguese translations had their missing accents restored. Counts use real plural forms rather than an English "(s)".
+- The README leads with what this app is for: it changes the display rather than painting a window over it, and it corrects a panel whose colour is wrong.
+
+### Fixed
+
+- Grayscale and the colour-vision presets restore correctly after a locked boot. The saved state carried the matrix but not the correction mode the rootless driver renders them through, so they came back as no filter at all until the phone was unlocked.
+- A refused service start now says so on the screen you are looking at, instead of surfacing as a message the next time you open the About tab.
+- The "notifications are off" card goes away when you grant the permission and come back, instead of waiting for the screen to be rebuilt.
+- The solar location warning appears only in the solar schedule mode, rather than on a fresh install that has not chosen one.
+- Renaming a profile to a name that is taken says so, instead of leaving the Save button enabled and swallowing the tap.
+- The custom RGB state has one name everywhere. The Home card showed the internal key.
+- Share, exact-alarm settings and notification settings no longer report a failure that was not one on Android 11 and later.
+- Screen readers have headings to navigate by, tabs that say their name once rather than three times, saved profiles announced as the buttons they are, a diagnostics timeline in readable local time, and an announced error when a driver probe fails.
+
+### Security
+
+- The Gradle build cache is off while the Kotlin plugin is inside GHSA-r937-wjx7-w2jp. The note claiming it was already off had been wrong since it was written.
+- Bouncy Castle is pinned above the version Robolectric brings in, which carried a critical advisory into the test classpath.
+- The Gradle wrapper is pinned by checksum. The tool that enforces every other checksum was itself downloaded unverified.
+- Dependency verification is described as what it is, checksums only. The file carried 85 PGP key entries that nothing read.
+
+## [0.7.1] (2026-08-29)
+
+- New app icon: adaptive, themed (monochrome) and legacy variants regenerated from the 2026-08 icon set.
+- Raised the local Gradle heap and Metaspace ceilings so the release shrinker completes alongside the full test and lint workload.
+- Build the destination list on access so R8 full mode cannot capture uninitialized navigation singletons and crash the signed app at startup.
+
+## [0.7.0] (2026-08-11)
+
+- Reject equal fixed-schedule start and end times in the editor and normalize imported or persisted equal-time schedules to the explicit Off mode.
+- Preserve the selected offline city's IANA timezone for solar schedules, while keeping manually entered coordinates on the device timezone.
+- Ambient-light activation now uses a visible hysteresis band, preventing lux readings near the threshold from repeatedly restarting filter transitions.
+- Foreground notifications now refresh after schedule reevaluation and distinguish active filtering from standby while retaining the next-alarm countdown.
+- Notification permission denials now distinguish retryable and permanent states, with an in-app Retry or notification-settings recovery action instead of a silent one-time failure.
+- Kelvin control state now follows the current RGB and is explicitly disabled for named presets that are not editable temperature profiles, preventing stale-value jumps.
+- Previous-preset restore now records only named presets; custom-to-named changes consistently omit the restore affordance instead of offering a key without its exact RGB snapshot.
+- Explicit Off and AlwaysOff selections now remain stable standby states while the service is enabled; only the master-switch turn-on action restores an active schedule/preset.
+- Settings and driver-report share actions now resolve external activities defensively and show localized recovery guidance when an OEM or managed profile cannot launch them.
+- Location entry now uses an IME-aware bounded scroll region, keeping coordinate fields, city results, validation text, and dialog actions reachable on short viewports.
+- Navigation-rail layouts now apply safe top/bottom insets, adapt rail sizing for large font scales, and expose complete destination labels through accessibility semantics.
+- Auto driver explanations now use the same shared root → CDM → Overlay resolver as the service, including the no-driver state.
+- Driver re-probing is now single-flight across the UI and service, preserves the last known result during refresh, and exposes a localized retry state when probing fails.
+- Profile saves now require explicit confirmation before replacing a trimmed, case-insensitive name collision; canceling leaves the original snapshot untouched.
+- Screenshot coverage now renders the production navigation root and real screens with deterministic state, including light/dark themes, phone/rail layouts, loading/error/empty states, and an import dialog.
+- Adjustable sliders now expose localized control names alongside live value descriptions for TalkBack and keyboard users.
+- Exact schedule alarms now target the foreground service directly, while inexact fallback alarms retain bounded blocked-start retries and cancel legacy alarm identities during reconciliation.
+- Android 13+ per-app language settings now expose exactly the shipped English, German, Spanish, French, Japanese, and Portuguese locales, with automated string-key parity checks.
+- Dependency-update review now reports official release-note endpoints, compatibility risks, required verification commands, checksum impact, unresolved metadata, and explicit intentional holds.
+- KCAL emergency recovery documentation now uses the engine's valid 0 to 255 scalar range, with documentation lint rejecting out-of-range recovery examples.
+- PROJECT_CONTEXT.md now reflects the v0.6.6 release metadata, preference schema 2, and nullable Auto driver resolution, with a local consistency gate for future drift.
+- Sensor callback backpressure and diagnostics-log locking comments now match the live lossy-buffer and shared-lock implementations, with a concurrency regression test for reader locking.
+- Tile and widget foreground-service starts now retain the requested enabled state through a blocked-start recovery handoff, retrying from the visible app after overlay permission is granted.
+- Supply-chain documentation now records the current protobuf CVE-2024-7254 triage against the release SBOM/OSV report and makes artifact provenance cadence explicit.
+- The Driver tab now explains Android Advanced Protection's irrelevant impact on OpenLumen and the driver report has a regression contract for its platform-state output.
+- Preset v2 now supports portable JSON preset packs, user-renamable built-in labels and saved profiles, plus persistent alphabetical or recency ordering without importing runtime state.
+- Added comfort-only PWM workflow guidance covering OpenLumen's Overlay/PWM Comfort path and safe comparison with OLED Saver or Iris, without health claims.
+- Diagnostics now supports a timeline range scrubber and case-insensitive text search over the active level/category-filtered log subset, with pure timestamp/filter regression tests.
 
 ## [0.6.6] (2026-08-03)
 

@@ -4,6 +4,9 @@ import com.google.common.truth.Truth.assertThat
 import com.openlumen.diagnostics.DiagnosticsLog
 import java.time.Instant
 import java.util.Locale
+import java.util.TimeZone
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -19,6 +22,23 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class DiagnosticsTimelineFormatTest {
+
+    /**
+     * formatLogInstant renders in the device's zone, so a test asserting a
+     * calendar date has to pin one. Left to the runner, this passes here and
+     * fails on a machine at UTC-9 or further west, where 08:00 UTC is the
+     * previous day.
+     */
+    @Before fun pinTimeZone() {
+        original = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
+    }
+
+    @After fun restoreTimeZone() {
+        TimeZone.setDefault(original)
+    }
+
+    private lateinit var original: TimeZone
 
     private val bounds = DiagnosticsLog.TimelineBounds(
         earliest = Instant.parse("2026-09-01T08:00:00Z"),

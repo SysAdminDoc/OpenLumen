@@ -1,0 +1,1 @@
+Raccourcis du lanceur, dont un qui force l'arrêt du filtre sans ouvrir l'application. Les préréglages de vision des couleurs n'activent plus l'éclairage nocturne en dessous, et le curseur d'intensité agit sur eux. Les niveaux de gris se restaurent après un démarrage verrouillé. Le contraste de toute la palette a été vérifié ; les widgets suivent le thème du lanceur.

@@ -32,11 +32,21 @@ class StaticAccessibilityTest {
     }
 
     @Test fun `the channel meter reports itself as a progress bar`() {
-        val block = presets.substringAfter("val meterState =").substringBefore("Text(")
+        val row = presets.substringAfter("private fun ChannelRow(").substringBefore("@Composable")
 
-        assertThat(block).contains("progressBarRangeInfo")
-        assertThat(block).contains("contentDescription")
-        assertThat(block).contains("stateDescription")
+        assertThat(row).contains("progressBarRangeInfo")
+        assertThat(row).contains("mergeDescendants = true")
+    }
+
+    @Test fun `the channel meter is named, not spelled`() {
+        // The visible label is one letter, so contentDescription = label made
+        // a screen reader announce the bar as "R". The full names already
+        // existed for the Home sliders.
+        val row = presets.substringAfter("private fun ChannelRow(").substringBefore("@Composable")
+
+        assertThat(row).contains("contentDescription = accessibleName")
+        assertThat(row).doesNotContain("contentDescription = label")
+        assertThat(presets).contains("R.string.home_rgb_red_name")
     }
 
     @Test fun `the channel meter reads its percentage from a resource`() {

@@ -133,7 +133,14 @@ internal object WidgetColors {
     val MutedText = ColorProvider(Latte.Subtext0, Catppuccin.Subtext0)
     val ActiveRing = ColorProvider(Latte.Mauve, Catppuccin.Mauve)
 
-    /** Rounded corners on every filled box, so the tiles are not raw squares. */
+    /**
+     * Rounded corners on every filled box, so the tiles are not raw squares.
+     *
+     * Glance's cornerRadius maps to a RemoteViews outline radius that only
+     * exists from API 31, so on 26 to 30 this is a no-op and the widgets keep
+     * the square corners they always had. That is the old appearance rather
+     * than a broken one, and the alternative is a nine-patch per shape.
+     */
     val CornerRadius = 12.dp
     val SwatchCornerRadius = 6.dp
 }

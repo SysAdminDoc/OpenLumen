@@ -37,7 +37,10 @@ fun LumenSwitch(
     val thumbColor = when {
         !enabled -> MaterialTheme.colorScheme.onSurfaceVariant
         checked -> MaterialTheme.colorScheme.onPrimary
-        else -> MaterialTheme.colorScheme.surface
+        // Not surface: against the unchecked track that was 2.63:1 dark and
+        // 1.91:1 light, so the thumb of an off switch was barely there. A
+        // control you have to see and aim wants 3:1 against what it sits on.
+        else -> MaterialTheme.colorScheme.onSurface
     }
 
     Box(

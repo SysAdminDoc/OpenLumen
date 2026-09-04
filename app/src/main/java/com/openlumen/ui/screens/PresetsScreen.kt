@@ -529,9 +529,27 @@ private fun PresetDetailPane(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     val channels = lumenChannelColors()
-                    ChannelRow(stringResource(R.string.channel_red_short), m.r, channels.red)
-                    ChannelRow(stringResource(R.string.channel_green_short), m.g, channels.green)
-                    ChannelRow(stringResource(R.string.channel_blue_short), m.b, channels.blue)
+                    // The visible label is a single letter. The name a screen
+                    // reader needs is the full one, and those strings already
+                    // existed for the Home sliders.
+                    ChannelRow(
+                        stringResource(R.string.channel_red_short),
+                        stringResource(R.string.home_rgb_red_name),
+                        m.r,
+                        channels.red
+                    )
+                    ChannelRow(
+                        stringResource(R.string.channel_green_short),
+                        stringResource(R.string.home_rgb_green_name),
+                        m.g,
+                        channels.green
+                    )
+                    ChannelRow(
+                        stringResource(R.string.channel_blue_short),
+                        stringResource(R.string.home_rgb_blue_name),
+                        m.b,
+                        channels.blue
+                    )
                 }
             }
         }
@@ -652,9 +670,24 @@ private fun ProfileDetailPane(profile: NamedProfile) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     val channels = lumenChannelColors()
-                    ChannelRow(stringResource(R.string.channel_red_short), matrix.r, channels.red)
-                    ChannelRow(stringResource(R.string.channel_green_short), matrix.g, channels.green)
-                    ChannelRow(stringResource(R.string.channel_blue_short), matrix.b, channels.blue)
+                    ChannelRow(
+                        stringResource(R.string.channel_red_short),
+                        stringResource(R.string.home_rgb_red_name),
+                        matrix.r,
+                        channels.red
+                    )
+                    ChannelRow(
+                        stringResource(R.string.channel_green_short),
+                        stringResource(R.string.home_rgb_green_name),
+                        matrix.g,
+                        channels.green
+                    )
+                    ChannelRow(
+                        stringResource(R.string.channel_blue_short),
+                        stringResource(R.string.home_rgb_blue_name),
+                        matrix.b,
+                        channels.blue
+                    )
                 }
             }
         }
@@ -696,26 +729,38 @@ private fun profileMatrix(profile: NamedProfile): LumenMatrix {
 }
 
 @Composable
-private fun ChannelRow(label: String, value: Float, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun ChannelRow(
+    label: String,
+    accessibleName: String,
+    value: Float,
+    color: Color
+) {
+    val percent = (value.coerceIn(0f, 1f) * 100).toInt()
+    val meterState = stringResource(R.string.home_percent_value, percent)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        // One row, one node. Without merging, the letter, the bar and the
+        // percentage are three separate stops, so a screen reader reads
+        // "R", then "R, 42 percent", then "42 percent".
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = accessibleName
+            stateDescription = meterState
+        }
+    ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.width(24.dp)
         )
         Spacer(Modifier.size(8.dp))
-        val percent = (value.coerceIn(0f, 1f) * 100).toInt()
-        val meterState = stringResource(R.string.home_percent_value, percent)
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(8.dp)
                 // Two nested Boxes are a picture as far as accessibility is
-                // concerned. This is the only thing that tells a screen reader
-                // what the bar is and how full it is.
+                // concerned. The row above carries the name and the value; this
+                // is what makes it a progress bar rather than a label.
                 .semantics {
-                    contentDescription = label
-                    stateDescription = meterState
                     progressBarRangeInfo = ProgressBarRangeInfo(
                         current = value.coerceIn(0f, 1f),
                         range = 0f..1f

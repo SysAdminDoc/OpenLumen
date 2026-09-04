@@ -1,0 +1,1 @@
+Atalhos do lançador, incluindo um que força o desligamento do filtro sem abrir a app. As predefinições de visão de cor já não ligam a luz noturna por baixo, e o controlo de intensidade passa a atuar sobre elas. A escala de cinzentos é restaurada após um arranque bloqueado. O contraste de toda a paleta foi verificado; os widgets seguem o tema do lançador.
