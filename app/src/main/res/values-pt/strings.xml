@@ -32,7 +32,7 @@
     <string name="home_kelvin_preset_hint">Disponível para RGB personalizado; selecione Personalizado para editar esta temperatura</string>
     <string name="home_preview">Visualizar</string>
     <string name="home_gamma_title">Gama por canal</string>
-    <string name="home_gamma_hint">1.0 = neutro. Valores maiores clareiam tons medios; menores escurecem.</string>
+    <string name="home_gamma_hint">1.0 = neutro. Valores maiores clareiam tons médios; menores escurecem.</string>
     <string name="home_gamma_value">%1$.2f</string>
     <string name="home_gamma_state">%1$s gama %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
@@ -126,7 +126,7 @@
     <string name="schedule_solar_timezone">As transições solares usam o relógio do local selecionado (%1$s).</string>
     <string name="schedule_exact_alarm_warning_title">Alarmes exatos desativados</string>
     <string name="schedule_exact_alarm_warning_body">As mudanças programadas podem atrasar porque o Android permite apenas alarmes inexatos para o OpenLumen.</string>
-    <string name="schedule_exact_alarm_warning_action">Abrir configuracoes de alarmes exatos</string>
+    <string name="schedule_exact_alarm_warning_action">Abrir configurações de alarmes exatos</string>
     <string name="schedule_set_location">Definir localização</string>
     <string name="schedule_solar_location_required_short">Localização necessária</string>
     <string name="schedule_solar_location_required_title">O agendamento solar precisa de uma localização</string>
@@ -158,21 +158,21 @@
     <string name="driver_auto_resolved_none">Auto: nenhum controlador disponível. Conceder a permissão de sobreposição instala a alternativa de sobreposição.</string>
     <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. Luz noturna do sistema, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
     <string name="driver_force_pinned">Usar este controlador mesmo que pareça indisponível</string>
-    <string name="driver_force_pinned_body">Esconder o root das apps também o esconde desta verificação, e um aviso do Magisk respondido tarde parece falta de root. Active isto para tentar mesmo assim. Se o controlador não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
+    <string name="driver_force_pinned_body">Esconder o root das apps também o esconde desta verificação, e um aviso do Magisk respondido tarde parece falta de root. Ative isto para tentar mesmo assim. Se o controlador não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection do Android</string>
     <string name="driver_aapm_explanation">O modo de protecção avançada pode desligar funcionalidades que dependem da acessibilidade. O OpenLumen não usa acessibilidade nem acesso à utilização, por isso não é afectado. O relatório do controlador regista o estado da plataforma quando o dispositivo o disponibiliza.</string>
     <string name="driver_grant_status_granted">Concedido neste dispositivo.</string>
     <string name="driver_grant_status_not_granted">Não concedido. O driver Luz noturna do sistema fica indisponível até que seja concedido pelo comando ADB abaixo.</string>
     <string name="driver_copy_command">Copiar comando</string>
-    <string name="driver_copy_report">Copiar relatorio</string>
-    <string name="driver_share_report">Compartilhar relatorio</string>
-    <string name="driver_report_subject">Relatorio de driver do OpenLumen</string>
+    <string name="driver_copy_report">Copiar relatório</string>
+    <string name="driver_share_report">Compartilhar relatório</string>
+    <string name="driver_report_subject">Relatório de driver do OpenLumen</string>
     <string name="command_copied">Comando copiado</string>
-    <string name="report_copied">Relatorio copiado</string>
+    <string name="report_copied">Relatório copiado</string>
     <string name="toast_service_start_failed">Não foi possível iniciar o OpenLumen. Verifique a permissão de sobreposição ou escolha outro controlador no separador Controlador.</string>
     <string name="clipboard_adb_grant">Concessao ADB do OpenLumen</string>
-    <string name="clipboard_driver_report">Relatorio de driver do OpenLumen</string>
+    <string name="clipboard_driver_report">Relatório de driver do OpenLumen</string>
     <string name="clipboard_emergency_off">Desligamento de emergência do OpenLumen</string>
     <string name="clipboard_automation_token">Token de automação do OpenLumen</string>
     <string name="overlay_caveats_title">Sobre o driver Overlay</string>
@@ -197,12 +197,12 @@
     <string name="backup_recovery_exported">Cópia de recuperação exportada</string>
     <string name="backup_recovery_reset">Preferências redefinidas para os padrões</string>
     <string name="about_diagnostics_title">Diagnósticos</string>
-    <string name="about_diagnostics_body">O OpenLumen mantém um registo local de falhas no armazenamento privado da aplicação. Nunca sai do dispositivo.</string>
+    <string name="about_diagnostics_body">O OpenLumen mantém um registro local de falhas no armazenamento privado da aplicativo. Nunca sai do dispositivo.</string>
     <string name="about_view_crash_log">Ver registro de falhas</string>
     <string name="about_crash_log_title">Registro de falhas</string>
     <string name="about_crash_log_empty">Nenhuma falha registrada.</string>
     <string name="about_automation_title">Acesso para automação</string>
-    <string name="about_automation_body">Outras apps só controlam o OpenLumen se activar isto e lhes passar o token abaixo. Desligar o filtro nunca pede token, por isso o comando de emergência funciona sempre.</string>
+    <string name="about_automation_body">Outras apps só controlam o OpenLumen se ativar isto e lhes passar o token abaixo. Desligar o filtro nunca pede token, por isso o comando de emergência funciona sempre.</string>
     <string name="about_automation_enable">Permitir controle por outros apps</string>
     <string name="about_automation_token_label">Token</string>
     <string name="about_automation_token_pending">Gerando…</string>
@@ -269,7 +269,7 @@
 
     <string name="perm_overlay_title">Permitir exibicao sobre outros aplicativos</string>
     <string name="perm_overlay_rationale">Necessario para o driver overlay sem root. Pule se usar apenas drivers com root.</string>
-    <string name="perm_overlay_grant">Abrir configuracoes</string>
+    <string name="perm_overlay_grant">Abrir configurações</string>
     <string name="external_intent_failed">Não foi possível abrir este ecrã. Abra as definições do Android ou escolha uma aplicação manualmente.</string>
 
     <string name="light_sensor_title">Acionamento por luz ambiente</string>
@@ -355,4 +355,5 @@
     <string name="shortcut_next_preset_long">Predefinição favorita seguinte</string>
     <string name="shortcut_emergency_off_short">Forçar</string>
     <string name="shortcut_emergency_off_long">Forçar o desligamento do filtro</string>
+    <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
 </resources>

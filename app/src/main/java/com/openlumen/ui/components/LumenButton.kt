@@ -80,12 +80,18 @@ fun LumenTextButton(
  * A Card and a Slider both default to the highest surface container, so a
  * slider sitting in a card painted its unfilled track in exactly the card's
  * colour: the track was invisible and the control looked like it ended at the
- * thumb. The unfilled part takes the outline tone instead, which is the same
- * thing an outlined button draws its border with.
+ * thumb. The unfilled part takes `outlineVariant` instead, which is a tone
+ * apart from every surface in both schemes.
+ *
+ * The tick colours move with it. Material picks them for contrast against its
+ * own default track, and three of these sliders draw ticks, so leaving them
+ * behind would put the marks at about 3.3:1 on the new track.
  */
 @Composable
 fun lumenSliderColors(activeTrack: Color? = null): SliderColors = SliderDefaults.colors(
     activeTrackColor = activeTrack ?: MaterialTheme.colorScheme.primary,
     thumbColor = activeTrack ?: MaterialTheme.colorScheme.primary,
-    inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
+    inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant,
+    inactiveTickColor = MaterialTheme.colorScheme.onSurface,
+    activeTickColor = MaterialTheme.colorScheme.onPrimary
 )

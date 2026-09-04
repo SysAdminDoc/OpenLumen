@@ -65,8 +65,25 @@ class ThemeContrastTest {
         Triple("onTertiaryContainer on tertiaryContainer", scheme.onTertiaryContainer, scheme.tertiaryContainer),
         Triple("onError on error", scheme.onError, scheme.error),
         Triple("onErrorContainer on errorContainer", scheme.onErrorContainer, scheme.errorContainer),
-        Triple("inverseOnSurface on inverseSurface", scheme.inverseOnSurface, scheme.inverseSurface)
+        Triple("inverseOnSurface on inverseSurface", scheme.inverseOnSurface, scheme.inverseSurface),
+        // A Snackbar's action label. Material paints it with inversePrimary on
+        // inverseSurface, and this app uses the default for the profile-delete
+        // Undo, so it is text a user has to read under time pressure.
+        Triple("inversePrimary on inverseSurface", scheme.inversePrimary, scheme.inverseSurface)
     )
+
+    /**
+     * Controls rather than text. WCAG's floor for something you have to see
+     * and position is 3:1 against what is next to it, not 4.5:1.
+     */
+    private fun controlPairs(scheme: ColorScheme, channels: ChannelColors): List<Triple<String, Color, Color>> =
+        listOf("red" to channels.red, "green" to channels.green, "blue" to channels.blue)
+            .flatMap { (name, channel) ->
+                listOf(
+                    Triple("$name channel thumb on the card", channel, scheme.surfaceContainerHighest),
+                    Triple("$name channel fill against its own unfilled track", channel, scheme.outlineVariant)
+                )
+            }
 
     private fun failuresIn(scheme: ColorScheme): List<String> =
         textPairs(scheme)
@@ -104,6 +121,26 @@ class ThemeContrastTest {
             assertThat(contrast(scheme.outlineVariant, scheme.surfaceVariant))
                 .isGreaterThan(1.3)
         }
+    }
+
+    @Test fun `a slider you have to aim is visible in both themes`() {
+        // The RGB and gamma sliders paint their thumb and filled track with the
+        // channel's own colour. Latte's Green managed 2.17:1 against the card
+        // and 1.55:1 against its own unfilled track, so the green slider
+        // disappeared into itself in the light theme.
+        val failures = buildList {
+            for ((scheme, channels) in listOf(
+                DarkColors to DarkChannelColors,
+                LightColors to LightChannelColors
+            )) {
+                for ((name, fg, bg) in controlPairs(scheme, channels)) {
+                    val ratio = contrast(fg, bg)
+                    if (ratio < 3.0) add("$name is %.2f:1".format(ratio))
+                }
+            }
+        }
+
+        assertThat(failures).isEmpty()
     }
 
     @Test fun `no container role paints the same colour as the surface behind it`() {

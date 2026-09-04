@@ -10,7 +10,7 @@
     <string name="home_filter_off">Filtre désactivé</string>
     <string name="home_filter_on">Filtre actif</string>
     <string name="home_toggle">Activer/désactiver le filtre</string>
-    <string name="home_intensity">Intensite</string>
+    <string name="home_intensity">Intensité</string>
     <string name="home_dim">Réduire sous le minimum</string>
     <string name="home_dim_value_precise">%1$.1f%%</string>
     <string name="home_dim_fine_hint" formatted="false">Ajustement fin : ±0,5 %</string>
@@ -30,7 +30,7 @@
     <string name="home_kelvin_state">%1$d Kelvin</string>
     <string name="home_kelvin_hint">Plus chaud (K bas) renforce les rouges ; plus froid (K haut) accentue les bleus. 6500 K correspond au blanc neutre.</string>
     <string name="home_kelvin_preset_hint">Disponible pour le profil personnalisé ; sélectionnez Personnalisé pour modifier cette température</string>
-    <string name="home_preview">Apercu</string>
+    <string name="home_preview">Aperçu</string>
     <string name="home_gamma_title">Gamma par canal</string>
     <string name="home_gamma_hint">1,0 = neutre. Plus élevé rehausse les tons moyens ; plus bas les assombrit.</string>
     <string name="home_gamma_value">%1$.2f</string>
@@ -52,7 +52,7 @@
 
     <string name="presets_title">Choisir un préréglage</string>
     <string name="presets_custom">RVB personnalisé</string>
-    <string name="preset_name_off">Eteint</string>
+    <string name="preset_name_off">Éteint</string>
     <string name="preset_name_night">Nuit</string>
     <string name="preset_name_amber">Ambre</string>
     <string name="preset_name_red">Rouge</string>
@@ -93,8 +93,8 @@
     <string name="diff_schedule_start">Début de programmation</string>
     <string name="diff_schedule_end">Fin de programmation</string>
     <string name="diff_location">Position</string>
-    <string name="diff_intensity">Intensite</string>
-    <string name="diff_dim">Reduction</string>
+    <string name="diff_intensity">Intensité</string>
+    <string name="diff_dim">Réduction</string>
     <string name="diff_light_sensor">Capteur de lumière</string>
     <string name="diff_light_sensor_threshold">Seuil du capteur (lux)</string>
     <string name="diff_contrast">Contraste</string>
@@ -103,21 +103,21 @@
     <string name="diff_sunrise_offset">Décalage du lever (min)</string>
     <string name="diff_favorites">Favoris</string>
     <string name="diff_transition">Transition</string>
-    <string name="value_unset">non defini</string>
+    <string name="value_unset">non défini</string>
     <string name="value_enabled">active</string>
-    <string name="value_disabled">desactive</string>
-    <string name="duration_instant">instantane</string>
+    <string name="value_disabled">désactivé</string>
+    <string name="duration_instant">instantané</string>
     <string name="duration_seconds_short">%1$ds</string>
     <string name="duration_minutes_short">%1$dm</string>
 
     <string name="schedule_title">Quand activer le filtre ?</string>
-    <string name="schedule_off">Desactive</string>
+    <string name="schedule_off">Désactivé</string>
     <string name="schedule_always">Toujours</string>
     <string name="schedule_fixed">Heure fixe</string>
     <string name="schedule_solar">Du coucher au lever du soleil</string>
     <string name="schedule_until_next_alarm">Jusqu\'au prochain réveil</string>
     <string name="schedule_until_alarm_hint">S\'active à l\'heure de début et se désactive au déclenchement de votre prochain réveil. Si aucun réveil n\'est défini, s\'arrête 12 heures après le début.</string>
-    <string name="schedule_start">Debut</string>
+    <string name="schedule_start">Début</string>
     <string name="schedule_end">Fin</string>
     <string name="schedule_time_value">%1$s: %2$s</string>
     <string name="schedule_location_value">Position : %1$s</string>
@@ -137,7 +137,7 @@
     <string name="schedule_sunrise_offset_name">Décalage du lever du soleil</string>
     <string name="transition_duration_title">Durée de transition</string>
     <string name="transition_duration_subtitle">Vitesse d\'apparition ou de disparition du filtre aux limites de la programmation. Les modifications manuelles (curseurs, préréglages) restent instantanées.</string>
-    <string name="transition_instant">Instantane</string>
+    <string name="transition_instant">Instantané</string>
     <string name="transition_30s">30 secondes</string>
     <string name="transition_5m">5 minutes</string>
     <string name="transition_15m">15 minutes</string>
@@ -154,9 +154,9 @@
     <string name="driver_probe_failed">Échec de la vérification des pilotes. Réessayez.</string>
     <string name="driver_available">Disponible</string>
     <string name="driver_not_available">Non disponible sur cet appareil</string>
-    <string name="driver_auto_resolved">Auto sélectionne : %1$s</string>
+    <string name="driver_auto_resolved">Auto a sélectionné : %1$s</string>
     <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Accorder l\'autorisation de superposition installe la solution de repli.</string>
-    <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. Eclairage nocturne systeme, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
+    <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. Éclairage nocturne système, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
     <string name="driver_force_pinned">Utiliser ce pilote même s\'il semble indisponible</string>
     <string name="driver_force_pinned_body">Masquer le root aux applis le masque aussi à cette vérification, et une invite Magisk à laquelle on répond trop tard ressemble à une absence de root. Activez ceci pour essayer quand même. Si le pilote ne peut vraiment pas tourner, le filtre signale l\'erreur au lieu de revenir en Auto.</string>
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
@@ -258,7 +258,7 @@
     <string name="notif_permission_settings">Ouvrir les réglages des notifications</string>
     <string name="notif_permission_settings_failed">Impossible d’ouvrir les réglages des notifications. Activez les notifications d’OpenLumen dans les réglages système.</string>
 
-    <string name="tile_off">Eteint</string>
+    <string name="tile_off">Éteint</string>
     <string name="tile_on">Actif</string>
     <string name="tile_subtitle_off">Filtre désactivé</string>
     <string name="tile_subtitle_on">%1$s</string>
@@ -355,4 +355,5 @@
     <string name="shortcut_next_preset_long">Préréglage favori suivant</string>
     <string name="shortcut_emergency_off_short">Arrêt</string>
     <string name="shortcut_emergency_off_long">Forcer l\'arrêt du filtre</string>
+    <string name="about_diag_log_timeline_state">De %1$s à %2$s</string>
 </resources>

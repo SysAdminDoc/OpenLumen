@@ -48,7 +48,7 @@ internal val DarkColors = darkColorScheme(
     // dark text on it.
     inverseSurface = Catppuccin.Text,
     inverseOnSurface = Catppuccin.Base,
-    inversePrimary = Latte.Mauve,
+    inversePrimary = Catppuccin.InversePrimary,
     scrim = Catppuccin.Crust,
     outline = Catppuccin.Overlay1,
     outlineVariant = Catppuccin.Surface2,
@@ -94,7 +94,7 @@ internal val LightColors = lightColorScheme(
     surfaceDim = Latte.Crust,
     inverseSurface = Latte.Text,
     inverseOnSurface = Latte.Base,
-    inversePrimary = Catppuccin.Mauve,
+    inversePrimary = Latte.InversePrimary,
     scrim = Latte.Text,
     outline = Latte.Overlay1,
     // Surface2, not Surface1. Surface1 is what the highest container used to

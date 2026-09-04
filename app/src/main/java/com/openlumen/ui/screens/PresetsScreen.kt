@@ -3,6 +3,7 @@ package com.openlumen.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -692,10 +697,23 @@ private fun ChannelRow(label: String, value: Float, color: Color) {
             modifier = Modifier.width(24.dp)
         )
         Spacer(Modifier.size(8.dp))
+        val percent = (value.coerceIn(0f, 1f) * 100).toInt()
+        val meterState = stringResource(R.string.home_percent_value, percent)
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(8.dp)
+                // Two nested Boxes are a picture as far as accessibility is
+                // concerned. This is the only thing that tells a screen reader
+                // what the bar is and how full it is.
+                .semantics {
+                    contentDescription = label
+                    stateDescription = meterState
+                    progressBarRangeInfo = ProgressBarRangeInfo(
+                        current = value.coerceIn(0f, 1f),
+                        range = 0f..1f
+                    )
+                }
                 .background(color.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
         ) {
             Box(
@@ -707,7 +725,7 @@ private fun ChannelRow(label: String, value: Float, color: Color) {
         }
         Spacer(Modifier.size(8.dp))
         Text(
-            text = "${(value * 100).toInt()}%",
+            text = meterState,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.width(40.dp),
             textAlign = TextAlign.End,

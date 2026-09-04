@@ -114,9 +114,9 @@ We will:
 
 - **C82 / C103** — Android 17 readiness (this document).
 - **C95** — AGP 9 migration spike. Shipped 2026-05-17 on AGP 9.2.1 /
-  Gradle 9.4.1 / Kotlin 2.4.10.
+  Gradle 9.4.1 / Kotlin 2.3.21. Kotlin is 2.4.10 now (C264).
 - **C96 / C124** — Hilt Compose artifact rename and Hilt 2.56+ bump.
-  Shipped 2026-05-17 on Hilt 2.60.1.
+  Shipped 2026-05-17 on Hilt 2.59.2. Hilt is 2.60.1 now (C264).
   `hiltViewModel()` moved to
   `androidx.hilt:hilt-lifecycle-viewmodel-compose` (S144-S145).
 - **C101** — Compose Preview Screenshot Testing CI. Shipped 2026-05-17

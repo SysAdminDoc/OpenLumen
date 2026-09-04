@@ -174,7 +174,7 @@
     <string name="clipboard_adb_grant">OpenLumen concesión ADB</string>
     <string name="clipboard_driver_report">Informe de controladores de OpenLumen</string>
     <string name="clipboard_emergency_off">OpenLumen apagado de emergencia</string>
-    <string name="clipboard_automation_token">Token de automatizacion de OpenLumen</string>
+    <string name="clipboard_automation_token">Token de automatización de OpenLumen</string>
     <string name="overlay_caveats_title">Acerca del controlador Overlay</string>
     <string name="overlay_alpha_cap_explanation" formatted="false">La opacidad del overlay está limitada a ~80% por las reglas de toques no confiables de Android 12+. Para una atenuación más profunda, utilice Luz nocturna del sistema o un controlador con root.</string>
     <string name="overlay_touch_pass_explanation">Mientras la superposición está activa, Android puede bloquear los toques en los diálogos del instalador y de permisos. Es la protección de la plataforma contra el tapjacking, no un fallo de OpenLumen. Desactiva el filtro desde el mosaico o la notificación antes de instalar aplicaciones.</string>
@@ -201,7 +201,7 @@
     <string name="about_view_crash_log">Ver registro de errores</string>
     <string name="about_crash_log_title">Registro de errores</string>
     <string name="about_crash_log_empty">No se han registrado errores.</string>
-    <string name="about_automation_title">Acceso de automatizacion</string>
+    <string name="about_automation_title">Acceso de automatización</string>
     <string name="about_automation_body">Otras apps solo pueden controlar OpenLumen si activas esto y les das el token de abajo. Apagar el filtro nunca pide token, así que el comando de emergencia siempre funciona.</string>
     <string name="about_automation_enable">Permitir control desde otras apps</string>
     <string name="about_automation_token_label">Token</string>
@@ -355,4 +355,5 @@
     <string name="shortcut_next_preset_long">Siguiente ajuste favorito</string>
     <string name="shortcut_emergency_off_short">Apagar</string>
     <string name="shortcut_emergency_off_long">Forzar el apagado del filtro</string>
+    <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
 </resources>

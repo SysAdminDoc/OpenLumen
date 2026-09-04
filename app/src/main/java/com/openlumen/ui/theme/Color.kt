@@ -50,6 +50,16 @@ internal object Catppuccin {
     // One step between Surface0 and Surface1, so the container ramp has five
     // distinct values and none of them collides with surfaceVariant.
     val SurfaceContainerHigh = Color(0xFF3B3C4F)
+
+    // inversePrimary, which is what a Snackbar action is painted with. The
+    // inverse surface in this scheme is light, so this has to be a dark
+    // purple: Latte's own Mauve on it is 3.74:1, under AA. This is 5.50:1.
+    val InversePrimary = Color(0xFF6B21C4)
+
+    // The red channel for the sliders. Catppuccin's own Red is 2.88:1 against
+    // the unfilled track those controls sit on, just under the 3:1 floor for
+    // something you have to aim. This is the same hue, slightly lighter.
+    val RedChannel = Color(0xFFF497B1)
 }
 
 /**
@@ -116,6 +126,21 @@ internal object Latte {
     // 5.61:1 and 5.45:1.
     val PinkStrong = Color(0xFFA32F86)
     val TealStrong = Color(0xFF0D6C72)
+
+    // inversePrimary here sits on a dark inverse surface, so it is the light
+    // purple. Mocha's own Mauve is 3.93:1 on it; this is 5.60:1.
+    val InversePrimary = Color(0xFFE4D0FC)
+
+    // Channel colours for the RGB and gamma sliders. Catppuccin's Latte Red,
+    // Green and Blue are chosen to read as text on a light ground, not as a
+    // filled control: against the card they are 3.52, 2.17 and 3.18 to one,
+    // and against the slider's own unfilled track 2.51, 1.55 and 2.27. Green
+    // in particular vanishes into its own track. These are the same hues
+    // taken dark enough to clear 3:1 on both, which is the floor for a
+    // control you have to be able to see and position.
+    val RedChannel   = Color(0xFF930A28)
+    val GreenChannel = Color(0xFF26601A)
+    val BlueChannel  = Color(0xFF1547AC)
 }
 
 /**
@@ -131,14 +156,18 @@ internal object Latte {
 internal data class ChannelColors(val red: Color, val green: Color, val blue: Color)
 
 internal val DarkChannelColors = ChannelColors(
-    red = Catppuccin.Red,
+    red = Catppuccin.RedChannel,
     green = Catppuccin.Green,
     blue = Catppuccin.Blue
 )
 
-/** Latte channel hues — more saturated so they read on the light surfaces. */
+/**
+ * Latte channel hues, darkened. These paint a slider's thumb and filled track,
+ * so they have to be visible against the card behind them and against the
+ * unfilled part of their own track, which the palette's own tones are not.
+ */
 internal val LightChannelColors = ChannelColors(
-    red = Latte.Red,
-    green = Latte.Green,
-    blue = Latte.Blue
+    red = Latte.RedChannel,
+    green = Latte.GreenChannel,
+    blue = Latte.BlueChannel
 )

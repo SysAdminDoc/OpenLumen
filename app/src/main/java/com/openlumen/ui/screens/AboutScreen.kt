@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.intl.Locale as ComposeLocale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,8 +75,13 @@ import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.LumenTextButton
+import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -1008,6 +1014,7 @@ private fun DiagnosticsLogDialog(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var timelineStartFraction by rememberSaveable { mutableFloatStateOf(0f) }
     var timelineEndFraction by rememberSaveable { mutableFloatStateOf(1f) }
+    val locale = Locale.forLanguageTag(ComposeLocale.current.toLanguageTag())
 
     val timelineBounds = remember(rawLines, selectedLevels, selectedCategories) {
         DiagnosticsLog.timelineBounds(rawLines, selectedLevels, selectedCategories)
@@ -1116,21 +1123,33 @@ private fun DiagnosticsLogDialog(
                                 timelineEndFraction = range.endInclusive
                             },
                             valueRange = 0f..1f,
-                            steps = 0
+                            steps = 0,
+                            // Without this the control has no name at all and
+                            // TalkBack announces two unlabelled adjustable
+                            // handles, which is unusable: there is no way to
+                            // tell which end you are dragging.
+                            modifier = Modifier.labeledSliderSemantics(
+                                name = stringResource(R.string.about_diag_log_timeline),
+                                valueDescription = stringResource(
+                                    R.string.about_diag_log_timeline_state,
+                                    formatLogInstant(bounds.earliest, timelineStartFraction, bounds, locale),
+                                    formatLogInstant(bounds.latest, timelineEndFraction, bounds, locale)
+                                )
+                            )
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                bounds.earliest.toString(),
+                                formatLogInstant(bounds.earliest, 0f, bounds, locale),
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f)
                             )
                             Text(
-                                bounds.latest.toString(),
+                                formatLogInstant(bounds.latest, 1f, bounds, locale),
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -1245,4 +1264,35 @@ private fun diagCategoryLabel(category: DiagnosticsLog.Category): Int = when (ca
     DiagnosticsLog.Category.WIDGET -> R.string.diag_category_widget
     DiagnosticsLog.Category.TILE -> R.string.diag_category_tile
     DiagnosticsLog.Category.PROFILE -> R.string.diag_category_profile
+}
+
+/**
+ * A diagnostics-log timestamp as a person reads it.
+ *
+ * The timeline used to print Instant.toString(), so the log filter offered
+ * "2026-09-04T14:22:31.918Z" as its user-facing bounds: the wrong timezone,
+ * and a precision nobody needs.
+ *
+ * [fraction] positions the value inside [bounds], so the same function serves
+ * the two fixed end labels and the two moving handles.
+ */
+internal fun formatLogInstant(
+    fallback: Instant,
+    fraction: Float,
+    bounds: DiagnosticsLog.TimelineBounds,
+    locale: Locale
+): String {
+    val span = bounds.latest.toEpochMilli() - bounds.earliest.toEpochMilli()
+    val at = if (span <= 0L) {
+        fallback
+    } else {
+        Instant.ofEpochMilli(
+            bounds.earliest.toEpochMilli() + (span * fraction.coerceIn(0f, 1f)).toLong()
+        )
+    }
+    return DateTimeFormatter
+        .ofLocalizedDateTime(FormatStyle.SHORT)
+        .withLocale(locale)
+        .withZone(ZoneId.systemDefault())
+        .format(at)
 }

@@ -352,4 +352,5 @@
     <string name="shortcut_next_preset_long">次のお気に入りプリセット</string>
     <string name="shortcut_emergency_off_short">強制オフ</string>
     <string name="shortcut_emergency_off_long">フィルターを強制的に切る</string>
+    <string name="about_diag_log_timeline_state">%1$s から %2$s まで</string>
 </resources>

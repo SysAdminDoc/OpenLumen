@@ -361,4 +361,5 @@
     <string name="shortcut_next_preset_long">Next favourite preset</string>
     <string name="shortcut_emergency_off_short">Force off</string>
     <string name="shortcut_emergency_off_long">Force the filter off</string>
+    <string name="about_diag_log_timeline_state">From %1$s to %2$s</string>
 </resources>

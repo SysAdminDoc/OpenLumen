@@ -355,4 +355,5 @@
     <string name="shortcut_next_preset_long">Nächstes Favoriten-Preset</string>
     <string name="shortcut_emergency_off_short">Aus</string>
     <string name="shortcut_emergency_off_long">Filter erzwungen ausschalten</string>
+    <string name="about_diag_log_timeline_state">Von %1$s bis %2$s</string>
 </resources>
