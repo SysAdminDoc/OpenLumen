@@ -131,6 +131,7 @@ class AutomationReceiver : BroadcastReceiver() {
                 presetKey?.let { forward.putExtra(LumenService.EXTRA_PRESET_KEY, it) }
                 value?.let { forward.putExtra(LumenService.EXTRA_VALUE, it) }
 
+                val requestedAt = System.currentTimeMillis()
                 val result = LumenServiceStarter.start(
                     context,
                     forward,
@@ -141,6 +142,18 @@ class AutomationReceiver : BroadcastReceiver() {
                 if (!result.started) {
                     Log.w(tag, "automation service start failed: ${result.error?.message ?: "unknown"}")
                     if (action == LumenService.ACTION_TURN_OFF) {
+                        clearDisplayWithoutService(context) {
+                            prefs.update { it.copy(enabled = false) }
+                        }
+                    }
+                } else if (action == LumenService.ACTION_TURN_OFF) {
+                    // A start that did not throw is not a turn-off that
+                    // happened. The service still has to reach startForeground
+                    // within a few seconds, and the work runs on a scope
+                    // onDestroy cancels, so it can be killed with the display
+                    // still tinted and nothing reporting a failure.
+                    if (!TurnOffAcknowledgement.awaitAfter(context, since = requestedAt)) {
+                        Log.w(tag, "turn-off was not acknowledged; clearing without the service")
                         clearDisplayWithoutService(context) {
                             prefs.update { it.copy(enabled = false) }
                         }

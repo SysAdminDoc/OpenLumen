@@ -563,6 +563,11 @@ class LumenService : LifecycleService() {
             directBootMirror.markDisabled()
         }
         engineController.hardClearOutputs("turn off from $source", blunt = blunt)
+        // After the clear, not before. The mirror above is written first on
+        // purpose, so a process killed mid-clear does not restore the tint on
+        // the next boot; that means it cannot tell anyone the clear actually
+        // happened. This can, and the automation receiver waits for it.
+        TurnOffAcknowledgement.record(this)
         stopSelf()
     }
 
