@@ -108,6 +108,90 @@ class SecureSettingsOwnershipRecordTest {
         assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(4000)
     }
 
+    @Test fun `an adopted record never replays a snapshot over a change made since`() = runBlocking {
+        // A record is a claim about rows this process did not write. Believing
+        // the ownership flags without checking them let a dead session's
+        // snapshot overwrite what the user had set in the meantime.
+        seedUserNightLight(active = 0, temperature = 6500)
+        SecureSettingsEngine().apply(context, Presets.NIGHT)
+
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 3600)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+        val afterRestart = SecureSettingsEngine()
+        afterRestart.apply(context, Presets.NIGHT)
+        afterRestart.clear(context)
+
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(3600)
+    }
+
+    @Test fun `clear does not seize a row this session already handed back`() = runBlocking {
+        seedUserNightLight(active = 0, temperature = 6500)
+        val engine = SecureSettingsEngine()
+        engine.apply(context, Presets.NIGHT)
+
+        // The user turns Night Light off while a warm preset runs, so the row
+        // is theirs. The neutral apply that follows correctly declines it.
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 0)
+        engine.apply(context, Presets.OFF)
+
+        // They then switch their own on, at the temperature we left behind.
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+        engine.clear(context)
+
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+    }
+
+    @Test fun `releasing under a solar auto mode leaves the screen untinted`() = runBlocking {
+        // auto_mode 2 is the user's own sunset-to-sunrise rule, so the
+        // activation flag is derived rather than chosen and a sample of it
+        // taken hours ago says nothing about now. Both release paths must hand
+        // auto mode back last and leave the flag off for the system to
+        // recompute.
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_AUTO_MODE, 2)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4000)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+        val viaClear = SecureSettingsEngine()
+        viaClear.apply(context, Presets.NIGHT)
+        viaClear.clear(context)
+        val afterClear = Triple(
+            secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED),
+            secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE),
+            secure(SecureSettingsEngine.KEY_NIGHT_AUTO_MODE)
+        )
+
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_AUTO_MODE, 2)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4000)
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+        val viaNeutralApply = SecureSettingsEngine()
+        viaNeutralApply.apply(context, Presets.NIGHT)
+        viaNeutralApply.apply(context, Presets.OFF)
+        val afterHandBack = Triple(
+            secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED),
+            secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE),
+            secure(SecureSettingsEngine.KEY_NIGHT_AUTO_MODE)
+        )
+
+        assertThat(afterClear).isEqualTo(afterHandBack)
+        assertThat(afterClear).isEqualTo(Triple(0, 4000, 2))
+    }
+
+    @Test fun `a transition ramp does not rewrite the record on every step`() = runBlocking {
+        seedUserNightLight(active = 0, temperature = 6500)
+        val engine = SecureSettingsEngine()
+        engine.apply(context, Presets.NIGHT)
+        val firstWrite = record.lastModified()
+        val contents = record.readText()
+
+        repeat(20) { engine.apply(context, Presets.NIGHT) }
+
+        assertThat(record.lastModified()).isEqualTo(firstWrite)
+        assertThat(record.readText()).isEqualTo(contents)
+    }
+
     @Test fun `a session that owns nothing leaves no record behind`() = runBlocking {
         seedUserNightLight(active = 0, temperature = 6500)
 

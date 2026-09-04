@@ -149,6 +149,9 @@ class SecureSettingsEngine : ColorEngine {
 
     @Volatile private var nightOwned: Boolean = false
 
+    /** Last record written to disk, so a ramp does not rewrite it 600 times. */
+    @Volatile private var lastPersistedRecord: String? = null
+
     /**
      * Which of the two transforms the last probe accepted. Read by
      * `DriverReport` so a device report records what this device actually
@@ -223,29 +226,17 @@ class SecureSettingsEngine : ColorEngine {
                                 Daltonizer.NONE.secureValue
                             )
                         ),
-                        lastAppliedTemperature = temperature,
-                        lastAppliedDimLevel = dimLevel,
-                        lastAppliedCorrectionMode = correction.secureValue
-                    )
-                } else {
-                    // Only record what this apply actually writes. A neutral
-                    // preset writes no temperature and selects no correction,
-                    // and recording its notional values would make the
-                    // ownership checks compare against rows we never touched.
-                    ownership = ownership?.copy(
-                        lastAppliedTemperature = if (tinted) {
-                            temperature
-                        } else {
-                            previousNightTemperature ?: temperature
-                        },
-                        lastAppliedDimLevel = dimLevel,
-                        lastAppliedCorrectionMode = if (correction != Daltonizer.NONE) {
-                            correction.secureValue
-                        } else {
-                            previousCorrectionMode ?: correction.secureValue
-                        }
+                        lastAppliedTemperature = previousNightTemperature ?: temperature,
+                        lastAppliedDimLevel = 0,
+                        lastAppliedCorrectionMode =
+                            previousCorrectionMode ?: Daltonizer.NONE.secureValue
                     )
                 }
+                // Every `lastApplied` value below is recorded immediately after
+                // the write it describes, never before. Setting them up front
+                // meant a write that threw partway left the record claiming a
+                // row we had not touched, and the ownership checks then refused
+                // to restore anything for the rest of the session.
 
                 if (tinted) {
                     // Taking the row now, so read what the user has right now.
@@ -259,6 +250,7 @@ class SecureSettingsEngine : ColorEngine {
                     Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
                     Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, temperature)
                     Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 1)
+                    ownership = ownership?.copy(lastAppliedTemperature = temperature)
                     nightOwned = true
                 } else if (nightOwned) {
                     // C293: this used to read `correctionOwned || nightOwned`.
@@ -274,6 +266,9 @@ class SecureSettingsEngine : ColorEngine {
                     if (!correctionOwned) recaptureColorCorrection(cr)
                     Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, correction.secureValue)
                     Settings.Secure.putInt(cr, KEY_CORRECTION_ENABLED, 1)
+                    ownership = ownership?.copy(
+                        lastAppliedCorrectionMode = correction.secureValue
+                    )
                     correctionOwned = true
                 } else if (correctionOwned) {
                     // Moving to a preset that names no correction mode. Give the
@@ -290,6 +285,7 @@ class SecureSettingsEngine : ColorEngine {
                     if (dimLevel > 0) {
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_LEVEL, dimLevel)
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 1)
+                        ownership = ownership?.copy(lastAppliedDimLevel = dimLevel)
                         dimOwned = true
                     } else if (dimOwned) {
                         // Turning off dim we ourselves switched on. If this
@@ -297,17 +293,22 @@ class SecureSettingsEngine : ColorEngine {
                         // writing 0 here would silently disable an Extra Dim
                         // setting the user had on before OpenLumen started.
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0)
+                        ownership = ownership?.copy(lastAppliedDimLevel = 0)
                     }
                 } else if (dimLevel > 0) {
                     Log.i(tag, "device has no Extra Dim transform; dim is not applied by this driver")
                 }
 
-                persistOwnership(context)
             } catch (t: Throwable) {
                 Log.w(tag, "secure-settings apply failed: ${t.message}")
                 return@withContext EngineResult.Failure(
                     "secure-settings apply failed: ${t.message ?: "unknown error"}"
                 )
+            } finally {
+                // Even a partial apply has to leave a record: the rows it did
+                // write outlive this process and something has to be able to
+                // put them back.
+                if (ownership != null) persistOwnership(context)
             }
             EngineResult.Success
         }
@@ -325,33 +326,25 @@ class SecureSettingsEngine : ColorEngine {
             ?: return@withContext EngineResult.Success
         try {
             val cr = context.contentResolver
-            val currentNightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1
-            val currentTemperature =
-                Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
-            if (
-                shouldRestoreNightDisplay(
-                    currentActive = currentNightActive,
-                    currentTemperature = currentTemperature,
-                    lastAppliedTemperature = owned.lastAppliedTemperature
-                )
-            ) {
-                Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, owned.original.nightTemperature)
-                Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, if (owned.original.nightActive) 1 else 0)
+            // Release Night Light through the same helper apply() uses, so the
+            // two paths cannot disagree about the ownership question or about
+            // writing auto mode before the activation flag. Gated on
+            // `nightOwned`: a row this session already handed back is the
+            // user's again, and re-seizing it here switched off a Night Light
+            // they had turned on since.
+            if (nightOwned) {
+                handBackNightDisplay(cr)
             } else {
-                Log.i(tag, "Night Light changed outside OpenLumen; leaving it untouched")
-            }
-
-            // The auto-mode restore is deliberately outside that branch. apply()
-            // always parks auto mode on manual, so tying its restore to the
-            // activation check strands a user who had "sunset to sunrise" set
-            // and then toggled Night Light by hand: the branch is skipped, the
-            // ownership record is dropped, and their schedule never runs again.
-            // Restore whenever nothing else has moved it since we did.
-            val currentAutoMode = Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
-            if (currentAutoMode == AUTO_MODE_MANUAL &&
-                owned.original.nightAutoMode != AUTO_MODE_MANUAL
-            ) {
-                Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
+                // apply() parks auto mode on manual while it holds the row, so
+                // a hand-back that declined to touch activation can still owe
+                // the user their schedule back.
+                val currentAutoMode =
+                    Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
+                if (currentAutoMode == AUTO_MODE_MANUAL &&
+                    owned.original.nightAutoMode != AUTO_MODE_MANUAL
+                ) {
+                    Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
+                }
             }
 
             if (dimOwned && supportsReduceBrightColors(context)) {
@@ -476,18 +469,21 @@ class SecureSettingsEngine : ColorEngine {
             return
         }
         Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, owned.original.nightTemperature)
-        // Auto mode goes back before the activation flag, because when it is
-        // anything but manual the system owns that flag and recomputes it from
-        // the user's own sunset/sunrise schedule. Replaying a sample of it
-        // taken hours earlier would turn the screen warm in the morning.
-        Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
         if (owned.original.nightAutoMode == AUTO_MODE_MANUAL) {
             Settings.Secure.putInt(
                 cr,
                 KEY_NIGHT_ACTIVATED,
                 if (owned.original.nightActive) 1 else 0
             )
+        } else {
+            // Their own sunset/sunrise rule owns the flag, so a sample of it
+            // taken hours ago says nothing about now. Leave the screen
+            // untinted and let ColorDisplayService decide.
+            Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 0)
         }
+        // Auto mode goes back last, so the system's recompute is the final
+        // word on the activation flag.
+        Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
     }
 
     /** Give the colour correction back, if the row is still the one we selected. */
@@ -537,7 +533,7 @@ class SecureSettingsEngine : ColorEngine {
             return
         }
         runCatching {
-            ownershipFile(context).writeText(
+            val encoded =
                 listOf(
                     RECORD_VERSION,
                     if (owned.original.nightActive) 1 else 0,
@@ -554,7 +550,20 @@ class SecureSettingsEngine : ColorEngine {
                     if (dimOwned) 1 else 0,
                     if (correctionOwned) 1 else 0
                 ).joinToString(" ")
-            )
+            // A transition ramp applies up to 600 times, and every step here
+            // holds the same record. Skip the identical rewrite.
+            if (encoded == lastPersistedRecord) return
+            // Write to a sibling and rename: writeText truncates first, so a
+            // kill landing mid-write leaves a short file that the reader has to
+            // reject, losing the record in the one case it exists for.
+            val file = ownershipFile(context)
+            val temp = java.io.File(file.parentFile, "$OWNERSHIP_FILE.tmp")
+            temp.writeText(encoded)
+            if (!temp.renameTo(file)) {
+                file.writeText(encoded)
+                temp.delete()
+            }
+            lastPersistedRecord = encoded
         }.onFailure { Log.w(tag, "could not persist secure-settings ownership: ${it.message}") }
     }
 
@@ -586,14 +595,39 @@ class SecureSettingsEngine : ColorEngine {
             lastAppliedCorrectionMode = values[10]
         )
         ownership = adopted
-        nightOwned = values[11] == 1
-        dimOwned = values[12] == 1
-        correctionOwned = values[13] == 1
-        Log.i(tag, "adopted a secure-settings ownership record from a previous session")
+        // A record is a claim about rows this process did not write, so check it
+        // against what is actually there before believing it. Without this, a
+        // record saying "we own Night Light" made apply() skip the re-capture
+        // and replay a dead session's snapshot over a setting the user had
+        // changed since.
+        val cr = context.contentResolver
+        nightOwned = values[11] == 1 && shouldRestoreNightDisplay(
+            currentActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
+            currentTemperature =
+                Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE),
+            lastAppliedTemperature = adopted.lastAppliedTemperature
+        )
+        dimOwned = values[12] == 1 && shouldRestoreReduceBrightColors(
+            currentActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1,
+            currentLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0),
+            lastAppliedLevel = adopted.lastAppliedDimLevel
+        )
+        correctionOwned = values[13] == 1 && shouldRestoreColorCorrection(
+            currentActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1,
+            currentMode =
+                Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue),
+            lastAppliedMode = adopted.lastAppliedCorrectionMode
+        )
+        Log.i(
+            tag,
+            "adopted a secure-settings ownership record from a previous session " +
+                "(night=$nightOwned dim=$dimOwned correction=$correctionOwned)"
+        )
         return adopted
     }
 
     private fun clearPersistedOwnership(context: Context) {
+        lastPersistedRecord = null
         runCatching { ownershipFile(context).delete() }
     }
 
@@ -767,6 +801,37 @@ class SecureSettingsEngine : ColorEngine {
          * this path knows what it was. It switches the transforms off, which is
          * the direction the emergency hatch exists to move in.
          */
+        /**
+         * True while any of the persistent rows this driver writes is on.
+         *
+         * Cheap: three provider reads, no `su`. Used by the emergency hatch to
+         * tell "there is nothing to clear" apart from "the filter is recorded
+         * as off but the display is still tinted", which is exactly the state a
+         * killed process leaves behind.
+         */
+        fun anyTransformIsOn(context: Context): Boolean {
+            if (Build.VERSION.SDK_INT < MIN_API) return false
+            val cr = context.contentResolver
+            return runCatching {
+                listOf(
+                    KEY_NIGHT_ACTIVATED,
+                    KEY_REDUCE_BRIGHT_ACTIVATED,
+                    KEY_CORRECTION_ENABLED
+                ).any { Settings.Secure.getInt(cr, it, 0) == 1 }
+            }.getOrDefault(false)
+        }
+
+        /**
+         * Whether a durable ownership record is waiting to be adopted.
+         *
+         * The emergency hatch uses this to decide whether the secure rows have
+         * an owner that can restore them properly, or whether the blunt sweep
+         * is the only option left.
+         */
+        fun hasOwnershipRecord(context: Context): Boolean =
+            runCatching { java.io.File(context.filesDir, OWNERSHIP_FILE).isFile }
+                .getOrDefault(false)
+
         fun clearKnownSecureState(context: Context): List<String> {
             if (Build.VERSION.SDK_INT < MIN_API) return emptyList()
             if (
@@ -777,6 +842,9 @@ class SecureSettingsEngine : ColorEngine {
                 return emptyList()
             }
             val cleared = mutableListOf<String>()
+            // The rows are going down without regard to the record, so the
+            // record must not survive to be adopted by the next apply.
+            runCatching { java.io.File(context.filesDir, OWNERSHIP_FILE).delete() }
             val cr = context.contentResolver
             for (
                 key in listOf(

@@ -3,6 +3,7 @@ package com.openlumen.service
 import android.provider.Settings
 import com.google.common.truth.Truth.assertThat
 import com.openlumen.diagnostics.DiagnosticsLog
+import com.openlumen.engine.Presets
 import com.openlumen.engine.engines.SecureSettingsEngine
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -45,6 +46,9 @@ class AutomationEmergencyClearTest {
 
     private fun rows(): List<Int> = TINT_ROWS.map { Settings.Secure.getInt(resolver, it, 0) }
 
+    private fun secure(key: String, default: Int = 0) =
+        Settings.Secure.getInt(resolver, key, default)
+
     @Test fun `a turn-off that cannot reach the service still clears the display`() = runBlocking {
         var recordedOff = false
 
@@ -67,6 +71,43 @@ class AutomationEmergencyClearTest {
         assertThat(rows()).containsExactly(0, 0, 0).inOrder()
     }
 
+    @Test fun `a record from the dead process restores the user's settings rather than zeroing them`() {
+        runBlocking {
+            // The user ran colour correction before OpenLumen existed. The
+            // blunt sweep cannot tell that row from one we set, but the durable
+            // record can, so the hatch must try the record first.
+            Settings.Secure.putInt(
+                resolver,
+                SecureSettingsEngine.KEY_CORRECTION_MODE,
+                DEUTERANOMALY
+            )
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_CORRECTION_ENABLED, 1)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 0)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 6500)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_REDUCE_BRIGHT_ACTIVATED, 0)
+
+            // A process applies a warm preset and is killed.
+            SecureSettingsEngine().apply(context, Presets.NIGHT)
+
+            AutomationReceiver.clearDisplayWithoutService(context) {}
+
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(0)
+            assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
+            assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_MODE)).isEqualTo(DEUTERANOMALY)
+        }
+    }
+
+    @Test fun `the hatch still works after an attempt that recorded the filter off`() = runBlocking {
+        // The first attempt records enabled = false whether or not it managed
+        // to clear anything. Keying the short-circuit on that preference alone
+        // disabled the hatch permanently.
+        assertThat(SecureSettingsEngine.anyTransformIsOn(context)).isTrue()
+
+        AutomationReceiver.clearDisplayWithoutService(context) {}
+
+        assertThat(SecureSettingsEngine.anyTransformIsOn(context)).isFalse()
+    }
+
     @Test fun `clearing twice is harmless`() = runBlocking {
         AutomationReceiver.clearDisplayWithoutService(context) {}
         AutomationReceiver.clearDisplayWithoutService(context) {}
@@ -75,6 +116,9 @@ class AutomationEmergencyClearTest {
     }
 
     private companion object {
+        /** `AccessibilityManager.DALTONIZER_CORRECT_DEUTERANOMALY`. */
+        const val DEUTERANOMALY = 12
+
         val TINT_ROWS = listOf(
             SecureSettingsEngine.KEY_NIGHT_ACTIVATED,
             SecureSettingsEngine.KEY_REDUCE_BRIGHT_ACTIVATED,

@@ -7,6 +7,8 @@ import android.os.SystemClock
 import android.util.Log
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.engine.DisplayEmergencyReset
+import com.openlumen.engine.EngineResult
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.prefs.AutomationToken
 import com.openlumen.prefs.PreferencesStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -108,8 +110,17 @@ class AutomationReceiver : BroadcastReceiver() {
                 // Repeating that when the filter is already off gives any local
                 // app a way to spin root-shell launches and Magisk prompts, so
                 // drop the redundant one.
-                if (action == LumenService.ACTION_TURN_OFF && current?.enabled == false) {
-                    Log.d(tag, "TURN_OFF ignored: filter is already off")
+                //
+                // "Recorded as off" is not the same as "the display is clear",
+                // though. A killed process leaves the secure rows set, and this
+                // path records the filter off even when the clear achieved
+                // nothing, so keying the short-circuit on the preference alone
+                // made one failed attempt disable the hatch for good.
+                if (action == LumenService.ACTION_TURN_OFF &&
+                    current?.enabled == false &&
+                    !SecureSettingsEngine.anyTransformIsOn(context)
+                ) {
+                    Log.d(tag, "TURN_OFF ignored: filter is already off and nothing is tinted")
                     return@launch
                 }
 
@@ -185,14 +196,34 @@ class AutomationReceiver : BroadcastReceiver() {
             context: Context,
             recordFilterOff: suspend () -> Unit
         ) {
-            val cleared = runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
-                .onFailure { Log.e(tag, "emergency clear failed: ${it.message}", it) }
+            // Give the secure driver first refusal. It adopts the durable
+            // ownership record, so it can put back what the user had instead of
+            // zeroing rows they may have owned all along, and it deletes the
+            // record on the way out.
+            val hadRecord = SecureSettingsEngine.hasOwnershipRecord(context)
+            val restored = runCatching { SecureSettingsEngine().clear(context) }
+                .onFailure { Log.w(tag, "record-based clear failed: ${it.message}") }
                 .getOrNull()
+
+            // The root drivers keep no such record. The secure rows only need
+            // the blunt sweep when nothing owned them: a row still on after a
+            // successful restore belongs to the user, and zeroing it here would
+            // undo the restore we just performed.
+            val bluntSecure = !(hadRecord && restored is EngineResult.Success) &&
+                SecureSettingsEngine.anyTransformIsOn(context)
+            val cleared = runCatching {
+                DisplayEmergencyReset.clearRootTransforms(
+                    context = context.takeIf { bluntSecure },
+                    roots = true
+                )
+            }.onFailure { Log.e(tag, "emergency clear failed: ${it.message}", it) }.getOrNull()
+
             DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SERVICE,
                 "turn off could not start the service; cleared the display directly: " +
+                    "restored=${restored is EngineResult.Success} " +
                     "secure=${cleared?.secureSettingsKeys?.joinToString().orEmpty().ifBlank { "none" }} " +
                     "SF=${cleared?.surfaceFlingerCodes?.joinToString().orEmpty().ifBlank { "none" }} " +
                     "KCAL=${cleared?.kcalPaths?.joinToString().orEmpty().ifBlank { "none" }}"
