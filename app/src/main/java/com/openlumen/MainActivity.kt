@@ -42,6 +42,11 @@ class MainActivity : ComponentActivity() {
             return
         }
         blockedStartPending = false
-        LumenServiceStarter.start(this, logTag = "OpenLumen/ActivityRecovery")
+        LumenServiceStarter.start(
+            this,
+            logTag = "OpenLumen/ActivityRecovery",
+            exemption = LumenServiceStarter.Exemption.USER_INTERACTION,
+            source = "activity"
+        )
     }
 }

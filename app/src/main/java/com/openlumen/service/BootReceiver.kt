@@ -61,7 +61,13 @@ class BootReceiver : BroadcastReceiver() {
                     return@launch
                 }
                 val svc = Intent(context, LumenService::class.java)
-                val result = LumenServiceStarter.start(context, svc, tag)
+                val result = LumenServiceStarter.start(
+                    context,
+                    svc,
+                    tag,
+                    exemption = LumenServiceStarter.Exemption.BOOT,
+                    source = "boot"
+                )
                 if (result.started) {
                     Log.d(tag, "LumenService start scheduled")
                 }

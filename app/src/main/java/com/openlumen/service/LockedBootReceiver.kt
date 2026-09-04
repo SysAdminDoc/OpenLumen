@@ -32,7 +32,13 @@ class LockedBootReceiver : BroadcastReceiver() {
                 }
                 val svc = Intent(context, LumenService::class.java)
                     .setAction(LumenService.ACTION_DIRECT_BOOT_RESTORE)
-                val result = LumenServiceStarter.start(context, svc, TAG)
+                val result = LumenServiceStarter.start(
+                    context,
+                    svc,
+                    TAG,
+                    exemption = LumenServiceStarter.Exemption.BOOT,
+                    source = "locked-boot"
+                )
                 if (result.started) {
                     Log.d(TAG, "Direct-boot restore service start scheduled")
                 }

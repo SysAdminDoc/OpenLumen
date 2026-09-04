@@ -131,7 +131,13 @@ class AutomationReceiver : BroadcastReceiver() {
                 presetKey?.let { forward.putExtra(LumenService.EXTRA_PRESET_KEY, it) }
                 value?.let { forward.putExtra(LumenService.EXTRA_VALUE, it) }
 
-                val result = LumenServiceStarter.start(context, forward, tag)
+                val result = LumenServiceStarter.start(
+                    context,
+                    forward,
+                    tag,
+                    exemption = LumenServiceStarter.Exemption.NONE,
+                    source = "automation"
+                )
                 if (!result.started) {
                     Log.w(tag, "automation service start failed: ${result.error?.message ?: "unknown"}")
                     if (action == LumenService.ACTION_TURN_OFF) {

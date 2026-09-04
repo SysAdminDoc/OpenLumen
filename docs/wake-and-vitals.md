@@ -8,6 +8,45 @@ so we document here exactly what wakes the device, when, and why —
 both for our own discipline and so a paranoid user (or F-Droid
 reviewer) can audit it.
 
+## Foreground-service starts and the Android 15 rule
+
+Android 15 narrowed the `SYSTEM_ALERT_WINDOW` exemption: an app targeting
+SDK 35 that relies on it to start a foreground service from the background
+needs the permission **and** an already-visible `TYPE_APPLICATION_OVERLAY`
+window, or `startForegroundService` throws
+`ForegroundServiceStartNotAllowedException`.
+
+OpenLumen holds `SYSTEM_ALERT_WINDOW`, targets SDK 35, and does not rely on
+that exemption. `LumenService.onCreate` calls `startInForeground()` before any
+engine is chosen, and the overlay window is installed later, inside
+`EngineController.ensureEngineFor`. So at the moment of every start there is
+no overlay window, and there does not need to be: each caller is covered by a
+different exemption.
+
+Every call site names the one it is relying on, as
+`LumenServiceStarter.Exemption`, and the value goes into the diagnostics log
+with the start. A refused start records the same thing, so a user's driver
+report says which exemption failed rather than only that something did.
+
+| Start path | Exemption | Why it holds |
+|---|---|---|
+| `MainActivity` recovery | `USER_INTERACTION` | The activity is in the foreground. |
+| `LumenTileService.onClick` | `USER_INTERACTION` | The user tapped the tile. |
+| `WidgetActionReceiver` | `USER_INTERACTION` | The user tapped the widget; the platform exempts widget interaction. |
+| `ShortcutActivity` | `USER_INTERACTION` | A launcher shortcut starts an activity of ours first. |
+| `BootReceiver`, `LockedBootReceiver` | `BOOT` | `BOOT_COMPLETED` and `LOCKED_BOOT_COMPLETED` are exempt. |
+| `ScheduleAlarmReceiver` | `EXACT_ALARM` | The transition fires from `setExactAndAllowWhileIdle` with the exact-alarm permission held. |
+| `ScheduleClockChangeReceiver`, `ExactAlarmPermissionReceiver` | `SYSTEM_BROADCAST` | Both are platform broadcasts on the exempt list. |
+| `AutomationReceiver` | `NONE` | Driven by other apps and by adb, from the background, with nothing exempting it. |
+
+The last row is the honest one. An automation start can be refused, and that
+is why `AutomationReceiver` clears the display itself when the service will
+not come up, and why `TURN_OFF` never depends on the service at all.
+
+`BlockedForegroundStartRecovery` handles the case where a start we expected to
+be exempt is refused anyway: the preference stays as the user set it while a
+visible activity obtains what is missing and retries.
+
 ## What never wakes the device
 
 - **The schedule's `nextTransition` clock.** Even though we use

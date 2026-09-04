@@ -37,7 +37,13 @@ class ScheduleClockChangeReceiver : BroadcastReceiver() {
 
                 val serviceIntent = Intent(context, LumenService::class.java)
                     .setAction(LumenService.ACTION_REEVALUATE)
-                val result = LumenServiceStarter.start(context, serviceIntent, TAG)
+                val result = LumenServiceStarter.start(
+                    context,
+                    serviceIntent,
+                    TAG,
+                    exemption = LumenServiceStarter.Exemption.SYSTEM_BROADCAST,
+                    source = "clock-change"
+                )
                 if (!result.started && result.foregroundStartNotAllowed) {
                     ScheduleAlarmOrchestrator(context, TAG).scheduleBlockedStartRetry(
                         attempt = 1,

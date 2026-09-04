@@ -17,7 +17,13 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
         if (intent.action != ACTION_FIRE) return
         val svc = Intent(context, LumenService::class.java)
             .setAction(LumenService.ACTION_REEVALUATE)
-        val result = LumenServiceStarter.start(context, svc, tag)
+        val result = LumenServiceStarter.start(
+            context,
+            svc,
+            tag,
+            exemption = LumenServiceStarter.Exemption.EXACT_ALARM,
+            source = "schedule-alarm"
+        )
         if (!result.started) {
             val attempt = intent.getIntExtra(EXTRA_RETRY_ATTEMPT, 0)
             if (result.foregroundStartNotAllowed && attempt < MAX_BLOCKED_START_RETRIES) {

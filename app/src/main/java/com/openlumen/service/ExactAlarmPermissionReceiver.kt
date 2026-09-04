@@ -40,7 +40,13 @@ class ExactAlarmPermissionReceiver : BroadcastReceiver() {
 
                 val serviceIntent = Intent(context, LumenService::class.java)
                     .setAction(LumenService.ACTION_RECONCILE_EXACT_ALARM)
-                val result = LumenServiceStarter.start(context, serviceIntent, TAG)
+                val result = LumenServiceStarter.start(
+                    context,
+                    serviceIntent,
+                    TAG,
+                    exemption = LumenServiceStarter.Exemption.SYSTEM_BROADCAST,
+                    source = "exact-alarm-permission"
+                )
                 if (!result.started && result.foregroundStartNotAllowed) {
                     ScheduleAlarmOrchestrator(context, TAG).scheduleBlockedStartRetry(
                         attempt = 1,

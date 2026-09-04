@@ -73,7 +73,12 @@ class LumenTileService : TileService() {
                         current.toggledFilterEnabled()
                     }
                     if (toggledTo) {
-                        val result = LumenServiceStarter.start(this@LumenTileService, logTag = tag)
+                        val result = LumenServiceStarter.start(
+                            this@LumenTileService,
+                            logTag = tag,
+                            exemption = LumenServiceStarter.Exemption.USER_INTERACTION,
+                            source = "tile"
+                        )
                         if (!result.started) {
                             if (result.foregroundStartNotAllowed) {
                                 // Keep the requested state while MainActivity
