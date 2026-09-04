@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The rootless driver now reaches Extra Dim (`reduce_bright_colors_*`, Android 12+ where the OEM ships it), so dim goes below the panel's minimum backlight with no root. The driver report records which secure rows the device accepted, because Night Light alone and Night Light plus Extra Dim are different capability states.
 
+### Removed
+
+- The overlay viewport smoke script is gone, along with the debug-only probe activity it drove. It picked whatever device happened to be attached, force-stopped Settings, granted app ops and issued blind taps at fixed fractions of the screen. It had no exit statement, so every failure it hit was silent and the run still reported success, and its one real assertion matched the probe activity against its own name, which is true by construction. A check that cannot fail is worse than no check. The probe activity was also exported with no permission, so any app on a debug install could put it on screen.
+
 ### Fixed
 
 - The ADB emergency-off command now works when OpenLumen is not running, which is the situation it exists for. It forwarded the command to the foreground service, and Android refuses to start one from the background, so a filter left on when the process died could not be cleared by the one thing documented to clear it. The receiver now clears the display itself when the service cannot start, and records the filter as off so the next boot does not put the tint back. The documented command gained `--include-stopped-packages`, without which a force-stopped app never receives the broadcast at all.
