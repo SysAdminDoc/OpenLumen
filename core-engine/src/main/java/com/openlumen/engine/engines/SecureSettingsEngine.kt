@@ -197,6 +197,10 @@ class SecureSettingsEngine : ColorEngine {
 
             try {
                 val cr = context.contentResolver
+                // A previous process may have died holding these rows. Adopt its
+                // record first so the leftover tint is recognised as ours rather
+                // than captured as the user's own state (C339).
+                if (ownership == null) adoptPersistedOwnership(context)
                 val previousNightTemperature = ownership?.lastAppliedTemperature
                 val previousCorrectionMode = ownership?.lastAppliedCorrectionMode
                 if (ownership == null) {
@@ -297,6 +301,8 @@ class SecureSettingsEngine : ColorEngine {
                 } else if (dimLevel > 0) {
                     Log.i(tag, "device has no Extra Dim transform; dim is not applied by this driver")
                 }
+
+                persistOwnership(context)
             } catch (t: Throwable) {
                 Log.w(tag, "secure-settings apply failed: ${t.message}")
                 return@withContext EngineResult.Failure(
@@ -310,7 +316,13 @@ class SecureSettingsEngine : ColorEngine {
         if (!hasSecureSettingsGrant(context)) {
             return@withContext EngineResult.Failure("WRITE_SECURE_SETTINGS not granted")
         }
-        val owned = ownership ?: return@withContext EngineResult.Success
+        // Same reason as apply: without the durable record a process that did
+        // not write the tint cannot tell it apart from a setting the user made,
+        // so a filter left on by a killed process could never be turned off
+        // (C339).
+        val owned = ownership
+            ?: adoptPersistedOwnership(context)
+            ?: return@withContext EngineResult.Success
         try {
             val cr = context.contentResolver
             val currentNightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1
@@ -388,6 +400,7 @@ class SecureSettingsEngine : ColorEngine {
             dimOwned = false
             correctionOwned = false
             nightOwned = false
+            clearPersistedOwnership(context)
         } catch (t: Throwable) {
             Log.w(tag, "secure-settings clear failed: ${t.message}")
             return@withContext EngineResult.Failure(
@@ -501,6 +514,92 @@ class SecureSettingsEngine : ColorEngine {
         )
     }
 
+    /**
+     * Mirror of [ownership] on disk, so a tint survives the process that made
+     * it (C339).
+     *
+     * These rows are persistent system settings: a process killed by the OS
+     * leaves them exactly as it set them, and the next process has no way to
+     * tell a leftover tint from something the user chose. It would capture the
+     * tint as their original, decline to touch it, and report the filter off
+     * while the screen stayed orange. The KCAL driver keeps a record for the
+     * same reason.
+     *
+     * Written after every apply that owns a row, deleted by a successful
+     * [clear]. Anything unreadable is discarded and the driver falls back to
+     * behaving as though nothing were owned, which is the old behaviour.
+     */
+    private fun persistOwnership(context: Context) {
+        val owned = ownership
+        val holdsSomething = nightOwned || dimOwned || correctionOwned
+        if (owned == null || !holdsSomething) {
+            clearPersistedOwnership(context)
+            return
+        }
+        runCatching {
+            ownershipFile(context).writeText(
+                listOf(
+                    RECORD_VERSION,
+                    if (owned.original.nightActive) 1 else 0,
+                    owned.original.nightTemperature,
+                    owned.original.nightAutoMode,
+                    if (owned.original.dimActive) 1 else 0,
+                    owned.original.dimLevel,
+                    if (owned.original.correctionActive) 1 else 0,
+                    owned.original.correctionMode,
+                    owned.lastAppliedTemperature,
+                    owned.lastAppliedDimLevel,
+                    owned.lastAppliedCorrectionMode,
+                    if (nightOwned) 1 else 0,
+                    if (dimOwned) 1 else 0,
+                    if (correctionOwned) 1 else 0
+                ).joinToString(" ")
+            )
+        }.onFailure { Log.w(tag, "could not persist secure-settings ownership: ${it.message}") }
+    }
+
+    /**
+     * Load a record a previous process left behind into this instance. Returns
+     * the adopted ownership, or null when there is nothing usable to adopt.
+     */
+    private fun adoptPersistedOwnership(context: Context): Ownership? {
+        val record = runCatching {
+            val file = ownershipFile(context)
+            if (!file.isFile || file.length() > MAX_RECORD_BYTES) null else file.readText()
+        }.getOrNull() ?: return null
+        val parts = record.trim().split(' ')
+        if (parts.size != RECORD_FIELDS) return null
+        val values = parts.map { it.toIntOrNull() ?: return null }
+        if (values[0] != RECORD_VERSION) return null
+        val adopted = Ownership(
+            original = SystemState(
+                nightActive = values[1] == 1,
+                nightTemperature = values[2],
+                nightAutoMode = values[3],
+                dimActive = values[4] == 1,
+                dimLevel = values[5],
+                correctionActive = values[6] == 1,
+                correctionMode = values[7]
+            ),
+            lastAppliedTemperature = values[8],
+            lastAppliedDimLevel = values[9],
+            lastAppliedCorrectionMode = values[10]
+        )
+        ownership = adopted
+        nightOwned = values[11] == 1
+        dimOwned = values[12] == 1
+        correctionOwned = values[13] == 1
+        Log.i(tag, "adopted a secure-settings ownership record from a previous session")
+        return adopted
+    }
+
+    private fun clearPersistedOwnership(context: Context) {
+        runCatching { ownershipFile(context).delete() }
+    }
+
+    private fun ownershipFile(context: Context) =
+        java.io.File(context.filesDir, OWNERSHIP_FILE)
+
     private fun hasSecureSettingsGrant(context: Context): Boolean =
         context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) ==
             PackageManager.PERMISSION_GRANTED
@@ -592,6 +691,18 @@ class SecureSettingsEngine : ColorEngine {
     )
 
     companion object {
+        /** Durable mirror of the ownership record (C339). */
+        private const val OWNERSHIP_FILE = "secure-settings-ownership"
+
+        /** Bump when the field list changes; an older record is discarded. */
+        private const val RECORD_VERSION = 1
+
+        /** Version plus seven captured values, three last-applied, three flags. */
+        private const val RECORD_FIELDS = 14
+
+        /** Fourteen small integers; anything larger is corrupt. */
+        private const val MAX_RECORD_BYTES = 256L
+
         /** `ColorDisplayManager` and the Night Light secure keys both land in Q. */
         const val MIN_API: Int = 29
 
