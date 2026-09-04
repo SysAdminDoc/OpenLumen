@@ -170,13 +170,89 @@ class SecureSettingsCorrectionTest {
         val engine = SecureSettingsEngine()
         engine.apply(context, Presets.PROTAN)
         engine.apply(context, Presets.NIGHT)
-        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(0)
+
+        // The correction comes back the moment OpenLumen stops needing the row.
+        // It has no reason to stay off while a warm tint runs, and leaving our
+        // own mode sitting in the row meant a user who re-enabled correction in
+        // Settings got Protanomaly instead of their own Deuteranomaly.
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_MODE))
+            .isEqualTo(Daltonizer.DEUTERANOMALY.secureValue)
 
         engine.clear(context)
 
         assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
         assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_MODE))
             .isEqualTo(Daltonizer.DEUTERANOMALY.secureValue)
+    }
+
+    @Test fun `a Night Light the user turns off mid-session is not switched back on`() {
+        runBlocking {
+            // The hand-back asks the same ownership question clear() asks. The
+            // user took the row back while a warm preset was running, so the
+            // next neutral apply must leave their choice alone rather than
+            // replaying the snapshot taken when the session started.
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_AUTO_MODE, 0)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4000)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+            val engine = SecureSettingsEngine()
+            engine.apply(context, Presets.NIGHT)
+
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 0)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 3600)
+
+            engine.apply(context, Presets.OFF)
+
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(0)
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(3600)
+        }
+    }
+
+    @Test fun `re-acquiring Night Light reads what the user has now, not the old snapshot`() {
+        runBlocking {
+            // The schedule hands the row back every morning and takes it again
+            // every evening, so the record has to be re-read on the way in.
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_AUTO_MODE, 0)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 6500)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 0)
+
+            val engine = SecureSettingsEngine()
+            engine.apply(context, Presets.NIGHT)
+            engine.apply(context, Presets.OFF)
+
+            // Daytime: the user sets up their own Night Light.
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4200)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+            engine.apply(context, Presets.NIGHT)
+            engine.clear(context)
+
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(4200)
+        }
+    }
+
+    @Test fun `handing Night Light back under a solar auto mode leaves the flag to the system`() {
+        runBlocking {
+            // auto_mode 2 is the user's own sunset-to-sunrise rule. Once it is
+            // restored the system recomputes activation from the current time,
+            // so replaying a sample of the flag taken the previous evening
+            // would fight it.
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_AUTO_MODE, 2)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_TEMPERATURE, 4000)
+            Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 1)
+
+            val engine = SecureSettingsEngine()
+            engine.apply(context, Presets.NIGHT)
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_AUTO_MODE))
+                .isEqualTo(SecureSettingsEngine.AUTO_MODE_MANUAL)
+
+            engine.apply(context, Presets.OFF)
+
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_AUTO_MODE)).isEqualTo(2)
+            assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(4000)
+        }
     }
 
     @Test fun `a neutral preset applied twice leaves the user's own Night Light on`() = runBlocking {

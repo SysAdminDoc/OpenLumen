@@ -116,17 +116,19 @@ class SecureSettingsEngineTest {
         ).isTrue()
     }
 
-    @Test fun `a correction deactivation we wrote is still ours while it stays off`() {
-        // C294. Moving from a colour-vision preset to a warm one writes the
-        // correction off, so the last applied mode is NONE. The user's own
-        // correction has to survive that and come back on clear().
+    @Test fun `a mode the user picks while the correction is off is left alone`() {
+        // C294 follow-up. AOSP's correction screen has the mode list and the
+        // master toggle as separate rows, so choosing a mode with the toggle
+        // off is a normal thing to do. Restoring over that would take the
+        // choice away, which is why this predicate keeps comparing modes
+        // instead of treating "it is off" as proof the row is still ours.
         assertThat(
             shouldRestoreColorCorrection(
                 currentActive = false,
-                currentMode = Daltonizer.PROTANOMALY.secureValue,
-                lastAppliedMode = Daltonizer.NONE.secureValue
+                currentMode = Daltonizer.DEUTERANOMALY.secureValue,
+                lastAppliedMode = Daltonizer.PROTANOMALY.secureValue
             )
-        ).isTrue()
+        ).isFalse()
     }
 
     @Test fun `a correction switched on by the user after we deactivated is left alone`() {

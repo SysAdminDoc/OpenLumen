@@ -52,21 +52,18 @@ internal fun shouldRestoreReduceBrightColors(
  * Anything else means they changed it while the filter was running, and their
  * choice wins.
  *
- * [lastAppliedMode] of [Daltonizer.NONE] means the last thing we wrote was a
- * deactivation, which is what happens the moment a session moves from a
- * colour-vision preset to a warm one. Ownership holds while the correction is
- * still off, exactly as it does for Extra Dim; without that branch a user who
- * ran correction before OpenLumen started never got it back.
+ * There is deliberately no "we last wrote a deactivation" branch here, unlike
+ * [shouldRestoreReduceBrightColors]. Switching the correction off releases
+ * ownership of the row on the spot, so a session never reaches [clear] holding
+ * a correction it already handed back. A branch that ignored [currentMode]
+ * would also overwrite a mode the user picked while the toggle was off, which
+ * is a normal thing to do on AOSP's correction screen.
  */
 internal fun shouldRestoreColorCorrection(
     currentActive: Boolean,
     currentMode: Int,
     lastAppliedMode: Int
-): Boolean = if (lastAppliedMode != Daltonizer.NONE.secureValue) {
-    currentActive && currentMode == lastAppliedMode
-} else {
-    !currentActive
-}
+): Boolean = currentActive && currentMode == lastAppliedMode
 
 /**
  * Rootless framework-level driver, written against `Settings.Secure`.
@@ -200,6 +197,8 @@ class SecureSettingsEngine : ColorEngine {
 
             try {
                 val cr = context.contentResolver
+                val previousNightTemperature = ownership?.lastAppliedTemperature
+                val previousCorrectionMode = ownership?.lastAppliedCorrectionMode
                 if (ownership == null) {
                     ownership = Ownership(
                         original = SystemState(
@@ -225,58 +224,62 @@ class SecureSettingsEngine : ColorEngine {
                         lastAppliedCorrectionMode = correction.secureValue
                     )
                 } else {
+                    // Only record what this apply actually writes. A neutral
+                    // preset writes no temperature and selects no correction,
+                    // and recording its notional values would make the
+                    // ownership checks compare against rows we never touched.
                     ownership = ownership?.copy(
-                        lastAppliedTemperature = temperature,
+                        lastAppliedTemperature = if (tinted) {
+                            temperature
+                        } else {
+                            previousNightTemperature ?: temperature
+                        },
                         lastAppliedDimLevel = dimLevel,
-                        lastAppliedCorrectionMode = correction.secureValue
+                        lastAppliedCorrectionMode = if (correction != Daltonizer.NONE) {
+                            correction.secureValue
+                        } else {
+                            previousCorrectionMode ?: correction.secureValue
+                        }
                     )
                 }
 
                 if (tinted) {
+                    // Taking the row now, so read what the user has right now.
+                    // A session hands Night Light back whenever it moves to a
+                    // neutral preset, and they are free to change it before the
+                    // schedule turns warm again.
+                    if (!nightOwned) recaptureNightDisplay(cr)
                     // The system's own sunset/sunrise rule would fight us for the
                     // activation flag, so park it on manual for the duration and
-                    // hand the user's choice back in clear().
+                    // hand the user's choice back when we let go.
                     Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
                     Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, temperature)
                     Settings.Secure.putInt(cr, KEY_NIGHT_ACTIVATED, 1)
                     nightOwned = true
                 } else if (nightOwned) {
-                    // Moving from a tinted preset to a neutral one. Hand Night
-                    // Light back to whatever the user had instead of writing a
-                    // flat 0 — the same restore clear() performs, just earlier,
-                    // because from here on the row is theirs again.
-                    //
                     // C293: this used to read `correctionOwned || nightOwned`.
                     // `correctionOwned` says nothing about Night Light, so the
                     // second apply of a neutral preset (a ramp step, a slider,
                     // or the identity apply every schedule-off performs) switched
-                    // off a Night Light the user had turned on themselves, and
-                    // clear() then saw a row it no longer recognised and left it
-                    // off for good.
-                    val original = ownership?.original
-                    Settings.Secure.putInt(
-                        cr,
-                        KEY_NIGHT_TEMPERATURE,
-                        original?.nightTemperature ?: DEFAULT_TEMPERATURE
-                    )
-                    Settings.Secure.putInt(
-                        cr,
-                        KEY_NIGHT_ACTIVATED,
-                        if (original?.nightActive == true) 1 else 0
-                    )
-                    original?.nightAutoMode?.let { Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, it) }
+                    // off a Night Light the user had turned on themselves.
+                    handBackNightDisplay(cr)
                     nightOwned = false
                 }
 
                 if (correction != Daltonizer.NONE) {
+                    if (!correctionOwned) recaptureColorCorrection(cr)
                     Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, correction.secureValue)
                     Settings.Secure.putInt(cr, KEY_CORRECTION_ENABLED, 1)
                     correctionOwned = true
                 } else if (correctionOwned) {
-                    // Same rule as Extra Dim: only switch off a correction this
-                    // session switched on. A user who had colour correction set
-                    // before OpenLumen started keeps it.
-                    Settings.Secure.putInt(cr, KEY_CORRECTION_ENABLED, 0)
+                    // Moving to a preset that names no correction mode. Give the
+                    // row back rather than only switching it off: a correction
+                    // the user runs for a visual impairment has no reason to
+                    // stay off while OpenLumen shows a warm tint, and leaving
+                    // our own mode in the row meant re-enabling it in Settings
+                    // handed them our choice instead of theirs.
+                    handBackColorCorrection(cr)
+                    correctionOwned = false
                 }
 
                 if (dimSupported) {
@@ -392,6 +395,110 @@ class SecureSettingsEngine : ColorEngine {
             )
         }
         EngineResult.Success
+    }
+
+    /**
+     * Re-read the Night Light rows into the ownership record.
+     *
+     * The record is captured once when a session first applies anything, but
+     * the session gives Night Light back every time it moves to a neutral
+     * preset, which the schedule does on its own each morning. Without this the
+     * evening re-acquire would still be holding the previous day's snapshot and
+     * would write it over whatever the user has set since.
+     */
+    private fun recaptureNightDisplay(cr: android.content.ContentResolver) {
+        ownership = ownership?.let { owned ->
+            owned.copy(
+                original = owned.original.copy(
+                    nightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
+                    nightTemperature = Settings.Secure.getInt(
+                        cr,
+                        KEY_NIGHT_TEMPERATURE,
+                        DEFAULT_TEMPERATURE
+                    ),
+                    nightAutoMode = Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, 0)
+                )
+            )
+        }
+    }
+
+    /** Same, for the correction rows. */
+    private fun recaptureColorCorrection(cr: android.content.ContentResolver) {
+        ownership = ownership?.let { owned ->
+            owned.copy(
+                original = owned.original.copy(
+                    correctionActive =
+                        Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1,
+                    correctionMode = Settings.Secure.getInt(
+                        cr,
+                        KEY_CORRECTION_MODE,
+                        Daltonizer.NONE.secureValue
+                    )
+                )
+            )
+        }
+    }
+
+    /**
+     * Give Night Light back, if what is on the rows is still what we put there.
+     *
+     * This asks the same ownership question [clear] asks, and it has to: a user
+     * who turns Night Light off in system Settings while a warm preset is
+     * running has taken the row back, and the next neutral apply must not
+     * switch it on again from a stale snapshot.
+     */
+    private fun handBackNightDisplay(cr: android.content.ContentResolver) {
+        val owned = ownership ?: return
+        val currentActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1
+        val currentTemperature =
+            Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
+        if (
+            !shouldRestoreNightDisplay(
+                currentActive = currentActive,
+                currentTemperature = currentTemperature,
+                lastAppliedTemperature = owned.lastAppliedTemperature
+            )
+        ) {
+            Log.i(tag, "Night Light changed outside OpenLumen; leaving it as the user set it")
+            return
+        }
+        Settings.Secure.putInt(cr, KEY_NIGHT_TEMPERATURE, owned.original.nightTemperature)
+        // Auto mode goes back before the activation flag, because when it is
+        // anything but manual the system owns that flag and recomputes it from
+        // the user's own sunset/sunrise schedule. Replaying a sample of it
+        // taken hours earlier would turn the screen warm in the morning.
+        Settings.Secure.putInt(cr, KEY_NIGHT_AUTO_MODE, owned.original.nightAutoMode)
+        if (owned.original.nightAutoMode == AUTO_MODE_MANUAL) {
+            Settings.Secure.putInt(
+                cr,
+                KEY_NIGHT_ACTIVATED,
+                if (owned.original.nightActive) 1 else 0
+            )
+        }
+    }
+
+    /** Give the colour correction back, if the row is still the one we selected. */
+    private fun handBackColorCorrection(cr: android.content.ContentResolver) {
+        val owned = ownership ?: return
+        val currentActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1
+        val currentMode =
+            Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
+        if (
+            !shouldRestoreColorCorrection(
+                currentActive = currentActive,
+                currentMode = currentMode,
+                lastAppliedMode = owned.lastAppliedCorrectionMode
+            )
+        ) {
+            Log.i(tag, "colour correction changed outside OpenLumen; leaving it untouched")
+            return
+        }
+        Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, owned.original.correctionMode)
+        Settings.Secure.putInt(
+            cr,
+            KEY_CORRECTION_ENABLED,
+            if (owned.original.correctionActive) 1 else 0
+        )
     }
 
     private fun hasSecureSettingsGrant(context: Context): Boolean =
