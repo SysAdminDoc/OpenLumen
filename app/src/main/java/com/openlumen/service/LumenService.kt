@@ -219,7 +219,7 @@ class LumenService : LifecycleService() {
                 restoreDirectBootState()
             }
             ACTION_TURN_OFF -> lifecycleScope.launch {
-                turnOffImmediately("intent")
+                turnOffImmediately("intent", blunt = isEmergencyTurnOff(intent))
             }
             ACTION_TURN_ON -> lifecycleScope.launch {
                 if (isUserUnlocked()) prefs.update { it.withFilterEnabled(true) }
@@ -355,7 +355,7 @@ class LumenService : LifecycleService() {
         )
         val offIntent = PendingIntent.getService(
             this, 1,
-            Intent(this, LumenService::class.java).setAction(ACTION_TURN_OFF),
+            ordinaryTurnOffIntent(this),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val cycleIntent = PendingIntent.getService(
@@ -434,7 +434,7 @@ class LumenService : LifecycleService() {
             )
             val offIntent = PendingIntent.getService(
                 this, 1,
-                Intent(this, LumenService::class.java).setAction(ACTION_TURN_OFF),
+                ordinaryTurnOffIntent(this),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val cycleIntent = PendingIntent.getService(
@@ -549,7 +549,7 @@ class LumenService : LifecycleService() {
         stopSelf()
     }
 
-    private suspend fun turnOffImmediately(source: String) {
+    private suspend fun turnOffImmediately(source: String, blunt: Boolean) {
         if (isUserUnlocked()) {
             val disabledPrefs = (latestPrefs.get() ?: Preferences()).copy(enabled = false)
             directBootMirror.mirror(disabledPrefs, active = false, matrix = LumenMatrix.IDENTITY)
@@ -557,11 +557,7 @@ class LumenService : LifecycleService() {
         } else {
             directBootMirror.markDisabled()
         }
-        // An explicit turn-off command is the emergency path: it is what the
-        // documented ADB escape hatch and the notification's Turn off action
-        // reach, and it must clear a transform even when nothing in this
-        // process still owns it (C291).
-        engineController.hardClearOutputs("turn off from $source", blunt = true)
+        engineController.hardClearOutputs("turn off from $source", blunt = blunt)
         stopSelf()
     }
 
@@ -746,6 +742,37 @@ class LumenService : LifecycleService() {
 
         const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
         const val EXTRA_VALUE = "com.openlumen.extra.VALUE"
+
+        /**
+         * Marks a turn-off that came from the app's own notification rather
+         * than the emergency hatch (C340).
+         *
+         * `ACTION_TURN_OFF` serves both, and treating every use of it as an
+         * emergency meant the notification's Turn off button ran the blunt
+         * secure-settings reset, which switches off a Night Light, Extra Dim
+         * or colour correction the user set themselves. That is the most
+         * ordinary way there is to disable the filter.
+         *
+         * Absent means emergency, so the documented ADB command and anything
+         * arriving through [AutomationReceiver] keep the blunt behaviour they
+         * need. The receiver copies only the two documented extras into the
+         * intent it forwards, and the service is not exported, so nothing
+         * outside the app can set this.
+         */
+        const val EXTRA_ORDINARY_TURN_OFF = "com.openlumen.extra.ORDINARY_TURN_OFF"
+
+        /** The Turn off intent the foreground notification fires. */
+        internal fun ordinaryTurnOffIntent(context: Context): Intent =
+            Intent(context, LumenService::class.java)
+                .setAction(ACTION_TURN_OFF)
+                .putExtra(EXTRA_ORDINARY_TURN_OFF, true)
+
+        /**
+         * Whether a `TURN_OFF` should also run the blunt reset over rows this
+         * process may no longer own.
+         */
+        internal fun isEmergencyTurnOff(intent: Intent?): Boolean =
+            intent?.getBooleanExtra(EXTRA_ORDINARY_TURN_OFF, false) != true
 
         const val EVENT_FILTER_STATE_CHANGED = "com.openlumen.event.FILTER_STATE_CHANGED"
         const val EXTRA_ENABLED = "com.openlumen.extra.ENABLED"
