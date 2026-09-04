@@ -474,6 +474,6 @@ internal class EngineController(
         internal fun honourPinnedEngine(
             forcePinned: Boolean,
             probeSaysAvailable: Boolean
-        ): Boolean = probeSaysAvailable || forcePinned
+        ): Boolean = DriverProbe.honourPinnedEngine(forcePinned, probeSaysAvailable)
     }
 }

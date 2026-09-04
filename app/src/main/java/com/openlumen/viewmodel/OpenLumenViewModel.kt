@@ -97,7 +97,7 @@ class OpenLumenViewModel @Inject constructor(
             if (enabled) {
                 if (!startService()) {
                     prefs.update { it.copy(enabled = false) }
-                    _exportResult.value = getApplication<Application>()
+                    _serviceStartError.value = getApplication<Application>()
                         .getString(com.openlumen.R.string.toast_service_start_failed)
                 }
             } else {
@@ -390,6 +390,9 @@ class OpenLumenViewModel @Inject constructor(
     private val _exportResult = MutableStateFlow<String?>(null)
     override val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
+    private val _serviceStartError = MutableStateFlow<String?>(null)
+    override val serviceStartError: StateFlow<String?> = _serviceStartError.asStateFlow()
+
     override fun exportTo(uri: Uri) = viewModelScope.launch {
         val result = prefs.exportTo(uri)
         _exportResult.value = if (result.isSuccess) {
@@ -446,6 +449,8 @@ class OpenLumenViewModel @Inject constructor(
             ?: getApplication<Application>().getString(R.string.error_unknown)
 
     override fun consumeExportResult() { _exportResult.value = null }
+
+    override fun consumeServiceStartError() { _serviceStartError.value = null }
 
     /**
      * Import preview (C30). Decodes + migrates + sanitizes the incoming

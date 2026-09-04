@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -122,6 +123,17 @@ fun HomeScreen(
     }
     if (enableSystemActions) {
         LaunchedEffect(Unit) { refreshNotificationPermissionState() }
+    }
+
+    // A refused service start rolls the toggle back, and until now said
+    // nothing: the message went to the flow only the About tab collects, so it
+    // surfaced later and out of context. Home is the screen the user is
+    // looking at when the switch snaps back.
+    val serviceStartError by vm.serviceStartError.collectAsStateWithLifecycle()
+    LaunchedEffect(serviceStartError) {
+        val message = serviceStartError ?: return@LaunchedEffect
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        vm.consumeServiceStartError()
     }
     val notifLauncher = if (enableSystemActions) rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()

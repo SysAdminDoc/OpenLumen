@@ -100,18 +100,36 @@ class DriverProbe(
          * A pin the device cannot honour is ignored here for the same reason
          * the service ignores it: an unavailable pin does not run, so
          * describing its capabilities would warn about losses the user will
-         * never see and hide the ones they will.
+         * never see and hide the ones they will. [forcePinned] is the user's
+         * override for exactly that judgement, so it decides this too. The
+         * rule is [honourPinnedEngine] either way, shared with the service so
+         * the screen cannot describe a driver the service will not run.
          */
         fun activeCapabilities(
             probes: List<Probe>,
-            pinned: EngineKind?
+            pinned: EngineKind?,
+            forcePinned: Boolean = false
         ): Set<EngineCapability>? {
             val honoured = pinned?.takeIf { kind ->
-                probes.any { it.engine.kind == kind && it.available }
+                honourPinnedEngine(
+                    forcePinned = forcePinned,
+                    probeSaysAvailable = probes.any { it.engine.kind == kind && it.available }
+                )
             }
             val kind = honoured ?: bestAvailableKind(probes) ?: return null
             return probes.firstOrNull { it.engine.kind == kind }?.engine?.capabilities
         }
+
+        /**
+         * Whether a pinned driver is the one that runs. Forcing exists because
+         * su detection is unreliable on root-hiding setups, so the user can
+         * say "run it anyway and report a real failure" instead of being
+         * silently moved to a weaker driver.
+         */
+        fun honourPinnedEngine(
+            forcePinned: Boolean,
+            probeSaysAvailable: Boolean
+        ): Boolean = probeSaysAvailable || forcePinned
 
         fun defaultEngines(): List<ColorEngine> = listOf(
             SecureSettingsEngine(),

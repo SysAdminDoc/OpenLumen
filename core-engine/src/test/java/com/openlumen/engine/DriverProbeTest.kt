@@ -106,6 +106,30 @@ class DriverProbeTest {
             .containsExactly(EngineCapability.COLOR_MATRIX)
     }
 
+    @Test fun `a forced pin describes the driver that will actually run`() {
+        // Forcing exists because su detection is unreliable on root-hiding
+        // setups: the service runs the pinned driver anyway and reports a real
+        // failure rather than moving the user to a weaker one. Skipping an
+        // unavailable pin here without asking about the override made the
+        // Presets detail describe a driver the service was not going to use.
+        val engines = listOf(
+            FakeEngine(EngineKind.KCAL, capabilities = setOf(EngineCapability.PER_CHANNEL_GAMMA)),
+            FakeEngine(EngineKind.OVERLAY, capabilities = setOf(EngineCapability.COLOR_MATRIX))
+        )
+        val probes = listOf(
+            DriverProbe.Probe(engines[0], available = false),
+            DriverProbe.Probe(engines[1], available = true)
+        )
+
+        assertThat(
+            DriverProbe.activeCapabilities(
+                probes = probes,
+                pinned = EngineKind.KCAL,
+                forcePinned = true
+            )
+        ).containsExactly(EngineCapability.PER_CHANNEL_GAMMA)
+    }
+
     @Test fun `a pin the device can honour is still the one described`() {
         // Positive control: the fallback above has to come from availability,
         // not from the pin being ignored outright.

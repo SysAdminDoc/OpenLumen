@@ -27,6 +27,16 @@ interface OpenLumenScreenModel {
     val lux: StateFlow<Float>
     val lightSensorAvailable: StateFlow<Boolean>
     val exportResult: StateFlow<String?>
+
+    /**
+     * Why the filter would not switch on, for the screen the user is
+     * looking at when it happens. Kept apart from [exportResult] because
+     * that one is only collected on the About tab, so a refused service
+     * start used to surface as a toast the next time the user opened
+     * About, with nothing at all on Home.
+     */
+    val serviceStartError: StateFlow<String?>
+        get() = MutableStateFlow(null)
     val pendingImport: StateFlow<OpenLumenViewModel.PendingImport?>
     val pendingPresetPack: StateFlow<OpenLumenViewModel.PendingPresetPack?>
         get() = MutableStateFlow(null)
@@ -61,6 +71,7 @@ interface OpenLumenScreenModel {
     fun resetCorruptPreferences(): Job
     fun importFrom(uri: Uri): Job
     fun consumeExportResult()
+    fun consumeServiceStartError() {}
     fun beginImportPreview(uri: Uri): Job
     fun confirmPendingImport(): Job
     fun cancelPendingImport()

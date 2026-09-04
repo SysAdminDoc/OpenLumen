@@ -79,7 +79,11 @@ fun PresetsScreen(
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
     val probes by vm.probes.collectAsStateWithLifecycle()
-    val driverCapabilities = DriverProbe.activeCapabilities(probes, prefs.engine.toEngineKind())
+    val driverCapabilities = DriverProbe.activeCapabilities(
+        probes = probes,
+        pinned = prefs.engine.toEngineKind(),
+        forcePinned = prefs.forcePinnedEngine
+    )
     val favorites = prefs.favoritePresetKeys.toSet()
     val scope = rememberCoroutineScope()
     val navigator = rememberListDetailPaneScaffoldNavigator<String>()
