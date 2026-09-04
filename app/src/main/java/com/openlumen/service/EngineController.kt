@@ -228,8 +228,17 @@ internal class EngineController(
     }
 
     suspend fun clearActiveEngineForShutdown() {
-        val current = engine ?: return
-        runCatching { current.clear(context) }
+        // Under the lock like every other engine call (C326). This was the one
+        // that was not, so a shutdown could land in the middle of an apply --
+        // and the KCAL driver raises the kernel's brightness floor in one write
+        // and records what it raised in another, so a clear between the two
+        // restores a floor that has not been raised yet and then throws away
+        // the record the apply is about to depend on. `onDestroy` already caps
+        // this call at two seconds, so waiting cannot hang shutdown.
+        applyMutex.withLock {
+            val current = engine ?: return@withLock
+            runCatching { current.clear(context) }
+        }
     }
 
     /**

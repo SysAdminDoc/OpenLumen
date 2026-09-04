@@ -72,8 +72,15 @@ class KcalEngine : ColorEngine {
 
     /**
      * Kept outside [Paths] so `invalidateOnFailure` cannot discard it (C257).
+     *
+     * Read and written only through [loadRestore] and [storeRestore]. The
+     * field and the file are one record in two places, and they were moved by
+     * two separate statements: a clear that landed between them left the
+     * kernel node and the record disagreeing about whether we had raised it
+     * (C326).
      */
     @Volatile private var minRestore: MinRestore? = null
+    private val restoreMutex = Mutex()
 
     /**
      * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
@@ -123,20 +130,38 @@ class KcalEngine : ColorEngine {
         // still reporting a floor below SAFETY_MIN; the raise is retried in
         // that case, but the original must stay the value we saw the first
         // time, never one of our own raises read back.
-        val existingRestore = minRestore ?: readPersistedRestore(context)?.also { minRestore = it }
+        val existingRestore = loadRestore(context)
         val shouldRaiseMin =
             paths.min != null &&
                 paths.originalMin != null &&
                 paths.originalMin < SAFETY_MIN
+        // C326: a record can outlive the state it describes. The kernel may
+        // have stopped exposing `kcal_min` at all, or the user may have tuned
+        // the floor above our own since we wrote it -- and `clear` trusts the
+        // record, so it would put their value back to whatever we saw months
+        // ago. Refusing to overwrite a floor the user chose is the same rule
+        // C166 applies on the way in.
+        //
+        // Strictly greater, deliberately. Our own raise writes exactly
+        // SAFETY_MIN and reads back as SAFETY_MIN, so treating equality as the
+        // user's tuning would throw away the record for every panel we had
+        // actually raised.
+        val staleRecord = existingRestore != null && (
+            paths.min == null ||
+                (paths.originalMin != null && paths.originalMin > SAFETY_MIN)
+            )
+        if (staleRecord) {
+            Log.i(TAG, "retiring a kcal_min record this panel has outgrown")
+            storeRestore(context, null)
+        }
         val minWriteScript = if (shouldRaiseMin) {
             // Latch before the script runs, not after it succeeds. The min
             // write carries `|| true`, so it can land while a later rgb write
             // fails the script — latching on overall success left the node
             // raised with no record that we had done it.
-            val record = existingRestore?.takeIf { it.raised }
+            val record = existingRestore?.takeIf { it.raised && !staleRecord }
                 ?: MinRestore(originalMin = paths.originalMin, raised = true)
-            minRestore = record
-            persistRestore(context, record)
+            storeRestore(context, record)
             "echo '$SAFETY_MIN' > '${paths.min}' 2>/dev/null || true\n"
         } else ""
 
@@ -163,7 +188,7 @@ class KcalEngine : ColorEngine {
         // gating the re-probe on that alone let the one case C257 exists for
         // (min raised, rgb write failed, paths invalidated) return early and
         // strand the node.
-        val record = minRestore ?: readPersistedRestore(context)?.also { minRestore = it }
+        val record = loadRestore(context)
         val hasRaisedMin = record?.raised == true
         // C256: invalidateOnFailure drops resolvedPaths after a failed apply,
         // so a panel left tinted was exactly the case this reported as a
@@ -187,8 +212,7 @@ class KcalEngine : ColorEngine {
             }
         )
         if (exit == 0 && restoreMin) {
-            minRestore = null
-            persistRestore(context, null)
+            storeRestore(context, null)
         }
         invalidateOnFailure(exit, paths, "clear")
         if (exit == 0) {
@@ -318,6 +342,18 @@ class KcalEngine : ColorEngine {
             }
         }
     }
+
+    /** The record this engine is working from, adopting a previous process's. */
+    private suspend fun loadRestore(context: Context): MinRestore? = restoreMutex.withLock {
+        minRestore ?: readPersistedRestore(context)?.also { minRestore = it }
+    }
+
+    /** Move both halves together, or a crash between them strands the node. */
+    private suspend fun storeRestore(context: Context, record: MinRestore?) =
+        restoreMutex.withLock {
+            minRestore = record
+            persistRestore(context, record)
+        }
 
     private fun restoreFile(context: Context) = java.io.File(context.filesDir, MIN_RESTORE_FILE)
 
