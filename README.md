@@ -6,20 +6,47 @@
 [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)
 [![No INTERNET](https://img.shields.io/badge/INTERNET-not%20requested-94e2d5?style=flat-square)](#privacy)
 
-> **Open-source spiritual successor to Chainfire's CF.Lumen.** Brings root-grade
-> display color shifting and overlay-based fallback to modern Android, plus a
-> rootless framework-level path that CF.Lumen never had.
+> **It changes the display, not a layer on top of it.** Three of OpenLumen's
+> four drivers work below the app layer: two write the colour transform the
+> compositor already applies, and one drives the panel through the kernel. The
+> tint reaches the status bar, the notification shade and the lock screen, and
+> it never swallows a tap. The overlay driver is the fallback for devices where
+> nothing else is reachable, not the design.
+
+If you came here after CF.Lumen, that is probably the sentence you were
+looking for. Most of what replaced it paints a coloured window over your
+screen, and it shows: the tint stops at the edges of the app, taps land in the
+wrong place during installs, and every screenshot comes out orange.
+
+Two things people actually use this for:
+
+**Fixing a screen that is the wrong colour.** Some panels ship with a cast,
+usually a green one that reads as a yellow tint on white. Per-channel RGB and
+gamma let you pull it back, and the settings persist across reboots, so this
+is a calibration you make once rather than a mode you turn on at night.
+
+**Evening colour shift.** The usual thing: warm the screen on a schedule, by
+clock time, by sunrise and sunset for your location, or until your next alarm.
+
+There is also a workflow some people want that no Android app really serves:
+holding the panel's hardware brightness high while dimming in software, rather
+than letting the backlight drop. Every driver here dims in software, and the
+root drivers and the system's Extra Dim can go below the panel's own minimum.
+Whether that suits you is yours to judge; see
+[docs/health-evidence.md](docs/health-evidence.md) for what is and is not
+established.
 
 CF.Lumen has been dormant since December 2020. Red Moon, the main open-source
-overlay-only competitor, has been unmaintained since August 2022. OpenLumen exists
-to fill that gap on Android 14 / 15 with a clean Compose UI, no telemetry, and four
-runtime-selectable display drivers.
+overlay-only competitor, has been unmaintained since August 2022. OpenLumen
+exists to fill that gap on Android 14 / 15 with a Compose UI, no telemetry,
+and four runtime-selectable display drivers.
 
 ---
 
 ## Why OpenLumen?
 
-- **Four display drivers, runtime-detected**: Auto uses a root driver when root is available; non-root devices use Overlay.
+- **Three of four drivers work below the app layer**, so the tint covers the whole screen, passes touches through and leaves screenshots untinted.
+- **Per-channel RGB and gamma** for correcting a panel's colour cast, not just warming it.
 - **No INTERNET permission, ever.** Fully offline, F-Droid-clean.
 - **Catppuccin Mocha + AMOLED true-black** Compose UI. Dark by default.
 - **Quick Settings tile** for one-tap toggling. CF.Lumen never shipped a tile.
@@ -37,6 +64,12 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 | `SurfaceFlinger` | Yes | Any | Framebuffer | `service call SurfaceFlinger` color-transform. Works on Tensor/Exynos/MediaTek too. |
 | `KCAL` | Yes | Qualcomm | Panel driver | Requires custom kernel exposing `/sys/devices/platform/kcal_ctrl.0/kcal*`. |
 | `Overlay` | No | Any | Compositor blend | Universal fallback. Capped at ~80% opacity by Android 12+ rules. |
+
+**None of these rows has been confirmed on real hardware yet.** They describe
+what each driver does by construction, read from the platform sources they
+call. [docs/device-matrix.md](docs/device-matrix.md) is where confirmed
+results go, and every row in it currently says untested. If you run one, the
+Driver tab's Share report produces exactly what that file wants.
 
 ¹ Requires granting `WRITE_SECURE_SETTINGS` once:
 `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
@@ -64,7 +97,8 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 
 **Color**
 
-- Named presets: Night · Amber · Red · Salmon · Sepia · Grayscale · Deep Sleep · Protan · Deutan · Tritan
+- Named presets: Night · Amber · Red · Salmon · Sepia · Grayscale · Deep Sleep · PWM Comfort · Protan · Deutan · Tritan
+- Software dimming on every driver, and below the panel minimum on the root drivers and the system Extra Dim, for holding hardware brightness high and darkening in software instead ([what is and is not established](docs/health-evidence.md))
 - Custom R/G/B picker on Home with live color preview
 - Kelvin color-temperature slider (1000 to 10 000 K) with Tanner Helland conversion
 - Per-channel gamma sliders (γR / γG / γB, range 0.5 to 2.5)
