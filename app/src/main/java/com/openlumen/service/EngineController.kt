@@ -55,9 +55,13 @@ internal class EngineController(
             if (current != null) {
                 cancelTransition()
                 applyMutex.withLock {
-                    escalateClearFailure("engine.clear() while no driver is available", runCatching {
-                        current.clear(context)
-                    }.getOrElse { EngineResult.Failure(it.message ?: "exception") })
+                    escalateClearFailure(
+                        "engine.clear() while no driver is available",
+                        current.kind,
+                        runCatching {
+                            current.clear(context)
+                        }.getOrElse { EngineResult.Failure(it.message ?: "exception") }
+                    )
                     engine = null
                     lastApplied = null
                     applyGate.reset()
@@ -71,9 +75,13 @@ internal class EngineController(
         cancelTransition()
         applyMutex.withLock {
             current?.let {
-                escalateClearFailure("engine.clear() during switch", runCatching {
-                    it.clear(context)
-                }.getOrElse { error -> EngineResult.Failure(error.message ?: "exception") })
+                escalateClearFailure(
+                    "engine.clear() during switch",
+                    it.kind,
+                    runCatching {
+                        it.clear(context)
+                    }.getOrElse { error -> EngineResult.Failure(error.message ?: "exception") }
+                )
             }
             val next = probe.engineOf(want)
             if (next == null) {
@@ -382,17 +390,29 @@ internal class EngineController(
      * Callers already hold [applyMutex], so this deliberately does not go
      * through [hardClearOutputs], which takes it.
      */
-    private suspend fun escalateClearFailure(operation: String, result: EngineResult) {
+    private suspend fun escalateClearFailure(
+        operation: String,
+        kind: EngineKind,
+        result: EngineResult
+    ) {
         reportResult(operation, result)
         if (result !is EngineResult.Failure) return
+        if (!escalatesToBluntReset(kind)) {
+            Log.w(logTag, "$operation failed (${result.message}); nothing blunt to escalate to")
+            return
+        }
         DiagnosticsLog.log(
             context,
             DiagnosticsLog.Level.WARN,
             DiagnosticsLog.Category.ENGINE,
             "$operation failed (${result.message}); running the emergency display reset"
         )
-        runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
-            .onFailure { Log.w(logTag, "escalated hard reset failed: ${it.message}") }
+        runCatching {
+            DisplayEmergencyReset.clearRootTransforms(
+                context = context.takeIf { clearsSecureRows(kind) },
+                roots = clearsRootTransforms(kind)
+            )
+        }.onFailure { Log.w(logTag, "escalated hard reset failed: ${it.message}") }
     }
 
     private suspend fun directBootEngineFor(engine: EngineKindDto): ColorEngine {
@@ -428,6 +448,29 @@ internal class EngineController(
          * either works or reports a concrete failure, instead of the app
          * quietly reverting the user's selection to Auto.
          */
+        /**
+         * Which transform family a failed driver could have left behind.
+         *
+         * C341: the escalation used to clear all three regardless. A root
+         * driver whose `su` call was denied would zero the secure rows, which
+         * that driver never writes and the user may well have set themselves,
+         * and changing driver on the Driver tab is a routine action rather than
+         * an emergency.
+         */
+        internal fun clearsSecureRows(kind: EngineKind): Boolean =
+            kind == EngineKind.COLOR_DISPLAY_MANAGER
+
+        internal fun clearsRootTransforms(kind: EngineKind): Boolean =
+            kind == EngineKind.SURFACE_FLINGER || kind == EngineKind.KCAL
+
+        /**
+         * The overlay driver holds a window rather than persistent system
+         * state, so there is nothing for the blunt reset to clear on its
+         * behalf; `hardClearOutputs` removes the window directly.
+         */
+        internal fun escalatesToBluntReset(kind: EngineKind): Boolean =
+            clearsSecureRows(kind) || clearsRootTransforms(kind)
+
         internal fun honourPinnedEngine(
             forcePinned: Boolean,
             probeSaysAvailable: Boolean

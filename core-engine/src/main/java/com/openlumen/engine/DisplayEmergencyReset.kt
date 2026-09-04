@@ -17,7 +17,17 @@ import kotlinx.coroutines.coroutineScope
  * directly gives recovery paths a chance to clear stale framebuffer/panel state.
  */
 object DisplayEmergencyReset {
-    suspend fun clearRootTransforms(context: Context? = null): Result = coroutineScope {
+    /**
+     * [context] switches the secure-settings half on; [roots] switches the
+     * SurfaceFlinger and KCAL half on. Both default to the full sweep the
+     * emergency-off path wants, but an escalation should only ever clear the
+     * family that failed (C341). Zeroing the secure rows because a root
+     * driver's `su` call was denied destroys settings that driver never wrote.
+     */
+    suspend fun clearRootTransforms(
+        context: Context? = null,
+        roots: Boolean = true
+    ): Result = coroutineScope {
         val secureSettings = async {
             // Ownership lives in an engine instance and does not survive a
             // process kill, so an instance clear() here would report success
@@ -26,8 +36,10 @@ object DisplayEmergencyReset {
             // off directly.
             if (context == null) emptyList() else SecureSettingsEngine.clearKnownSecureState(context)
         }
-        val surfaceFlinger = async { SurfaceFlingerEngine.clearKnownColorTransforms() }
-        val kcal = async { KcalEngine.clearKnownPaths() }
+        val surfaceFlinger = async {
+            if (roots) SurfaceFlingerEngine.clearKnownColorTransforms() else emptyList()
+        }
+        val kcal = async { if (roots) KcalEngine.clearKnownPaths() else emptyList() }
         Result(
             secureSettingsKeys = secureSettings.await(),
             surfaceFlingerCodes = surfaceFlinger.await(),
