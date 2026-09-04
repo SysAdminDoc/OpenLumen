@@ -45,8 +45,8 @@ The secure-settings driver writes the same rows `ColorDisplayService` watches, s
 the tint is applied by the compositor: it covers the status bar, notification
 shade and lock screen, it does not block touches, and screenshots come out
 untinted. On devices that ship Extra Dim (Android 12+, and not every OEM does) it
-also dims below the panel's minimum backlight without root — the one thing the
-overlay driver cannot do. Note it carries chromaticity as a colour temperature, so
+also dims below the panel's minimum backlight without root, which is the one
+thing the overlay driver cannot do. Note it carries chromaticity as a colour temperature, so
 per-channel gamma and the colour-vision presets still need a root driver.
 
 Releases through 0.7.1 shipped a `ColorDisplayManager` driver here that could not
@@ -243,7 +243,6 @@ OpenLumen/
 
 ### Roadmap and design
 
-- [Roadmap](ROADMAP.md): source-backed release plan with the candidate inventory
 - [Overlay safety and per-app design notes](docs/overlay-and-per-app-design.md): why per-app behavior is deferred until the trust posture is sorted
 - [Deferred roadmap candidates](docs/deferred-candidates.md): design sketches for Wear OS / Android TV / etc.
 - [Android 17 readiness](docs/android-17-readiness.md): forward-looking Android-version migration notes (renamed from `api-36-readiness.md` in rev 4)
@@ -275,9 +274,8 @@ See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the source-backed release plan and the
-candidate inventory. The `Now` candidates through v0.6.0 are largely
-shipped; deferred items have design sketches in
+Planned work is tracked in the repository's issues. Deferred items have design
+sketches in
 [docs/deferred-candidates.md](docs/deferred-candidates.md) and
 [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md).
 

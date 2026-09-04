@@ -51,9 +51,12 @@ CODEX_CHANGELOG.md
 *.log
 *.tmp
 
-# Markdown files local-only (except README)
+# Markdown files local-only (except README and the published docs)
 *.md
 !README.md
+!CONTRIBUTING.md
+!SECURITY.md
+!docs/*.md
 
 # AI config
 AGENTS.md
