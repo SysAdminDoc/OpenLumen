@@ -206,7 +206,7 @@ fun ScheduleScreen(
             }
         }
 
-        if (!solarLocationValid) {
+        if (shouldWarnAboutSolarLocation(prefs.schedule.mode, solarLocationValid)) {
             SolarLocationWarningCard(onSetLocation = { showLocationDialog = true })
         }
 
@@ -553,3 +553,17 @@ private fun SolarLocationWarningCard(onSetLocation: () -> Unit) {
         }
     }
 }
+
+/**
+ * Whether the Schedule tab shows the "needs a location" card.
+ *
+ * Only the solar mode needs a location, so only the solar mode warns about not
+ * having one. This used to key off the location alone, so a fresh install
+ * opened the Schedule tab on a warning about a mode the user had not picked.
+ * The Solar row carries its own inline hint, so discovery does not depend on
+ * this card.
+ */
+internal fun shouldWarnAboutSolarLocation(
+    mode: ScheduleModeDto,
+    locationValid: Boolean
+): Boolean = mode == ScheduleModeDto.Solar && !locationValid
