@@ -3,6 +3,8 @@ package com.openlumen.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
@@ -189,7 +191,11 @@ fun PresetsScreen(
                 ) { Text(stringResource(R.string.action_save)) }
             },
             dismissButton = {
-                Row {
+                // FlowRow, not Row: AlertDialog flows its own buttons onto a
+                // second line when they do not fit, and a plain Row inside the
+                // slot defeats that, so Reset and Cancel were pushed off the
+                // edge together at a large font scale.
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (prefs.presetNameOverrides.containsKey(key)) {
                         LumenTextButton(
                             onClick = {
@@ -750,7 +756,9 @@ private fun ChannelRow(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.width(24.dp)
+            // widthIn, not width: at a large font scale a single letter needs
+            // more than 24 dp and was being cut in half.
+            modifier = Modifier.widthIn(min = 24.dp)
         )
         Spacer(Modifier.size(8.dp))
         Box(
@@ -779,9 +787,12 @@ private fun ChannelRow(
         Text(
             text = meterState,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.width(40.dp),
+            // "100%" does not fit 40 dp much past the default scale, and with
+            // maxLines = 1 and no ellipsis it simply lost a character.
+            modifier = Modifier.widthIn(min = 40.dp),
             textAlign = TextAlign.End,
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

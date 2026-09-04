@@ -39,9 +39,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,7 +88,21 @@ import java.time.format.FormatStyle
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+/**
+ * The ceiling for a scrolling dialog body.
+ *
+ * A flat 420 dp is taller than a landscape phone's whole window, which pushes
+ * the dialog's own buttons off screen with no way to dismiss it. Callers take
+ * the smaller of this and a share of the window.
+ */
 private val DialogLogMaxHeight = 420.dp
+
+/** [DialogLogMaxHeight], or a share of the window when that is smaller. */
+@Composable
+private fun dialogBodyMaxHeight(): Dp {
+    val windowHeight = LocalConfiguration.current.screenHeightDp.dp
+    return minOf(DialogLogMaxHeight, windowHeight * 0.6f)
+}
 
 @Composable
 fun AboutScreen(
@@ -361,13 +377,16 @@ fun AboutScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    Row(
+                                    // Three weighted buttons in one row leaves
+                                    // each a third of a narrow phone, so Rename
+                                    // and Delete ellipsised into nothing. They
+                                    // wrap now instead of shrinking.
+                                    FlowRow(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         LumenTextButton(
-                                            onClick = { vm.loadProfile(profile.name) },
-                                            modifier = Modifier.weight(1f)
+                                            onClick = { vm.loadProfile(profile.name) }
                                         ) {
                                             Text(
                                                 stringResource(R.string.about_profiles_load),
@@ -380,8 +399,7 @@ fun AboutScreen(
                                                 pendingRenameProfileName = profile.name
                                                 renameProfileName = profile.name
                                                 showRenameProfileDialog = true
-                                            },
-                                            modifier = Modifier.weight(1f)
+                                            }
                                         ) {
                                             Text(
                                                 stringResource(R.string.about_profiles_rename),
@@ -402,8 +420,7 @@ fun AboutScreen(
                                                         vm.restoreDeletedProfile(profile)
                                                     }
                                                 }
-                                            },
-                                            modifier = Modifier.weight(1f)
+                                            }
                                         ) {
                                             Text(
                                                 stringResource(R.string.about_profiles_delete),
@@ -677,7 +694,7 @@ fun AboutScreen(
             text = {
                 Column(
                     modifier = Modifier
-                        .heightIn(max = DialogLogMaxHeight)
+                        .heightIn(max = dialogBodyMaxHeight())
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(
@@ -720,7 +737,7 @@ fun AboutScreen(
             text = {
                 Column(
                     modifier = Modifier
-                        .heightIn(max = DialogLogMaxHeight)
+                        .heightIn(max = dialogBodyMaxHeight())
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -779,7 +796,7 @@ fun AboutScreen(
             text = {
                 Column(
                     modifier = Modifier
-                        .heightIn(max = DialogLogMaxHeight)
+                        .heightIn(max = dialogBodyMaxHeight())
                         .verticalScroll(rememberScrollState())
                 ) {
                     if (pending.summary.droppedDuplicateNames.isNotEmpty()) {
@@ -1067,7 +1084,7 @@ private fun DiagnosticsLogDialog(
         text = {
             Column(
                 modifier = Modifier
-                    .heightIn(max = DialogLogMaxHeight)
+                    .heightIn(max = dialogBodyMaxHeight())
                     .verticalScroll(rememberScrollState())
             ) {
                 if (rawLines.isEmpty()) {

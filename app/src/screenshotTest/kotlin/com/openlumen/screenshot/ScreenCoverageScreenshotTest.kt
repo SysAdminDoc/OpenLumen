@@ -42,6 +42,36 @@ fun ProductionHomeDarkPhone() {
 }
 
 @PreviewTest
+@Preview(
+    name = "Production home light phone at 2x font",
+    showBackground = true,
+    widthDp = 393,
+    heightDp = 852,
+    fontScale = 2f
+)
+@Composable
+fun ProductionHomeLargeFont() {
+    // C323. The bottom bar had a fixed height while the rail grew with the
+    // font scale, so a two-line tab label was clipped at 1.5x and above.
+    ProductionScreenPreview(route = "home", darkTheme = false, model = PreviewScreenModel.home())
+}
+
+@PreviewTest
+@Preview(
+    name = "Production presets light phone at 2x font",
+    showBackground = true,
+    widthDp = 393,
+    heightDp = 852,
+    fontScale = 2f
+)
+@Composable
+fun ProductionPresetsLargeFont() {
+    // The channel meter's label and percentage cells were fixed widths, so
+    // "100%" lost a character with no ellipsis to show for it.
+    ProductionScreenPreview(route = "presets", darkTheme = false, model = PreviewScreenModel.home())
+}
+
+@PreviewTest
 @Preview(name = "Production schedule light phone", showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
 fun ProductionScheduleLightPhone() {

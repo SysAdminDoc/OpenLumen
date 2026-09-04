@@ -150,7 +150,12 @@ private fun LumenBottomNavigation(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .height(88.dp)
+                // Scaled, but still a fixed height: the rail already grows
+                // with the font scale and the bar did not, so at 1.5x and
+                // above a two-line label plus the icon exceeded a flat 88 dp
+                // and clipped. heightIn would let this Row take the whole
+                // column and push the screen off.
+                .height(bottomBarHeight(LocalDensity.current.fontScale))
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -265,6 +270,18 @@ internal data class NavigationRailMetrics(
     val width: Dp,
     val itemHeight: Dp
 )
+
+/**
+ * How tall the bottom bar has to be at a given font scale.
+ *
+ * Same shape as [navigationRailMetrics], and for the same reason: the labels
+ * are allowed two lines, so the bar has to have room for two lines plus the
+ * icon before it starts cutting them off.
+ */
+internal fun bottomBarHeight(fontScale: Float): Dp {
+    val scale = if (fontScale.isFinite()) fontScale.coerceIn(1f, 2f) else 1f
+    return 88.dp + (44.dp * (scale - 1f))
+}
 
 internal fun navigationRailMetrics(fontScale: Float): NavigationRailMetrics {
     val scale = if (fontScale.isFinite()) fontScale.coerceIn(1f, 2f) else 1f
