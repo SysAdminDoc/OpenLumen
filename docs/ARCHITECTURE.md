@@ -1,6 +1,6 @@
 # OpenLumen Architecture
 
-> Snapshot as of v0.4.0. Tracks the actual code in `main`, not aspirational
+> Snapshot as of v0.7.1. Tracks the actual code in `main`, not aspirational
 > structure. Update this doc with the same PR that changes the relevant
 > module.
 
@@ -65,8 +65,8 @@ toggles (UI + tile + boot) never race on read-modify-write.
 3. `LumenService.observePreferences()` collects, asks `EngineController` to
    pick/apply the current `LumenMatrix`, and asks
    `ScheduleAlarmOrchestrator` to schedule the next transition alarm via
-   `AlarmManager`. Auto mode picks the best available root engine when root
-   is present; otherwise it falls back to Overlay.
+   `AlarmManager`. Auto prefers any available root driver, then the
+   secure-settings driver, then Overlay.
 4. When the alarm fires, `ScheduleAlarmReceiver` sends
    `ACTION_REEVALUATE` back to `LumenService`, which re-derives the matrix
    and reschedules.
@@ -107,18 +107,35 @@ interface ColorEngine {
 }
 ```
 
-`EngineKind` carries a `rank: Int`. `DriverProbe.pickBest()` returns the
-highest-ranked engine whose `isAvailable()` returns true. Ranks:
+`DriverProbe.bestAvailableKind()` resolves Auto in three steps, and the
+order is not the rank order:
+
+1. any available driver whose `EngineKind.requiresRoot` is true, in list
+   order, which is `SURFACE_FLINGER` then `KCAL`;
+2. otherwise `COLOR_DISPLAY_MANAGER`, the secure-settings driver, if it is
+   available;
+3. otherwise `OVERLAY`.
+
+If none of the three is available it returns null, and the service and the
+Driver tab both report that no driver is available rather than silently
+selecting one that cannot work. There is no fallback to `OVERLAY` for its own
+sake: an overlay that cannot be installed is not a filter.
+
+`EngineKind` still carries a `rank: Int`, and it is what orders the Driver
+tab's list and breaks ties inside step 1. It is not what step 2 keys off,
+which is why the ranks below do not read as the resolution order:
 
 | Engine | Rank | Why |
 |---|---:|---|
-| `COLOR_DISPLAY_MANAGER` | 100 | AOSP-blessed framebuffer transform; no root, no overlay. Same path Night Light uses. |
-| `SURFACE_FLINGER` | 90 | Root-only framebuffer transform via `service call`. Universal across SoCs but needs `su`. |
+| `COLOR_DISPLAY_MANAGER` | 100 | System Night Light and Extra Dim through `Settings.Secure`. No root, no overlay, and the tint covers the whole screen. Ranks first because it is the best result a device without root can get. |
+| `SURFACE_FLINGER` | 90 | Root-only framebuffer transform via `service call`. Universal across SoCs but needs `su`. Preferred over the row above when root is present, because it takes the whole matrix rather than a colour temperature. |
 | `KCAL` | 70 | Panel-driver write. Best dim quality on Snapdragon kernels that expose it, but device-specific. |
 | `OVERLAY` | 10 | Universal rootless fallback. Capped at ~80% opacity by Android 12 untrusted-touch rules. |
 
-If `DriverProbe.probeAll()` returns no `available = true`, `pickBest()` falls
-back to `OVERLAY` so the user always gets *something*.
+A pinned driver is honoured over all of this, and a pin whose probe reports
+unavailable falls back to the Auto order above unless the user has also turned
+on the force-pin switch, which exists because `su` detection is unreliable on
+root-hiding setups.
 
 ### Engine implementations
 
