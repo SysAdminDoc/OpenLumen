@@ -120,7 +120,7 @@ When triaging Overlay engine issues, run the local emulator smoke helper
 against a debug build and attach its summary to the overlay issue template:
 
 ```powershell
-rtk powershell -NoProfile -ExecutionPolicy Bypass -File tools\overlay_viewport_smoke.ps1 -Serial emulator-5554 -Package com.openlumen.debug
+adb shell dumpsys window windows | grep -A2 OpenLumen
 ```
 
 The helper pins the debug app to the Overlay driver and Always schedule,

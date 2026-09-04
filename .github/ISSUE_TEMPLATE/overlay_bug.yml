@@ -74,7 +74,6 @@ body:
         - label: FLAG_SECURE / DRM / screenshot-blocked surface checked
         - label: System permission or settings surface checked
         - label: Installer / package-update surface checked
-        - label: "`tools/overlay_viewport_smoke.ps1` run and REVIEW lines included"
     validations:
       required: false
 
@@ -82,7 +81,7 @@ body:
     id: viewport_smoke
     attributes:
       label: Overlay viewport smoke summary
-      description: Paste the summary from `tools/overlay_viewport_smoke.ps1` or equivalent notes. Keep any REVIEW lines.
+      description: Paste anything that shows the window state while the overlay was up, for example `adb shell dumpsys window windows`.
       render: text
     validations:
       required: false
