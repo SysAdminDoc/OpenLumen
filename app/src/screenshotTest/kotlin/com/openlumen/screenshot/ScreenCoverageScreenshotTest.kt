@@ -1,6 +1,9 @@
 package com.openlumen.screenshot
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import com.android.tools.screenshot.PreviewTest
 import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.EngineKind
@@ -42,13 +45,74 @@ fun ProductionHomeDarkPhone() {
 }
 
 @PreviewTest
+@Preview(name = "Production home right to left", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionHomeRtl() {
+    // C271. The manifest has claimed supportsRtl since the first release and
+    // nothing had ever rendered the app mirrored, so the claim was untested.
+    ProductionScreenPreview(
+        route = "home",
+        darkTheme = false,
+        model = PreviewScreenModel.home(),
+        layoutDirection = LayoutDirection.Rtl
+    )
+}
+
+@PreviewTest
+@Preview(name = "Production schedule right to left", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionScheduleRtl() {
+    ProductionScreenPreview(
+        route = "schedule",
+        darkTheme = false,
+        model = PreviewScreenModel.schedule(),
+        layoutDirection = LayoutDirection.Rtl
+    )
+}
+
+@PreviewTest
+@Preview(name = "Production presets right to left", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionPresetsRtl() {
+    ProductionScreenPreview(
+        route = "presets",
+        darkTheme = false,
+        model = PreviewScreenModel.home(),
+        layoutDirection = LayoutDirection.Rtl
+    )
+}
+
+@PreviewTest
+@Preview(name = "Production driver right to left", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionDriverRtl() {
+    ProductionScreenPreview(
+        route = "driver",
+        darkTheme = false,
+        model = PreviewScreenModel.driver(),
+        layoutDirection = LayoutDirection.Rtl
+    )
+}
+
+@PreviewTest
+@Preview(name = "Production about right to left", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionAboutRtl() {
+    ProductionScreenPreview(
+        route = "about",
+        darkTheme = false,
+        model = PreviewScreenModel.home(),
+        layoutDirection = LayoutDirection.Rtl
+    )
+}
+
+@PreviewTest
 @Preview(
     name = "Production home light phone at 2x font",
     showBackground = true,
     widthDp = 393,
     heightDp = 852,
-    fontScale = 2f
-)
+    fontScale = 2f)
 @Composable
 fun ProductionHomeLargeFont() {
     // C323. The bottom bar had a fixed height while the rail grew with the
@@ -62,8 +126,7 @@ fun ProductionHomeLargeFont() {
     showBackground = true,
     widthDp = 393,
     heightDp = 852,
-    fontScale = 2f
-)
+    fontScale = 2f)
 @Composable
 fun ProductionPresetsLargeFont() {
     // The channel meter's label and percentage cells were fixed widths, so
@@ -137,14 +200,17 @@ fun ProductionRootDarkRail() {
 private fun ProductionScreenPreview(
     route: String,
     darkTheme: Boolean,
-    model: OpenLumenScreenModel
+    model: OpenLumenScreenModel,
+    layoutDirection: LayoutDirection = LayoutDirection.Ltr
 ) {
-    OpenLumenRoot(
-        screenModel = model,
-        initialRoute = route,
-        enableSystemActions = false,
-        darkTheme = darkTheme
-    )
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        OpenLumenRoot(
+            screenModel = model,
+            initialRoute = route,
+            enableSystemActions = false,
+            darkTheme = darkTheme
+        )
+    }
 }
 
 private class PreviewScreenModel(
