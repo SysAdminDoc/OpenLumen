@@ -38,7 +38,7 @@ git stash
 rm -rf ~/.gradle/caches
 
 # 2. Generate metadata for the release and validation surfaces.
-./gradlew --write-verification-metadata sha256,pgp \
+./gradlew --write-verification-metadata sha256 \
     :app:assembleDebug \
     :app:assembleRelease \
     :app:lintDebug \
@@ -79,7 +79,7 @@ metadata refresh:
 
 ```bash
 git fetch origin
-./gradlew --write-verification-metadata sha256,pgp \
+./gradlew --write-verification-metadata sha256 \
     :app:assembleDebug \
     :app:lintDebug \
     :app:testDebugUnitTest \

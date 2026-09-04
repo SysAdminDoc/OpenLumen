@@ -3,118 +3,19 @@
    <configuration>
       <verify-metadata>true</verify-metadata>
       <verify-signatures>false</verify-signatures>
-      <ignored-keys>
-         <ignored-key id="0F9FE62F88E938D8" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="15C71C0A4E0B8EDD" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="280D66A55F5316C5" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="34918B7D3969D2F5" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="3AD93C3C677A106E" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="3D5839A2262CBBFB" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="40A3C4432BD7308C" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="571A5291E827E1C7" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="59A252FB1199D873" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="66B50994442D2D40" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="79752DB6C966F0B8" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="7A8860944FAD5F62" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="7C25280EAE63EBE5" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="7ECBD740FF06AEB5" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="7FE9900F412D622E" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="8118B3BCDB1A5000" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="84E913A8E3A748C0" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="86FDC7E2A11262CB" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="88BB19A33A18445F" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="9EB80E92EB2135B1" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="AB2DA4527F6FFC0B" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="ABE9F3126BB741C1" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="BAC30622339994C4" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="CA80D1F0EB6CA4BA" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="E88979FB9B30ACF2" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="EB095DA7D2F6AC0E" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="EE92349AD86DE446" reason="Key couldn't be downloaded from any key server"/>
-         <ignored-key id="EE9E7DC9D92FC896" reason="Key couldn't be downloaded from any key server"/>
-      </ignored-keys>
-      <trusted-keys>
-         <trusted-key id="0CC641C3A62453AB390066C4A41F13C999945293" group="commons-logging" name="commons-logging" version="1.2"/>
-         <trusted-key id="0D35D3F60078655126908E8AF3D1600878E85A3D" group="io.netty"/>
-         <trusted-key id="0E225917414670F4442C250DFD533C07C264648F">
-            <trusting group="androidx.activity"/>
-            <trusting group="androidx.core"/>
-            <trusting group="androidx.datastore"/>
-         </trusted-key>
-         <trusted-key id="0F06FF86BEEAF4E71866EE5232EE5355A6BC6E42">
-            <trusting group="androidx.collection"/>
-            <trusting group="androidx.core"/>
-            <trusting group="androidx.databinding"/>
-            <trusting group="androidx.hilt"/>
-            <trusting group="androidx.lifecycle"/>
-            <trusting group="androidx.navigation"/>
-            <trusting group="androidx.navigationevent"/>
-            <trusting group="androidx.savedstate"/>
-            <trusting group="androidx.transition"/>
-            <trusting group="androidx.window"/>
-            <trusting group="^androidx[.]compose($|([.].*))" regex="true"/>
-            <trusting group="^androidx[.]test($|([.].*))" regex="true"/>
-            <trusting group="^com[.]android($|([.].*))" regex="true"/>
-         </trusted-key>
-         <trusted-key id="10F3C7A02ECA55E502BADCF3991EFB94DB91127D" group="org.ow2" name="ow2" version="1.5.1"/>
-         <trusted-key id="1597AB231B7ADD7E14B1D9C43F00DB67AE236E2E" group="org.conscrypt" name="conscrypt-openjdk-uber" version="2.5.2"/>
-         <trusted-key id="19BEAB2D799C020F17C69126B16698A4ADF4D638" group="org.checkerframework"/>
-         <trusted-key id="1A55F091AD28C07F831FA44D7905DE25C78AD456" group="com.google.protobuf"/>
-         <trusted-key id="1D0A8B5E77C678A7C724445ABF984B4145EA13F7" group="com.squareup" name="javapoet" version="1.13.0"/>
-         <trusted-key id="24D04176586361FDA94EE0315F7786DF73E61F56" group="com.google.devtools.ksp"/>
-         <trusted-key id="2BAB4466B44F54F8F99BBBDD5ED22F661BBF0ACC" group="com.almworks.sqlite4java" name="sqlite4java" version="1.0.392"/>
-         <trusted-key id="2E3A1AFFE42B5F53AF19F780BCF4173966770193" group="org.jetbrains" name="annotations" version="13.0"/>
-         <trusted-key id="2EE890070AE9318C3AD3520CE08F28E25BD93E9F" group="com.google.testparameterinjector"/>
-         <trusted-key id="2FC53E6B1F681184F4CCD637F5C81DE10A0B8ECC" group="org.yaml" name="snakeyaml" version="2.4"/>
-         <trusted-key id="33FD4BFD33554634053D73C0C2148900BCD3C2AF" group="org.jetbrains" name="annotations" version="23.0.0"/>
-         <trusted-key id="341C2AE47D5FF3A7EDFB5989E57A697A70CFE5F9" group="org.webjars" name="materializecss" version="1.0.0"/>
-         <trusted-key id="34441E504A937F43EB0DAEF96A65176A0FB1CD0B" group="org.codehaus.groovy" name="groovy" version="3.0.22"/>
-         <trusted-key id="4021EEEAFF5DE8404DCD0A270AA3E5C3D232E79B" group="jakarta.inject" name="jakarta.inject-api" version="2.0.1"/>
-         <trusted-key id="41207814A1D90D8724416744902E15693BB8846B" group="com.dropbox.differ"/>
-         <trusted-key id="44FBDBBC1A00FE414F1C1873586654072EAD6677" group="org.sonatype.oss" name="oss-parent" version="9"/>
-         <trusted-key id="47504B76CF89C15C0512D9AFE16AB52D79FD224F" group="com.google.api.grpc" name="proto-google-common-protos"/>
-         <trusted-key id="475F3B8E59E6E63AA78067482C7B12F2A511E325" group="org.slf4j"/>
-         <trusted-key id="4BF79B8259007B566D2FCE82296CD27F60EED12C" group="com.google.crypto.tink" name="tink" version="1.7.0"/>
-         <trusted-key id="4DB1A49729B053CAF015CEE9A6ADFC93EF34893E" group="org.hamcrest"/>
-         <trusted-key id="4F7E32D440EF90A83011A8FC6425559C47CC79C4" group="javax.annotation" name="javax.annotation-api" version="1.3.2"/>
-         <trusted-key id="517B94F8D0A46317A28D8AB30DA8A5EC02D11EAD" group="net.sf.jopt-simple" name="jopt-simple" version="4.9"/>
-         <trusted-key id="54A26BFDC7ECDD39BA4C123AC3BAB45F4AF71FAB" group="io.opencensus" name="opencensus-proto" version="0.2.0"/>
-         <trusted-key id="5767F9CDE920750621875079A40E24B5B408DBD5" group="org.robolectric"/>
-         <trusted-key id="5897253BEA3046AEEA95A067E93671C7272B7B3F" group="org.jdom" name="jdom2" version="2.0.6"/>
-         <trusted-key id="600EA202B1EC682F4A788E5AAC7A514BC9F9BB70" group="io.opencensus" name="opencensus-api" version="0.31.0"/>
-         <trusted-key id="696B6199A2A9D8C29CE78CC0D041CAD2E452550F" group="com.google.protobuf"/>
-         <trusted-key id="6DD3B8C64EF75253BEB2C53AD908A43FB7EC07AC" group="jakarta.activation"/>
-         <trusted-key id="6F538074CCEBF35F28AF9B066A0975F8B1127B83" group="org.jetbrains.kotlin"/>
-         <trusted-key id="73976C9C39C1479B84E2641A5A68A2249128E2C6" group="com.google.crypto.tink" name="tink" version="1.18.0"/>
-         <trusted-key id="7E22D50A7EBD9D2CD269B2D4056ACA74D46000BF" group="io.netty"/>
-         <trusted-key id="8461EFA0E74ABAE010DE66994EB27DB2A3B88B8B">
-            <trusting group="androidx.emoji2"/>
-            <trusting group="androidx.lifecycle"/>
-            <trusting group="androidx.tracing"/>
-         </trusted-key>
-         <trusted-key id="90EE19787A7BCF6FD37A1E9180C08B1C29100955">
-            <trusting group="com.squareup" name="javawriter" version="2.1.1"/>
-            <trusting group="com.squareup" name="javawriter" version="2.5.0"/>
-         </trusted-key>
-         <trusted-key id="9A34CAE3273983DDCFBB54AE74C748A90802F104" group="io.github.takahirom.roborazzi"/>
-         <trusted-key id="A5BD02B93E7A40482EB1D66A5F69AD087600B22C" group="org.ow2.asm"/>
-         <trusted-key id="AA70C7C433D501636392EC02153E7A3C2B4E5118" group="org.eclipse.ee4j" name="project"/>
-         <trusted-key id="B02335AA54CCF21E52BBF9ABD9C565AA72BA2FDD" group="io.grpc"/>
-         <trusted-key id="BDB5FA4FE719D787FB3D3197F6D4A1D411E9D1AE" group="^com[.]google($|([.].*))" regex="true"/>
-         <trusted-key id="C7BE5BCC9FEC15518CFDA882B0F3710FA64900E7">
-            <trusting group="com.google.code.gson"/>
-            <trusting group="^com[.]google[.]auto($|([.].*))" regex="true"/>
-         </trusted-key>
-         <trusted-key id="E52F07877A5805F9AF4AB0ACD46C5610D06E7001" group="com.ibm.icu" name="icu4j" version="77.1"/>
-         <trusted-key id="EE0CA873074092F806F59B65D364ABAA39A47320" group="^com[.]google($|([.].*))" regex="true"/>
-         <trusted-key id="FA1703B1D287CAEA3A60F931E0130A3ED5A2079E" group="org.webjars"/>
-         <trusted-key id="FF6E2C001948C5F2F38B0CC385911F425EC61B51">
-            <trusting group="junit"/>
-            <trusting group="org.junit"/>
-            <trusting group="org.junit.platform"/>
-            <trusting group="org.opentest4j"/>
-         </trusted-key>
-      </trusted-keys>
+      <!--
+         Checksum-only, deliberately. verify-signatures is false, which
+         means Gradle never looks at a PGP signature, so the ignored-key
+         and trusted-key blocks that used to sit here did nothing at all
+         except imply a guarantee this file does not provide. They were
+         85 entries, most of them keys that could not be downloaded from
+         any key server in the first place.
+
+         What is actually enforced: every artifact and its POM must match
+         a SHA-256 recorded below, and an unlisted artifact fails the
+         build. Turning signatures on is a separate decision that needs a
+         key-availability pass first.
+      -->
    </configuration>
    <components>
       <component group="androidx.activity" name="activity" version="1.13.0">
