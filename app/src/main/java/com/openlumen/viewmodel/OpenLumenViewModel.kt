@@ -23,6 +23,7 @@ import com.openlumen.prefs.touchPreset
 import com.openlumen.prefs.withFilterEnabled
 import com.openlumen.schedule.LightSensorAdapter
 import com.openlumen.schedule.isValidSolarLocation
+import com.openlumen.service.EngineController
 import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -348,9 +349,21 @@ class OpenLumenViewModel @Inject constructor(
             val results = probe.probeAll(getApplication(), invalidateCaches = true)
             _probes.value = results
             val current = state.value.engine
-            if (current != EngineKindDto.Auto && results.isUnavailable(current)) {
-                prefs.update { prefs ->
-                    if (prefs.engine == current) prefs.copy(engine = EngineKindDto.Auto) else prefs
+            if (
+                shouldRevertPinnedEngineToAuto(
+                    selected = current,
+                    forcePinned = state.value.forcePinnedEngine,
+                    probeSaysAvailable = !results.isUnavailable(current)
+                )
+            ) {
+                prefs.update { snapshot ->
+                    val revert = snapshot.engine == current &&
+                        shouldRevertPinnedEngineToAuto(
+                            selected = snapshot.engine,
+                            forcePinned = snapshot.forcePinnedEngine,
+                            probeSaysAvailable = !results.isUnavailable(snapshot.engine)
+                        )
+                    if (revert) snapshot.copy(engine = EngineKindDto.Auto) else snapshot
                 }
             }
         } catch (cancelled: CancellationException) {
@@ -559,6 +572,31 @@ class OpenLumenViewModel @Inject constructor(
     }
 
 }
+
+/**
+ * Whether a probe result should send the user's pinned driver back to Auto.
+ *
+ * C292: this used to be `selected != Auto && probe says unavailable`, with no
+ * regard for the force-pin override. That override exists because root-hiding
+ * setups make `su` detection report no root, and a Magisk prompt still on
+ * screen reads the same way — which is exactly the verdict that lands here. So
+ * opening the app silently undid the user's selection and hid the switch that
+ * had set it, since the Driver tab only offers the override while a driver is
+ * pinned.
+ *
+ * Defers to [EngineController.honourPinnedEngine] rather than restating the
+ * rule, because the service asks the same question when it resolves the engine
+ * to run and the two answers must not disagree.
+ */
+internal fun shouldRevertPinnedEngineToAuto(
+    selected: EngineKindDto,
+    forcePinned: Boolean,
+    probeSaysAvailable: Boolean
+): Boolean = selected != EngineKindDto.Auto &&
+    !EngineController.honourPinnedEngine(
+        forcePinned = forcePinned,
+        probeSaysAvailable = probeSaysAvailable
+    )
 
 private fun List<DriverProbe.Probe>.isUnavailable(kind: EngineKindDto): Boolean {
     val engineKind = kind.toEngineKind() ?: return false
