@@ -19,6 +19,11 @@ fun presetNameRes(key: String): Int? = when (key) {
     "protan" -> R.string.preset_name_protan
     "deutan" -> R.string.preset_name_deutan
     "tritan" -> R.string.preset_name_tritan
+    // Not a Presets entry: the custom RGB state has no matrix in the
+    // catalogue, so byKey returns null for it and every caller fell back
+    // to something different. The Home card showed the raw key, the tile
+    // showed "Custom", and the Presets screen showed "Custom RGB".
+    "custom" -> R.string.presets_custom
     else -> null
 }
 

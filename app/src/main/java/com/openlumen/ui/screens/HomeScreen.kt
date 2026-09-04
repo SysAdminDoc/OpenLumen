@@ -86,10 +86,11 @@ fun HomeScreen(
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
     val preset = Presets.byKey(prefs.activePresetKey)
-    val activePresetLabel = preset?.let {
-        presetLabel(it.key, it.displayName, prefs.presetNameOverrides[it.key])
-    }
-        ?: prefs.activePresetKey
+    val activePresetLabel = presetLabel(
+        key = prefs.activePresetKey,
+        fallback = preset?.displayName ?: prefs.activePresetKey,
+        override = prefs.presetNameOverrides[prefs.activePresetKey]
+    )
 
     val context = LocalContext.current
     val notifPromptPrefs = remember {
