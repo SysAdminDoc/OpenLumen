@@ -44,7 +44,7 @@ class ExactAlarmPermissionReceiver : BroadcastReceiver() {
                     context,
                     serviceIntent,
                     TAG,
-                    exemption = LumenServiceStarter.Exemption.SYSTEM_BROADCAST,
+                    exemption = LumenServiceStarter.Exemption.NONE,
                     source = "exact-alarm-permission"
                 )
                 if (!result.started && result.foregroundStartNotAllowed) {

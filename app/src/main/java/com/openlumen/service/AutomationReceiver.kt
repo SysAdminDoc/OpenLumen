@@ -80,7 +80,27 @@ class AutomationReceiver : BroadcastReceiver() {
         // Doing the rate check first keeps a flood down to a map lookup, and
         // caps how many goAsync() results can be pending at once.
         val now = SystemClock.elapsedRealtime()
-        val lastForwarded = lastForwardedMs.getOrDefault(action, 0L)
+
+        // A broadcast that cannot possibly be authorised is refused here,
+        // before the preference read, and counts against its own budget. This
+        // is what keeps a flood cheap: sending an action that needs a token
+        // with no token, or one that is not even the right shape, costs a
+        // string check rather than a DataStore hit. It cannot delay a real
+        // command, because a real command carries a well-formed token and
+        // never enters this branch.
+        if (isCheaplyRejectable(action, presentedToken)) {
+            val lastRejected = lastRejectedMs.get()
+            if (now - lastRejected < REJECT_THROTTLE_MS) {
+                val count = throttleCount.incrementAndGet()
+                if (count % 20 == 1L) {
+                    Log.d(tag, "throttled malformed $action ($count total)")
+                }
+                return
+            }
+            lastRejectedMs.set(now)
+        }
+
+        val lastForwarded = lastForwardedMs.getOrDefault(action, NEVER)
         if (now - lastForwarded < THROTTLE_MS) {
             val count = throttleCount.incrementAndGet()
             if (count % 20 == 1L) {
@@ -88,6 +108,11 @@ class AutomationReceiver : BroadcastReceiver() {
             }
             return
         }
+        // Reserved, not spent. The slot is taken now so that a burst of valid
+        // commands is still capped synchronously, and handed back below if
+        // this one turns out not to be authorised: otherwise anything able to
+        // broadcast could hold every real command out by failing the token
+        // check every 150 ms.
         lastForwardedMs[action] = now
 
         // Null when this receiver was not reached through a real broadcast
@@ -104,6 +129,13 @@ class AutomationReceiver : BroadcastReceiver() {
                     storedToken = current?.automationToken.orEmpty()
                 )
                 if (decision != Decision.Allowed) {
+                    // Hand the slot back. A rejection must not cost a
+                    // legitimate command its turn.
+                    if (lastForwarded == NEVER) {
+                        lastForwardedMs.remove(action)
+                    } else {
+                        lastForwardedMs[action] = lastForwarded
+                    }
                     reject(context, action, decision)
                     return@launch
                 }
@@ -131,7 +163,13 @@ class AutomationReceiver : BroadcastReceiver() {
                 presetKey?.let { forward.putExtra(LumenService.EXTRA_PRESET_KEY, it) }
                 value?.let { forward.putExtra(LumenService.EXTRA_VALUE, it) }
 
-                val requestedAt = System.currentTimeMillis()
+                // Claim the turn-off before starting the service, so the
+                // acknowledgement can only refer to this request.
+                val turnOffNonce = if (action == LumenService.ACTION_TURN_OFF) {
+                    TurnOffAcknowledgement.requestTurnOff(context)
+                } else {
+                    null
+                }
                 val result = LumenServiceStarter.start(
                     context,
                     forward,
@@ -152,7 +190,7 @@ class AutomationReceiver : BroadcastReceiver() {
                     // within a few seconds, and the work runs on a scope
                     // onDestroy cancels, so it can be killed with the display
                     // still tinted and nothing reporting a failure.
-                    if (!TurnOffAcknowledgement.awaitAfter(context, since = requestedAt)) {
+                    if (turnOffNonce == null || !TurnOffAcknowledgement.awaitAcknowledgement(context, turnOffNonce)) {
                         Log.w(tag, "turn-off was not acknowledged; clearing without the service")
                         clearDisplayWithoutService(context) {
                             prefs.update { it.copy(enabled = false) }
@@ -194,6 +232,25 @@ class AutomationReceiver : BroadcastReceiver() {
     companion object {
         const val tag = "OpenLumen/Automation"
         const val THROTTLE_MS = 200L
+
+        /**
+         * How long a refused-on-sight broadcast suppresses the next one.
+         *
+         * Longer than [THROTTLE_MS] because nothing legitimate is being
+         * delayed: only broadcasts with a missing or misshapen token reach
+         * this budget, and a real caller's token is neither.
+         */
+        const val REJECT_THROTTLE_MS = 1_000L
+
+        /**
+         * The stamp for an action nothing has forwarded yet.
+         *
+         * Not zero: elapsedRealtime is near zero for the first moments after
+         * a boot, so a zero default reads as "forwarded just now" and
+         * throttles the first command of every action on a freshly started
+         * device.
+         */
+        const val NEVER = Long.MIN_VALUE / 2
 
         /**
          * Clear the display when the escape hatch could not reach the service
@@ -297,6 +354,32 @@ class AutomationReceiver : BroadcastReceiver() {
         )
 
         val lastForwardedMs = ConcurrentHashMap<String, Long>()
+        /**
+         * Far enough in the past that the first broadcast is never read as
+         * following a rejection. A plain AtomicLong starts at zero, and
+         * elapsedRealtime is also near zero just after boot, so zero would
+         * mean "just rejected" for the one moment the emergency path is most
+         * likely to be used.
+         */
+        val lastRejectedMs = AtomicLong(Long.MIN_VALUE / 2)
+
+        /** Actions that never present a token, so no token check applies. */
+        internal fun isUnauthenticated(action: String?): Boolean =
+            action == LumenService.ACTION_TURN_OFF
+
+        /**
+         * True when a broadcast can be refused without reading anything.
+         *
+         * The emergency turn-off never presents a token and has to stay
+         * reachable, so it is never in this class. Everything else needs one,
+         * and a missing or misshapen token is a definite no: a real caller
+         * copied a token out of the app and it is the right length and
+         * alphabet.
+         */
+        internal fun isCheaplyRejectable(action: String?, presentedToken: String?): Boolean {
+            if (isUnauthenticated(action)) return false
+            return presentedToken.isNullOrEmpty() || !AutomationToken.isWellFormed(presentedToken)
+        }
         val throttleCount = AtomicLong()
         val rejectionCount = AtomicLong()
     }

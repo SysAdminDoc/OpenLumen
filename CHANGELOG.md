@@ -108,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renaming a profile to a name that is taken says so, instead of leaving the Save button enabled and swallowing the tap.
 - The custom RGB state has one name everywhere. The Home card showed the internal key.
 - Share, exact-alarm settings and notification settings no longer report a failure that was not one on Android 11 and later.
+- The RGB channel meters name themselves to a screen reader instead of announcing a single letter, and the unchecked switch thumb is visible against its own track, which it was not in either theme.
 - Screen readers have headings to navigate by, tabs that say their name once rather than three times, saved profiles announced as the buttons they are, a diagnostics timeline in readable local time, and an announced error when a driver probe fails.
 
 ### Security

@@ -39,7 +39,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
@@ -100,7 +101,12 @@ private val DialogLogMaxHeight = 420.dp
 /** [DialogLogMaxHeight], or a share of the window when that is smaller. */
 @Composable
 private fun dialogBodyMaxHeight(): Dp {
-    val windowHeight = LocalConfiguration.current.screenHeightDp.dp
+    // containerSize, not Configuration.screenHeightDp: the configuration value
+    // rounds to whole dp and its inset handling changes with the target SDK,
+    // so it does not reliably describe the window this dialog has to fit in.
+    // Lint flags that read for exactly this reason.
+    val containerHeight = LocalWindowInfo.current.containerSize.height
+    val windowHeight = with(LocalDensity.current) { containerHeight.toDp() }
     return minOf(DialogLogMaxHeight, windowHeight * 0.6f)
 }
 

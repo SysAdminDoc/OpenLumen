@@ -36,7 +36,7 @@ report says which exemption failed rather than only that something did.
 | `ShortcutActivity` | `USER_INTERACTION` | A launcher shortcut starts an activity of ours first. |
 | `BootReceiver`, `LockedBootReceiver` | `BOOT` | `BOOT_COMPLETED` and `LOCKED_BOOT_COMPLETED` are exempt. |
 | `ScheduleAlarmReceiver` | `EXACT_ALARM` | The transition fires from `setExactAndAllowWhileIdle` with the exact-alarm permission held. |
-| `ScheduleClockChangeReceiver`, `ExactAlarmPermissionReceiver` | `SYSTEM_BROADCAST` | Both are platform broadcasts on the exempt list. |
+| `ScheduleClockChangeReceiver`, `ExactAlarmPermissionReceiver` | `NONE` | These feel like they should be exempt and are not. Android exempts boot, package replaced, timezone, time set and locale; the date change, the next-alarm-clock change and the exact-alarm permission change are none of those. |
 | `AutomationReceiver` | `NONE` | Driven by other apps and by adb, from the background, with nothing exempting it. |
 
 The last row is the honest one. An automation start can be refused, and that

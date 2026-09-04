@@ -18,7 +18,7 @@ import com.openlumen.engine.withContrast
 fun Preferences.effectiveMatrix(): LumenMatrix {
     if (activePresetKey == Preferences.OFF_PRESET_KEY) return LumenMatrix.IDENTITY
 
-    val raw = Presets.byKey(activePresetKey)?.matrix ?: customMatrix.toMatrix()
+    val raw = Presets.byKey(activePresetKey)?.matrix ?: customMatrix.asCustomBase()
     val scaled = raw.withIntensity(presetIntensity.coerceIn(0f, 1f))
 
     return scaled
@@ -34,6 +34,34 @@ fun Preferences.effectiveMatrix(): LumenMatrix {
         )
         .withContrast(contrast.coerceIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX))
 }
+
+/**
+ * The custom RGB state as a matrix, carrying only what the custom controls set.
+ *
+ * Deliberately not [toMatrix]. The persisted DTO can hold a dim, a bias and a
+ * correction mode, because a saved profile or an imported backup round-trips
+ * whatever was in it, but the custom RGB screen sets none of those: dim comes
+ * from its own control and composes with the preset's, gamma is applied
+ * separately below, and a correction mode belongs to a named preset. Mapping
+ * every field here would change what the screen renders for any profile whose
+ * snapshot happens to carry one, which is a silent behaviour change rather
+ * than a fix.
+ */
+private fun MatrixDto.asCustomBase(): LumenMatrix = LumenMatrix(
+    r = r,
+    g = g,
+    b = b,
+    hasColorMatrix = hasColorMatrix,
+    matrixRr = matrixRr,
+    matrixRg = matrixRg,
+    matrixRb = matrixRb,
+    matrixGr = matrixGr,
+    matrixGg = matrixGg,
+    matrixGb = matrixGb,
+    matrixBr = matrixBr,
+    matrixBg = matrixBg,
+    matrixBb = matrixBb
+)
 
 /**
  * The persisted form of a matrix, as a matrix.

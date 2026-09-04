@@ -39,10 +39,10 @@ class TurnOffAcknowledgementTest {
     @Test fun `a service that never acknowledges leaves the caller to clear it`() {
         tintTheDisplay()
         assertThat(secureRowsOn()).isTrue()
-        val requestedAt = System.currentTimeMillis()
+        val nonce = TurnOffAcknowledgement.requestTurnOff(context)
 
         val acknowledged = runBlocking {
-            TurnOffAcknowledgement.awaitAfter(context, since = requestedAt, budgetMs = 300L)
+            TurnOffAcknowledgement.awaitAcknowledgement(context, nonce, budgetMs = 300L)
         }
 
         assertThat(acknowledged).isFalse()
@@ -53,41 +53,60 @@ class TurnOffAcknowledgementTest {
         assertThat(secureRowsOn()).isFalse()
     }
 
-    @Test fun `an acknowledged turn-off needs no second clear`() {
-        val requestedAt = System.currentTimeMillis()
-        TurnOffAcknowledgement.record(context, atMillis = requestedAt + 5)
+    @Test fun `a service that clears the display is not made to do it twice`() {
+        val nonce = TurnOffAcknowledgement.requestTurnOff(context)
+        TurnOffAcknowledgement.record(context)
 
         val acknowledged = runBlocking {
-            TurnOffAcknowledgement.awaitAfter(context, since = requestedAt, budgetMs = 300L)
+            TurnOffAcknowledgement.awaitAcknowledgement(context, nonce, budgetMs = 300L)
         }
 
         assertThat(acknowledged).isTrue()
     }
 
-    @Test fun `an acknowledgement from an earlier turn-off does not count`() {
-        // Positive control for the two above. Without comparing against the
-        // request time, the note left by any previous turn-off would satisfy
-        // every later one and the fallback would never run again.
-        TurnOffAcknowledgement.record(context, atMillis = 1_000L)
-        val requestedAt = 50_000L
+    @Test fun `an acknowledgement of an earlier turn-off does not count`() {
+        // The reason this is a nonce rather than a timestamp. A wall clock
+        // moves backward on an NTP correction and elapsedRealtime resets on
+        // reboot; either would let this stale note satisfy the new request and
+        // silently retire the fallback.
+        val old = TurnOffAcknowledgement.requestTurnOff(context)
+        TurnOffAcknowledgement.record(context)
+        assertThat(TurnOffAcknowledgement.lastAcknowledged(context)).isEqualTo(old)
+
+        val fresh = TurnOffAcknowledgement.requestTurnOff(context)
+        assertThat(fresh).isNotEqualTo(old)
 
         val acknowledged = runBlocking {
-            TurnOffAcknowledgement.awaitAfter(context, since = requestedAt, budgetMs = 300L)
+            TurnOffAcknowledgement.awaitAcknowledgement(context, fresh, budgetMs = 300L)
         }
 
         assertThat(acknowledged).isFalse()
     }
 
-    @Test fun `the note survives being read and is not consumed`() {
-        // The receiver reads it; the next turn-off overwrites it. Deleting on
-        // read would make two turn-offs in quick succession disagree.
-        TurnOffAcknowledgement.record(context, atMillis = 7_000L)
+    @Test fun `the service acknowledges the request that was actually made`() {
+        val nonce = TurnOffAcknowledgement.requestTurnOff(context)
 
-        assertThat(TurnOffAcknowledgement.lastAcknowledgedAt(context)).isEqualTo(7_000L)
-        assertThat(TurnOffAcknowledgement.lastAcknowledgedAt(context)).isEqualTo(7_000L)
+        TurnOffAcknowledgement.record(context)
+
+        assertThat(TurnOffAcknowledgement.lastAcknowledged(context)).isEqualTo(nonce)
+    }
+
+    @Test fun `a service that was never asked acknowledges nothing`() {
+        // Positive control: record has to echo a request rather than inventing
+        // one, or a service starting for any other reason would satisfy a
+        // turn-off nobody asked for.
+        val nonce = TurnOffAcknowledgement.requestTurnOff(context)
+        TurnOffAcknowledgement.record(context)
+        val afterFirst = TurnOffAcknowledgement.lastAcknowledged(context)
+
+        // No new request; recording again must not change the answer.
+        TurnOffAcknowledgement.record(context)
+
+        assertThat(afterFirst).isEqualTo(nonce)
+        assertThat(TurnOffAcknowledgement.lastAcknowledged(context)).isEqualTo(nonce)
     }
 
     @Test fun `no note at all reads as no acknowledgement`() {
-        assertThat(TurnOffAcknowledgement.lastAcknowledgedAt(context)).isNull()
+        assertThat(TurnOffAcknowledgement.lastAcknowledged(context)).isNull()
     }
 }

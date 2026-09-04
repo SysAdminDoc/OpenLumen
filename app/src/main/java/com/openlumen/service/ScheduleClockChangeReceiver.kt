@@ -41,7 +41,7 @@ class ScheduleClockChangeReceiver : BroadcastReceiver() {
                     context,
                     serviceIntent,
                     TAG,
-                    exemption = LumenServiceStarter.Exemption.SYSTEM_BROADCAST,
+                    exemption = LumenServiceStarter.Exemption.NONE,
                     source = "clock-change"
                 )
                 if (!result.started && result.foregroundStartNotAllowed) {

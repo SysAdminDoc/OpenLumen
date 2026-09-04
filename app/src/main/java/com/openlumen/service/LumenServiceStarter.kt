@@ -40,7 +40,13 @@ object LumenServiceStarter {
         /** BOOT_COMPLETED or LOCKED_BOOT_COMPLETED. */
         BOOT,
 
-        /** A system broadcast the platform exempts, such as a time change. */
+        /**
+         * A system broadcast that is genuinely on the platform's exempt list:
+         * boot, package replaced, timezone, time set, locale. The list is
+         * short and closed, and several broadcasts that feel like they belong
+         * on it are not: the exact-alarm permission change, the date change,
+         * and the next-alarm-clock change all arrive with no exemption at all.
+         */
         SYSTEM_BROADCAST,
 
         /**

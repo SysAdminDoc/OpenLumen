@@ -40,20 +40,24 @@ enum class SuOutcome {
 
     companion object {
         /**
-         * Classify a probe from its exit code and whatever it wrote.
+         * Classify a probe from its exit code.
          *
-         * The message matters for 13: Magisk prints `strerror(EACCES)` on a
-         * deny, and other tools reuse 13 for their own reasons.
+         * 13 is a deny whatever it wrote. Magisk prints `strerror(EACCES)`
+         * with it, and an earlier version of this checked for that text, but
+         * the check could not change the answer: every 13 is a refusal from
+         * something standing between this app and root, and there is no other
+         * reading of it that would lead anywhere different. [message] stays in
+         * the signature because callers have it and the diagnostics log wants
+         * it, not because it decides anything.
          */
-        fun of(exitCode: Int, message: String? = null): SuOutcome = when {
-            exitCode == 0 -> GRANTED
-            exitCode == -1 -> TIMED_OUT
-            exitCode == 127 -> NOT_PERMITTED
-            exitCode == 13 && message.orEmpty().contains("permission denied", ignoreCase = true) ->
-                DENIED
-            exitCode == 13 -> DENIED
-            else -> NO_ROOT
-        }
+        fun of(exitCode: Int, @Suppress("UNUSED_PARAMETER") message: String? = null): SuOutcome =
+            when (exitCode) {
+                0 -> GRANTED
+                -1 -> TIMED_OUT
+                127 -> NOT_PERMITTED
+                13 -> DENIED
+                else -> NO_ROOT
+            }
     }
 }
 

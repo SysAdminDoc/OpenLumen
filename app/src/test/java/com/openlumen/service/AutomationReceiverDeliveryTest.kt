@@ -160,6 +160,27 @@ class AutomationReceiverDeliveryTest {
         assertThat(shadowOf(app).nextStartedService).isNull()
     }
 
+    @Test fun `a wrong token cannot starve the real command`() = runBlocking {
+        // C332. The slot used to be stamped before the token was checked, so
+        // anything on the device could hold every real command out by failing
+        // the check every 150 ms. The wrong-token broadcast here carries a
+        // well-formed token, so it costs a preference read and cannot be
+        // refused on sight: it is exactly the case that used to starve the
+        // one after it.
+        prefs.setAutomationEnabled(true)
+        val token = prefs.flow.first().automationToken
+        val wrongToken = token.reversed()
+        assertThat(wrongToken).isNotEqualTo(token)
+
+        AutomationReceiver().onReceive(app, setPreset("amber", wrongToken))
+        awaitStartedService()
+        AutomationReceiver().onReceive(app, setPreset("night", token))
+
+        val started = awaitStartedService()
+        assertThat(started).isNotNull()
+        assertThat(started!!.getStringExtra(LumenService.EXTRA_PRESET_KEY)).isEqualTo("night")
+    }
+
     @Test fun `repeat broadcasts inside the throttle window are dropped`() = runBlocking {
         prefs.setAutomationEnabled(true)
         val token = prefs.flow.first().automationToken

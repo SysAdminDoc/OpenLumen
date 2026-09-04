@@ -92,7 +92,11 @@ object Su {
     }
 
     fun resetCacheIfSuLikelyFailed(exitCode: Int) {
-        if (exitCode == 127 || exitCode == -1) cachedAvailable = null
+        // Through the same classifier as [isInconclusive]. These two used to
+        // hardcode the same pair of exit codes independently, with a comment
+        // claiming they were kept in sync: they agreed by coincidence, and a
+        // new manager's exit code would have desynced them silently.
+        if (isInconclusive(exitCode)) cachedAvailable = null
     }
 
     internal fun peekCachedAvailable(): Boolean? = cachedAvailable

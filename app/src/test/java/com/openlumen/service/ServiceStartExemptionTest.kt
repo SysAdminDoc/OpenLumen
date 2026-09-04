@@ -25,8 +25,12 @@ class ServiceStartExemptionTest {
             "service/BootReceiver.kt" to "BOOT",
             "service/LockedBootReceiver.kt" to "BOOT",
             "service/ScheduleAlarmReceiver.kt" to "EXACT_ALARM",
-            "service/ScheduleClockChangeReceiver.kt" to "SYSTEM_BROADCAST",
-            "service/ExactAlarmPermissionReceiver.kt" to "SYSTEM_BROADCAST"
+            // Not SYSTEM_BROADCAST. Android exempts boot, package replaced,
+            // timezone, time set and locale, and nothing else. The exact-alarm
+            // permission change, the date change and the next-alarm-clock
+            // change are not on that list, so these two claim nothing.
+            "service/ScheduleClockChangeReceiver.kt" to "NONE",
+            "service/ExactAlarmPermissionReceiver.kt" to "NONE"
         )
 
         for ((path, exemption) in callers) {

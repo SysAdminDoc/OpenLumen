@@ -3,9 +3,14 @@
     The widget-picker preview for both widgets.
 
     previewImage used to point straight at ic_lumen_tile, which is a white
-    glyph on nothing. In a picker with a light background that is a white
-    shape on white. This puts the same glyph on the widget's own backplate,
-    so it reads on either launcher.
+    glyph on nothing: in a picker with a light background, white on white.
+    This puts the same glyph on the widget's own backplate.
+
+    The glyph is drawn by ic_widget_glyph rather than referenced directly,
+    because ic_lumen_tile has a hardcoded white fill and a layer-list item
+    carries no tint attribute. Referencing it here is how the first attempt at
+    this reintroduced the very bug it was meant to fix: white on a light
+    surface is about 1.1 to 1.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
@@ -14,13 +19,8 @@
             <corners android:radius="12dp" />
         </shape>
     </item>
-    <!--
-        drawable, not bitmap: ic_lumen_tile is a vector, and a bitmap element
-        decodes its src as a raster image and throws when that fails. The
-        first attempt at this preview would not have rendered at all.
-    -->
     <item
-        android:drawable="@drawable/ic_lumen_tile"
+        android:drawable="@drawable/ic_widget_glyph"
         android:gravity="center"
         android:width="32dp"
         android:height="32dp" />
