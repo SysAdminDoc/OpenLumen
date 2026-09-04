@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RangeSlider
@@ -78,6 +77,7 @@ import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
+import com.openlumen.ui.components.LumenFilterChip
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.ui.components.labeledSliderSemantics
@@ -1146,13 +1146,12 @@ private fun DiagnosticsLogDialog(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         com.openlumen.diagnostics.DiagnosticsLog.Level.values().forEach { lvl ->
-                            FilterChip(
+                            LumenFilterChip(
                                 selected = lvl.name in selectedLevels,
                                 onClick = {
                                     selectedLevels = if (lvl.name in selectedLevels) selectedLevels - lvl.name
                                                      else selectedLevels + lvl.name
                                 },
-                                shape = MaterialTheme.shapes.small,
                                 label = { Text(stringResource(diagLevelLabel(lvl))) }
                             )
                         }
@@ -1167,13 +1166,12 @@ private fun DiagnosticsLogDialog(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         com.openlumen.diagnostics.DiagnosticsLog.Category.values().forEach { cat ->
-                            FilterChip(
+                            LumenFilterChip(
                                 selected = cat.name in selectedCategories,
                                 onClick = {
                                     selectedCategories = if (cat.name in selectedCategories) selectedCategories - cat.name
                                                          else selectedCategories + cat.name
                                 },
-                                shape = MaterialTheme.shapes.small,
                                 label = { Text(stringResource(diagCategoryLabel(cat))) }
                             )
                         }

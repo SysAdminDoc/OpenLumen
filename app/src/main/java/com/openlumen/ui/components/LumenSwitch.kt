@@ -1,6 +1,7 @@
 package com.openlumen.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,6 +44,20 @@ fun LumenSwitch(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
+    // A disabled track is surfaceVariant on a card that is often surfaceVariant
+    // too, and an unchecked track is outlineVariant, which is barely a step off
+    // either. The outline gives the control an edge in both states, which is
+    // what tells a switch that is off from a switch that is not there. A
+    // checked track is `primary` and carries its own edge.
+    // onSurfaceVariant, not outline. Measured against the three grounds a
+    // switch sits on in this app, outline reaches 1.48:1 on a light unchecked
+    // track and onSurfaceVariant never drops below 4.05:1.
+    val borderColor = if (enabled && checked) {
+        trackColor
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     Box(
         modifier = modifier
             .then(interactiveModifier)
@@ -53,6 +68,7 @@ fun LumenSwitch(
             modifier = Modifier
                 .size(width = 56.dp, height = 34.dp)
                 .background(trackColor, shape = MaterialTheme.shapes.large)
+                .border(1.dp, borderColor, shape = MaterialTheme.shapes.large)
                 .padding(5.dp)
         ) {
             Box(

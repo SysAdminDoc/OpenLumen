@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +73,7 @@ import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.NamedProfile
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PresetSortOrder
+import com.openlumen.ui.components.LumenFilterChip
 import com.openlumen.ui.components.LumenTextButton
 import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenScreenModel
@@ -281,12 +281,12 @@ private fun PresetListPane(
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.weight(1f)
                 )
-                FilterChip(
+                LumenFilterChip(
                     selected = prefs.presetSortOrder == PresetSortOrder.Alphabetical,
                     onClick = { onSortOrderChange(PresetSortOrder.Alphabetical) },
                     label = { Text(stringResource(R.string.presets_sort_alphabetical)) }
                 )
-                FilterChip(
+                LumenFilterChip(
                     selected = prefs.presetSortOrder == PresetSortOrder.Recent,
                     onClick = { onSortOrderChange(PresetSortOrder.Recent) },
                     label = { Text(stringResource(R.string.presets_sort_recent)) }

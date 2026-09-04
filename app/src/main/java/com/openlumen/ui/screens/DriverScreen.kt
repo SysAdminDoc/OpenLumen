@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -116,7 +117,16 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
                     )
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                        // A row the device cannot use kept full-contrast text
+                        // while its radio button went grey, so the only thing
+                        // saying "unavailable" was a control most of the row
+                        // does not touch. Material's disabled alpha, applied
+                        // to the whole row, is what that state looks like
+                        // everywhere else in the app.
+                        .alpha(if (selectable) 1f else 0.38f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
