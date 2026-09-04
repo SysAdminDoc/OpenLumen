@@ -42,6 +42,10 @@ class MainActivity : ComponentActivity() {
             return
         }
         blockedStartPending = false
+        // The user is here, so these preferences are this install's. The
+        // automation guard reads this marker to tell a fresh install from
+        // a blob restored off another phone.
+        com.openlumen.service.AutomationRestoreGuard.claimInstall(this)
         LumenServiceStarter.start(
             this,
             logTag = "OpenLumen/ActivityRecovery",

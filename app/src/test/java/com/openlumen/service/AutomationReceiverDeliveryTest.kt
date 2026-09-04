@@ -54,6 +54,13 @@ class AutomationReceiverDeliveryTest {
      * "forwarded at time 0" and drops the very first delivery. Seed the last
      * forward far enough back that the window has passed.
      */
+    @Before fun claimThisInstall() {
+        // These preferences are this install's, which on a real device is
+        // established the moment the app runs. Without it the restore guard
+        // correctly reads them as arriving from another phone.
+        AutomationRestoreGuard.claimInstall(app)
+    }
+
     private fun allowNextDelivery(action: String) {
         AutomationReceiver.lastForwardedMs[action] = -AutomationReceiver.THROTTLE_MS * 2
     }

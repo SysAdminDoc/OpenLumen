@@ -3,12 +3,17 @@ package com.openlumen.diagnostics
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.effectiveMatrix
+import com.openlumen.service.mapScheduleMode
+import com.openlumen.service.progressiveIntensityAt
+import java.time.ZonedDateTime
 
 /**
- * Pure function: convert a [Preferences] snapshot to the [LumenMatrix] the
- * engine would receive next. Mirrors `LumenService.matrixFor()` so the UI
- * can render previews (color swatches, blue-channel-suppression indicators)
- * without coupling to the service or kicking off an actual engine apply.
+ * Convert a [Preferences] snapshot to the [LumenMatrix] the engine would
+ * receive next, so the UI can render previews (colour swatches, the
+ * blue-channel indicator) without kicking off an engine apply.
+ *
+ * The service calls this too. It is the one answer, rather than a mirror of
+ * one kept in step by a comment.
  *
  * Both the service and the UI call this; they must stay in sync. If you
  * change the math here, change it in the service too — and ideally factor
@@ -35,7 +40,19 @@ object MatrixPreview {
      * this anyway, so there was one implementation with two names and a note
      * where the shared ownership should have been.
      */
-    fun matrixFor(p: Preferences): LumenMatrix = p.effectiveMatrix()
+    fun matrixFor(p: Preferences, now: ZonedDateTime = ZonedDateTime.now()): LumenMatrix {
+        // The progressive ramp is part of what is on screen, so it is part of
+        // what this returns. Applying it only in the service would put the
+        // Home tab's readouts, which describe the output, an evening's worth
+        // of intensity behind what the display is actually doing.
+        val ramped = progressiveIntensityAt(
+            prefs = p,
+            mode = mapScheduleMode(p.schedule, nextAlarmAt = null),
+            now = now
+        )?.let { p.copy(presetIntensity = it) } ?: p
+
+        return ramped.effectiveMatrix()
+    }
 
     /**
      * Blue-channel suppression as a 0..1 fraction. 0.0 means full blue

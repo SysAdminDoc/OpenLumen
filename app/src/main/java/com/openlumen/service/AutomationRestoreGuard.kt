@@ -45,13 +45,31 @@ internal object AutomationRestoreGuard {
     ): Boolean = !markerPresent && (automationEnabled || token.isNotEmpty())
 
     /**
-     * Run once per process, early. Clears the token and switches the surface
-     * off when the preferences look restored, then claims the install so this
-     * never fires again on this device.
+     * Mark these preferences as belonging to this install.
+     *
+     * Called when the app itself is running, which is the only moment we know
+     * the user is here rather than a restore having handed us someone else's
+     * blob. Claiming is deliberately separate from [reconcile]: doing both in
+     * one place meant the first automation broadcast on a fresh install, where
+     * the marker does not exist yet either, read as a restore and threw away a
+     * token the user had just minted.
+     */
+    fun claimInstall(context: Context) {
+        val file = marker(context)
+        if (runCatching { file.exists() }.getOrDefault(true)) return
+        runCatching { file.writeText("1") }
+            .onFailure { Log.w(TAG, "could not claim the install: ${it.message}") }
+    }
+
+    /**
+     * Close the automation surface if these preferences were not minted here.
+     *
+     * Checks the marker; never writes it. Safe to call on every broadcast: it
+     * is a file existence check and, once the install is claimed, a no-op.
      */
     suspend fun reconcile(context: Context, prefs: PreferencesStore) {
-        val file = marker(context)
-        val present = runCatching { file.exists() }.getOrDefault(true)
+        val present = runCatching { marker(context).exists() }.getOrDefault(true)
+        if (present) return
 
         var closed = false
         prefs.update { current ->
@@ -64,11 +82,6 @@ internal object AutomationRestoreGuard {
         }
         if (closed) {
             Log.w(TAG, "preferences arrived from another install; automation closed")
-        }
-
-        if (!present) {
-            runCatching { file.writeText("1") }
-                .onFailure { Log.w(TAG, "could not claim the install: ${it.message}") }
         }
     }
 }

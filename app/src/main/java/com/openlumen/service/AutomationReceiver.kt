@@ -113,7 +113,8 @@ class AutomationReceiver : BroadcastReceiver() {
         // this one turns out not to be authorised: otherwise anything able to
         // broadcast could hold every real command out by failing the token
         // check every 150 ms.
-        lastForwardedMs[action] = now
+        val reservedAt = now
+        lastForwardedMs[action] = reservedAt
 
         // Null when this receiver was not reached through a real broadcast
         // dispatch, which is the case in a unit test. The work below is what
@@ -121,6 +122,15 @@ class AutomationReceiver : BroadcastReceiver() {
         val pending: PendingResult? = goAsync()
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
             try {
+                // Before reading the token. This receiver is exported and
+                // manifest-declared, so Android starts the process for it: an
+                // automation profile firing on boot reaches here without the
+                // service ever running, and on a restored phone that would
+                // authorise against the previous device's token. The guard is
+                // idempotent and does nothing once the install is claimed.
+                runCatching { AutomationRestoreGuard.reconcile(context, prefs) }
+                    .onFailure { Log.w(tag, "automation restore check failed: ${it.message}") }
+
                 val current = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) { prefs.flow.first() }
                 val decision = authorize(
                     action = action,
@@ -129,12 +139,15 @@ class AutomationReceiver : BroadcastReceiver() {
                     storedToken = current?.automationToken.orEmpty()
                 )
                 if (decision != Decision.Allowed) {
-                    // Hand the slot back. A rejection must not cost a
-                    // legitimate command its turn.
+                    // Hand the slot back, but only if it is still the one this
+                    // call reserved. A second broadcast for the same action can
+                    // reserve while this one's decision is still pending, and
+                    // a blind restore would wipe out that newer reservation and
+                    // reopen the very window this is here to close.
                     if (lastForwarded == NEVER) {
-                        lastForwardedMs.remove(action)
+                        lastForwardedMs.remove(action, reservedAt)
                     } else {
-                        lastForwardedMs[action] = lastForwarded
+                        lastForwardedMs.replace(action, reservedAt, lastForwarded)
                     }
                     reject(context, action, decision)
                     return@launch

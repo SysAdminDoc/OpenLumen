@@ -608,16 +608,9 @@ class LumenService : LifecycleService() {
         )
         val shouldBeActive = shouldFilterBeActive(p, scheduleActive, lightActive)
 
-        // The progressive ramp deepens the filter across the evening, so the
-        // intensity is a function of the clock rather than a stored value.
-        val effective = if (shouldBeActive) {
-            progressiveIntensityAt(p, mode, java.time.ZonedDateTime.now())
-                ?.let { p.copy(presetIntensity = it) }
-                ?: p
-        } else {
-            p
-        }
-        val matrix = if (shouldBeActive) matrixFor(effective) else LumenMatrix.IDENTITY
+        // matrixFor applies the progressive ramp itself, so the service and
+        // the Home tab's readouts cannot disagree about what is on screen.
+        val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
         engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs)
         // Always reschedule — the next transition time depends on the current mode and clock.
@@ -646,8 +639,10 @@ class LumenService : LifecycleService() {
         // everywhere else is that the token never leaves the device it was
         // minted on.
         lifecycleScope.launch {
-            runCatching { AutomationRestoreGuard.reconcile(this@LumenService, prefs) }
-                .onFailure { Log.w(tag, "automation restore check failed: ${it.message}") }
+            runCatching {
+                AutomationRestoreGuard.reconcile(this@LumenService, prefs)
+                AutomationRestoreGuard.claimInstall(this@LumenService)
+            }.onFailure { Log.w(tag, "automation restore check failed: ${it.message}") }
         }
         observePreferences()
     }
