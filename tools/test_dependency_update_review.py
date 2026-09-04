@@ -159,5 +159,159 @@ class DependencyUpdateReviewTest(unittest.TestCase):
         )
 
 
+SHARED_REF_CATALOG = """
+[versions]
+shared = "1.0.0"
+
+[libraries]
+first = { module = "com.example:first", version.ref = "shared" }
+second = { module = "com.example:second", version.ref = "shared" }
+"""
+
+
+class VersionPrecedenceTest(unittest.TestCase):
+    """C277. A pre-release is by definition older than the release it leads to."""
+
+    def assertOlder(self, older, newer):
+        self.assertLess(review.version_sort_key(older), review.version_sort_key(newer))
+
+    def test_a_pre_release_never_outranks_its_release(self):
+        self.assertOlder("2.0.0-alpha01", "2.0.0")
+        self.assertOlder("2.0.0-rc03", "2.0.0")
+        self.assertOlder("1.0.0-SNAPSHOT", "1.0.0")
+        self.assertOlder("2026.05.00-alpha01", "2026.05.00")
+
+    def test_pre_releases_of_one_version_order_among_themselves(self):
+        self.assertOlder("2.0.0-alpha01", "2.0.0-alpha02")
+        self.assertOlder("2.0.0-alpha09", "2.0.0-beta01")
+        self.assertOlder("2.0.0-beta01", "2.0.0-rc01")
+        # Numeric identifiers rank below alphanumeric ones inside a
+        # pre-release, which is the one place the ordering inverts.
+        self.assertOlder("1.0.0-1", "1.0.0-alpha")
+
+    def test_a_release_still_outranks_an_older_release(self):
+        # Positive control: the fix must not flatten ordinary comparisons.
+        self.assertOlder("2.9.8", "2.10.0")
+        self.assertOlder("2025.12.99", "2026.05.00")
+        self.assertOlder("1.0.0", "1.0.1")
+
+    def test_a_pre_release_still_outranks_the_release_before_it(self):
+        self.assertOlder("1.9.0", "2.0.0-alpha01")
+
+    def test_build_metadata_carries_no_precedence(self):
+        self.assertEqual(
+            review.version_sort_key("1.2.3+build9"),
+            review.version_sort_key("1.2.3"),
+        )
+
+
+class MissingCoordinateTest(unittest.TestCase):
+    """C277. A 404 everywhere means the coordinate moved, not that the pin is fine."""
+
+    def not_found(self, base_url, coordinate, timeout_seconds):
+        raise review.urllib.error.HTTPError(base_url, 404, "Not Found", {}, None)
+
+    def ref(self):
+        return review.VersionRef(
+            "gone",
+            "1.0.0",
+            (review.Coordinate("com.example", "gone", "library:gone"),),
+        )
+
+    def test_a_coordinate_no_repository_publishes_is_an_error(self):
+        with patch.object(review, "fetch_metadata_versions", side_effect=self.not_found):
+            candidates, errors = review.collect_candidates(self.ref(), False, 1)
+
+        self.assertEqual(candidates, [])
+        self.assertEqual(len(errors), 1)
+        self.assertIn("com.example:gone", errors[0])
+        self.assertEqual(review.classify_status("1.0.0", None, errors), "unresolved")
+
+    def test_one_repository_answering_is_not_an_error(self):
+        # Positive control. Every coordinate 404s on two of the three
+        # repositories in normal operation, and that must stay silent.
+        def only_google(base_url, coordinate, timeout_seconds):
+            if "google" not in base_url:
+                raise review.urllib.error.HTTPError(base_url, 404, "Not Found", {}, None)
+            return ["1.0.0", "1.1.0"]
+
+        with patch.object(review, "fetch_metadata_versions", side_effect=only_google):
+            candidates, errors = review.collect_candidates(self.ref(), False, 1)
+
+        self.assertEqual(errors, [])
+        self.assertEqual({candidate.version for candidate in candidates}, {"1.0.0", "1.1.0"})
+
+    def test_the_review_exits_non_zero_when_a_reference_is_unresolved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "libs.versions.toml"
+            catalog.write_text(SHARED_REF_CATALOG, encoding="utf-8")
+            policy = root / "policy.json"
+            policy.write_text(json.dumps({"held": {}, "release_notes": {}}), encoding="utf-8")
+
+            with patch.object(review, "fetch_metadata_versions", side_effect=self.not_found):
+                code = review.main(
+                    ["--catalog", str(catalog), "--policy", str(policy), "--timeout-seconds", "1"]
+                )
+
+        self.assertEqual(code, 1)
+
+    def test_a_clean_review_still_exits_zero(self):
+        # Positive control for the exit code: an ordinary run must not start
+        # failing the release checklist.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            catalog = root / "libs.versions.toml"
+            catalog.write_text(SHARED_REF_CATALOG, encoding="utf-8")
+            policy = root / "policy.json"
+            policy.write_text(json.dumps({"held": {}, "release_notes": {}}), encoding="utf-8")
+
+            with patch.object(review, "fetch_metadata_versions", return_value=["1.0.0"]):
+                code = review.main(
+                    ["--catalog", str(catalog), "--policy", str(policy), "--timeout-seconds", "1"]
+                )
+
+        self.assertEqual(code, 0)
+
+
+class SharedVersionRefTest(unittest.TestCase):
+    """C277. One version ref sets the version for every artifact using it."""
+
+    FIRST = review.Coordinate("com.example", "first", "library:first")
+    SECOND = review.Coordinate("com.example", "second", "library:second")
+
+    def candidates(self, first_versions, second_versions):
+        return [
+            review.Candidate(version, "central", self.FIRST) for version in first_versions
+        ] + [
+            review.Candidate(version, "central", self.SECOND) for version in second_versions
+        ]
+
+    def test_only_a_version_every_artifact_publishes_is_proposed(self):
+        # Bumping the ref to 1.2.0 would leave com.example:second unresolvable,
+        # because the ref sets the version for both at once.
+        latest = review.latest_shared_candidate(
+            self.candidates(["1.0.0", "1.1.0", "1.2.0"], ["1.0.0", "1.1.0"])
+        )
+
+        self.assertIsNotNone(latest)
+        self.assertEqual(latest.version, "1.1.0")
+
+    def test_a_single_artifact_reference_is_unaffected(self):
+        # Positive control: most refs drive one coordinate and must still see
+        # their newest version.
+        latest = review.latest_shared_candidate(self.candidates(["1.0.0", "1.2.0"], []))
+
+        self.assertEqual(latest.version, "1.2.0")
+
+    def test_no_version_in_common_proposes_nothing(self):
+        latest = review.latest_shared_candidate(self.candidates(["1.2.0"], ["1.1.0"]))
+
+        self.assertIsNone(latest)
+
+    def test_an_empty_candidate_list_proposes_nothing(self):
+        self.assertIsNone(review.latest_shared_candidate([]))
+
+
 if __name__ == "__main__":
     unittest.main()

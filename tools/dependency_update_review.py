@@ -156,6 +156,15 @@ def main(argv: list[str] | None = None) -> int:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+    unresolved = [entry for entry in report["unresolved"] if entry["status"] == "unresolved"]
+    if unresolved:
+        # Distinct from the update code so a caller can tell "there is work to
+        # do" from "this review could not be trusted". A pre-release-only ref
+        # is neither: nothing stable exists to move to, which is an answer.
+        print("")
+        print("Review incomplete: " + ", ".join(entry["name"] for entry in unresolved))
+        return 1
+
     if args.fail_on_updates and report["updates"]:
         return 2
     return 0
@@ -174,7 +183,7 @@ def review_catalog(
     entries = []
     for ref in refs:
         candidates, errors = collect_candidates(ref, include_pre_releases, timeout_seconds)
-        latest = max(candidates, key=lambda candidate: version_sort_key(candidate.version), default=None)
+        latest = latest_shared_candidate(candidates)
         hold = held_policy.get(ref.name)
         hold_error = held_policy_error(ref, hold)
         status = "unresolved" if hold_error else classify_status(ref.current, latest, errors)
@@ -346,6 +355,7 @@ def collect_candidates(
     candidates: list[Candidate] = []
     errors: list[str] = []
     for coordinate in version_ref.coordinates:
+        resolved = False
         for repository, base_url in REPOSITORIES:
             try:
                 versions = fetch_metadata_versions(base_url, coordinate, timeout_seconds)
@@ -356,9 +366,16 @@ def collect_candidates(
             except (OSError, urllib.error.URLError, ET.ParseError, TimeoutError) as exc:
                 errors.append(f"{repository} {coordinate.label}: {exc}")
                 continue
+            resolved = True
             for version in versions:
                 if include_pre_releases or is_stable_version(version):
                     candidates.append(Candidate(version, repository, coordinate))
+        if not resolved:
+            # A 404 from one repository is ordinary; a 404 from all of them
+            # means the coordinate has been renamed or withdrawn. Swallowing
+            # that reported the pin as fine, which is the opposite of what a
+            # missing artifact means for the next build.
+            errors.append(f"{coordinate.label}: not published by any configured repository")
     return dedupe_candidates(candidates), errors
 
 
@@ -373,6 +390,26 @@ def fetch_metadata_versions(base_url: str, coordinate: Coordinate, timeout_secon
 def metadata_url(base_url: str, coordinate: Coordinate) -> str:
     group_path = coordinate.group.replace(".", "/")
     return f"{base_url.rstrip('/')}/{group_path}/{coordinate.artifact}/maven-metadata.xml"
+
+
+def latest_shared_candidate(candidates: list[Candidate]) -> Candidate | None:
+    """The newest version every artifact under this version ref publishes.
+
+    One version ref can drive several coordinates, and a plain max() over all
+    of them proposes a bump that only some artifacts have. Applying it puts
+    the catalog into a state Gradle cannot resolve, because the ref sets the
+    version for all of them at once.
+    """
+    if not candidates:
+        return None
+    by_coordinate: dict[str, set[str]] = {}
+    for candidate in candidates:
+        by_coordinate.setdefault(candidate.coordinate.label, set()).add(candidate.version)
+    shared = set.intersection(*by_coordinate.values())
+    if not shared:
+        return None
+    newest = max(shared, key=version_sort_key)
+    return next(candidate for candidate in candidates if candidate.version == newest)
 
 
 def dedupe_candidates(candidates: Iterable[Candidate]) -> list[Candidate]:
@@ -397,15 +434,41 @@ def is_stable_version(version: str) -> bool:
     return not UNSTABLE_RE.search(version)
 
 
-def version_sort_key(version: str) -> tuple[tuple[int, object], ...]:
-    tokens = re.findall(r"\d+|[A-Za-z]+", version)
-    key: list[tuple[int, object]] = []
-    for token in tokens:
-        if token.isdigit():
-            key.append((1, int(token)))
-        else:
-            key.append((0, token.lower()))
-    return tuple(key)
+def version_sort_key(version: str) -> tuple[object, ...]:
+    """Order two versions the way semantic versioning says to.
+
+    The old key tokenised the whole string into one tuple, so 2.0.0-alpha01
+    outranked 2.0.0: the first three components tied and the longer tuple won.
+    A pre-release is by definition older than the release it leads to, and
+    getting that backwards proposes an alpha as the update for a stable pin.
+
+    Build metadata carries no precedence, so it is dropped.
+    """
+    text = version.strip().split("+", 1)[0]
+    release, separator, pre_release = text.partition("-")
+    release_key = tuple(_release_token(token) for token in _tokens(release))
+    if not separator or not pre_release:
+        # Nothing after the hyphen: this is the release, and it outranks every
+        # pre-release that shares its numbers.
+        return (release_key, (1,))
+    return (release_key, (0, tuple(_pre_release_token(t) for t in _tokens(pre_release))))
+
+
+def _tokens(text: str) -> list[str]:
+    return re.findall(r"\d+|[A-Za-z]+", text)
+
+
+def _release_token(token: str) -> tuple[int, object]:
+    # A number outranks a qualifier in the release part, which is how Maven
+    # orders 1.2 against 1.2.RELEASE.
+    return (1, int(token)) if token.isdigit() else (0, token.lower())
+
+
+def _pre_release_token(token: str) -> tuple[int, object]:
+    # The other way round inside a pre-release, per the spec: a numeric
+    # identifier always has lower precedence than an alphanumeric one, so
+    # 1.0.0-1 comes before 1.0.0-alpha.
+    return (0, int(token)) if token.isdigit() else (1, token.lower())
 
 
 def print_report(report: dict[str, object]) -> None:
