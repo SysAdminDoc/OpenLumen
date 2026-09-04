@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ CONTEXT_VERSION_RE = re.compile(
 CONTEXT_SCHEMA_RE = re.compile(
     r"(?m)^\s*-\s*\*\*Current preference schema\*\*:\s*`(\d+)`"
 )
+CONTEXT_RELEASE_RE = re.compile(r"\*\*Latest tagged release\*\*:\s*(v[0-9][^.\s]*(?:\.[0-9]+)*)")
 DRIVER_SOURCE = Path(
     "core-engine/src/main/java/com/openlumen/engine/DriverProbe.kt"
 )
@@ -36,15 +38,30 @@ def validate_project_context(root: Path) -> list[str]:
     if not context_path.exists():
         return [f"PROJECT_CONTEXT.md is missing at {context_path}"]
 
-    context = context_path.read_text(encoding="utf-8")
-    normalized_context = re.sub(r"\s+", " ", context)
-    build = (root / "app/build.gradle.kts").read_text(encoding="utf-8")
-    preferences = (
-        root
-        / "core-prefs/src/main/java/com/openlumen/prefs/Preferences.kt"
-    ).read_text(encoding="utf-8")
-    driver_source = (root / DRIVER_SOURCE).read_text(encoding="utf-8")
     errors: list[str] = []
+
+    sources: dict[str, str] = {}
+    for label, relative in (
+        ("context", "PROJECT_CONTEXT.md"),
+        ("build", "app/build.gradle.kts"),
+        ("preferences", "core-prefs/src/main/java/com/openlumen/prefs/Preferences.kt"),
+        ("driver_source", str(DRIVER_SOURCE)),
+    ):
+        try:
+            sources[label] = (root / relative).read_text(encoding="utf-8")
+        except OSError as exc:
+            # A source file that moved or lost its read bit used to surface as
+            # a traceback, which reads as the gate being broken rather than the
+            # repository being wrong.
+            errors.append(f"{relative} could not be read: {exc}")
+    if errors:
+        return errors
+
+    context = sources["context"]
+    normalized_context = re.sub(r"\s+", " ", context)
+    build = sources["build"]
+    preferences = sources["preferences"]
+    driver_source = sources["driver_source"]
 
     build_version = _first_group(BUILD_VERSION_RE, build)
     context_version = _first_group(CONTEXT_VERSION_RE, context)
@@ -65,7 +82,12 @@ def validate_project_context(root: Path) -> list[str]:
         )
 
     required_context_contracts = (
-        "**Auto driver order**: root drivers → `ColorDisplayManager` → `Overlay`",
+        # Named by the enum constants the source markers below check, not by
+        # a driver class name. The rootless path was a reflection driver
+        # called ColorDisplayManager and is now a secure-settings one; the
+        # contract that matters is the order, and pinning it to a class name
+        # meant the gate forbade correcting the document.
+        "**Auto driver order**: root drivers → `COLOR_DISPLAY_MANAGER` → `OVERLAY`",
         "**Auto no-driver behavior**: when no probed driver is available, Auto selects no driver and the service/Driver report surfaces unavailable state.",
     )
     for contract in required_context_contracts:
@@ -89,7 +111,34 @@ def validate_project_context(root: Path) -> list[str]:
         if source_positions[2:] != sorted(source_positions[2:]):
             errors.append("DriverProbe Auto resolution order no longer matches context")
 
+    errors.extend(_check_latest_release(root, context))
+
     return errors
+
+
+def _check_latest_release(root: Path, context: str) -> list[str]:
+    """The document names the newest tag. Nothing kept it in step with git."""
+    documented = _first_group(CONTEXT_RELEASE_RE, context)
+    if documented is None:
+        return ["context has no 'Latest tagged release' line"]
+    try:
+        described = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        return [f"git describe could not run: {exc}"]
+    if described.returncode != 0:
+        # No tags reachable, e.g. a shallow clone. Nothing to compare against,
+        # and failing here would block a gate for a checkout-shape problem.
+        return []
+    latest = described.stdout.strip()
+    if latest and documented != latest:
+        return [f"context latest release {documented!r} != newest git tag {latest!r}"]
+    return []
 
 
 def _first_group(pattern: re.Pattern[str], text: str) -> str | None:
