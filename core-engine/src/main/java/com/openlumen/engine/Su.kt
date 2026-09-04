@@ -1,6 +1,7 @@
 package com.openlumen.engine
 
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStreamWriter
@@ -101,7 +102,8 @@ object Su {
 
     internal fun peekCachedAvailable(): Boolean? = cachedAvailable
 
-    internal fun setCachedAvailableForTest(value: Boolean?) {
+    @VisibleForTesting
+    fun setCachedAvailableForTest(value: Boolean?) {
         cachedAvailable = value
     }
 
@@ -116,11 +118,21 @@ object Su {
      * observable through the scripts they emit and the exit codes they get
      * back, and no JVM test can spawn a root shell.
      */
-    @Volatile internal var commandRunnerForTest: (suspend (String) -> SuResult)? = null
+    // Visible beyond this module rather than internal to it: the service code
+    // that decides how many times to spawn `su` lives in `app`, and the cost of
+    // that decision is only observable through these. They would be private
+    // members of this object if tests did not need them, which is what the
+    // annotation says, and lint fails any reference from outside a test.
+    @Volatile
+    @VisibleForTesting
+    var commandRunnerForTest: (suspend (String) -> SuResult)? = null
 
-    @Volatile internal var shellRunnerForTest: (suspend (String) -> Int)? = null
+    @Volatile
+    @VisibleForTesting
+    var shellRunnerForTest: (suspend (String) -> Int)? = null
 
-    internal fun clearTestRunners() {
+    @VisibleForTesting
+    fun clearTestRunners() {
         commandRunnerForTest = null
         shellRunnerForTest = null
     }

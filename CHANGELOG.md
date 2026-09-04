@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The filter can deepen across the evening instead of arriving at full strength when the schedule opens. Off by default; when on, it starts at the preset's own intensity at sunset or your start time and reaches a strength you choose by a time you choose. It moves in steps driven by the alarm the schedule already sets rather than a ticker, so a sleeping device is not kept awake for a colour change nobody is looking at.
 
+### Fixed
+
+- Solar transitions land at the right minute on the two days a year the clocks change. The calculator worked out the time in UT and then moved the result by a whole local day to put it on the date you asked for, and a local day is 23 or 25 hours across a daylight-saving change, so sunrise and sunset came out an hour early or an hour late. Auckland, Sydney and Wellington hit this on every sunrise; the American zones hit it on sunset.
+- On rooted devices, a kernel brightness floor you raised yourself is no longer overwritten when the filter switches off. OpenLumen records the panel's original `kcal_min` before raising it to a safe value, and that record was trusted even after you had tuned the floor higher by hand, or after the kernel stopped exposing it at all. The record is now checked against what the panel actually reports before anything is written back.
+- Turning the filter off spawns `su` once instead of three times on rooted devices. The emergency display reset ran on the command, again on the preference write it makes, and a third time as the service stopped, and each pass meant another root call and another second of waiting. A reset that could not reach the panel, because root was unavailable or the grant was refused, is still retried.
+
 ## [0.8.0] (2026-09-04)
 
 ### Breaking

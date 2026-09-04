@@ -16,11 +16,12 @@ import org.robolectric.annotation.Config
  * rooted device is a visible stall and, the first time, a grant prompt. One
  * turn-off used to run three identical passes.
  *
- * `EngineController` is the thing that stopped repeating them, but it lives in
- * `app`, and `Su`'s test hooks are internal to this module, so the count and
- * the decision cannot be asserted in one place. This half pins the cost of a
- * pass: what one sweep spends, and that a skipped sweep spends nothing.
- * `RootSweepRepeatTest` pins the controller running exactly one of them.
+ * `RootSweepRepeatTest` counts what a turn-off spends. This pins what a single
+ * pass spends, which is the number that makes the repeats worth removing: one
+ * transaction and one probe per candidate base. It is a characterisation test,
+ * not a regression guard for the repeat fix, so it does not go red without it;
+ * what it catches is a later change that turns one pass into several, such as
+ * probing every candidate code rather than the one AOSP confirms.
  */
 // Robolectric 4.16.1 ships no SDK 37 shadows and a library module has no
 // targetSdk to fall back on, so the picker needs telling. 35 matches `app`.

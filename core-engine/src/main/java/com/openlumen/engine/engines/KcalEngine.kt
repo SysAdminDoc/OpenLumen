@@ -83,6 +83,19 @@ class KcalEngine : ColorEngine {
     private val restoreMutex = Mutex()
 
     /**
+     * The record this apply is relying on, re-asserted once its script is done.
+     *
+     * `clearActiveEngineForShutdown` cannot take a lock (it runs from
+     * `onDestroy` on a parked main Looper), so a clear can land between the
+     * record write and the script: it restores a floor that has not been
+     * raised yet, then deletes the record the raise is about to depend on, and
+     * the node ends up at the safety floor with nothing saying the user's
+     * value was ever different. Writing the record again after the script
+     * closes that window without a lock (C326).
+     */
+    @Volatile private var pendingRaiseRecord: MinRestore? = null
+
+    /**
      * Diagnostic: which KCAL sysfs directory did the probe pick? Exposed so
      * the driver report can record the exact path the engine is writing to.
      */
@@ -159,9 +172,10 @@ class KcalEngine : ColorEngine {
             // write carries `|| true`, so it can land while a later rgb write
             // fails the script — latching on overall success left the node
             // raised with no record that we had done it.
-            val record = existingRestore?.takeIf { it.raised && !staleRecord }
+            val record = existingRestore?.takeIf { it.raised }
                 ?: MinRestore(originalMin = paths.originalMin, raised = true)
             storeRestore(context, record)
+            pendingRaiseRecord = record
             "echo '$SAFETY_MIN' > '${paths.min}' 2>/dev/null || true\n"
         } else ""
 
@@ -172,6 +186,8 @@ class KcalEngine : ColorEngine {
             append("echo '$r $g $b' > '").append(paths.rgb).append("'\n")
         }
         val exit = Su.runShell(script)
+        pendingRaiseRecord?.let { storeRestore(context, it) }
+        pendingRaiseRecord = null
         invalidateOnFailure(exit, paths, "apply")
         if (exit == 0) {
             if (matrix != LumenMatrix.IDENTITY) appliedNonIdentity = true
@@ -199,7 +215,23 @@ class KcalEngine : ColorEngine {
             ?: return@withContext clearWithoutPaths(appliedNonIdentity || hasRaisedMin)
         // Take the original from the durable record rather than from `paths`,
         // which a failed apply may already have discarded.
-        val restoreMin = paths.min != null && hasRaisedMin
+        //
+        // C326: and check it against the floor the panel actually has now. The
+        // same rule in `apply` is bypassed by every early return there, and it
+        // reads a probe value that was cached before the user touched
+        // anything, so this is the check that has to hold: a floor above the
+        // safety minimum is the user's own, and writing an older value over it
+        // is the thing C166 refuses to do on the way in. Our own raise writes
+        // exactly SAFETY_MIN, which is why the test is strictly greater.
+        val currentMin = if (hasRaisedMin && paths.min != null) {
+            readIntOrNull("cat '${paths.min}'") ?: paths.originalMin
+        } else null
+        val userRaisedItThemselves = currentMin != null && currentMin > SAFETY_MIN
+        if (userRaisedItThemselves) {
+            Log.i(TAG, "kcal_min is $currentMin, above the safety floor; leaving the user's value")
+            storeRestore(context, null)
+        }
+        val restoreMin = paths.min != null && hasRaisedMin && !userRaisedItThemselves
         val minRestoreScript = if (restoreMin) {
             "echo '${record.originalMin}' > '${paths.min}' 2>/dev/null || true\n"
         } else ""
@@ -214,6 +246,7 @@ class KcalEngine : ColorEngine {
         if (exit == 0 && restoreMin) {
             storeRestore(context, null)
         }
+
         invalidateOnFailure(exit, paths, "clear")
         if (exit == 0) {
             appliedNonIdentity = false

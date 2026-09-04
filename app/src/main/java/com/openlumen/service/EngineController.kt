@@ -165,10 +165,22 @@ internal class EngineController(
                 )
             }
                 .onSuccess { result ->
+                    // Latch only on a sweep that actually reached the panel.
+                    // Both halves return an empty list without doing anything
+                    // when `su` is unavailable or was denied, and that is the
+                    // case that most needs the next pass to try again: a user
+                    // who answers the Magisk prompt a second late would
+                    // otherwise be left with the tint and no retry until the
+                    // process is replaced. On a rootless device nothing is
+                    // latched and nothing is spent, because both halves
+                    // short-circuit on the cached availability probe.
+                    //
                     // Only the root half is latched. The secure half still runs
                     // on every blunt pass: it is a different family, it costs no
                     // su, and an ordinary disable never touches it (C291).
-                    rootTransformsSwept = true
+                    if (result.surfaceFlingerCodes.isNotEmpty() || result.kcalPaths.isNotEmpty()) {
+                        rootTransformsSwept = true
+                    }
                     DiagnosticsLog.log(
                         context,
                         DiagnosticsLog.Level.INFO,
@@ -200,12 +212,12 @@ internal class EngineController(
             engine = selected
             lastApplied = null
             applyGate.reset()
+            rootTransformsSwept = false
             val result = runCatching { selected.apply(context, matrix) }
                 .getOrElse { EngineResult.Failure(it.message ?: "exception") }
             when (result) {
                 EngineResult.Success -> {
                     lastApplied = matrix
-                    rootTransformsSwept = false
                     applyGate.commit(state.active, matrix)
                     DiagnosticsLog.log(
                         context,
@@ -227,18 +239,22 @@ internal class EngineController(
         transitionJob = null
     }
 
+    /**
+     * Deliberately takes no lock, unlike every other engine call here.
+     *
+     * `onDestroy` calls this from `runBlocking` on the main thread, which
+     * parks the Looper. Every holder of [applyMutex] is a coroutine on
+     * `Dispatchers.Main.immediate` suspended inside the engine's own
+     * `withContext(Dispatchers.IO)`, and it can only resume by posting back to
+     * that parked Looper. Waiting for the lock therefore waits for something
+     * that cannot happen: the two-second cap in `onDestroy` expires and the
+     * clear never runs at all, which loses the active engine's own restore.
+     * An interleaved clear is a narrow window; not clearing is certain. The
+     * KCAL record protects itself instead (C326).
+     */
     suspend fun clearActiveEngineForShutdown() {
-        // Under the lock like every other engine call (C326). This was the one
-        // that was not, so a shutdown could land in the middle of an apply --
-        // and the KCAL driver raises the kernel's brightness floor in one write
-        // and records what it raised in another, so a clear between the two
-        // restores a floor that has not been raised yet and then throws away
-        // the record the apply is about to depend on. `onDestroy` already caps
-        // this call at two seconds, so waiting cannot hang shutdown.
-        applyMutex.withLock {
-            val current = engine ?: return@withLock
-            runCatching { current.clear(context) }
-        }
+        val current = engine ?: return
+        runCatching { current.clear(context) }
     }
 
     /**
@@ -253,7 +269,9 @@ internal class EngineController(
         if (rootTransformsSwept) return
         runCatching { DisplayEmergencyReset.clearRootTransforms(context = null) }
             .onSuccess { result ->
-                rootTransformsSwept = true
+                if (result.surfaceFlingerCodes.isNotEmpty() || result.kcalPaths.isNotEmpty()) {
+                    rootTransformsSwept = true
+                }
                 DiagnosticsLog.log(
                     context,
                     DiagnosticsLog.Level.INFO,
@@ -413,12 +431,18 @@ internal class EngineController(
                Log.w(logTag, "applyOnce: no engine yet, skipping")
                 return@withLock false
            } else {
+                // Before the attempt, not after a success. A driver that
+                // reports failure may still have reached the panel: a `su`
+                // that times out mid-transaction, or a `set -e` script whose
+                // later write failed after the earlier one landed. Both are
+                // documented here already (C256, C257), and both leave a
+                // transform the blunt sweep is the only thing that can clear.
+                rootTransformsSwept = false
                 val result = runCatching { current.apply(context, matrix) }
                     .getOrElse { EngineResult.Failure(it.message ?: "exception") }
                 when (result) {
                     EngineResult.Success -> {
                         lastApplied = matrix
-                        rootTransformsSwept = false
                         return@withLock true
                     }
                     is EngineResult.Failure -> {

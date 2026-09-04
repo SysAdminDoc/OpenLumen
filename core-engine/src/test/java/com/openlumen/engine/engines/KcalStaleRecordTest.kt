@@ -127,6 +127,82 @@ class KcalStaleRecordTest {
         assertThat(recordFile.exists()).isFalse()
     }
 
+    @Test fun `clear does not write an original the panel has outgrown`() = runBlocking {
+        // The check in apply is bypassed by every early return there, so the
+        // one on the clear path is what actually has to hold. Straight from a
+        // record to a clear, as after a process restart.
+        recordARaise()
+        kernelMin = 35
+
+        KcalEngine().clear(context)
+
+        assertThat(scripts.single()).doesNotContain("kcal_min")
+        assertThat(recordFile.exists()).isFalse()
+    }
+
+    @Test fun `a floor raised while the filter is running is not overwritten`() = runBlocking {
+        // The probe reads kcal_min once and caches it, so a user who tunes the
+        // floor mid-session is invisible to the cached value. Only a live read
+        // at clear time sees it.
+        val engine = KcalEngine()
+        engine.apply(context, tint)
+        kernelMin = 35
+        scripts.clear()
+
+        engine.clear(context)
+
+        assertThat(scripts.single()).doesNotContain("kcal_min")
+    }
+
+    @Test fun `our own raise read back live still restores the user's value`() = runBlocking {
+        // Positive control for both checks above. After our raise the live
+        // read returns exactly the safety minimum, and treating that as the
+        // user's tuning would strand every panel we had actually raised.
+        val engine = KcalEngine()
+        engine.apply(context, tint)
+        kernelMin = KcalEngine.SAFETY_MIN
+        scripts.clear()
+
+        engine.clear(context)
+
+        assertThat(scripts.single()).contains("echo '$originalMin' > '$base/kcal_min'")
+    }
+
+    @Test fun `a clear that lands inside an apply cannot erase the record`() = runBlocking {
+        // The shutdown clear cannot take a lock: onDestroy calls it from
+        // runBlocking on a parked main Looper, so waiting for one waits
+        // forever. It can therefore arrive between the record write and the
+        // script, restore a floor the script has not raised yet, and delete
+        // the record the raise is about to depend on. The record is written
+        // again after the script for exactly this.
+        val engine = KcalEngine()
+        var interleaved = false
+        Su.shellRunnerForTest = { script ->
+            scripts += script
+            if (!interleaved && script.contains("$base/kcal_min")) {
+                interleaved = true
+                engine.clear(context)
+            }
+            0
+        }
+
+        engine.apply(context, tint)
+
+        assertThat(interleaved).isTrue()
+        assertThat(KcalEngine.MinRestore.decode(recordFile.readText()))
+            .isEqualTo(KcalEngine.MinRestore(originalMin, raised = true))
+    }
+
+    @Test fun `an uninterrupted apply and clear still end with no record`() = runBlocking {
+        // Positive control for the re-assertion: writing the record again must
+        // not leave one behind on the ordinary path.
+        val engine = KcalEngine()
+        engine.apply(context, tint)
+        engine.clear(context)
+
+        assertThat(recordFile.exists()).isFalse()
+    }
+
     @Test fun `retiring a record does not disturb a panel that never had one`() = runBlocking {
         // Nothing on disk, a floor already above the safety minimum: the engine
         // has no business writing kcal_min in either direction.

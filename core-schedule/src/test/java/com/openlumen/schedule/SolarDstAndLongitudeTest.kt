@@ -1,6 +1,7 @@
 package com.openlumen.schedule
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -52,10 +53,11 @@ class SolarDstAndLongitudeTest {
         what: String
     ) {
         val minutes = Duration.between(first, second).toMinutes()
-        assertThat(minutes).isAtLeast(dayMinutes - toleranceMinutes)
-        assertThat(minutes).isAtMost(dayMinutes + toleranceMinutes)
-        // Truth reports the numbers but not which pair produced them.
-        assertThat("$what $first -> $second lands $minutes minutes apart").isNotEmpty()
+        // Truth reports the numbers but not which pair produced them, and the
+        // loops below cover several dates in several zones.
+        val where = "$what: $first -> $second"
+        assertWithMessage(where).that(minutes).isAtLeast(dayMinutes - toleranceMinutes)
+        assertWithMessage(where).that(minutes).isAtMost(dayMinutes + toleranceMinutes)
     }
 
     private fun assertCadenceAcrossTransitions(zone: ZoneId, lat: Double, lon: Double) {
