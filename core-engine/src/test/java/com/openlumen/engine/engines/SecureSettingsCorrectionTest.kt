@@ -155,6 +155,30 @@ class SecureSettingsCorrectionTest {
         assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
     }
 
+    @Test fun `a correction preset followed by a warm one still hands the user's correction back`() = runBlocking {
+        // C294. The user runs deuteranomaly correction for a real visual
+        // impairment. A session that selects a correction preset and then moves
+        // to a warm one writes the correction off, and clear() used to see a row
+        // it no longer recognised and leave it off permanently.
+        Settings.Secure.putInt(
+            resolver,
+            SecureSettingsEngine.KEY_CORRECTION_MODE,
+            Daltonizer.DEUTERANOMALY.secureValue
+        )
+        Settings.Secure.putInt(resolver, SecureSettingsEngine.KEY_CORRECTION_ENABLED, 1)
+
+        val engine = SecureSettingsEngine()
+        engine.apply(context, Presets.PROTAN)
+        engine.apply(context, Presets.NIGHT)
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(0)
+
+        engine.clear(context)
+
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_MODE))
+            .isEqualTo(Daltonizer.DEUTERANOMALY.secureValue)
+    }
+
     @Test fun `a neutral preset applied twice leaves the user's own Night Light on`() = runBlocking {
         // C293. The user runs system Night Light themselves. Grayscale carries
         // no tint, so this driver never owns that row and must not switch it

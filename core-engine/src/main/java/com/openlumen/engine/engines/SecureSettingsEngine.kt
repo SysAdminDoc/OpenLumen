@@ -51,12 +51,22 @@ internal fun shouldRestoreReduceBrightColors(
  * mode back if what is on screen is still the correction this session selected.
  * Anything else means they changed it while the filter was running, and their
  * choice wins.
+ *
+ * [lastAppliedMode] of [Daltonizer.NONE] means the last thing we wrote was a
+ * deactivation, which is what happens the moment a session moves from a
+ * colour-vision preset to a warm one. Ownership holds while the correction is
+ * still off, exactly as it does for Extra Dim; without that branch a user who
+ * ran correction before OpenLumen started never got it back.
  */
 internal fun shouldRestoreColorCorrection(
     currentActive: Boolean,
     currentMode: Int,
     lastAppliedMode: Int
-): Boolean = currentActive && currentMode == lastAppliedMode
+): Boolean = if (lastAppliedMode != Daltonizer.NONE.secureValue) {
+    currentActive && currentMode == lastAppliedMode
+} else {
+    !currentActive
+}
 
 /**
  * Rootless framework-level driver, written against `Settings.Secure`.

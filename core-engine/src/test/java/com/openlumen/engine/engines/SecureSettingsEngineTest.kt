@@ -1,6 +1,7 @@
 package com.openlumen.engine.engines
 
 import com.google.common.truth.Truth.assertThat
+import com.openlumen.engine.Daltonizer
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
 import org.junit.Test
@@ -113,6 +114,46 @@ class SecureSettingsEngineTest {
                 lastAppliedLevel = 0
             )
         ).isTrue()
+    }
+
+    @Test fun `a correction deactivation we wrote is still ours while it stays off`() {
+        // C294. Moving from a colour-vision preset to a warm one writes the
+        // correction off, so the last applied mode is NONE. The user's own
+        // correction has to survive that and come back on clear().
+        assertThat(
+            shouldRestoreColorCorrection(
+                currentActive = false,
+                currentMode = Daltonizer.PROTANOMALY.secureValue,
+                lastAppliedMode = Daltonizer.NONE.secureValue
+            )
+        ).isTrue()
+    }
+
+    @Test fun `a correction switched on by the user after we deactivated is left alone`() {
+        assertThat(
+            shouldRestoreColorCorrection(
+                currentActive = true,
+                currentMode = Daltonizer.DEUTERANOMALY.secureValue,
+                lastAppliedMode = Daltonizer.NONE.secureValue
+            )
+        ).isFalse()
+    }
+
+    @Test fun `a correction we selected is ours only while it is still on screen`() {
+        assertThat(
+            shouldRestoreColorCorrection(
+                currentActive = true,
+                currentMode = Daltonizer.PROTANOMALY.secureValue,
+                lastAppliedMode = Daltonizer.PROTANOMALY.secureValue
+            )
+        ).isTrue()
+        assertThat(
+            shouldRestoreColorCorrection(
+                currentActive = true,
+                currentMode = Daltonizer.TRITANOMALY.secureValue,
+                lastAppliedMode = Daltonizer.PROTANOMALY.secureValue
+            )
+        ).isFalse()
     }
 
     @Test fun `dim maps onto the documented 0 to 100 Extra Dim percentage`() {
