@@ -7,6 +7,8 @@ import com.openlumen.prefs.DirectBootState
 import com.openlumen.prefs.DirectBootStateStore
 import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.toDto
+import com.openlumen.prefs.toMatrix
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -52,56 +54,12 @@ internal class DirectBootMirror(
         withTimeoutOrNull(timeoutMs) { store.flow.first() } ?: DirectBootState()
 }
 
-internal fun LumenMatrix.toMatrixDto(): MatrixDto = MatrixDto(
-    r = r,
-    g = g,
-    b = b,
-    biasR = biasR,
-    biasG = biasG,
-    biasB = biasB,
-    dim = dim,
-    gammaR = gammaR,
-    gammaG = gammaG,
-    gammaB = gammaB,
-    hasColorMatrix = hasColorMatrix,
-    matrixRr = matrixRr,
-    matrixRg = matrixRg,
-    matrixRb = matrixRb,
-    matrixGr = matrixGr,
-    matrixGg = matrixGg,
-    matrixGb = matrixGb,
-    matrixBr = matrixBr,
-    matrixBg = matrixBg,
-    matrixBb = matrixBb,
-    // The rootless driver renders grayscale and the colour-vision presets
-    // through this mode rather than through the matrix, so a mirror without it
-    // restored those presets as no filter at all between locked boot and
-    // unlock. The root drivers were unaffected because they take the matrix.
-    daltonizer = daltonizer.takeIf { it != Daltonizer.NONE }?.name
-)
+/**
+ * The mapping between a matrix and its persisted form lives in core-prefs now,
+ * next to the DTO, because both core modules needed it and only one of them
+ * could see the other. These keep the names the mirror already used.
+ */
+internal fun LumenMatrix.toMatrixDto(): MatrixDto = toDto()
 
-internal fun DirectBootState.toLumenMatrix(): LumenMatrix = LumenMatrix(
-    r = matrix.r,
-    g = matrix.g,
-    b = matrix.b,
-    biasR = matrix.biasR,
-    biasG = matrix.biasG,
-    biasB = matrix.biasB,
-    dim = matrix.dim,
-    gammaR = matrix.gammaR,
-    gammaG = matrix.gammaG,
-    gammaB = matrix.gammaB,
-    amoledClamp = amoledBlackClamp,
-    hasColorMatrix = matrix.hasColorMatrix,
-    matrixRr = matrix.matrixRr,
-    matrixRg = matrix.matrixRg,
-    matrixRb = matrix.matrixRb,
-    matrixGr = matrix.matrixGr,
-    matrixGg = matrix.matrixGg,
-    matrixGb = matrix.matrixGb,
-    matrixBr = matrix.matrixBr,
-    matrixBg = matrix.matrixBg,
-    matrixBb = matrix.matrixBb,
-    daltonizer = Daltonizer.entries.firstOrNull { it.name == matrix.daltonizer }
-        ?: Daltonizer.NONE
-)
+internal fun DirectBootState.toLumenMatrix(): LumenMatrix =
+    matrix.toMatrix(amoledClamp = amoledBlackClamp)

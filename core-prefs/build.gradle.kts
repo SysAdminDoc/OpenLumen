@@ -29,6 +29,12 @@ android {
 }
 
 dependencies {
+    // api, not implementation: MatrixDto maps to LumenMatrix here, so a
+    // consumer of core-prefs sees engine types on this module's own surface.
+    // The edge only goes this way; core-engine knows nothing about
+    // preferences, so there is no cycle.
+    api(project(":core-engine"))
+
     implementation(libs.androidx.core)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.datastore.preferences)

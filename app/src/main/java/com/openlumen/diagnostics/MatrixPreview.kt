@@ -1,8 +1,8 @@
 package com.openlumen.diagnostics
 
 import com.openlumen.engine.LumenMatrix
-import com.openlumen.engine.Presets
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.effectiveMatrix
 
 /**
  * Pure function: convert a [Preferences] snapshot to the [LumenMatrix] the
@@ -26,71 +26,16 @@ object MatrixPreview {
      * lerp, gamma, the preset-owned dim combined with the user's additional
      * dim control, contrast scaling + center bias, AMOLED clamp pass-through.
      */
-    fun matrixFor(p: Preferences): LumenMatrix {
-        if (p.activePresetKey == Preferences.OFF_PRESET_KEY) return LumenMatrix.IDENTITY
-        val preset = Presets.byKey(p.activePresetKey)?.matrix
-        val raw = preset ?: LumenMatrix(
-            r = p.customMatrix.r,
-            g = p.customMatrix.g,
-            b = p.customMatrix.b,
-            hasColorMatrix = p.customMatrix.hasColorMatrix,
-            matrixRr = p.customMatrix.matrixRr,
-            matrixRg = p.customMatrix.matrixRg,
-            matrixRb = p.customMatrix.matrixRb,
-            matrixGr = p.customMatrix.matrixGr,
-            matrixGg = p.customMatrix.matrixGg,
-            matrixGb = p.customMatrix.matrixGb,
-            matrixBr = p.customMatrix.matrixBr,
-            matrixBg = p.customMatrix.matrixBg,
-            matrixBb = p.customMatrix.matrixBb
-        )
-        val t = p.presetIntensity.coerceIn(0f, 1f)
-        val intensityScaled = raw.withIntensity(t).copy(
-            gammaR = p.customMatrix.gammaR,
-            gammaG = p.customMatrix.gammaG,
-            gammaB = p.customMatrix.gammaB,
-            // Presets such as Deep and PWM own a baseline dim. The preference
-            // is an additional dim control, so compose both reductions instead
-            // of replacing the preset value. Multiplicative composition keeps
-            // either control at zero neutral and prevents stacking beyond the
-            // same 0..0.95 Android overlay limit used by the slider.
-            dim = composeDim(raw.withIntensity(t).dim, p.dim),
-            amoledClamp = p.amoledBlackClamp
-        )
-        return applyContrast(intensityScaled, p.contrast)
-    }
-
-    private fun composeDim(presetDim: Float, userDim: Float): Float {
-        val preset = presetDim.coerceIn(0f, MAX_DIM)
-        val user = userDim.coerceIn(0f, MAX_DIM)
-        return (1f - (1f - preset) * (1f - user)).coerceIn(0f, MAX_DIM)
-    }
-
-    private fun applyContrast(m: LumenMatrix, contrast: Float): LumenMatrix {
-        val c = contrast.coerceIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX)
-        if (c == 1f) return m
-        val bias = (1f - c) * 0.5f
-        val contrasted = m.copy(
-            r = (m.r * c).coerceIn(0f, 2f),
-            g = (m.g * c).coerceIn(0f, 2f),
-            b = (m.b * c).coerceIn(0f, 2f),
-            biasR = (m.biasR + bias).coerceIn(-1f, 1f),
-            biasG = (m.biasG + bias).coerceIn(-1f, 1f),
-            biasB = (m.biasB + bias).coerceIn(-1f, 1f)
-        )
-        if (!m.hasColorMatrix) return contrasted
-        return contrasted.copy(
-            matrixRr = (m.matrixRr * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixRg = (m.matrixRg * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixRb = (m.matrixRb * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixGr = (m.matrixGr * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixGg = (m.matrixGg * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixGb = (m.matrixGb * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixBr = (m.matrixBr * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixBg = (m.matrixBg * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX),
-            matrixBb = (m.matrixBb * c).coerceIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX)
-        )
-    }
+    /**
+     * The effective matrix for these preferences.
+     *
+     * The computation itself is [effectiveMatrix] in core-prefs. It used to
+     * live here, in a class named for previews, with a comment asking whoever
+     * changed it to remember to change the service too. The service called
+     * this anyway, so there was one implementation with two names and a note
+     * where the shared ownership should have been.
+     */
+    fun matrixFor(p: Preferences): LumenMatrix = p.effectiveMatrix()
 
     /**
      * Blue-channel suppression as a 0..1 fraction. 0.0 means full blue
