@@ -64,3 +64,8 @@ AGENTS.md
 .ai/
 PROJECT_CONTEXT.md
 CONTINUATION_PROMPT.md
+
+# Written by --write-verification-metadata as a scratch comparison. Gradle
+# reads only verification-metadata.xml, so a committed copy is 316 KB of
+# dead weight that drifts from the real file and trips the secret scan.
+gradle/verification-metadata.dryrun.xml
