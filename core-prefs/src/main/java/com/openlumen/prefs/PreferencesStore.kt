@@ -23,7 +23,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
-private val Context.dataStore by preferencesDataStore(name = "openlumen-prefs")
+// Internal rather than private so a test can seed a raw blob and exercise
+// the decode path. Two DataStore instances over one file throw, so a test
+// cannot declare its own delegate for this name.
+internal val Context.dataStore by preferencesDataStore(name = "openlumen-prefs")
 
 internal const val MAX_IMPORT_FILE_BYTES = 64 * 1024
 internal const val MAX_RECOVERY_CHARS = MAX_IMPORT_FILE_BYTES

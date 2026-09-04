@@ -13,6 +13,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests {
+            // PreferencesStore is DataStore-backed, so until now nothing in
+            // this module could construct it: every test built a Preferences
+            // object and called the pure helpers. That left the whole
+            // persisted-blob path unexercised, including v0 detection, the
+            // corruption quarantine and the token redaction on export.
+            // core-engine already runs Robolectric this way.
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -24,4 +37,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+    testImplementation(libs.robolectric)
 }
