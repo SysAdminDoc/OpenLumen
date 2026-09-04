@@ -203,6 +203,21 @@ class LumenMatrixTest {
         assertThat(half.matrixBb).isWithin(EPS).of(1f)
     }
 
+    @Test fun `a correction mode follows the intensity slider past its midpoint`() {
+        // The mode is a discrete selection with no partial setting, so on the
+        // drivers that render these presets through it the slider used to do
+        // nothing at all between full strength and one percent, then snap the
+        // preset off at zero. It switches at the midpoint now, matching how a
+        // ramp switches its discrete fields.
+        assertThat(Presets.GRAY.withIntensity(0f).daltonizer).isEqualTo(Daltonizer.NONE)
+        assertThat(Presets.GRAY.withIntensity(0.49f).daltonizer).isEqualTo(Daltonizer.NONE)
+        assertThat(Presets.GRAY.withIntensity(0.5f).daltonizer).isEqualTo(Daltonizer.MONOCHROMACY)
+        assertThat(Presets.GRAY.withIntensity(1f).daltonizer).isEqualTo(Daltonizer.MONOCHROMACY)
+
+        assertThat(Presets.PROTAN.withIntensity(0.49f).daltonizer).isEqualTo(Daltonizer.NONE)
+        assertThat(Presets.PROTAN.withIntensity(0.5f).daltonizer).isEqualTo(Daltonizer.PROTANOMALY)
+    }
+
     @Test fun `surface matrix carries CVD off diagonal terms`() {
         val m = Presets.PROTAN.toSurfaceFlinger16()
 

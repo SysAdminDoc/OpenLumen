@@ -249,8 +249,12 @@ data class LumenMatrix(
         val u = strength.coerceIn(0f, 1f)
         val scalar = copy(
             // A correction mode has no partial setting, so it is either
-            // selected or not. Zero intensity means the preset is off.
-            daltonizer = if (u <= 0f) Daltonizer.NONE else daltonizer,
+            // selected or not, and it switches at the midpoint the way lerp
+            // switches discrete fields. Keeping it selected at any strength
+            // above zero made the Intensity slider dead on the drivers that
+            // render these presets through the mode: the screen did not move
+            // between 100 percent and 1 percent, then snapped off at zero.
+            daltonizer = if (u < 0.5f) Daltonizer.NONE else daltonizer,
             r = 1f + (r - 1f) * u,
             g = 1f + (g - 1f) * u,
             b = 1f + (b - 1f) * u,
