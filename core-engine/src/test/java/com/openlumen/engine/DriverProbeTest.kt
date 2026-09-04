@@ -89,6 +89,39 @@ class DriverProbeTest {
         assertThat(kind).isEqualTo(EngineKind.COLOR_DISPLAY_MANAGER)
     }
 
+    @Test fun `a pin the device cannot honour does not describe what the preset loses`() {
+        // C300. An unavailable pin does not run, so reading its capabilities
+        // warned about losses the user would never see and hid the ones they
+        // would. The Presets detail now describes whatever Auto falls back to.
+        val engines = listOf(
+            FakeEngine(EngineKind.KCAL, capabilities = setOf(EngineCapability.PER_CHANNEL_GAMMA)),
+            FakeEngine(EngineKind.OVERLAY, capabilities = setOf(EngineCapability.COLOR_MATRIX))
+        )
+        val probes = listOf(
+            DriverProbe.Probe(engines[0], available = false),
+            DriverProbe.Probe(engines[1], available = true)
+        )
+
+        assertThat(DriverProbe.activeCapabilities(probes, pinned = EngineKind.KCAL))
+            .containsExactly(EngineCapability.COLOR_MATRIX)
+    }
+
+    @Test fun `a pin the device can honour is still the one described`() {
+        // Positive control: the fallback above has to come from availability,
+        // not from the pin being ignored outright.
+        val engines = listOf(
+            FakeEngine(EngineKind.KCAL, capabilities = setOf(EngineCapability.PER_CHANNEL_GAMMA)),
+            FakeEngine(EngineKind.OVERLAY, capabilities = setOf(EngineCapability.COLOR_MATRIX))
+        )
+        val probes = listOf(
+            DriverProbe.Probe(engines[0], available = true),
+            DriverProbe.Probe(engines[1], available = true)
+        )
+
+        assertThat(DriverProbe.activeCapabilities(probes, pinned = EngineKind.KCAL))
+            .containsExactly(EngineCapability.PER_CHANNEL_GAMMA)
+    }
+
     private fun engines(): List<ColorEngine> = EngineKind.entries.map { FakeEngine(it) }
 
     private fun probes(
@@ -103,9 +136,9 @@ class DriverProbeTest {
 
     private class FakeEngine(
         override val kind: EngineKind,
-        private val available: Boolean = false
+        private val available: Boolean = false,
+        override val capabilities: Set<EngineCapability> = emptySet()
    ) : ColorEngine {
-       override val capabilities: Set<EngineCapability> = emptySet()
        override suspend fun isAvailable(context: Context): Boolean = available
         override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = EngineResult.Success
         override suspend fun clear(context: Context): EngineResult = EngineResult.Success

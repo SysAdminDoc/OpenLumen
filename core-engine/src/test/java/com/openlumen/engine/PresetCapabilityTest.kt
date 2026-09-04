@@ -83,12 +83,30 @@ class PresetCapabilityTest {
         }
     }
 
-    @Test fun `the rootless driver covers channel mixing with the system's own correction`() {
-        // It cannot take the matrix, but it can select the equivalent AOSP mode,
-        // so the preset is honoured rather than approximated.
+    @Test fun `the rootless driver names the substitution instead of claiming a match`() {
+        // C300. This asserted an empty set, on the reading that selecting the
+        // equivalent AOSP mode honours the preset outright. It does not. The
+        // system applies its own correction matrices rather than OpenLumen's,
+        // and because the mode is a discrete selection the strength slider
+        // only moves it at the halfway point. The screen the user gets is
+        // close but not the designed one, and the old assertion was what kept
+        // the Presets detail silent about it.
         val secure = SecureSettingsEngine().capabilities
         for (key in listOf("gray", "protan", "deutan", "tritan")) {
-            assertThat(Presets.byKey(key)!!.matrix.unsupportedBy(secure)).isEmpty()
+            assertThat(Presets.byKey(key)!!.matrix.unsupportedBy(secure))
+                .containsExactly(EngineCapability.SYSTEM_COLOR_CORRECTION)
+        }
+    }
+
+    @Test fun `a driver with no substitution to offer still reports the raw loss`() {
+        // Positive control for the assertion above: the substitution has to be
+        // what puts SYSTEM_COLOR_CORRECTION in the set, not the preset.
+        val kcal = KcalEngine().capabilities
+        for (key in listOf("gray", "protan")) {
+            assertThat(Presets.byKey(key)!!.matrix.unsupportedBy(kcal))
+                .contains(EngineCapability.COLOR_MATRIX)
+            assertThat(Presets.byKey(key)!!.matrix.unsupportedBy(kcal))
+                .doesNotContain(EngineCapability.SYSTEM_COLOR_CORRECTION)
         }
     }
 

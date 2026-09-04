@@ -590,6 +590,8 @@ private fun PresetDetailPane(
 private fun approximationReason(missing: Set<EngineCapability>): String = listOfNotNull(
     stringResource(R.string.preset_capability_color_matrix)
         .takeIf { EngineCapability.COLOR_MATRIX in missing },
+    stringResource(R.string.preset_capability_system_correction)
+        .takeIf { EngineCapability.SYSTEM_COLOR_CORRECTION in missing },
     stringResource(R.string.preset_capability_dim)
         .takeIf { EngineCapability.SUB_MINIMUM_DIM in missing },
     stringResource(R.string.preset_capability_gamma)

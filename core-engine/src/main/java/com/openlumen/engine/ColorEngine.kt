@@ -101,9 +101,15 @@ fun LumenMatrix.requiredCapabilities(): Set<EngineCapability> = buildSet {
 
 /**
  * What [engine] cannot honour about this matrix. Empty means the preset renders
- * as designed. A driver that offers [EngineCapability.SYSTEM_COLOR_CORRECTION]
- * covers a matrix requirement the preset can name a mode for, because the
- * system applies its own equivalent.
+ * as designed.
+ *
+ * A driver that offers [EngineCapability.SYSTEM_COLOR_CORRECTION] can stand in
+ * for a matrix requirement the preset names a mode for, but standing in is not
+ * the same as rendering it. The system uses its own correction matrices, and
+ * the strength slider only moves such a preset at its midpoint because the
+ * mode is a discrete selection. So the substitution reports itself rather than
+ * reporting nothing, and the caller can say which of the two the user is
+ * looking at.
  */
 fun LumenMatrix.unsupportedBy(engine: Set<EngineCapability>): Set<EngineCapability> {
     val missing = requiredCapabilities() - engine
@@ -112,7 +118,7 @@ fun LumenMatrix.unsupportedBy(engine: Set<EngineCapability>): Set<EngineCapabili
         daltonizer != Daltonizer.NONE &&
         EngineCapability.SYSTEM_COLOR_CORRECTION in engine
     ) {
-        return missing - EngineCapability.COLOR_MATRIX
+        return missing - EngineCapability.COLOR_MATRIX + EngineCapability.SYSTEM_COLOR_CORRECTION
     }
     return missing
 }

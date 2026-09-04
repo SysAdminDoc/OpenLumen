@@ -3,9 +3,11 @@ package com.openlumen.engine.engines
 import android.provider.Settings
 import com.google.common.truth.Truth.assertThat
 import com.openlumen.engine.Daltonizer
+import com.openlumen.engine.EngineCapability
 import com.openlumen.engine.EngineResult
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
+import com.openlumen.engine.unsupportedBy
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -35,6 +37,35 @@ class SecureSettingsCorrectionTest {
 
     private fun secure(key: String, default: Int = MISSING) =
         Settings.Secure.getInt(resolver, key, default)
+
+    @Test fun `a probe that cannot reach Extra Dim stops claiming sub-minimum dim`() = runBlocking {
+        // C300. capabilities was a constant, so the Presets screen promised
+        // Deep Sleep and PWM Comfort in full on devices with no Extra Dim,
+        // while apply dropped the dim without a word. The probe already knows
+        // which rows the device took, so the answer comes from there.
+        val engine = SecureSettingsEngine()
+        assertThat(engine.supportsReduceBrightColors(context)).isFalse()
+
+        val available = engine.isAvailable(context)
+
+        assertThat(available).isTrue()
+        assertThat(engine.acceptedKeys).doesNotContain(SecureSettingsEngine.KEY_REDUCE_BRIGHT_ACTIVATED)
+        assertThat(engine.capabilities).doesNotContain(EngineCapability.SUB_MINIMUM_DIM)
+        assertThat(engine.capabilities).contains(EngineCapability.SYSTEM_COLOR_CORRECTION)
+        assertThat(Presets.DEEP.unsupportedBy(engine.capabilities))
+            .contains(EngineCapability.SUB_MINIMUM_DIM)
+    }
+
+    @Test fun `an unprobed driver keeps the shape it declares`() {
+        // Positive control: an empty accepted set is "no probe has run", not
+        // "the device refused the rows", so nothing is narrowed away before
+        // there is an answer to narrow it with.
+        assertThat(SecureSettingsEngine().capabilities)
+            .containsExactly(
+                EngineCapability.SUB_MINIMUM_DIM,
+                EngineCapability.SYSTEM_COLOR_CORRECTION
+            )
+    }
 
     @Test fun `grayscale selects the system monochromacy correction`() = runBlocking {
         val result = SecureSettingsEngine().apply(context, Presets.GRAY)

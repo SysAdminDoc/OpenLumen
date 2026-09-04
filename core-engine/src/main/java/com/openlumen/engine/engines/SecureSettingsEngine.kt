@@ -125,10 +125,24 @@ class SecureSettingsEngine : ColorEngine {
      * sub-minimum dim, but only where the device ships it, so callers should
      * still check `acceptedKeys`.
      */
-    override val capabilities: Set<EngineCapability> = setOf(
-        EngineCapability.SUB_MINIMUM_DIM,
-        EngineCapability.SYSTEM_COLOR_CORRECTION
-    )
+    override val capabilities: Set<EngineCapability>
+        get() = buildSet {
+            add(EngineCapability.SYSTEM_COLOR_CORRECTION)
+            // Extra Dim is the one capability here a device can lack, and
+            // apply already drops the dim silently when it does. Claiming it
+            // unconditionally meant the Presets screen promised Deep Sleep and
+            // PWM Comfort in full on devices that cannot darken past the panel
+            // minimum. An empty accepted set means no probe has run yet rather
+            // than a device that refused the rows, and a probe that accepts
+            // nothing leaves the driver unavailable, so it keeps the declared
+            // shape.
+            if (
+                acceptedKeys.isEmpty() ||
+                KEY_REDUCE_BRIGHT_ACTIVATED in acceptedKeys
+            ) {
+                add(EngineCapability.SUB_MINIMUM_DIM)
+            }
+        }
 
     private val tag = "OpenLumen/SecureSettings"
 

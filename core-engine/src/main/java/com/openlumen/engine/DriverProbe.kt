@@ -96,12 +96,20 @@ class DriverProbe(
          * or when no driver is available — so callers can tell "cannot honour
          * this preset" apart from "do not know yet" and stay quiet rather than
          * warning about a driver that may not be the one used.
+         *
+         * A pin the device cannot honour is ignored here for the same reason
+         * the service ignores it: an unavailable pin does not run, so
+         * describing its capabilities would warn about losses the user will
+         * never see and hide the ones they will.
          */
         fun activeCapabilities(
             probes: List<Probe>,
             pinned: EngineKind?
         ): Set<EngineCapability>? {
-            val kind = pinned ?: bestAvailableKind(probes) ?: return null
+            val honoured = pinned?.takeIf { kind ->
+                probes.any { it.engine.kind == kind && it.available }
+            }
+            val kind = honoured ?: bestAvailableKind(probes) ?: return null
             return probes.firstOrNull { it.engine.kind == kind }?.engine?.capabilities
         }
 

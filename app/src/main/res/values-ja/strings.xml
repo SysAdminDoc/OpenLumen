@@ -78,6 +78,7 @@
     <string name="preset_capability_color_matrix">チャンネル間の色の混合</string>
     <string name="preset_capability_dim">パネル最小輝度より暗くする調光</string>
     <string name="preset_capability_gamma">チャンネルごとのガンマ</string>
+    <string name="preset_capability_system_correction">OpenLumen 独自の色の混合（システムの色彩補正が代わりに適用されます）</string>
     <string name="preset_capability_separator">、</string>
     <string name="preset_detail_empty">プリセットを選択して詳細を表示</string>
     <string name="import_preview_title">インポートしたプロファイルのプレビュー</string>

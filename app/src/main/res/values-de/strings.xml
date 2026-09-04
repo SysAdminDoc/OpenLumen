@@ -78,6 +78,7 @@
     <string name="preset_capability_color_matrix">Farbmischung zwischen Kanälen</string>
     <string name="preset_capability_dim">Abdunkeln unter das Display-Minimum</string>
     <string name="preset_capability_gamma">Gamma pro Kanal</string>
+    <string name="preset_capability_system_correction">die eigene Farbmischung von OpenLumen, für die die systemeigene Farbkorrektur einspringt</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Filter auswählen, um Details anzuzeigen</string>
     <string name="import_preview_title">Importiertes Profil anzeigen</string>

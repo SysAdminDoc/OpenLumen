@@ -78,6 +78,7 @@
     <string name="preset_capability_color_matrix">a mistura de cor entre canais</string>
     <string name="preset_capability_dim">o escurecimento abaixo do mínimo do ecrã</string>
     <string name="preset_capability_gamma">o gama por canal</string>
+    <string name="preset_capability_system_correction">a mistura de cor própria do OpenLumen, que a correção de cor do sistema substitui</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Selecione um filtro para ver os detalhes</string>
     <string name="import_preview_title">Visualizar perfil importado</string>

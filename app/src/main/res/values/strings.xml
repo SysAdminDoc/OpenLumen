@@ -79,6 +79,7 @@
     <string name="preset_capability_color_matrix">colour mixing between channels</string>
     <string name="preset_capability_dim">dimming below the panel minimum</string>
     <string name="preset_capability_gamma">per-channel gamma</string>
+    <string name="preset_capability_system_correction">OpenLumen\'s own colour mixing, which the system\'s built-in correction stands in for</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Select a preset to see details</string>
     <string name="presets_sort_label">Sort</string>
