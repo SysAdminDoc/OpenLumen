@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -187,7 +188,14 @@ fun AboutScreen(
                 .padding(topLevelScrollPadding()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineMedium,
+                // TalkBack's heading navigation is how you skip a long scroll
+                // screen. There was not one heading anywhere in the app, so it
+                // had nothing to jump between.
+                modifier = Modifier.semantics { heading() }
+            )
             Text(
                 stringResource(R.string.about_version_value, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodyLarge

@@ -10,8 +10,11 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.openlumen.ui.components.LumenSwitch
 import androidx.compose.foundation.layout.Arrangement
@@ -70,7 +73,11 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
             .padding(topLevelScrollPadding()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(stringResource(R.string.driver_title), style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.driver_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() }
+        )
 
         val choices = listOf(
             EngineKindDto.Auto to stringResource(R.string.driver_auto),
@@ -239,7 +246,11 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
             Text(
                 error,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.error,
+                // This appears after the user taps refresh. Without a live
+                // region a screen reader says nothing at all: the text is
+                // simply there the next time you happen to reach it.
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
         }
 

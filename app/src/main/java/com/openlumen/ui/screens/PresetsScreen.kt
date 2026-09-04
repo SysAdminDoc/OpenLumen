@@ -2,6 +2,7 @@ package com.openlumen.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
@@ -390,6 +391,7 @@ private fun PresetListPane(
             }
             items(sortedProfiles, key = { "$PROFILE_DESTINATION_PREFIX${it.name}" }) { profile ->
                 val matrix = profileMatrix(profile)
+                val loadProfileLabel = stringResource(R.string.about_profiles_load)
                 Card(
                     shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(
@@ -397,12 +399,17 @@ private fun PresetListPane(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .selectable(
-                            selected = false,
+                        // Not selectable: a saved profile is never in a
+                        // selected state, so every row announced "not
+                        // selected, radio button" while its actual action is
+                        // to load it. onClickLabel is what TalkBack reads as
+                        // the action.
+                        .clickable(
+                            onClickLabel = loadProfileLabel,
+                            role = Role.Button,
                             onClick = {
                                 onPresetClick("$PROFILE_DESTINATION_PREFIX${profile.name}")
-                            },
-                            role = Role.RadioButton
+                            }
                         )
                 ) {
                     Row(

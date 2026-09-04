@@ -221,7 +221,6 @@ private fun LumenDestinationItem(
                 role = Role.Tab,
                 onClick = onClick
             )
-            .semantics { contentDescription = label }
             .padding(horizontal = 2.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -242,7 +241,11 @@ private fun LumenDestinationItem(
         ) {
             Icon(
                 painter = painterResource(dest.iconRes),
-                contentDescription = label,
+                // The Text below already names the tab, and a merged
+                // semantics node reads every description it contains. With
+                // this set and a Column description as well, each tab
+                // announced "Home, Home, Home, tab".
+                contentDescription = null,
                 tint = if (selected) selectedColor else unselectedColor
             )
         }

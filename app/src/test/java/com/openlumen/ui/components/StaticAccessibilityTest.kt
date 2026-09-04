@@ -53,6 +53,50 @@ class StaticAccessibilityTest {
         assertThat(home).contains("contentDescription = fineIncLabel")
     }
 
+    @Test fun `each screen title is a heading`() {
+        // TalkBack's heading navigation is how you skip a long scroll screen.
+        // There was not one heading anywhere in the app, so it had nothing to
+        // jump between on five of them.
+        for (path in listOf(
+            "ui/screens/ScheduleScreen.kt",
+            "ui/screens/DriverScreen.kt",
+            "ui/screens/AboutScreen.kt"
+        )) {
+            assertThat(source(path)).contains("heading()")
+        }
+    }
+
+    @Test fun `a bottom tab names itself once`() {
+        // A merged semantics node reads every description it contains, so a
+        // Column description plus an Icon description plus the Text made each
+        // tab announce "Home, Home, Home, tab".
+        val root = source("ui/OpenLumenRoot.kt")
+        val tab = root.substringAfter("role = Role.Tab").substringBefore("Text(")
+
+        assertThat(tab).doesNotContain("contentDescription = label")
+        assertThat(tab).contains("contentDescription = null")
+    }
+
+    @Test fun `a saved profile is a button that loads it`() {
+        // It was selectable with selected = false and Role.RadioButton, so
+        // every row announced "not selected, radio button" while its actual
+        // action is to load the profile.
+        val presets = source("ui/screens/PresetsScreen.kt")
+        val row = presets.substringAfter("val loadProfileLabel").substringBefore("Row(")
+
+        assertThat(row).contains("Role.Button")
+        assertThat(row).contains("onClickLabel = loadProfileLabel")
+        assertThat(row).doesNotContain("Role.RadioButton")
+    }
+
+    @Test fun `an error that appears after a tap is announced`() {
+        val driver = source("ui/screens/DriverScreen.kt")
+        val block = driver.substringAfter("probeError?.let").substringBefore("}")
+
+        assertThat(block).contains("liveRegion")
+        assertThat(block).contains("LiveRegionMode.Polite")
+    }
+
     @Test fun `the timeline bounds are not raw instants`() {
         // Positive control for the format test: the formatter has to be what
         // the screen actually calls, not a function nothing reaches.

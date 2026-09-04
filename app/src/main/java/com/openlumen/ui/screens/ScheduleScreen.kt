@@ -30,6 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -129,7 +131,11 @@ fun ScheduleScreen(
             .padding(topLevelScrollPadding()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(stringResource(R.string.schedule_title), style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.schedule_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() }
+        )
         // Fixed-time schedules follow the device zone. A city-selected solar
         // schedule keeps the city's IANA zone so its wall-clock sunrise and
         // sunset remain stable when the device travels.
