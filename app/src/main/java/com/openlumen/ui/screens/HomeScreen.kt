@@ -33,7 +33,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -122,6 +126,20 @@ fun HomeScreen(
         if (granted) notificationSettingsLaunchFailed = false
     }
     if (enableSystemActions) {
+        // The state was read once per composition entry, so after "Open
+        // notification settings", granting, and coming back, the card stayed
+        // until something else recreated the screen. Same lifecycle observer
+        // OverlayPermissionCard already uses.
+        val lifecycleOwner = LocalLifecycleOwner.current
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
+                    refreshNotificationPermissionState()
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
         LaunchedEffect(Unit) { refreshNotificationPermissionState() }
     }
 
