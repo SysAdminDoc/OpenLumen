@@ -262,9 +262,14 @@ The receiver's outbound filter-state broadcast is signature-protected and is
 not a general-purpose inter-app state channel.
 
 ```bash
-adb shell am broadcast -a com.openlumen.action.TURN_OFF \
+adb shell am broadcast --include-stopped-packages -a com.openlumen.action.TURN_OFF \
     -n com.openlumen/.service.AutomationReceiver
 ```
+
+This works whether or not OpenLumen is running. If the app was force-stopped or
+killed, `--include-stopped-packages` is what lets the broadcast reach it at all,
+and the receiver clears the display itself rather than waiting on a service
+Android will not let it start from the background.
 
 See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
 

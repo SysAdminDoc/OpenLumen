@@ -937,7 +937,10 @@ private fun formatDuration(context: Context, ms: Long): String = when {
 // re-enters the non-exported service under OpenLumen's UID and hard-clears
 // root display backends even if the foreground UI is completely obscured.
 private fun emergencyOffCommand(packageName: String): String =
-    "adb shell am broadcast -a com.openlumen.action.TURN_OFF " +
+    // --include-stopped-packages: a force-stopped or killed package receives no
+    // broadcast without it, and "the app is not running" is the state this
+    // command exists for (C296).
+    "adb shell am broadcast --include-stopped-packages -a com.openlumen.action.TURN_OFF " +
         "-n $packageName/com.openlumen.service.AutomationReceiver"
 
 private fun copyToClipboardAbout(context: Context, label: String, text: String) {

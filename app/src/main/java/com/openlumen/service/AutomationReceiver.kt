@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
 import com.openlumen.diagnostics.DiagnosticsLog
+import com.openlumen.engine.DisplayEmergencyReset
 import com.openlumen.prefs.AutomationToken
 import com.openlumen.prefs.PreferencesStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -119,6 +120,11 @@ class AutomationReceiver : BroadcastReceiver() {
                 val result = LumenServiceStarter.start(context, forward, tag)
                 if (!result.started) {
                     Log.w(tag, "automation service start failed: ${result.error?.message ?: "unknown"}")
+                    if (action == LumenService.ACTION_TURN_OFF) {
+                        clearDisplayWithoutService(context) {
+                            prefs.update { it.copy(enabled = false) }
+                        }
+                    }
                 }
             } catch (t: Throwable) {
                 Log.e(tag, "automation receiver failed: ${t.message}", t)
@@ -155,6 +161,45 @@ class AutomationReceiver : BroadcastReceiver() {
     companion object {
         const val tag = "OpenLumen/Automation"
         const val THROTTLE_MS = 200L
+
+        /**
+         * Clear the display when the escape hatch could not reach the service
+         * (C296).
+         *
+         * `TURN_OFF` normally forwards to [LumenService], which owns the
+         * engines. But the state this hatch exists for is the one where nothing
+         * is running: the process was killed with the persistent secure rows
+         * still set, so the display stays tinted with no OpenLumen alive. From
+         * the background that service start is refused, and on Android 15 the
+         * `SYSTEM_ALERT_WINDOW` exemption additionally requires a visible
+         * overlay window, which a dead process does not have. Logging the
+         * refusal and finishing left the user staring at a tint the documented
+         * command could not remove.
+         *
+         * [DisplayEmergencyReset] needs no service and no engine instance, so
+         * call it here. The display comes first; [recordFilterOff] runs after,
+         * because a boot receiver that still reads `enabled = true` would put
+         * the tint straight back.
+         */
+        internal suspend fun clearDisplayWithoutService(
+            context: Context,
+            recordFilterOff: suspend () -> Unit
+        ) {
+            val cleared = runCatching { DisplayEmergencyReset.clearRootTransforms(context) }
+                .onFailure { Log.e(tag, "emergency clear failed: ${it.message}", it) }
+                .getOrNull()
+            DiagnosticsLog.log(
+                context,
+                DiagnosticsLog.Level.WARN,
+                DiagnosticsLog.Category.SERVICE,
+                "turn off could not start the service; cleared the display directly: " +
+                    "secure=${cleared?.secureSettingsKeys?.joinToString().orEmpty().ifBlank { "none" }} " +
+                    "SF=${cleared?.surfaceFlingerCodes?.joinToString().orEmpty().ifBlank { "none" }} " +
+                    "KCAL=${cleared?.kcalPaths?.joinToString().orEmpty().ifBlank { "none" }}"
+            )
+            runCatching { recordFilterOff() }
+                .onFailure { Log.w(tag, "could not record the filter as off: ${it.message}") }
+        }
 
         /** String extra carrying the shared secret shown in the app's automation section. */
         const val EXTRA_TOKEN = "com.openlumen.extra.TOKEN"
