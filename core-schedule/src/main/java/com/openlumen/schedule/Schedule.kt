@@ -54,6 +54,63 @@ sealed interface ScheduleMode {
  * Stateless on purpose — the foreground service polls this every minute (cheap) and
  * the activation transition fans out through preferences updates, not through callbacks.
  */
+/**
+ * When the currently active window opened, or null when nothing is active or
+ * the mode has no opening moment.
+ *
+ * The progressive ramp measures from here, so it has to be the same instant
+ * [isActive] turned true at, not "today at the start time": a window opened
+ * before midnight has a start that is yesterday.
+ */
+fun activeWindowStart(
+    mode: ScheduleMode,
+    now: ZonedDateTime = ZonedDateTime.now(),
+    zoneId: ZoneId = now.zone
+): ZonedDateTime? = when (mode) {
+    is ScheduleMode.FixedTime -> {
+        if (!isValidFixedTimeWindow(mode.start, mode.end)) {
+            null
+        } else if (!inWrappedWindow(now.toLocalTime(), mode.start, mode.end)) {
+            null
+        } else {
+            val today = now.with(mode.start)
+            if (today.isAfter(now)) today.minusDays(1) else today
+        }
+    }
+    is ScheduleMode.Solar -> {
+        val solarZone = mode.locationZoneId ?: zoneId
+        val solarNow = now.withZoneSameInstant(solarZone)
+        val today = SolarCalculator.computeTimes(
+            solarNow.toLocalDate(), mode.latitude, mode.longitude, solarZone
+        )
+        if (today.polar != SolarCalculator.Polar.NONE) {
+            null
+        } else {
+            val sunset = today.sunset.plusMinutes(mode.sunsetOffsetMin.toLong())
+            when {
+                solarNow.isAfter(sunset) -> sunset
+                // Before this morning's sunrise: the window opened at
+                // yesterday's sunset, so measure from there.
+                solarNow.isBefore(today.sunrise.plusMinutes(mode.sunriseOffsetMin.toLong())) -> {
+                    val yesterday = SolarCalculator.computeTimes(
+                        solarNow.toLocalDate().minusDays(1),
+                        mode.latitude,
+                        mode.longitude,
+                        solarZone
+                    )
+                    if (yesterday.polar == SolarCalculator.Polar.NONE) {
+                        yesterday.sunset.plusMinutes(mode.sunsetOffsetMin.toLong())
+                    } else {
+                        null
+                    }
+                }
+                else -> null
+            }
+        }
+    }
+    is ScheduleMode.AlwaysOn, is ScheduleMode.AlwaysOff, is ScheduleMode.UntilNextAlarm -> null
+}
+
 fun isActive(
     mode: ScheduleMode,
     now: ZonedDateTime = ZonedDateTime.now(),

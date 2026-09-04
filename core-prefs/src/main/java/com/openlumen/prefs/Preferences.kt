@@ -101,7 +101,23 @@ data class ScheduleDto(
     /** IANA zone selected with a bundled city; null follows the device zone. */
     val solarTimezone: String? = null,
     val sunsetOffsetMin: Int = 0,
-    val sunriseOffsetMin: Int = 0
+    val sunriseOffsetMin: Int = 0,
+
+    /**
+     * Deepen the filter across the evening rather than arriving at full
+     * strength when the schedule opens.
+     *
+     * Off by default, and additive with defaults, so an existing schedule
+     * decodes unchanged and keeps the single fade it already had.
+     */
+    val progressiveIntensity: Boolean = false,
+
+    /** When the ramp reaches [progressiveEndIntensity]. Usually after midnight. */
+    val progressiveEndHour: Int = 1,
+    val progressiveEndMinute: Int = 0,
+
+    /** Where the ramp ends. The start is the preset's own intensity. */
+    val progressiveEndIntensity: Float = 1f
 )
 
 @Serializable

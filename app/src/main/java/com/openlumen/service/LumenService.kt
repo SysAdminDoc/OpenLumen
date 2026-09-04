@@ -145,7 +145,22 @@ class LumenService : LifecycleService() {
             isUserUnlocked = ::isUserUnlocked,
             logTag = tag
         )
-        scheduleAlarms = ScheduleAlarmOrchestrator(this, tag)
+        scheduleAlarms = ScheduleAlarmOrchestrator(
+            context = this,
+            logTag = tag,
+            // The progressive ramp needs a wake-up at each of its steps. Rather
+            // than a second alarm, or a ticker, the one alarm this class already
+            // owns fires at whichever comes first: the next schedule flip or the
+            // next step. Waking re-evaluates and reschedules, which is what the
+            // transition path already does.
+            nextTransitionProvider = { mode ->
+                val transition = com.openlumen.schedule.nextTransition(mode)
+                val step = latestPrefs.get()?.let { prefs ->
+                    nextProgressiveStep(prefs, mode, java.time.ZonedDateTime.now())
+                }
+                listOfNotNull(transition, step).minOrNull()
+            }
+        )
         lightSubscription = LightSensorSubscription(
             luxFlow = lightSensor::lux,
             scope = lifecycleScope,
@@ -593,7 +608,16 @@ class LumenService : LifecycleService() {
         )
         val shouldBeActive = shouldFilterBeActive(p, scheduleActive, lightActive)
 
-        val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
+        // The progressive ramp deepens the filter across the evening, so the
+        // intensity is a function of the clock rather than a stored value.
+        val effective = if (shouldBeActive) {
+            progressiveIntensityAt(p, mode, java.time.ZonedDateTime.now())
+                ?.let { p.copy(presetIntensity = it) }
+                ?: p
+        } else {
+            p
+        }
+        val matrix = if (shouldBeActive) matrixFor(effective) else LumenMatrix.IDENTITY
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
         engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs)
         // Always reschedule — the next transition time depends on the current mode and clock.

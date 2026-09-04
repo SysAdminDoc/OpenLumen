@@ -358,4 +358,10 @@
     <string name="about_diag_log_timeline_state">Von %1$s bis %2$s</string>
     <string name="widget_preset_slot">Preset %1$s</string>
     <string name="widget_preset_slot_active">Preset %1$s, aktiv</string>
+    <string name="schedule_progressive_title">Im Lauf des Abends verstärken</string>
+    <string name="schedule_progressive_body">Mit der Stärke des Presets beginnen und bis zu einer gewählten Uhrzeit einen stärkeren Wert erreichen, statt sofort voll einzusetzen.</string>
+    <string name="schedule_progressive_end">Voll erreicht um: %1$s</string>
+    <string name="schedule_progressive_end_title">Voll erreicht um</string>
+    <string name="schedule_progressive_end_intensity">Stärke spät nachts: %1$d %%</string>
+    <string name="schedule_progressive_end_intensity_name">Stärke spät nachts</string>
 </resources>

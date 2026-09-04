@@ -119,6 +119,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
 - Live lux readout + "calibrate: use current reading" button
 - Smooth fade-in / fade-out transitions (Instant / 30 s / 5 min / 15 min / 30 min)
+- Optional progressive intensity: start at the preset's strength and reach a deeper one by a time you set, stepped by the schedule's own alarm
 - Schedule timezone hint so fixed-time windows are unambiguous after travel
 
 **Command surfaces**

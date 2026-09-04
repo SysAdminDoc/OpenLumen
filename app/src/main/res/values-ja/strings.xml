@@ -355,4 +355,10 @@
     <string name="about_diag_log_timeline_state">%1$s から %2$s まで</string>
     <string name="widget_preset_slot">プリセット %1$s</string>
     <string name="widget_preset_slot_active">プリセット %1$s、適用中</string>
+    <string name="schedule_progressive_title">夜が深まるほど強く</string>
+    <string name="schedule_progressive_body">プリセットの強さから始め、選んだ時刻までにもっと強い値にします。</string>
+    <string name="schedule_progressive_end">最大になる時刻: %1$s</string>
+    <string name="schedule_progressive_end_title">最大になる時刻</string>
+    <string name="schedule_progressive_end_intensity">深夜の強さ: %1$d%%</string>
+    <string name="schedule_progressive_end_intensity_name">深夜の強さ</string>
 </resources>

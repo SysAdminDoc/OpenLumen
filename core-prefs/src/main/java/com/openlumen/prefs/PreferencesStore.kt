@@ -439,7 +439,14 @@ class PreferencesStore(
         latitude = s.latitude.finiteInOrNull(-90.0, 90.0),
         longitude = s.longitude.finiteInOrNull(-180.0, 180.0),
         sunsetOffsetMin = s.sunsetOffsetMin.coerceIn(-180, 180),
-        sunriseOffsetMin = s.sunriseOffsetMin.coerceIn(-180, 180)
+        sunriseOffsetMin = s.sunriseOffsetMin.coerceIn(-180, 180),
+        progressiveEndHour = s.progressiveEndHour.coerceIn(0, 23),
+        progressiveEndMinute = s.progressiveEndMinute.coerceIn(0, 59),
+        progressiveEndIntensity = if (s.progressiveEndIntensity.isFinite()) {
+            s.progressiveEndIntensity.coerceIn(0f, 1f)
+        } else {
+            1f
+        }
     ))
 
     /**

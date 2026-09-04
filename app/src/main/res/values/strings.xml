@@ -364,4 +364,10 @@
     <string name="about_diag_log_timeline_state">From %1$s to %2$s</string>
     <string name="widget_preset_slot">%1$s preset</string>
     <string name="widget_preset_slot_active">%1$s preset, active</string>
+    <string name="schedule_progressive_title">Deepen through the evening</string>
+    <string name="schedule_progressive_body">Start at the preset\'s own strength and reach a deeper one by a time you choose, instead of arriving at full strength when the schedule opens.</string>
+    <string name="schedule_progressive_end">Reaches full by: %1$s</string>
+    <string name="schedule_progressive_end_title">Reaches full at</string>
+    <string name="schedule_progressive_end_intensity">Late-night strength: %1$d%%</string>
+    <string name="schedule_progressive_end_intensity_name">Late-night strength</string>
 </resources>

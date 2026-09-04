@@ -2,6 +2,8 @@ package com.openlumen.ui.screens
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +53,7 @@ import com.openlumen.ui.components.LightSensorCard
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
+import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.ui.components.lumenSliderColors
@@ -84,6 +87,7 @@ fun ScheduleScreen(
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    var showProgressiveEndPicker by rememberSaveable { mutableStateOf(false) }
     var equalFixedTimesError by rememberSaveable { mutableStateOf(false) }
     var exactAlarmSettingsError by rememberSaveable { mutableStateOf(false) }
     var sunsetOffsetDraft by remember {
@@ -402,6 +406,102 @@ fun ScheduleScreen(
             }
         }
 
+        // C269. A single fade at the transition is not what people ask for:
+        // they want the filter to keep deepening as the evening goes on.
+        // Offered only for the two modes that have an opening moment to
+        // measure from.
+        if (
+            prefs.schedule.mode == ScheduleModeDto.Solar ||
+            prefs.schedule.mode == ScheduleModeDto.FixedTime
+        ) {
+            var progressiveEndIntensity by remember(prefs.schedule.progressiveEndIntensity) {
+                mutableFloatStateOf(prefs.schedule.progressiveEndIntensity)
+            }
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.schedule_progressive_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                stringResource(R.string.schedule_progressive_body),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        LumenSwitch(
+                            checked = prefs.schedule.progressiveIntensity,
+                            onCheckedChange = { on ->
+                                vm.setProgressiveIntensity(
+                                    enabled = on,
+                                    endHour = prefs.schedule.progressiveEndHour,
+                                    endMinute = prefs.schedule.progressiveEndMinute,
+                                    endIntensity = prefs.schedule.progressiveEndIntensity
+                                )
+                            }
+                        )
+                    }
+                    if (prefs.schedule.progressiveIntensity) {
+                        Spacer(Modifier.height(8.dp))
+                        LumenOutlinedButton(
+                            onClick = { showProgressiveEndPicker = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                stringResource(
+                                    R.string.schedule_progressive_end,
+                                    formatScheduleTime(
+                                        prefs.schedule.progressiveEndHour,
+                                        prefs.schedule.progressiveEndMinute,
+                                        use24Hour,
+                                        locale
+                                    )
+                                )
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(
+                                R.string.schedule_progressive_end_intensity,
+                                (progressiveEndIntensity * 100).roundToInt()
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Slider(
+                            value = progressiveEndIntensity,
+                            onValueChange = { progressiveEndIntensity = it },
+                            onValueChangeFinished = {
+                                vm.setProgressiveIntensity(
+                                    enabled = true,
+                                    endHour = prefs.schedule.progressiveEndHour,
+                                    endMinute = prefs.schedule.progressiveEndMinute,
+                                    endIntensity = progressiveEndIntensity
+                                )
+                            },
+                            modifier = Modifier.labeledSliderSemantics(
+                                name = stringResource(R.string.schedule_progressive_end_intensity_name),
+                                valueDescription = stringResource(
+                                    R.string.schedule_progressive_end_intensity,
+                                    (progressiveEndIntensity * 100).roundToInt()
+                                )
+                            ),
+                            colors = lumenSliderColors()
+                        )
+                    }
+                }
+            }
+        }
+
         LightSensorCard(
             enabled = prefs.lightSensorEnabled,
             threshold = prefs.lightSensorLuxThreshold,
@@ -468,6 +568,24 @@ fun ScheduleScreen(
                 }
             }
         }
+    }
+
+    if (showProgressiveEndPicker) {
+        TimePickerDialog(
+            title = stringResource(R.string.schedule_progressive_end_title),
+            initialHour = prefs.schedule.progressiveEndHour,
+            initialMinute = prefs.schedule.progressiveEndMinute,
+            onDismiss = { showProgressiveEndPicker = false },
+            onConfirm = { h, m ->
+                vm.setProgressiveIntensity(
+                    enabled = true,
+                    endHour = h,
+                    endMinute = m,
+                    endIntensity = prefs.schedule.progressiveEndIntensity
+                )
+                showProgressiveEndPicker = false
+            }
+        )
     }
 
     if (showStartPicker) {

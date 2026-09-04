@@ -358,4 +358,10 @@
     <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
     <string name="widget_preset_slot">Predefinição %1$s</string>
     <string name="widget_preset_slot_active">Predefinição %1$s, ativa</string>
+    <string name="schedule_progressive_title">Reforçar ao longo da noite</string>
+    <string name="schedule_progressive_body">Começar com a intensidade da predefinição e chegar a outra mais forte à hora que escolher, em vez de aplicar tudo logo no início.</string>
+    <string name="schedule_progressive_end">Atinge o máximo às: %1$s</string>
+    <string name="schedule_progressive_end_title">Atinge o máximo às</string>
+    <string name="schedule_progressive_end_intensity">Intensidade de madrugada: %1$d %%</string>
+    <string name="schedule_progressive_end_intensity_name">Intensidade de madrugada</string>
 </resources>

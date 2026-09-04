@@ -61,6 +61,12 @@ interface OpenLumenScreenModel {
     fun setCustomKelvin(kelvin: Int): Job
     fun setGamma(r: Float, g: Float, b: Float): Job
     fun setScheduleOffsets(sunsetMin: Int, sunriseMin: Int): Job
+    fun setProgressiveIntensity(
+        enabled: Boolean,
+        endHour: Int,
+        endMinute: Int,
+        endIntensity: Float
+    ): Job = Job()
     fun reconcileExactAlarmPermission(): Job
     fun setLightSensor(enabled: Boolean, threshold: Float): Job
     fun setTransitionDuration(durationMs: Long): Job

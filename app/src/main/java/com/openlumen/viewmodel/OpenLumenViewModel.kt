@@ -278,6 +278,24 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    override fun setProgressiveIntensity(
+        enabled: Boolean,
+        endHour: Int,
+        endMinute: Int,
+        endIntensity: Float
+    ) = viewModelScope.launch {
+        prefs.update {
+            it.copy(
+                schedule = it.schedule.copy(
+                    progressiveIntensity = enabled,
+                    progressiveEndHour = endHour.coerceIn(0, 23),
+                    progressiveEndMinute = endMinute.coerceIn(0, 59),
+                    progressiveEndIntensity = endIntensity.coerceIn(0f, 1f)
+                )
+            )
+        }
+    }
+
     override fun setScheduleOffsets(sunsetMin: Int, sunriseMin: Int) = viewModelScope.launch {
         prefs.update {
             it.copy(schedule = it.schedule.copy(

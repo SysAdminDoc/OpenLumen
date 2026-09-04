@@ -358,4 +358,10 @@
     <string name="about_diag_log_timeline_state">De %1$s à %2$s</string>
     <string name="widget_preset_slot">Préréglage %1$s</string>
     <string name="widget_preset_slot_active">Préréglage %1$s, actif</string>
+    <string name="schedule_progressive_title">Renforcer au fil de la soirée</string>
+    <string name="schedule_progressive_body">Commencer à la force du préréglage et atteindre une valeur plus marquée à l\'heure de votre choix, au lieu d\'arriver au maximum dès l\'ouverture.</string>
+    <string name="schedule_progressive_end">Atteint son maximum à : %1$s</string>
+    <string name="schedule_progressive_end_title">Atteint son maximum à</string>
+    <string name="schedule_progressive_end_intensity">Force en fin de nuit : %1$d %%</string>
+    <string name="schedule_progressive_end_intensity_name">Force en fin de nuit</string>
 </resources>

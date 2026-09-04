@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The filter can deepen across the evening instead of arriving at full strength when the schedule opens. Off by default; when on, it starts at the preset's own intensity at sunset or your start time and reaches a strength you choose by a time you choose. It moves in steps driven by the alarm the schedule already sets rather than a ticker, so a sleeping device is not kept awake for a colour change nobody is looking at.
+
 ## [0.8.0] (2026-09-04)
 
 ### Breaking
