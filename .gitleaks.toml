@@ -4,19 +4,23 @@
 [extend]
 useDefault = true
 
-[allowlist]
-description = "Known non-secrets in this repository"
+[[allowlists]]
+description = """
+Gradle dependency verification. The long hex strings are SHA-256 artifact
+checksums and PGP key fingerprints, both public by design: they are what you
+publish so other people can check you. generic-api-key matches them on entropy
+alone.
+"""
+paths = ['''gradle/verification-metadata.*\.xml''']
 
-paths = [
-  # Gradle dependency verification. The long hex strings are SHA-256 artifact
-  # checksums and PGP key fingerprints, both public by design: they are what
-  # you publish so other people can check you. generic-api-key matches them on
-  # entropy alone.
-  '''gradle/verification-metadata.*\.xml''',
-]
-
-commits = [
-  # A roadmap line whose wrapped prose reads as high entropy. ROADMAP.md is
-  # untracked now, so this only ever comes up on a history scan.
-  "8db400ca61b51dc98a2d940fb120cdc46fdcebe6",
-]
+[[allowlists]]
+description = """
+One historical commit whose wrapped roadmap prose reads as high entropy.
+Scoped to that file in that commit: allowlisting the commit alone would also
+skip the manifest, Su.kt and PreferencesStore.kt changes it carries, so a
+secret added there would never be found on a rescan. ROADMAP.md is untracked
+now, so this only comes up on a history scan.
+"""
+condition = "AND"
+commits = ["8db400ca61b51dc98a2d940fb120cdc46fdcebe6"]
+paths = ['''^ROADMAP\.md$''']

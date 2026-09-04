@@ -51,6 +51,7 @@ import com.openlumen.ui.components.LocationEntryDialog
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.TimePickerDialog
 import com.openlumen.ui.components.labeledSliderSemantics
+import com.openlumen.ui.components.lumenSliderColors
 import com.openlumen.viewmodel.OpenLumenViewModel
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import java.time.Instant
@@ -333,7 +334,8 @@ fun ScheduleScreen(
                         modifier = Modifier.labeledSliderSemantics(
                             name = stringResource(R.string.schedule_sunset_offset_name),
                             valueDescription = sunsetOffsetLabel
-                        )
+                        ),
+                        colors = lumenSliderColors()
                     )
 
                     val sunriseOffsetLabel = stringResource(
@@ -358,7 +360,8 @@ fun ScheduleScreen(
                         modifier = Modifier.labeledSliderSemantics(
                             name = stringResource(R.string.schedule_sunrise_offset_name),
                             valueDescription = sunriseOffsetLabel
-                        )
+                        ),
+                        colors = lumenSliderColors()
                     )
                 }
             }

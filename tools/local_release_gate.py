@@ -729,7 +729,8 @@ def load_advisory_allowlist(path: Path, today: date | None = None) -> list[dict[
             ) from exc
         if expiry < (today or date.today()):
             raise GateError(
-                f"OSV advisory allowlist entry {index} expired on {expiry.isoformat()}"
+                f"OSV advisory allowlist entry for {raw_entry['advisory_id']} "
+                f"(entry {index}) expired on {expiry.isoformat()}"
             )
         entries.append({key: str(raw_entry[key]).strip() for key in required})
     return entries

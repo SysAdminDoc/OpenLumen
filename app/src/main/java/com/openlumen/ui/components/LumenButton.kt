@@ -7,9 +7,13 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderColors
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
@@ -68,4 +72,20 @@ fun LumenTextButton(
     enabled = enabled,
     shape = shape,
     content = content
+)
+
+/**
+ * Slider colours for the plain sliders.
+ *
+ * A Card and a Slider both default to the highest surface container, so a
+ * slider sitting in a card painted its unfilled track in exactly the card's
+ * colour: the track was invisible and the control looked like it ended at the
+ * thumb. The unfilled part takes the outline tone instead, which is the same
+ * thing an outlined button draws its border with.
+ */
+@Composable
+fun lumenSliderColors(activeTrack: Color? = null): SliderColors = SliderDefaults.colors(
+    activeTrackColor = activeTrack ?: MaterialTheme.colorScheme.primary,
+    thumbColor = activeTrack ?: MaterialTheme.colorScheme.primary,
+    inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
 )

@@ -109,7 +109,8 @@ fun LightSensorCard(
                 modifier = Modifier.labeledSliderSemantics(
                     name = stringResource(R.string.light_sensor_threshold_name),
                     valueDescription = thresholdState
-                )
+                ),
+                colors = lumenSliderColors()
             )
             Text(
                 stringResource(R.string.light_sensor_hysteresis, thresholdLux, disengageLux),

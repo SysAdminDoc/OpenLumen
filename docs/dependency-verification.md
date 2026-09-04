@@ -6,25 +6,33 @@
 > after the AGP 9 migration and AndroidX baseline refresh, and the
 > current Gradle suite passes with `--dependency-verification=strict`.
 
-Gradle dependency verification ensures every downloaded artifact
-(transitive deps, plugins, the wrapper itself) matches a checksum
-recorded in `gradle/verification-metadata.xml`. A
-tampered or unexpected dependency fails the build before any Kotlin
-compiles.
+Gradle dependency verification makes every downloaded artifact
+(transitive deps, plugins, POMs) match a SHA-256 checksum recorded in
+`gradle/verification-metadata.xml`. A tampered or unexpected dependency
+fails the build before any Kotlin compiles.
+
+The wrapper is pinned separately, by `distributionSha256Sum` in
+`gradle/wrapper/gradle-wrapper.properties`. That one matters on its own:
+without it the tool that enforces every other checksum was itself
+downloaded unverified.
 
 ## Current policy
 
 - `gradle/verification-metadata.xml` is source-controlled and should be
   reviewed like source code.
-- The file records SHA-256 checksums and PGP signature metadata where
-  Gradle could retrieve it.
+- **Checksums only.** `verify-signatures` is `false`, so no PGP
+  signature is ever checked. The file used to carry 85 trusted-key and
+  ignored-key entries anyway, most of them keys that could not be
+  downloaded from any key server, which read as a guarantee the build
+  does not provide. They are gone.
+- What is enforced: every artifact and POM must match a recorded
+  SHA-256, and an artifact with no entry fails the build.
+- Turning signatures on is separate work. It needs a pass over which
+  upstreams publish reachable keys, and a deliberate decision about the
+  ones that do not.
 - The initial enforced metadata was generated after C95 (AGP 9) and
   C144 (AndroidX stable baseline refresh) so routine toolchain churn did
   not immediately invalidate the lockfile.
-- The metadata currently includes ignored PGP keys whose public keys
-  could not be downloaded from any key server during generation. Keep
-  those entries only when the artifact checksum is expected and the
-  dependency/source is otherwise known.
 - Local release commands should keep verification in strict mode.
 
 ## Refreshing the verification metadata
@@ -68,7 +76,6 @@ artifacts.
 Review `gradle/verification-metadata.xml` for:
 
 - components without a SHA-256 checksum — investigate each one;
-- new ignored PGP keys — verify why Gradle could not fetch the key;
 - unexpected new groups or artifacts — compare to the dependency PR;
 - any entry marked unverified — triage before commit.
 
@@ -127,7 +134,6 @@ python tools/dependency_update_review.py \
 |---|---|---|
 | `Dependency verification failed for org.foo:bar:1.2.3` | Hash in metadata doesn't match the resolved artifact | Regenerate metadata; investigate why the artifact changed without a version bump |
 | `No checksum found for org.foo:bar:1.2.3` | Artifact was added (often transitively) without metadata | Regenerate or add an explicit `<trusted-artifacts>` entry |
-| Signature verification failed for AGP plugin | AGP or its sub-plugins changed their signing key | Compare the new key fingerprint to the published one on `developer.android.com`; update `<pgp-keys>` block if legitimate |
 | Gradle wrapper itself fails | Wrapper distribution hash changed | Check `gradle/wrapper/gradle-wrapper.properties` against `services.gradle.org/distributions/` — never silently bump |
 
 ## Related controls already in place

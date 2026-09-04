@@ -69,6 +69,7 @@ import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.components.labeledSliderSemantics
+import com.openlumen.ui.components.lumenSliderColors
 import com.openlumen.ui.theme.lumenChannelColors
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
@@ -383,7 +384,8 @@ fun HomeScreen(
                     modifier = Modifier.labeledSliderSemantics(
                         name = stringResource(R.string.home_intensity),
                         valueDescription = intensityState
-                    )
+                    ),
+                    colors = lumenSliderColors()
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -409,7 +411,8 @@ fun HomeScreen(
                     modifier = Modifier.labeledSliderSemantics(
                         name = stringResource(R.string.home_dim),
                         valueDescription = dimState
-                    )
+                    ),
+                    colors = lumenSliderColors()
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -475,7 +478,8 @@ fun HomeScreen(
                     modifier = Modifier.labeledSliderSemantics(
                         name = stringResource(R.string.home_contrast),
                         valueDescription = contrastState
-                    )
+                    ),
+                    colors = lumenSliderColors()
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -600,7 +604,8 @@ fun HomeScreen(
                     modifier = Modifier.labeledSliderSemantics(
                         name = stringResource(R.string.home_kelvin_title),
                         valueDescription = kelvinState
-                    )
+                    ),
+                    colors = lumenSliderColors()
                 )
                 Text(
                     stringResource(
@@ -689,7 +694,8 @@ private fun GammaSlider(
                 .labeledSliderSemantics(
                     name = accessibleName,
                     valueDescription = gammaState
-                )
+                ),
+            colors = lumenSliderColors(track)
         )
         Text(
             stringResource(R.string.home_gamma_value, value),
@@ -731,7 +737,8 @@ private fun RgbSlider(
                 .labeledSliderSemantics(
                     name = accessibleName,
                     valueDescription = rgbState
-                )
+                ),
+            colors = lumenSliderColors(track)
         )
         Text(
             stringResource(R.string.home_rgb_value, percent),

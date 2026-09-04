@@ -36,12 +36,20 @@ internal object Catppuccin {
     val Crust     = Color(0xFF11111B)
     val Amoled    = Color(0xFF000000)
 
-    // Warning and error card fills. Peach and Red at roughly 18 percent
-    // over Surface0, precomputed so the roles stay plain colours and the
-    // card reads as a warning next to a plain one rather than identical
-    // to it.
+    // Derived tones, not part of Catppuccin. Each one is here because a
+    // Material role needed a value the palette does not carry, and each is
+    // chosen for its measured contrast against what sits on it. The figures
+    // are asserted in ThemeRolesTest, so they cannot drift quietly.
+
+    // Warning and error card fills. Peach on PeachContainer is 6.15:1 and Red
+    // on RedContainer is 5.22:1, so a warning reads as a warning next to a
+    // plain card instead of sharing its fill.
     val PeachContainer = Color(0xFF463A3B)
     val RedContainer   = Color(0xFF44303E)
+
+    // One step between Surface0 and Surface1, so the container ramp has five
+    // distinct values and none of them collides with surfaceVariant.
+    val SurfaceContainerHigh = Color(0xFF3B3C4F)
 }
 
 /**
@@ -78,9 +86,36 @@ internal object Latte {
     val Mantle    = Color(0xFFE6E9EF)
     val Crust     = Color(0xFFDCE0E8)
 
-    // Same idea as Mocha's, over Latte Crust.
+    // Derived tones, as in Mocha. Latte needs more of them because its
+    // palette has only three steps below Surface0, and because dark text on a
+    // pale ground is where contrast actually goes wrong.
+
+    // Warning and error card fills, with their own text colours. Catppuccin's
+    // Latte Peach (#FE640B) on this ground is 2.28:1 and Latte Red is 3.69:1,
+    // both of which fail AA, so the accent stays the card's identity and a
+    // darker tone carries the words: 5.97:1 and 5.78:1.
     val PeachContainer = Color(0xFFF7DCC8)
+    val PeachText      = Color(0xFF8A3A00)
     val RedContainer   = Color(0xFFF3CBD1)
+    val RedText        = Color(0xFF9C0626)
+
+    // Two steps inside the container ramp, so it has five distinct values
+    // ending at Surface0 rather than running down to Surface1, where
+    // secondary text cannot reach 4.5:1.
+    val SurfaceContainer     = Color(0xFFE1E4EC)
+    val SurfaceContainerHigh = Color(0xFFD4D8E1)
+
+    // Secondary text. Subtext1 manages only 4.05:1 on the darkest container in
+    // this ramp; this is one step darker and clears 4.5:1 on all of them
+    // while staying visibly lighter than Text.
+    val SecondaryText = Color(0xFF545771)
+
+    // Filled accents. Catppuccin's Latte Pink and Teal are decorative tones,
+    // and a filled button painting Base on them reaches only 2.34:1 and
+    // 3.31:1. These keep the hue and take it dark enough to carry light text:
+    // 5.61:1 and 5.45:1.
+    val PinkStrong = Color(0xFFA32F86)
+    val TealStrong = Color(0xFF0D6C72)
 }
 
 /**

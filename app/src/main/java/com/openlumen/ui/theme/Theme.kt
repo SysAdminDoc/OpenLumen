@@ -38,7 +38,9 @@ internal val DarkColors = darkColorScheme(
     surfaceContainerLowest = Catppuccin.Crust,
     surfaceContainerLow = Catppuccin.Mantle,
     surfaceContainer = Catppuccin.Base,
-    surfaceContainerHigh = Catppuccin.Surface0,
+    // Not Surface0: surfaceVariant above is Surface0, and a container that
+    // paints the same colour as the surface behind it has no edge at all.
+    surfaceContainerHigh = Catppuccin.SurfaceContainerHigh,
     surfaceContainerHighest = Catppuccin.Surface1,
     surfaceBright = Catppuccin.Surface0,
     surfaceDim = Catppuccin.Amoled,
@@ -66,25 +68,28 @@ internal val LightColors = lightColorScheme(
     onPrimary = Latte.Base,
     primaryContainer = Latte.Surface0,
     onPrimaryContainer = Latte.Text,
-    secondary = Latte.Pink,
+    secondary = Latte.PinkStrong,
     onSecondary = Latte.Base,
     secondaryContainer = Latte.Surface0,
     onSecondaryContainer = Latte.Text,
-    tertiary = Latte.Teal,
+    tertiary = Latte.TealStrong,
     onTertiary = Latte.Base,
     tertiaryContainer = Latte.PeachContainer,
-    onTertiaryContainer = Latte.Peach,
+    onTertiaryContainer = Latte.PeachText,
     background = Latte.Base,
     onBackground = Latte.Text,
     surface = Latte.Base,
     onSurface = Latte.Text,
     surfaceVariant = Latte.Crust,
-    onSurfaceVariant = Latte.Subtext1,
+    onSurfaceVariant = Latte.SecondaryText,
     surfaceContainerLowest = Latte.Base,
     surfaceContainerLow = Latte.Mantle,
-    surfaceContainer = Latte.Crust,
-    surfaceContainerHigh = Latte.Surface0,
-    surfaceContainerHighest = Latte.Surface1,
+    // Ends at Surface0. Cards take the highest container by default, so this
+    // is the ground most of the app's text sits on, and Surface1 leaves
+    // onSurface at 4.39:1.
+    surfaceContainer = Latte.SurfaceContainer,
+    surfaceContainerHigh = Latte.SurfaceContainerHigh,
+    surfaceContainerHighest = Latte.Surface0,
     surfaceBright = Latte.Base,
     surfaceDim = Latte.Crust,
     inverseSurface = Latte.Text,
@@ -92,11 +97,14 @@ internal val LightColors = lightColorScheme(
     inversePrimary = Catppuccin.Mauve,
     scrim = Latte.Text,
     outline = Latte.Overlay1,
-    outlineVariant = Latte.Surface1,
+    // Surface2, not Surface1. Surface1 is what the highest container used to
+    // be, and an outlined button drawing its border in the same colour as the
+    // card behind it has no border at all.
+    outlineVariant = Latte.Surface2,
     error = Latte.Red,
     onError = Latte.Base,
     errorContainer = Latte.RedContainer,
-    onErrorContainer = Latte.Red
+    onErrorContainer = Latte.RedText
 )
 
 /**
