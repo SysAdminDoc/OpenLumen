@@ -158,7 +158,7 @@
     <string name="driver_auto_resolved_none">Auto: nenhum controlador disponível. Conceder a permissão de sobreposição instala a alternativa de sobreposição.</string>
     <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. Luz noturna do sistema, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
     <string name="driver_force_pinned">Usar este controlador mesmo que pareça indisponível</string>
-    <string name="driver_force_pinned_body">Esconder o root das apps também o esconde desta verificação, e um aviso do Magisk respondido tarde parece falta de root. Ative isto para tentar mesmo assim. Se o controlador não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
+    <string name="driver_force_pinned_body">Os gestores de root respondem de forma diferente. O KernelSU e o APatch nunca perguntam, por isso um controlador sem root aí costuma apenas precisar que adicione o OpenLumen à lista do gestor. O Magisk pergunta, e uma resposta lenta parece falta de root. Active isto para tentar mesmo assim; se não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection do Android</string>
     <string name="driver_aapm_explanation">O modo de protecção avançada pode desligar funcionalidades que dependem da acessibilidade. O OpenLumen não usa acessibilidade nem acesso à utilização, por isso não é afectado. O relatório do controlador regista o estado da plataforma quando o dispositivo o disponibiliza.</string>

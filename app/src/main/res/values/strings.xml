@@ -182,7 +182,7 @@
     <string name="driver_auto_resolved_none">Auto: no driver available. Granting overlay permission installs the Overlay fallback.</string>
     <string name="driver_color_contract">SurfaceFlinger preserves the full color matrix. System Night Light, KCAL, and Overlay use a scalar approximation: contrast matches the transformed white point, while black and midtones may differ.</string>
     <string name="driver_force_pinned">Use this driver even if it looks unavailable</string>
-    <string name="driver_force_pinned_body">Hiding root from apps also hides it from this check, and a slow Magisk prompt reads as no root. Turn this on to try the driver anyway. If it really cannot run, the filter reports the error instead of switching back to Auto.</string>
+    <string name="driver_force_pinned_body">Root managers answer differently. KernelSU and APatch never prompt, so a driver that cannot get root there usually just needs OpenLumen added to the manager\'s allowlist. Magisk does prompt, and a slow answer reads as no root. Turn this on to try the driver anyway; if it really cannot run, the filter reports the error instead of switching back to Auto.</string>
     <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Advanced Protection Mode can switch off features that rely on Accessibility. OpenLumen uses neither Accessibility nor usage access, so it is unaffected. The driver report records the platform state where the device exposes it.</string>

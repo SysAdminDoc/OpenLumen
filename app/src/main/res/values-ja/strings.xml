@@ -158,7 +158,7 @@
     <string name="driver_auto_resolved_none">自動: 利用できるドライバーがありません。オーバーレイ権限を許可するとオーバーレイの代替ドライバーを使えます。</string>
     <string name="driver_color_contract">SurfaceFlinger は完全なカラーマトリクスを保持します。システムの夜間モード、KCAL、Overlay はスカラー近似を使用するため、コントラストは変換後の白色点に一致しますが、黒と中間調は異なる場合があります。</string>
     <string name="driver_force_pinned">利用不可に見えてもこのドライバを使う</string>
-    <string name="driver_force_pinned_body">アプリから root を隠す設定はこの判定からも隠し、Magisk の許可を遅く押すと root なしに見えます。これをオンにするとそれでも試します。本当に動かない場合は、自動に戻らずエラーを報告します。</string>
+    <string name="driver_force_pinned_body">root マネージャーによって応答は異なります。KernelSU と APatch は確認を求めないため、root を取得できない場合は通常、マネージャーの許可リストに OpenLumen を追加すれば済みます。Magisk は確認を求め、応答が遅いと root なしに見えます。これを有効にするととにかく試行し、本当に実行できなければ自動に戻らずエラーを報告します。</string>
     <string name="driver_grant_secure_settings">ADB で WRITE_SECURE_SETTINGS を許可する</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">高度な保護モードは、ユーザー補助機能に依存する機能を無効にすることがあります。OpenLumen はユーザー補助機能も使用状況へのアクセスも使わないため、影響を受けません。ドライバーレポートには、端末が公開している場合に限りプラットフォームの状態を記録します。</string>

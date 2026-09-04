@@ -272,5 +272,14 @@
         <intent>
             <action android:name="android.settings.APPLICATION_DETAILS_SETTINGS" />
         </intent>
+
+        <!--
+            The root managers, so the driver report can say which one is
+            installed and the Driver tab can name the right next step. Without
+            these an installed manager reads as absent from API 30.
+        -->
+        <package android:name="com.topjohnwu.magisk" />
+        <package android:name="me.weishu.kernelsu" />
+        <package android:name="me.bmax.apatch" />
     </queries>
 </manifest>

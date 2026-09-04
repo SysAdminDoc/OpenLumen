@@ -83,7 +83,8 @@ object Su {
      * is no". Kept in sync with [resetCacheIfSuLikelyFailed], which exists for
      * the same reason on the engines' apply paths.
      */
-    internal fun isInconclusive(exitCode: Int): Boolean = exitCode == 127 || exitCode == -1
+    internal fun isInconclusive(exitCode: Int): Boolean =
+        SuOutcome.of(exitCode).isInconclusive
 
     fun resetCache() {
         cacheGeneration.incrementAndGet()

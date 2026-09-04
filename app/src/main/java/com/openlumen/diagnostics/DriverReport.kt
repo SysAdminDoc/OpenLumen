@@ -7,6 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import com.openlumen.BuildConfig
 import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.RootManager
 import com.openlumen.engine.engines.KcalEngine
 import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
@@ -45,10 +46,36 @@ object DriverReport {
         appendDevice()
         appendPermissions(context)
         appendAdvancedProtection(context)
+        appendRootManagers(context)
         appendProbes(probes)
         appendConfig(prefs)
         appendDiagnostics(context)
         appendFooter()
+    }
+
+    /**
+     * Which root managers are installed.
+     *
+     * "Root not available" means different things under different managers,
+     * and the fix is different too: KernelSU and APatch have no prompt at all,
+     * so a driver that cannot get su there is usually an allowlist toggle
+     * rather than anything wrong. A report that does not say which manager is
+     * present cannot be read.
+     */
+    private fun StringBuilder.appendRootManagers(context: Context) {
+        appendLine("Root managers")
+        appendLine("---")
+        val installed = RootManager.entries.filter { manager ->
+            runCatching {
+                context.packageManager.getPackageInfo(manager.packageName, 0)
+            }.isSuccess
+        }
+        if (installed.isEmpty()) {
+            appendLine("none detected")
+        } else {
+            installed.forEach { appendLine("${it.name}: ${it.packageName}") }
+        }
+        appendLine()
     }
 
     /**
