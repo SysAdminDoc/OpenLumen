@@ -230,6 +230,7 @@
     <string name="about_profiles_replace">Reemplazar</string>
     <string name="about_profiles_name_label">Nombre del perfil</string>
     <string name="about_profiles_name_count">Longitud %1$d/%2$d</string>
+    <string name="about_profiles_name_taken">Ya existe un perfil con este nombre</string>
     <string name="about_profiles_load">Cargar</string>
     <string name="about_profiles_delete">Eliminar</string>
     <string name="about_profiles_deleted">Perfil eliminado</string>

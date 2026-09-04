@@ -260,6 +260,7 @@
     <string name="about_profiles_replace">Replace</string>
     <string name="about_profiles_name_label">Profile name</string>
     <string name="about_profiles_name_count">Length %1$d/%2$d</string>
+    <string name="about_profiles_name_taken">A profile with this name already exists</string>
     <string name="about_profiles_load">Load</string>
     <string name="about_profiles_delete">Delete</string>
     <string name="about_profiles_empty">No profiles saved yet.</string>

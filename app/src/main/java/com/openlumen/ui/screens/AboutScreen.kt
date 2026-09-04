@@ -149,8 +149,7 @@ fun AboutScreen(
         val oldName = pendingRenameProfileName
         val cleanName = name.trim()
         if (oldName.isBlank() || cleanName.isBlank()) return
-        val existing = Profiles.findByName(currentPrefs, cleanName)
-        if (existing != null && !existing.name.equals(oldName, ignoreCase = true)) return
+        if (profileRenameCollides(currentPrefs, oldName, cleanName)) return
         vm.renameProfile(oldName, cleanName)
         showRenameProfileDialog = false
         pendingRenameProfileName = ""
@@ -556,6 +555,13 @@ fun AboutScreen(
     if (showRenameProfileDialog) {
         val cleanProfileName = renameProfileName.trim()
         val maxProfileNameLength = Preferences.MAX_PROFILE_NAME_LENGTH
+        // The Save button used to stay enabled on a name that is already
+        // taken, and the tap was swallowed: the dialog just sat there.
+        val renameCollides = profileRenameCollides(
+            currentPrefs,
+            pendingRenameProfileName,
+            cleanProfileName
+        )
         AlertDialog(
             onDismissRequest = {
                 showRenameProfileDialog = false
@@ -568,13 +574,18 @@ fun AboutScreen(
                     value = renameProfileName,
                     onValueChange = { renameProfileName = it.take(maxProfileNameLength) },
                     label = { Text(stringResource(R.string.about_profiles_name_label)) },
+                    isError = renameCollides,
                     supportingText = {
                         Text(
-                            stringResource(
-                                R.string.about_profiles_name_count,
-                                renameProfileName.length,
-                                maxProfileNameLength
-                            )
+                            if (renameCollides) {
+                                stringResource(R.string.about_profiles_name_taken)
+                            } else {
+                                stringResource(
+                                    R.string.about_profiles_name_count,
+                                    renameProfileName.length,
+                                    maxProfileNameLength
+                                )
+                            }
                         )
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -588,7 +599,7 @@ fun AboutScreen(
             confirmButton = {
                 LumenTextButton(
                     onClick = { submitProfileRename(cleanProfileName) },
-                    enabled = cleanProfileName.isNotEmpty()
+                    enabled = cleanProfileName.isNotEmpty() && !renameCollides
                 ) { Text(stringResource(R.string.action_save)) }
             },
             dismissButton = {
@@ -1183,4 +1194,18 @@ private fun timelineInstantAt(
     val clamped = fraction.coerceIn(0f, 1f)
     val offset = ((end - start).toDouble() * clamped).toLong()
     return java.time.Instant.ofEpochMilli(start + offset)
+}
+
+/**
+ * Whether renaming [oldName] to [newName] would land on a profile that already
+ * exists. Renaming a profile to its own name in a different case is not a
+ * collision: that is how a user fixes the capitalisation of a name they own.
+ */
+internal fun profileRenameCollides(
+    current: Preferences,
+    oldName: String,
+    newName: String
+): Boolean {
+    val existing = Profiles.findByName(current, newName.trim()) ?: return false
+    return !existing.name.equals(oldName, ignoreCase = true)
 }
