@@ -50,7 +50,6 @@
     <string name="home_gamma_green_name">Grünes Gamma</string>
     <string name="home_gamma_blue_name">Blaues Gamma</string>
 
-    <string name="presets_title">Vorlage auswählen</string>
     <string name="presets_custom">Benutzerdefiniertes RGB</string>
     <string name="preset_name_off">Aus</string>
     <string name="preset_name_night">Nacht</string>
@@ -65,9 +64,6 @@
     <string name="preset_name_deutan">Deutan</string>
     <string name="preset_name_tritan">Tritan</string>
     <string name="preset_previous">Vorherige: %1$s</string>
-    <string name="presets_red">Rot</string>
-    <string name="presets_amber">Bernstein</string>
-    <string name="presets_night">Nacht</string>
     <string name="preset_favorite">Zu Favoriten hinzufügen</string>
     <string name="preset_unfavorite">Aus Favoriten entfernen</string>
     <string name="preset_restore_previous">Wiederherstellen</string>
@@ -179,7 +175,6 @@
     <string name="overlay_alpha_cap_explanation" formatted="false">Die Overlay-Transparenz ist durch Android 12+ auf ca. 80% begrenzt (Untrusted-Touch-Regeln). Für stärkere Abdunklung verwenden Sie System-Nachtlicht oder einen Root-Treiber.</string>
     <string name="overlay_touch_pass_explanation">Solange das Overlay läuft, kann Android Tipps auf Installations- und Berechtigungsdialoge blockieren. Das ist der Tapjacking-Schutz der Plattform, kein Fehler in OpenLumen. Schalte den Filter vor dem Installieren über die Kachel oder die Benachrichtigung aus.</string>
 
-    <string name="about_version">Version</string>
     <string name="about_license">Lizenz: GPL-3.0-or-later</string>
     <string name="about_source">Quellcode: github.com/SysAdminDoc/OpenLumen</string>
     <string name="about_offline" formatted="false">100 % offline. Es wird keine INTERNET-Berechtigung angefordert.</string>

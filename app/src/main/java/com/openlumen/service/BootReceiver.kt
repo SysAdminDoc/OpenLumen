@@ -20,11 +20,11 @@ import javax.inject.Inject
  * the foreground service. Root-driver builds get their tint back immediately; rootless
  * users still need to grant overlay permission once (handled at first run).
  *
- * We deliberately do NOT register for `LOCKED_BOOT_COMPLETED`: our DataStore lives in
- * user-protected storage which isn't accessible before the user unlocks the device for
- * the first time after boot. Listening there would just deadlock on prefs.flow.first()
- * until the system kills our PendingResult. Direct-boot support requires moving prefs
- * to deviceProtectedStorageContext, which is tracked as C28 on the roadmap.
+ * `LOCKED_BOOT_COMPLETED` is [LockedBootReceiver]'s, not this one's. The DataStore
+ * this reads lives in user-protected storage and cannot be opened before the first
+ * unlock, so reading it there would block on `prefs.flow.first()` until the system
+ * killed the PendingResult. [DirectBootMirror] keeps a copy of the few fields the
+ * locked path needs in device-protected storage instead (C28).
  *
  * Boot-panic reset (C85):
  *

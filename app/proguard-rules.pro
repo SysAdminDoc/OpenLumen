@@ -1,10 +1,5 @@
 # OpenLumen ProGuard / R8 rules
 
-# Keep ColorEngine reflection target for ColorDisplayManager path
--keepclassmembers class android.hardware.display.ColorDisplayManager {
-    public *;
-}
-
 # Compose / Material 3 — handled by AGP defaults
 
 # Hilt — consumer rules handle framework classes; keep generated components only

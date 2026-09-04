@@ -50,7 +50,6 @@
     <string name="home_gamma_green_name">Gamma vert</string>
     <string name="home_gamma_blue_name">Gamma bleu</string>
 
-    <string name="presets_title">Choisir un préréglage</string>
     <string name="presets_custom">RVB personnalisé</string>
     <string name="preset_name_off">Éteint</string>
     <string name="preset_name_night">Nuit</string>
@@ -65,9 +64,6 @@
     <string name="preset_name_deutan">Deutan</string>
     <string name="preset_name_tritan">Tritan</string>
     <string name="preset_previous">Precedent : %1$s</string>
-    <string name="presets_red">Rouge</string>
-    <string name="presets_amber">Ambre</string>
-    <string name="presets_night">Nuit</string>
     <string name="preset_favorite">Ajouter aux favoris</string>
     <string name="preset_unfavorite">Retirer des favoris</string>
     <string name="preset_restore_previous">Restaurer</string>
@@ -179,7 +175,6 @@
     <string name="overlay_alpha_cap_explanation" formatted="false">L\'opacité de la superposition est limitée à environ 80 % par les règles Android 12+ sur les touchers non fiables. Pour assombrir davantage, utilisez Éclairage nocturne système ou un pilote root.</string>
     <string name="overlay_touch_pass_explanation">Tant que la superposition est active, Android peut bloquer les appuis sur les boîtes de dialogue d\'installation et d\'autorisation. C\'est la protection anti-tapjacking de la plateforme, pas un bogue d\'OpenLumen. Désactivez le filtre depuis la tuile ou la notification avant d\'installer des applications.</string>
 
-    <string name="about_version">Version</string>
     <string name="about_license">Licence : GPL-3.0-or-later</string>
     <string name="about_source">Source : github.com/SysAdminDoc/OpenLumen</string>
     <string name="about_offline" formatted="false">100 % hors ligne. Aucune autorisation INTERNET n\'est demandée.</string>

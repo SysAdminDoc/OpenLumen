@@ -86,7 +86,6 @@ fun hasCompleteReleaseSigningEnv(): Boolean =
 android {
     namespace = "com.openlumen"
     compileSdk = 37
-    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
         applicationId = "com.openlumen"
@@ -146,6 +145,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    // The screenshot plugin needs both this and the project property in
+    // gradle.properties: the project one lets the source set exist at all, and
+    // this one turns it on for this module. Removing either fails the build at
+    // configuration time with a message naming the other.
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
     buildFeatures {
         compose = true
         buildConfig = true

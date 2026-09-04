@@ -50,7 +50,6 @@
     <string name="home_gamma_green_name">Gamma verde</string>
     <string name="home_gamma_blue_name">Gamma azul</string>
 
-    <string name="presets_title">Elegir un ajuste predefinido</string>
     <string name="presets_custom">RGB personalizado</string>
     <string name="preset_name_off">Desactivado</string>
     <string name="preset_name_night">Nocturno</string>
@@ -65,9 +64,6 @@
     <string name="preset_name_deutan">Deutan</string>
     <string name="preset_name_tritan">Tritan</string>
     <string name="preset_previous">Anterior: %1$s</string>
-    <string name="presets_red">Rojo</string>
-    <string name="presets_amber">Ámbar</string>
-    <string name="presets_night">Nocturno</string>
     <string name="preset_favorite">Añadir a favoritos</string>
     <string name="preset_unfavorite">Quitar de favoritos</string>
     <string name="preset_restore_previous">Restaurar</string>
@@ -179,7 +175,6 @@
     <string name="overlay_alpha_cap_explanation" formatted="false">La opacidad del overlay está limitada a ~80% por las reglas de toques no confiables de Android 12+. Para una atenuación más profunda, utilice Luz nocturna del sistema o un controlador con root.</string>
     <string name="overlay_touch_pass_explanation">Mientras la superposición está activa, Android puede bloquear los toques en los diálogos del instalador y de permisos. Es la protección de la plataforma contra el tapjacking, no un fallo de OpenLumen. Desactiva el filtro desde el mosaico o la notificación antes de instalar aplicaciones.</string>
 
-    <string name="about_version">Versión</string>
     <string name="about_license">Licencia: GPL-3.0-or-later</string>
     <string name="about_source">Código fuente: github.com/SysAdminDoc/OpenLumen</string>
     <string name="about_offline" formatted="false">100 % sin conexión. No se solicita el permiso INTERNET.</string>

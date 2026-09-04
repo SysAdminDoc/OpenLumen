@@ -51,7 +51,6 @@
     <string name="home_gamma_green_name">Green gamma</string>
     <string name="home_gamma_blue_name">Blue gamma</string>
 
-    <string name="presets_title">Choose a preset</string>
     <string name="presets_custom">Custom RGB</string>
     <string name="preset_name_off">Off</string>
     <string name="preset_name_night">Night</string>
@@ -66,9 +65,6 @@
     <string name="preset_name_deutan">Deutan</string>
     <string name="preset_name_tritan">Tritan</string>
     <string name="preset_previous">Previous: %1$s</string>
-    <string name="presets_red">Red</string>
-    <string name="presets_amber">Amber</string>
-    <string name="presets_night">Night</string>
     <string name="preset_favorite">Add to favorites</string>
     <string name="preset_unfavorite">Remove from favorites</string>
     <string name="preset_restore_previous">Restore</string>
@@ -203,7 +199,6 @@
     <string name="overlay_alpha_cap_explanation" formatted="false">Overlay alpha is capped at ~80% by Android 12+ untrusted-touch rules. For deeper dim, use System Night Light (with Extra Dim) or a root driver.</string>
     <string name="overlay_touch_pass_explanation">While the overlay is on, Android may block taps on system installer and permission dialogs. That is the platform\'s tapjacking protection, not an OpenLumen bug. Turn the filter off from the tile or the notification before installing apps.</string>
 
-    <string name="about_version">Version</string>
     <string name="about_license">License: GPL-3.0-or-later</string>
     <string name="about_source">Source: github.com/SysAdminDoc/OpenLumen</string>
     <string name="about_offline" formatted="false">100% offline. No INTERNET permission is requested.</string>
