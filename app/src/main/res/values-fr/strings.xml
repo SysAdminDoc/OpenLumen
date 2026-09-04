@@ -135,7 +135,6 @@
     <string name="schedule_sunrise_offset">Décalage du lever : %1$d min</string>
     <string name="schedule_sunset_offset_name">Décalage du coucher du soleil</string>
     <string name="schedule_sunrise_offset_name">Décalage du lever du soleil</string>
-    <string name="schedule_offset_state">%1$s %2$d minutes</string>
     <string name="transition_duration_title">Durée de transition</string>
     <string name="transition_duration_subtitle">Vitesse d\'apparition ou de disparition du filtre aux limites de la programmation. Les modifications manuelles (curseurs, préréglages) restent instantanées.</string>
     <string name="transition_instant">Instantane</string>
@@ -220,7 +219,6 @@
     <string name="about_diag_log_empty">Aucun événement enregistré.</string>
     <string name="about_diag_log_filter_level">Niveaux</string>
     <string name="about_diag_log_filter_category">Categories</string>
-    <string name="about_diag_log_count">Affichage de %1$d lignes sur %2$d</string>
     <string name="about_diag_log_no_matches">Aucune ligne ne correspond au filtre actuel.</string>
     <string name="about_profiles_title">Profils</string>
     <string name="about_profiles_body">Enregistrez le préréglage actuel, la programmation, l\'intensité, la réduction et les favoris sous un profil nommé. Rechargez-le ensuite depuis cette liste.</string>
@@ -313,7 +311,7 @@
     <string name="preset_rename_label">Nom du préréglage</string>
     <string name="preset_rename_reset">Réinitialiser</string>
     <string name="preset_pack_preview_title">Aperçu du pack</string>
-    <string name="preset_pack_preview_summary">Préréglages ajoutés : %1$d. Noms remplacés : %2$d.</string>
+    <string name="preset_pack_preview_summary">%1$s. %2$s.</string>
     <string name="preset_pack_preview_replaced">Remplacés : %1$s</string>
     <string name="preset_pack_preview_safe">Seuls les préréglages enregistrés et les noms intégrés sont importés. Le filtre actif, la programmation et les autorisations restent inchangés.</string>
     <string name="backup_preset_pack_exported">Pack de préréglages exporté</string>
@@ -339,4 +337,16 @@
     <string name="diag_category_widget">Widget</string>
     <string name="diag_category_tile">Tuile</string>
     <string name="diag_category_profile">Préréglage</string>
+    <plurals name="preset_pack_preview_added">
+        <item quantity="one">%1$d préréglage ajouté</item>
+        <item quantity="other">%1$d préréglages ajoutés</item>
+    </plurals>
+    <plurals name="preset_pack_preview_replaced">
+        <item quantity="one">%1$d nom existant remplacé</item>
+        <item quantity="other">%1$d noms existants remplacés</item>
+    </plurals>
+    <plurals name="about_diag_log_count">
+        <item quantity="one">Affichage de %1$d ligne sur %2$d</item>
+        <item quantity="other">Affichage de %1$d lignes sur %2$d</item>
+    </plurals>
 </resources>

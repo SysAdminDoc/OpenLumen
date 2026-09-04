@@ -39,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.pluralStringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -712,8 +713,16 @@ fun AboutScreen(
                     Text(
                         stringResource(
                             R.string.preset_pack_preview_summary,
-                            pending.summary.importedProfileNames.size,
-                            pending.summary.replacedProfileNames.size
+                            pluralStringResource(
+                                R.plurals.preset_pack_preview_added,
+                                pending.summary.importedProfileNames.size,
+                                pending.summary.importedProfileNames.size
+                            ),
+                            pluralStringResource(
+                                R.plurals.preset_pack_preview_replaced,
+                                pending.summary.replacedProfileNames.size,
+                                pending.summary.replacedProfileNames.size
+                            )
                         )
                     )
                     if (pending.summary.replacedProfileNames.isNotEmpty()) {
@@ -1140,8 +1149,9 @@ private fun DiagnosticsLogDialog(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        stringResource(
-                            R.string.about_diag_log_count,
+                        pluralStringResource(
+                            R.plurals.about_diag_log_count,
+                            baseFilteredLines.size,
                             filteredLines.size,
                             baseFilteredLines.size
                         ),

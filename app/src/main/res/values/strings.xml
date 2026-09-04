@@ -93,7 +93,7 @@
     <string name="preset_rename_label">Preset name</string>
     <string name="preset_rename_reset">Reset</string>
     <string name="preset_pack_preview_title">Preview preset pack</string>
-    <string name="preset_pack_preview_summary">Saved presets added: %1$d. Existing names replaced: %2$d.</string>
+    <string name="preset_pack_preview_summary">%1$s. %2$s.</string>
     <string name="preset_pack_preview_replaced">Replaced: %1$s</string>
     <string name="preset_pack_preview_safe">Only saved presets and built-in labels are imported. The active filter, schedule, and permissions stay unchanged.</string>
     <string name="import_preview_title">Preview imported backup</string>
@@ -159,7 +159,6 @@
     <string name="schedule_sunrise_offset">Sunrise offset: %1$d min</string>
     <string name="schedule_sunset_offset_name">Sunset offset</string>
     <string name="schedule_sunrise_offset_name">Sunrise offset</string>
-    <string name="schedule_offset_state">%1$s %2$d minutes</string>
     <string name="transition_duration_title">Transition duration</string>
     <string name="transition_duration_subtitle">How smoothly the filter fades in or out at schedule boundaries. User-driven changes (sliders, preset taps) remain instant.</string>
     <string name="transition_instant">Instant</string>
@@ -248,7 +247,6 @@
     <string name="about_diag_log_filter_category">Categories</string>
     <string name="about_diag_log_timeline">Timeline range</string>
     <string name="about_diag_log_search">Search filtered lines</string>
-    <string name="about_diag_log_count">Showing %1$d of %2$d lines</string>
     <string name="about_diag_log_no_matches">No lines match the current filter.</string>
     <string name="about_profiles_title">Profiles</string>
     <string name="about_profiles_body">Save the current preset, schedule, intensity, dim, and favorites as a named profile. Load it later from this list.</string>
@@ -345,4 +343,16 @@
     <string name="diag_category_widget">Widget</string>
     <string name="diag_category_tile">Tile</string>
     <string name="diag_category_profile">Preset</string>
+    <plurals name="preset_pack_preview_added">
+        <item quantity="one">%1$d saved preset added</item>
+        <item quantity="other">%1$d saved presets added</item>
+    </plurals>
+    <plurals name="preset_pack_preview_replaced">
+        <item quantity="one">%1$d existing name replaced</item>
+        <item quantity="other">%1$d existing names replaced</item>
+    </plurals>
+    <plurals name="about_diag_log_count">
+        <item quantity="one">Showing %1$d of %2$d line</item>
+        <item quantity="other">Showing %1$d of %2$d lines</item>
+    </plurals>
 </resources>

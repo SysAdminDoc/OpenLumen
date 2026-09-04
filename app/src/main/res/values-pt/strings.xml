@@ -135,7 +135,6 @@
     <string name="schedule_sunrise_offset">Desvio do nascer do sol: %1$d min</string>
     <string name="schedule_sunset_offset_name">Deslocamento do pôr do sol</string>
     <string name="schedule_sunrise_offset_name">Deslocamento do nascer do sol</string>
-    <string name="schedule_offset_state">%1$s %2$d minutos</string>
     <string name="transition_duration_title">Duração da transição</string>
     <string name="transition_duration_subtitle">Velocidade com que o filtro aparece ou desaparece nos limites do agendamento. Alteracoes manuais (controles deslizantes, toques em predefinidos) permanecem instantaneas.</string>
     <string name="transition_instant">Instantaneo</string>
@@ -220,7 +219,6 @@
     <string name="about_diag_log_empty">Nenhum evento registrado ainda.</string>
     <string name="about_diag_log_filter_level">Níveis</string>
     <string name="about_diag_log_filter_category">Categorias</string>
-    <string name="about_diag_log_count">Exibindo %1$d de %2$d linhas</string>
     <string name="about_diag_log_no_matches">Nenhuma linha corresponde ao filtro atual.</string>
     <string name="about_profiles_title">Perfis</string>
     <string name="about_profiles_body">Salve o predefinido atual, agendamento, intensidade, escurecimento e favoritos como um perfil nomeado. Carregue-o depois a partir desta lista.</string>
@@ -313,7 +311,7 @@
     <string name="preset_rename_label">Nome da predefinição</string>
     <string name="preset_rename_reset">Repor</string>
     <string name="preset_pack_preview_title">Pré-visualizar pacote</string>
-    <string name="preset_pack_preview_summary">Predefinições guardadas adicionadas: %1$d. Nomes substituídos: %2$d.</string>
+    <string name="preset_pack_preview_summary">%1$s. %2$s.</string>
     <string name="preset_pack_preview_replaced">Substituídas: %1$s</string>
     <string name="preset_pack_preview_safe">Só são importadas predefinições guardadas e etiquetas integradas. O filtro ativo, o horário e as permissões não mudam.</string>
     <string name="backup_preset_pack_exported">Pacote de predefinições exportado</string>
@@ -339,4 +337,16 @@
     <string name="diag_category_widget">Widget</string>
     <string name="diag_category_tile">Mosaico</string>
     <string name="diag_category_profile">Predefinição</string>
+    <plurals name="preset_pack_preview_added">
+        <item quantity="one">%1$d predefinição guardada adicionada</item>
+        <item quantity="other">%1$d predefinições guardadas adicionadas</item>
+    </plurals>
+    <plurals name="preset_pack_preview_replaced">
+        <item quantity="one">%1$d nome existente substituído</item>
+        <item quantity="other">%1$d nomes existentes substituídos</item>
+    </plurals>
+    <plurals name="about_diag_log_count">
+        <item quantity="one">A mostrar %1$d de %2$d linha</item>
+        <item quantity="other">A mostrar %1$d de %2$d linhas</item>
+    </plurals>
 </resources>
