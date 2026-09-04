@@ -40,8 +40,6 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.LocalTime
-import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -581,13 +579,7 @@ class LumenService : LifecycleService() {
             thresholdLux = p.lightSensorLuxThreshold,
             lux = luxNow
         )
-        // Off and AlwaysOff are explicit standby choices. The light sensor is
-        // an additional trigger for ordinary schedules, but it must not
-        // override either user-selected off state.
-        val explicitStandby =
-            p.activePresetKey == Preferences.OFF_PRESET_KEY ||
-                p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.AlwaysOff
-        val shouldBeActive = !explicitStandby && (scheduleActive || lightActive)
+        val shouldBeActive = shouldFilterBeActive(p, scheduleActive, lightActive)
 
         val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
@@ -630,41 +622,19 @@ class LumenService : LifecycleService() {
         engineController.restoreDirectBootState(state)
     }
 
-    /**
-     * Defensive: corrupted import data could give us hour 25 or minute 70. We clamp into
-     * the valid LocalTime range so we never throw inside the foreground service.
-     */
-    private fun mapMode(p: Preferences): ScheduleMode = when (p.schedule.mode) {
-        com.openlumen.prefs.ScheduleModeDto.AlwaysOn -> ScheduleMode.AlwaysOn
-        com.openlumen.prefs.ScheduleModeDto.AlwaysOff -> ScheduleMode.AlwaysOff
-        com.openlumen.prefs.ScheduleModeDto.FixedTime -> ScheduleMode.FixedTime(
-            LocalTime.of(p.schedule.startHour.coerceIn(0, 23), p.schedule.startMinute.coerceIn(0, 59)),
-            LocalTime.of(p.schedule.endHour.coerceIn(0, 23), p.schedule.endMinute.coerceIn(0, 59))
-        )
-        com.openlumen.prefs.ScheduleModeDto.Solar -> {
-            val lat = p.schedule.latitude
-            val lng = p.schedule.longitude
-            if (!isValidSolarLocation(lat, lng)) {
-                ScheduleMode.AlwaysOff
+    /** See [mapScheduleMode] for the bounds a corrupt import has to survive. */
+    private fun mapMode(p: Preferences): ScheduleMode =
+        mapScheduleMode(
+            p.schedule,
+            // Only the alarm-driven mode reads the alarm clock. Asking for it
+            // on every apply would be a needless AlarmManager call in the
+            // other four modes.
+            nextAlarmAt = if (p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm) {
+                scheduleAlarms.nextAlarmClockAt()
             } else {
-                ScheduleMode.Solar(
-                    latitude = checkNotNull(lat),
-                    longitude = checkNotNull(lng),
-                    locationZoneId = p.schedule.solarTimezone
-                        ?.let { runCatching { ZoneId.of(it) }.getOrNull() },
-                    sunsetOffsetMin = p.schedule.sunsetOffsetMin.coerceIn(-180, 180),
-                    sunriseOffsetMin = p.schedule.sunriseOffsetMin.coerceIn(-180, 180)
-                )
+                null
             }
-        }
-        com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm -> ScheduleMode.UntilNextAlarm(
-            start = LocalTime.of(
-                p.schedule.startHour.coerceIn(0, 23),
-                p.schedule.startMinute.coerceIn(0, 59)
-            ),
-            nextAlarmAt = scheduleAlarms.nextAlarmClockAt()
         )
-    }
 
     override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
