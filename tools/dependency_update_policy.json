@@ -36,6 +36,11 @@
       "module": "AndroidX Navigation",
       "area": "androidx"
     },
+    "bouncycastle": {
+      "url": "https://www.bouncycastle.org/latest_releases.html",
+      "module": "Bouncy Castle provider (test scope, pinned above Robolectric's)",
+      "area": "security"
+    },
     "hilt": {
       "url": "https://github.com/google/dagger/releases",
       "module": "Dagger Hilt",

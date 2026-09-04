@@ -221,6 +221,9 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.robolectric)
+    // Robolectric drags in an older bcprov. Test scope only, but a resolved
+    // coordinate with a critical advisory is still a resolved coordinate.
+    testImplementation(libs.bouncycastle.prov)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
 }
