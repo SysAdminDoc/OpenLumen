@@ -1,0 +1,11 @@
+# One person, one identity.
+#
+# 89 of the commits in this history were authored as "Matthew Parker" and 211
+# as "SysAdminDoc", both from the same address, so GitHub counted two
+# contributors for one author. History cannot be rewritten to fix it: branch
+# protection on this repository refuses force-push, and taking the protection
+# off to correct a name is not a trade worth making. A mailmap fixes every
+# `git log`, `git shortlog` and contributor view without touching a commit.
+#
+# Add to this file rather than replacing it if another spelling ever appears.
+SysAdminDoc <matt_parker@outlook.com> Matthew Parker <matt_parker@outlook.com>

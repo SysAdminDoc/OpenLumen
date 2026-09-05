@@ -87,6 +87,10 @@ These are non-negotiable for any PR that wants to merge:
   get theirs.
 - We don't squash. Don't open a PR with `wip` / `fix typo` / `address review`
   noise — rebase locally first.
+- The repository has a `.mailmap`. It exists because one author appeared under
+  two spellings and GitHub counted them as two contributors. If your commits
+  ever land under more than one name or address, add a line to that file rather
+  than replacing what is already in it.
 
 ## Driver work
 
