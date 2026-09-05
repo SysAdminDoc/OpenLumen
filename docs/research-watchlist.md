@@ -39,8 +39,7 @@ added developer verification and CI action-major watchpoints. See
 |---|---|---|
 | Android Behavior Changes pages (annual) | Each release tightens FGS, overlay, exact-alarm, or sensor rules | Update manifest, runtime checks |
 | `developer.android.com` foreground service types | `specialUse` rules can change between releases | Update the manifest property and `docs/release-checklist.md` |
-| Android Developers blog → Privacy / Trust labels | Play Store labeling impacts the optional Play track | Adjust `fastlane/metadata/` if we ever ship to Play |
-| Android developer verification docs | Off-Play package registration can affect F-Droid/direct APK installs on certified devices | C141 package-registration plan |
+| Android install restrictions on certified devices | Advanced Protection Mode and unknown-source rules decide whether a sideloaded APK installs at all, which is the only distribution channel this app has | Document the symptom in `docs/troubleshooting.md`; it is not a bug to fix |
 | Android Gradle Plugin release notes | AGP 10 / built-in Kotlin / DSL behavior changes | Post-C95 upgrade watch |
 | AndroidX Hilt release notes | Hilt Compose artifact and compiler/toolchain moves | Post-C96/C124 upgrade watch |
 

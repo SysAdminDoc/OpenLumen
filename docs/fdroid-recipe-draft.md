@@ -1,5 +1,14 @@
 # F-Droid Submission Recipe Draft
 
+> **Unmaintained since 2026-09-05.** OpenLumen is not submitted to F-Droid or
+> to any other store; distribution is the signed APK on the GitHub releases
+> page. Nothing below is kept in sync with the app, and it is already several
+> versions stale: it is pinned to v0.4.0 / versionCode 5 and refers to a GitHub
+> Actions release workflow that was deleted in 2026-06. It is left in the tree
+> because a maintainer who ever does want to package this app would rather
+> start from a stale recipe than a blank page. Check every value against the
+> build files before believing any of it.
+
 > **Status**: draft. This file is the *content* of the `metadata/com.openlumen.yml`
 > file the maintainer would commit to a fork of
 > [gitlab.com/fdroid/fdroiddata](https://gitlab.com/fdroid/fdroiddata).

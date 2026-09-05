@@ -1,5 +1,12 @@
 # Play Store `specialUse` Foreground Service Evidence Pack
 
+> **Unmaintained since 2026-09-05.** OpenLumen is not submitted to Play or to
+> any other store, so there is no review this pack is being written for. The
+> reasoning about *why* `specialUse` is the correct foreground-service type for
+> a display filter is still accurate and still worth reading, because it
+> documents a real manifest decision the app depends on. The parts about
+> submission, review and listings describe something this project does not do.
+
 > Tied to roadmap candidate **C93**. F-Droid remains OpenLumen's primary
 > distribution channel; this document exists so an optional Play Store
 > listing can be defensible without compromising the offline philosophy.

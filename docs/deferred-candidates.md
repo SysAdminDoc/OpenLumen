@@ -25,9 +25,12 @@ Each entry below is one of:
 Deferral is *not* abandonment. Each entry has a viable plan; we just
 haven't picked it up yet.
 
-## Wear OS: C21 (Next)
+## Wear OS: C21 (excluded, not deferred)
 
-**Status**: Next-tier. Will likely land in v0.7.0.
+**Status**: not planned. This is a scope decision, not a blocker, so nothing
+unblocks it. OpenLumen ships as a sideloaded APK and there is no Wear OS
+device in the picture; the sketch below is kept only so nobody spends an
+afternoon re-deriving it before finding that out.
 
 **Design sketch**:
 
@@ -91,9 +94,15 @@ running indefinitely when no alarm is set. Tested in
 The app relies on adaptive-icon XML/vector resources because `minSdk` is
 26. The remaining release-artwork blocker is C36 store screenshots.
 
-## Store screenshots: C36 (hardware-blocked)
+## Store screenshots: C36 (excluded, not deferred)
 
-**Status**: blocked on a device or emulator capture pass.
+**Status**: not planned. OpenLumen is distributed as a signed APK on the
+GitHub releases page and is not submitted to any store, so there is no
+listing for these to appear in. The old status said "blocked on a device or
+emulator capture pass", which was wrong twice over: the work is not wanted,
+and the Compose Preview screenshot baselines under
+`app/src/screenshotTestDebug/reference/` are host renders that never needed a
+device anyway.
 
 **Plan**:
 
@@ -106,9 +115,12 @@ The app relies on adaptive-icon XML/vector resources because `minSdk` is
 **Why deferred**: no real-device or emulator in the development
 environment we worked in.
 
-## Play Store listing: C39 (Under Consideration)
+## Play Store listing: C39 (excluded, not deferred)
 
-**Status**: optional; F-Droid remains primary.
+**Status**: not planned, and neither is F-Droid. Distribution is the GitHub
+releases page and direct sideload. Store submission, store listings and
+developer verification are all outside what this project does, so the rows
+that tracked them were deleted rather than left looking like pending work.
 
 The full reasoning lives in
 [docs/play-fgs-evidence.md](play-fgs-evidence.md). Short version: a

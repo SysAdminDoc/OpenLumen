@@ -174,11 +174,15 @@ gh release create v$VERSION \
 ## 9. Publish
 
 - [ ] Flip the GitHub release from draft to published.
-- [ ] (Optional) Push to F-Droid if metadata is ready. See
-      `fastlane/metadata/android/`.
-- [ ] If distributing outside Play after September 2026 enforcement begins,
-      confirm `com.openlumen` is registered through the Android developer
-      verification path. See ROADMAP C141.
+- [ ] Confirm the published release actually serves the APK. Every check above
+      this line reads the working tree, which is exactly where the evidence of
+      not publishing does not exist: `gh release view v<version>` should list
+      the signed APK and `sbom.spdx.json` as assets.
+
+The release is the GitHub release. There is no store step: OpenLumen is not
+submitted to Play, F-Droid or anywhere else, and there is no developer
+registration to complete. `fastlane/metadata/android/` is kept for its
+changelogs and descriptions, not because anything consumes it.
 
 ## 10. Post-release
 
