@@ -312,16 +312,26 @@ See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
 
 ## Roadmap
 
-Planned work is tracked in the repository's issues. Deferred items have design
-sketches in
+Planned work is tracked in a file that lives only on the maintainer's machine,
+so there is no public backlog to read. The issue tracker is for bug reports and
+for driver reports from real hardware, not for planning; an empty tracker means
+nobody has reported anything, not that nothing is being worked on.
+
+What is on disk and readable here: design sketches for the candidates that were
+considered and set aside, in
 [docs/deferred-candidates.md](docs/deferred-candidates.md) and
-[docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md).
+[docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md). Each
+one says whether it is waiting on something or was ruled out.
 
-Post-v0.7.1 work clusters around:
+After 0.8.0 the work worth naming is:
 
-- A Shizuku-backed privileged path for per-app behavior (C06)
-- Wear OS companion as a separate F-Droid package (C21)
-- Real-device validation rows in `docs/device-matrix.md` (C01)
+- A Shizuku-backed privileged path, which would reach per-app colour without
+  root and without the accessibility service this app refuses to ship.
+- Real hardware. Every row in
+  [docs/device-matrix.md](docs/device-matrix.md) still reads untested, so the
+  driver table above describes what each driver does by construction rather
+  than what anyone has watched it do. The Driver tab's Share report produces
+  exactly what that file wants.
 
 ## License
 
