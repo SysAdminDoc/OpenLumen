@@ -1595,7 +1595,7 @@ applicable.
   Compose Preview Screenshot Testing `0.0.1-alpha14`. CI now runs
   `:app:validateDebugScreenshotTest` with an initial textless
   theme-token fixture and checked-in references. Local full validation
-  passed from `C:\Users\Xray\OpenLumen-agp9-verify` because the `Z:`
+  passed from `%USERPROFILE%\OpenLumen-agp9-verify` because the `Z:`
   shared-folder path hit a Windows D8 path limitation under AGP 9.
 - [x] **C142: CI action major rotation and SHA-pinning policy** shipped
   on 2026-05-17. Workflows now use `actions/checkout@v6`,
@@ -2620,7 +2620,7 @@ above; the others continue with their rev 2 placement.
   section above.
 - **S00o**: 2026-05-17 C48 dependency-verification implementation :
   `gradle/verification-metadata.xml` was generated after C95/C144 and
-  strict verification passed from `C:\Users\Xray\OpenLumen-agp9-verify`
+  strict verification passed from `%USERPROFILE%\OpenLumen-agp9-verify`
   across `:app:assembleDebug`, `:app:lintDebug`,
   `:app:validateDebugScreenshotTest`, `:app:testDebugUnitTest`,
   `:core-engine:test`, `:core-schedule:test`, and `:core-prefs:test`.
@@ -2637,7 +2637,7 @@ above; the others continue with their rev 2 placement.
   baselines under `app/src/test/roborazzi/`; CI now runs
   `:app:verifyRoborazziDebug`; `gradle/verification-metadata.xml` was
   refreshed for Roborazzi/Robolectric dependencies; strict verification
-  passed from `C:\Users\Xray\OpenLumen-agp9-verify`.
+  passed from `%USERPROFILE%\OpenLumen-agp9-verify`.
 - **S00r**: 2026-05-17 C139 import duplicate-name feedback :
   `PreferencesStore.importFrom()` and `previewImport()` return
   `ImportSummary`; duplicate profile names dropped by the sanitizer are
@@ -2649,7 +2649,7 @@ above; the others continue with their rev 2 placement.
   DaltonLens-derived matrices plus scalar fallbacks, `MatrixDto` preserves
   the fields for import/direct-boot mirrors, and focused strict Gradle
   plus full strict Gradle verification passed from
-  `C:\Users\Xray\OpenLumen-agp9-verify`.
+  `%USERPROFILE%\OpenLumen-agp9-verify`.
 
 ### External URLs (rev 2: preserved)
 
