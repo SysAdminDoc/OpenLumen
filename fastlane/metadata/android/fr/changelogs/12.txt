@@ -1,0 +1,1 @@
+Polissage de l'interface v0.6.4 : dialogues plus coherents, avertissements et recuperation plus clairs, cibles tactiles agrandies, etats selectionnes/desactives plus lisibles, navigation/interrupteurs alignes sur le projet et captures de reference mises a jour.

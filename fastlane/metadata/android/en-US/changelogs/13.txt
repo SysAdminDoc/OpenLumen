@@ -1,0 +1,1 @@
+Expanded screenshot coverage with dark-mode baselines for Home, Schedule, Presets, Driver, and About, including bottom navigation and representative app states.

@@ -1,0 +1,1 @@
+Vordergrunddienst in fokussierte Komponenten fuer Engine, Zeitplan, Lichtsensor, Widgets und Direct Boot aufgeteilt, ohne das Filterverhalten zu aendern. Neue Unit-Tests fuer Widget-Aktualisierungsdiffs und Direct-Boot-Matrixwiederherstellung.

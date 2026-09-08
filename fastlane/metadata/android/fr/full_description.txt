@@ -1,0 +1,33 @@
+OpenLumen est un filtre de couleur d'ecran hors ligne pour Android. Il fonctionne comme service de premier plan, applique une transformation de couleur a l'affichage et choisit le pilote selon ce que l'appareil prend en charge:
+
+* Éclairage nocturne et Atténuation supplémentaire du système, via les
+  réglages sécurisés (sans root ; la teinte couvre la barre d'état, les
+  notifications et l'écran de verrouillage). Nécessite d'accorder une fois
+  WRITE_SECURE_SETTINGS via adb.
+* matrice de couleur SurfaceFlinger (root)
+* pilote noyau KCAL (root, panneaux Qualcomm compatibles)
+* Overlay (sans root, secours universel limite par les regles Android 12+)
+
+OpenLumen ne demande pas INTERNET. Il n'a pas de telemetrie, pas de rapport de crash distant, pas de configuration distante et pas d'analyse. Le manifeste ne contient aucune permission reseau et les controles locaux de publication rejettent tout acces reseau avant diffusion.
+
+Fonctions:
+
+* Presets: Night, Amber, Red, Salmon, Sepia, Grayscale, Deep Sleep, PWM Comfort et trois ajustements de vision des couleurs
+* Selecteur RGB personnalise avec gamma par canal
+* Reglages d'intensite, attenuation, contraste et temperature de couleur
+* Horaires fixes et solaires (coucher/lever du soleil, algorithme NOAA) avec decalages configurables
+* Activation par capteur de lumiere ambiante
+* Tuile de reglages rapides, widgets, notification de service et actions locales d'automatisation
+* Transitions via AlarmManager, sans interrogation en arriere-plan
+* Restauration apres redemarrage, export/import de profils JSON et journal de crash local dans le stockage prive
+
+Confidentialite et confiance:
+
+* GPL-3.0-or-later
+* Distribution F-Droid d'abord; les builds reproductibles sont un objectif de publication
+* Aucun compte, aucune publicite, aucun paywall
+* Aucune promesse d'amelioration du sommeil; consultez la note Health Evidence du depot
+
+OpenLumen ne demande pas l'autorisation de localisation. Les horaires solaires utilisent les coordonnees que vous saisissez.
+
+Code source: https://github.com/SysAdminDoc/OpenLumen

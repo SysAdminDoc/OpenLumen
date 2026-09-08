@@ -1,0 +1,4 @@
+{
+  "sha256": "cca7d7faa45f25cd4b918ce4d4d0b68bdd73034af28a17a1b9d22effa1b7c331",
+  "note": "Signer of every published OpenLumen release. Read on 2026-09-05 from the v0.7.1 APK on the releases page with apksigner verify --print-certs, not from the local keystore, because the point of the pin is to catch a build signed with the wrong key and a local keystore cannot answer that question about itself. It matches ~/.android/openlumen-release/openlumen-release.jks, alias openlumen, CN=OpenLumen. Change this only when the signing key is deliberately rotated, and expect every installed copy to refuse the update when it happens."
+}

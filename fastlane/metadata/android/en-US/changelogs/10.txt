@@ -1,0 +1,1 @@
+Refactored the foreground service into focused engine, schedule, light sensor, widget, and Direct Boot collaborators while preserving the existing filter behavior. Added unit coverage for widget refresh diffing and Direct Boot matrix restoration.

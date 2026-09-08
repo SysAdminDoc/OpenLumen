@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The tile glyph in the widget's own on-surface colour.
+
+    ic_lumen_tile hardcodes a white fill, which is correct where it is drawn
+    on a dark tile and wrong on the light picker backplate. Same path, themed
+    fill, so the preview reads on either launcher.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="@color/widget_on_surface">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,3a9,9 0 1,0 9,9 7,7 0 0,1 -9,-9z" />
+</vector>

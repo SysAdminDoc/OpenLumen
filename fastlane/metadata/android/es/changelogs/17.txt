@@ -1,0 +1,1 @@
+Accesos directos del lanzador, incluido uno que fuerza el apagado del filtro sin abrir la app. Los ajustes de visión del color ya no activan la luz nocturna por debajo, y el control de intensidad ahora actúa sobre ellos. La escala de grises se restaura bien tras un arranque bloqueado. Se revisó el contraste de toda la paleta; los widgets siguen el tema del lanzador.

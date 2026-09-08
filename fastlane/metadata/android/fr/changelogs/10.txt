@@ -1,0 +1,1 @@
+Service de premier plan refactorise en composants dedies au moteur, a l'horaire, au capteur de lumiere, aux widgets et au Direct Boot, sans changer le filtre. Nouveaux tests unitaires pour le rafraichissement des widgets et la restauration de matrice Direct Boot.

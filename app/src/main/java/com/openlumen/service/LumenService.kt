@@ -1,0 +1,793 @@
+package com.openlumen.service
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.ServiceInfo
+import android.os.Build
+import android.os.IBinder
+import android.os.UserManager
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import com.openlumen.CrashLogger
+import com.openlumen.MainActivity
+import com.openlumen.PresetKeyResolver
+import com.openlumen.R
+import com.openlumen.diagnostics.DiagnosticsLog
+import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.LumenMatrix
+import com.openlumen.prefs.DirectBootStateStore
+import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.PreferencesStore
+import com.openlumen.prefs.toggledFilterEnabled
+import com.openlumen.prefs.withFilterEnabled
+import com.openlumen.schedule.AmbientLightGate
+import com.openlumen.schedule.LightSensorAdapter
+import com.openlumen.schedule.ScheduleMode
+import com.openlumen.schedule.isActive
+import com.openlumen.schedule.isValidSolarLocation
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicReference
+import javax.inject.Inject
+
+/**
+ * Foreground service that orchestrates the active display filter. Lives as long as the
+ * user has the filter enabled. The schedule's next state-flip targets this service
+ * directly; [ScheduleAlarmReceiver] remains only for bounded blocked-start retries and
+ * legacy alarms. The light sensor drives a Flow collector — no polling.
+ *
+ * IMPORTANT: We declare `foregroundServiceType="specialUse"` because Android 14+ requires
+ * a typed FGS and `dataSync` / `systemExempted` are likely to be rejected on Play / F-Droid
+ * review. The `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` manifest property documents the use.
+ *
+ * Concurrency model:
+ *   - Prefs and lux are AtomicReferences so the schedule alarm / sensor callback can
+ *     read the latest snapshot without coupling to the collector coroutine.
+ *   - [EngineController] serializes engine `apply()` / `clear()` calls and ramp
+ *     cancellation so root subprocesses and transition jobs do not race.
+ *   - The prefs flow is `.conflate()`d before collection — if the user drags a slider
+ *     and produces many emissions while a slow su apply is in flight, only the latest
+ *     value is queued.
+ */
+@AndroidEntryPoint
+class LumenService : LifecycleService() {
+
+    private val tag = "OpenLumen/LumenSvc"
+
+    @Inject lateinit var prefs: PreferencesStore
+    @Inject lateinit var directBootState: DirectBootStateStore
+    @Inject lateinit var probe: DriverProbe
+    @Inject lateinit var lightSensor: LightSensorAdapter
+
+    @Volatile private var preferencesObserved: Boolean = false
+    private lateinit var engineController: EngineController
+    private lateinit var scheduleAlarms: ScheduleAlarmOrchestrator
+    private lateinit var lightSubscription: LightSensorSubscription
+    private lateinit var widgetBridge: WidgetBridge
+    private val ambientLightGate = AmbientLightGate()
+    private val directBootMirror: DirectBootMirror by lazy {
+        DirectBootMirror(directBootState, tag)
+    }
+
+    /**
+     * Screen-state listener. Tied to roadmap candidate C99 (event-driven
+     * ambient sampling). Screen-off owns only the ambient trigger: invalidate
+     * the latest lux and immediately re-evaluate, which clears a light-only
+     * tint but leaves a schedule-owned tint unchanged. The OS pauses sensor
+     * delivery while the display is off, so screen-on restarts collection and
+     * re-evaluates the current schedule without waiting for a new sample.
+     *
+     * Also handles `ACTION_USER_UNLOCKED` so a service that was started
+     * pre-unlock via `LockedBootReceiver` can transition to observing
+     * credential-protected preferences as soon as the user unlocks the
+     * device. Without this, the service would otherwise hold the
+     * direct-boot mirrored matrix until the user explicitly opened the app
+     * or interacted with the tile/widget.
+     */
+    private val screenStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    lightSubscription.invalidate()
+                    lifecycleScope.launch {
+                        latestPrefs.get()?.let { p ->
+                            val active = applyIfShouldBeActive(p)
+                            updateNotification(p, active, force = true)
+                        }
+                    }
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    latestPrefs.get()?.let { p ->
+                        lightSubscription.restart(p.enabled && p.lightSensorEnabled)
+                        lifecycleScope.launch {
+                            val active = applyIfShouldBeActive(p)
+                            updateNotification(p, active, force = true)
+                        }
+                    }
+                }
+                Intent.ACTION_USER_UNLOCKED -> {
+                    DiagnosticsLog.log(
+                        this@LumenService,
+                        DiagnosticsLog.Level.INFO,
+                        DiagnosticsLog.Category.SERVICE,
+                        "USER_UNLOCKED: transitioning to credential-protected prefs"
+                    )
+                    ensurePreferencesObserved()
+                }
+            }
+        }
+    }
+    @Volatile private var screenStateReceiverRegistered = false
+
+    private val latestPrefs = AtomicReference<Preferences?>(null)
+
+    override fun onCreate() {
+        super.onCreate()
+        DiagnosticsLog.log(this, DiagnosticsLog.Level.INFO, DiagnosticsLog.Category.SERVICE, "onCreate")
+        engineController = EngineController(
+            context = this,
+            probe = probe,
+            prefs = prefs,
+            scope = lifecycleScope,
+            isUserUnlocked = ::isUserUnlocked,
+            logTag = tag
+        )
+        scheduleAlarms = ScheduleAlarmOrchestrator(
+            context = this,
+            logTag = tag,
+            // The progressive ramp needs a wake-up at each of its steps. Rather
+            // than a second alarm, or a ticker, the one alarm this class already
+            // owns fires at whichever comes first: the next schedule flip or the
+            // next step. Waking re-evaluates and reschedules, which is what the
+            // transition path already does.
+            nextTransitionProvider = { mode ->
+                val transition = com.openlumen.schedule.nextTransition(mode)
+                val step = latestPrefs.get()?.let { prefs ->
+                    nextProgressiveStep(prefs, mode, java.time.ZonedDateTime.now())
+                }
+                listOfNotNull(transition, step).minOrNull()
+            }
+        )
+        lightSubscription = LightSensorSubscription(
+            luxFlow = lightSensor::lux,
+            scope = lifecycleScope,
+            onLuxChanged = {
+                latestPrefs.get()?.let { p ->
+                    val active = applyIfShouldBeActive(p)
+                    updateNotification(p, active)
+                }
+            },
+            onUnavailable = {
+                DiagnosticsLog.log(
+                    this@LumenService,
+                    DiagnosticsLog.Level.WARN,
+                    DiagnosticsLog.Category.SENSOR,
+                    "ambient sensor unavailable after bounded retry budget"
+                )
+                try {
+                    prefs.update { current ->
+                        if (current.lightSensorEnabled) {
+                            current.copy(lightSensorEnabled = false)
+                        } else {
+                            current
+                        }
+                    }
+                } catch (t: Throwable) {
+                    Log.w(tag, "could not disable unavailable ambient sensor: ${t.message}")
+                }
+            }
+        )
+        widgetBridge = WidgetBridge(this, tag)
+        startInForeground()
+        registerScreenStateReceiver()
+        ensurePreferencesObserved()
+    }
+
+    private fun registerScreenStateReceiver() {
+        if (screenStateReceiverRegistered) return
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+            // USER_UNLOCKED is a protected broadcast and (like SCREEN_OFF) is
+            // exempt from Android 8+ background-execution limits when received
+            // via a runtime registration. Manifest-registered receivers stopped
+            // getting it on modern Android, so we listen here from the service.
+            addAction(Intent.ACTION_USER_UNLOCKED)
+        }
+        // Implicit broadcast for ACTION_SCREEN_OFF is exempt from Android 8+
+        // background-execution limits, so a runtime registration here is
+        // safe and the right approach (manifest-registered receivers don't
+        // get screen-off on modern Android).
+        try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(screenStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("UnspecifiedRegisterReceiverFlag")
+                registerReceiver(screenStateReceiver, filter)
+            }
+            screenStateReceiverRegistered = true
+        } catch (t: Throwable) {
+            Log.w(tag, "registerReceiver(SCREEN_OFF) failed: ${t.message}")
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        ensurePreferencesObserved()
+        when (intent?.action) {
+            ACTION_DIRECT_BOOT_RESTORE -> lifecycleScope.launch {
+                restoreDirectBootState()
+            }
+            ACTION_TURN_OFF -> lifecycleScope.launch {
+                turnOffImmediately("intent", blunt = isEmergencyTurnOff(intent))
+            }
+            ACTION_TURN_ON -> lifecycleScope.launch {
+                if (isUserUnlocked()) prefs.update { it.withFilterEnabled(true) }
+            }
+            ACTION_TOGGLE -> lifecycleScope.launch {
+                if (isUserUnlocked()) prefs.update { it.toggledFilterEnabled() }
+            }
+            ACTION_REEVALUATE -> lifecycleScope.launch {
+                if (isUserUnlocked()) latestPrefs.get()?.let { p ->
+                    val active = applyIfShouldBeActive(p)
+                    // An alarm may have changed the next system alarm without
+                    // changing the current filter state, so this is forced.
+                    updateNotification(p, active, force = true)
+                }
+            }
+            ACTION_RECONCILE_EXACT_ALARM -> lifecycleScope.launch {
+                if (isUserUnlocked()) {
+                    latestPrefs.get()?.let { p ->
+                        val active = applyIfShouldBeActive(p, reconcileExactAlarmPermission = true)
+                        updateNotification(p, active, force = true)
+                    }
+                }
+            }
+            ACTION_CYCLE_PRESET -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
+                // PresetCycle.next is a no-op when favorites is empty. The
+                // notification action stays visible on purpose (it would
+                // require rebuilding the notification on every favorites
+                // edit), so without this breadcrumb a user troubleshooting
+                // via the diagnostics log sees nothing happen.
+                prefs.update { current ->
+                    val next = com.openlumen.prefs.PresetCycle.next(
+                        current,
+                        PresetKeyResolver::isKnown
+                    )
+                    if (next === current && current.favoritePresetKeys.isEmpty()) {
+                        DiagnosticsLog.log(
+                            this@LumenService,
+                            DiagnosticsLog.Level.INFO,
+                            DiagnosticsLog.Category.PROFILE,
+                            "cycle ignored: no favorites set"
+                        )
+                    }
+                    next
+                }
+            }
+            ACTION_SET_PRESET -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
+                val key = intent.getStringExtra(EXTRA_PRESET_KEY)
+                    ?.takeIf { it.isNotBlank() && it.length <= 64 && it.none { ch -> ch.isISOControl() } }
+                // Reject keys that don't resolve to a known preset; a
+                // Tasker/ADB caller passing "wrong" silently swapping
+                // active preset to garbage is worse than a no-op. "custom"
+                // is allowed because the in-app picker uses it as the
+                // sentinel for a user-tuned RGB matrix.
+                val accepted = key?.takeIf(PresetKeyResolver::isSelectable)
+                if (accepted != null) {
+                    prefs.update {
+                        com.openlumen.prefs.PresetCycle.setActiveKey(
+                            it,
+                            accepted,
+                            PresetKeyResolver::isKnown
+                        )
+                    }
+                } else if (key != null) {
+                    Log.w(tag, "ACTION_SET_PRESET rejected unknown key: $key")
+                }
+            }
+            ACTION_RESTORE_PREVIOUS -> lifecycleScope.launch {
+                if (isUserUnlocked()) {
+                    prefs.update {
+                        com.openlumen.prefs.PresetCycle.restorePrevious(
+                            it,
+                            PresetKeyResolver::isKnown
+                        )
+                    }
+                }
+            }
+            ACTION_SET_INTENSITY -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
+                val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
+                if (v.isFinite()) {
+                    prefs.update { it.copy(presetIntensity = v.coerceIn(0f, 1f)) }
+                }
+            }
+            ACTION_SET_DIM -> lifecycleScope.launch {
+                if (!isUserUnlocked()) return@launch
+                val v = intent.getFloatExtra(EXTRA_VALUE, Float.NaN)
+                if (v.isFinite()) {
+                    prefs.update { it.copy(dim = v.coerceIn(0f, 0.95f)) }
+                }
+            }
+        }
+        return START_STICKY
+    }
+
+    /**
+     * Defensive notification-channel registration. [OpenLumenApp] also
+     * registers the channel, but skips it pre-unlock (some OEM
+     * `NotificationManager` calls throw before credential storage is
+     * unlocked). On a `LOCKED_BOOT_COMPLETED` → service-start path the
+     * channel may not exist yet by the time we hit `startForeground` —
+     * Android creates a placeholder default channel which leaks a "default"
+     * label into the user's notification settings. Calling
+     * `createNotificationChannel` here is idempotent on the platform side
+     * (re-registering the same channel ID is a no-op), so the cheap call
+     * site is the right place to belt-and-suspenders the race.
+     */
+    private fun ensureNotificationChannelRegistered() {
+        runCatching {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return@runCatching
+            val channelId = getString(R.string.notif_channel_id)
+            if (nm.getNotificationChannel(channelId) != null) return@runCatching
+            val channel = NotificationChannel(
+                channelId,
+                getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.notif_channel_desc)
+                setShowBadge(false)
+            }
+            nm.createNotificationChannel(channel)
+        }.onFailure { Log.w(tag, "ensureNotificationChannel: ${it.message}") }
+    }
+
+    private fun startInForeground() {
+        ensureNotificationChannelRegistered()
+        val tapIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val offIntent = PendingIntent.getService(
+            this, 1,
+            ordinaryTurnOffIntent(this),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val cycleIntent = PendingIntent.getService(
+            this, 2,
+            Intent(this, LumenService::class.java).setAction(ACTION_CYCLE_PRESET),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification: Notification = NotificationCompat.Builder(this, getString(R.string.notif_channel_id))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(getString(R.string.notif_title_standby))
+            .setContentText(getString(R.string.notif_status_standby))
+            .setContentIntent(tapIntent)
+            .setOngoing(true)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            // Cycle action is always present; the handler is a no-op when
+            // favorites is empty. This avoids two notification layouts and
+            // the rebuilds that would entail on every favorites edit.
+            .addAction(0, getString(R.string.notif_action_cycle), cycleIntent)
+            .addAction(0, getString(R.string.notif_action_off), offIntent)
+            .build()
+        try {
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (t: Throwable) {
+            // Android 12+ throws ForegroundServiceStartNotAllowedException if started from
+            // the wrong context. Log and bail rather than crashing the process.
+            Log.e(tag, "startForeground failed: ${t.message}", t)
+            lifecycleScope.launch {
+                runCatching { prefs.update { it.copy(enabled = false) } }
+                    .onFailure { Log.w(tag, "Failed to roll back enabled state: ${it.message}") }
+            }
+            stopSelf()
+        }
+    }
+
+    private val lastNotificationActive = AtomicReference<Boolean?>(null)
+
+    private fun updateNotification(p: Preferences, active: Boolean, force: Boolean = false) {
+        if (!p.enabled) return
+        if (!force && lastNotificationActive.get() == active) return
+        lastNotificationActive.set(active)
+
+        val status = getString(
+            if (active) R.string.notif_status_filtering else R.string.notif_status_standby
+        )
+        val detail: String? = when {
+            p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.Solar &&
+                !isValidSolarLocation(p.schedule.latitude, p.schedule.longitude) ->
+                getString(R.string.notif_solar_location_required)
+            p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm ->
+                scheduleAlarms.nextAlarmClockAt()?.let { alarmAt ->
+                    val nowMs = System.currentTimeMillis()
+                    val remainMs = alarmAt.toInstant().toEpochMilli() - nowMs
+                    if (remainMs > 0) {
+                        val h = (remainMs / 3_600_000L).toInt()
+                        val m = ((remainMs % 3_600_000L) / 60_000L).toInt()
+                        getString(R.string.notif_alarm_countdown, h, m)
+                    } else null
+                }
+            else -> null
+        }
+        // The separator lives in a resource: a language that does not use a
+        // middle dot, or wants the parts the other way round, cannot change a
+        // literal baked into the code.
+        val contentText = if (detail == null) {
+            status
+        } else {
+            getString(R.string.notif_status_detail, status, detail)
+        }
+
+        runCatching {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return
+            val tapIntent = PendingIntent.getActivity(
+                this, 0,
+                Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val offIntent = PendingIntent.getService(
+                this, 1,
+                ordinaryTurnOffIntent(this),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val cycleIntent = PendingIntent.getService(
+                this, 2,
+                Intent(this, LumenService::class.java).setAction(ACTION_CYCLE_PRESET),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val notification = NotificationCompat.Builder(this, getString(R.string.notif_channel_id))
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(
+                    getString(
+                        if (active) R.string.notif_title_filtering else R.string.notif_title_standby
+                    )
+                )
+                .setContentText(contentText)
+                .setContentIntent(tapIntent)
+                .setOngoing(true)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .addAction(0, getString(R.string.notif_action_cycle), cycleIntent)
+                .addAction(0, getString(R.string.notif_action_off), offIntent)
+                .build()
+            nm.notify(NOTIFICATION_ID, notification)
+        }.onFailure { Log.w(tag, "notification update failed: ${it.message}") }
+    }
+
+    /**
+     * Single long-lived collector on the prefs flow. `.conflate()` drops intermediate
+     * emissions while the current apply is in flight, so slider drags can't queue up
+     * dozens of su calls.
+     *
+     * Resilience: each emission is wrapped in a runCatching so a single
+     * failure (engine apply throwing, widget broadcast hitting a
+     * RemoteException, etc.) doesn't cancel the collector and silently
+     * leave the service deaf to future prefs changes.
+     */
+    private fun observePreferences() {
+        preferencesObserved = true
+        lifecycleScope.launch {
+            prefs.flow.conflate().collect { p ->
+                try {
+                    handlePreferenceEmission(p)
+                } catch (cancel: kotlinx.coroutines.CancellationException) {
+                    // Don't swallow cancellation — let the lifecycleScope tear down cleanly.
+                    throw cancel
+                } catch (t: Throwable) {
+                    Log.e(tag, "prefs emission handler crashed: ${t.message}", t)
+                    DiagnosticsLog.log(
+                        this@LumenService,
+                        DiagnosticsLog.Level.ERROR,
+                        DiagnosticsLog.Category.SERVICE,
+                        "prefs handler crash: ${t.javaClass.simpleName}"
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun handlePreferenceEmission(p: Preferences) {
+        latestPrefs.set(p)
+        lightSubscription.update(p.enabled && p.lightSensorEnabled)
+        // Nudge installed widget instances only when fields they actually
+        // render have changed. A slider drag (intensity / dim / gamma /
+        // contrast / schedule offsets) is invisible to both widgets and
+        // would otherwise re-broadcast Glance updates per conflated
+        // emission — measurable jank on lower-end devices.
+        widgetBridge.maybeBroadcastRefresh(p)
+        if (!p.enabled) {
+            directBootMirror.mirror(p, active = false, matrix = LumenMatrix.IDENTITY)
+            maybeBroadcastFilterStateChanged(p)
+            clearAndStop()
+            return
+        }
+        engineController.ensureEngineFor(p)
+        val active = applyIfShouldBeActive(p)
+        updateNotification(p, active, force = true)
+        maybeBroadcastFilterStateChanged(p)
+    }
+
+    private data class FilterBroadcastState(
+        val enabled: Boolean,
+        val activePresetKey: String,
+        val intensity: Float,
+        val dim: Float
+    )
+    private val lastFilterBroadcast = AtomicReference<FilterBroadcastState?>(null)
+
+    private fun maybeBroadcastFilterStateChanged(p: Preferences) {
+        val state = FilterBroadcastState(
+            enabled = p.enabled,
+            activePresetKey = p.activePresetKey,
+            intensity = p.presetIntensity,
+            dim = p.dim
+        )
+        if (lastFilterBroadcast.getAndSet(state) == state) return
+        runCatching {
+            sendBroadcast(
+                Intent(EVENT_FILTER_STATE_CHANGED).apply {
+                    putExtra(EXTRA_ENABLED, state.enabled)
+                    putExtra(EXTRA_ACTIVE_PRESET_KEY, state.activePresetKey)
+                    putExtra(EXTRA_INTENSITY, state.intensity)
+                    putExtra(EXTRA_DIM, state.dim)
+                },
+                "com.openlumen.permission.AUTOMATION"
+            )
+        }.onFailure { Log.w(tag, "filter state broadcast failed: ${it.message}") }
+    }
+
+    private suspend fun clearAndStop() {
+        engineController.hardClearOutputs("filter disabled")
+        stopSelf()
+    }
+
+    private suspend fun turnOffImmediately(source: String, blunt: Boolean) {
+        if (isUserUnlocked()) {
+            val disabledPrefs = (latestPrefs.get() ?: Preferences()).copy(enabled = false)
+            directBootMirror.mirror(disabledPrefs, active = false, matrix = LumenMatrix.IDENTITY)
+            prefs.update { it.copy(enabled = false) }
+        } else {
+            directBootMirror.markDisabled()
+        }
+        engineController.hardClearOutputs("turn off from $source", blunt = blunt)
+        // After the clear, not before. The mirror above is written first on
+        // purpose, so a process killed mid-clear does not restore the tint on
+        // the next boot; that means it cannot tell anyone the clear actually
+        // happened. This can, and the automation receiver waits for it.
+        TurnOffAcknowledgement.record(this)
+        stopSelf()
+    }
+
+    /**
+     * Filter is active when either:
+     *  - The schedule is active right now (time / solar / always-on), OR
+     *  - The light sensor is enabled and the latest lux reading is below threshold.
+     *
+     * The light sensor acts as an "additional" trigger — it can engage the filter even
+     * outside the user's schedule window, useful for dark-room sessions during the day.
+     */
+    private suspend fun applyIfShouldBeActive(
+        p: Preferences,
+        reconcileExactAlarmPermission: Boolean = false
+    ): Boolean {
+        val mode = mapMode(p)
+        val scheduleActive = isActive(mode)
+        val luxNow = lightSubscription.currentLuxOrNegative()
+        val lightActive = ambientLightGate.update(
+            enabled = p.lightSensorEnabled,
+            thresholdLux = p.lightSensorLuxThreshold,
+            lux = luxNow
+        )
+        val shouldBeActive = shouldFilterBeActive(p, scheduleActive, lightActive)
+
+        // matrixFor applies the progressive ramp itself, so the service and
+        // the Home tab's readouts cannot disagree about what is on screen.
+        val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
+        directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
+        engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs)
+        // Always reschedule — the next transition time depends on the current mode and clock.
+        if (reconcileExactAlarmPermission) {
+            scheduleAlarms.rescheduleIfExactAlarmPermissionChanged(mode)
+        } else {
+            scheduleAlarms.rescheduleNextTransition(mode)
+        }
+        return shouldBeActive
+    }
+
+    /**
+     * Effective `LumenMatrix` for [p]. Delegates to
+     * `com.openlumen.diagnostics.MatrixPreview.matrixFor` so the service
+     * and any UI preview compute exactly the same target matrix. C61's
+     * blue-suppression indicator depends on this parity.
+     */
+    private fun matrixFor(p: Preferences): LumenMatrix =
+        com.openlumen.diagnostics.MatrixPreview.matrixFor(p)
+
+    private fun ensurePreferencesObserved() {
+        if (preferencesObserved || !isUserUnlocked()) return
+        CrashLogger.install(this)
+        // Before anything reads the automation surface: preferences restored
+        // from another device carry that device's token, and the contract
+        // everywhere else is that the token never leaves the device it was
+        // minted on.
+        lifecycleScope.launch {
+            runCatching {
+                AutomationRestoreGuard.reconcile(this@LumenService, prefs)
+                AutomationRestoreGuard.claimInstall(this@LumenService)
+            }.onFailure { Log.w(tag, "automation restore check failed: ${it.message}") }
+        }
+        observePreferences()
+    }
+
+    private fun isUserUnlocked(): Boolean =
+        (getSystemService(Context.USER_SERVICE) as? UserManager)?.isUserUnlocked != false
+
+    private suspend fun restoreDirectBootState() {
+        if (isUserUnlocked()) return
+        val state = directBootMirror.readSnapshot()
+        if (!state.enabled || !state.active) {
+            Log.d(tag, "Direct-boot state inactive; stopping service")
+            clearAndStop()
+            return
+        }
+        engineController.restoreDirectBootState(state)
+    }
+
+    /** See [mapScheduleMode] for the bounds a corrupt import has to survive. */
+    private fun mapMode(p: Preferences): ScheduleMode =
+        mapScheduleMode(
+            p.schedule,
+            // Only the alarm-driven mode reads the alarm clock. Asking for it
+            // on every apply would be a needless AlarmManager call in the
+            // other four modes.
+            nextAlarmAt = if (p.schedule.mode == com.openlumen.prefs.ScheduleModeDto.UntilNextAlarm) {
+                scheduleAlarms.nextAlarmClockAt()
+            } else {
+                null
+            }
+        )
+
+    override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
+        return null
+    }
+
+    override fun onDestroy() {
+        // Blocking: the process is going away and a queued write would be
+        // lost, which is exactly the line you want when diagnosing a kill.
+        DiagnosticsLog.logBlocking(
+            this,
+            DiagnosticsLog.Level.INFO,
+            DiagnosticsLog.Category.SERVICE,
+            "onDestroy"
+        )
+        if (screenStateReceiverRegistered) {
+            runCatching { unregisterReceiver(screenStateReceiver) }
+                .onFailure { Log.w(tag, "unregisterReceiver(SCREEN_OFF): ${it.message}") }
+            screenStateReceiverRegistered = false
+        }
+        engineController.cancelJobs()
+        lightSubscription.cancel()
+        scheduleAlarms.cancelAlarm()
+        // Synchronously clear the engine — the lifecycleScope is about to be cancelled,
+        // so a normal `launch { engine?.clear() }` would race with cancellation. We
+        // block on a short timeout so we never hang shutdown if su is misbehaving.
+        //
+        // We deliberately keep the default runBlocking dispatcher (BlockingEventLoop
+        // on the calling Main thread) rather than handing off to Dispatchers.Default:
+        //
+        // - Root engines do their own `withContext(Dispatchers.IO)` switch, which
+        //   works fine because Dispatchers.IO has its own worker pool and the
+        //   BlockingEventLoop on Main keeps draining its queue while parked.
+        // - Overlay clear runs on the Main looper. Its internal `onMain`
+        //   check detects that we're already on the Main thread and runs inline
+        //   rather than scheduling through Dispatchers.Main (which would deadlock
+        //   waiting on a parked Looper).
+        runBlocking {
+            withContext(NonCancellable) {
+                withTimeoutOrNull(2_000L) {
+                    engineController.clearActiveEngineForShutdown()
+                }
+            }
+        }
+        runBlocking {
+            withContext(NonCancellable) {
+                withTimeoutOrNull(2_000L) {
+                    engineController.clearRootTransformsForShutdown()
+                }
+            }
+        }
+        super.onDestroy()
+    }
+
+    companion object {
+        private const val NOTIFICATION_ID = 4242
+
+        // Documented intent actions. Tied to roadmap candidates C13 (off),
+        // C16 (cycle), and C70 (Tasker/automation). See docs/automation.md
+        // for the full ADB command reference. Changing these strings is a
+        // breaking change for anyone scripting against them — bump
+        // `Preferences.CURRENT_SCHEMA_VERSION` and document the move if
+        // you must rename one.
+        const val ACTION_TURN_OFF = "com.openlumen.action.TURN_OFF"
+        const val ACTION_TURN_ON = "com.openlumen.action.TURN_ON"
+        const val ACTION_TOGGLE = "com.openlumen.action.TOGGLE"
+        const val ACTION_REEVALUATE = "com.openlumen.action.REEVALUATE"
+        const val ACTION_RECONCILE_EXACT_ALARM = "com.openlumen.action.RECONCILE_EXACT_ALARM"
+        const val ACTION_CYCLE_PRESET = "com.openlumen.action.CYCLE_PRESET"
+        const val ACTION_SET_PRESET = "com.openlumen.action.SET_PRESET"
+        const val ACTION_RESTORE_PREVIOUS = "com.openlumen.action.RESTORE_PREVIOUS"
+        const val ACTION_SET_INTENSITY = "com.openlumen.action.SET_INTENSITY"
+        const val ACTION_SET_DIM = "com.openlumen.action.SET_DIM"
+        const val ACTION_DIRECT_BOOT_RESTORE = "com.openlumen.action.DIRECT_BOOT_RESTORE"
+
+        const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
+        const val EXTRA_VALUE = "com.openlumen.extra.VALUE"
+
+        /**
+         * Marks a turn-off that came from the app's own notification rather
+         * than the emergency hatch (C340).
+         *
+         * `ACTION_TURN_OFF` serves both, and treating every use of it as an
+         * emergency meant the notification's Turn off button ran the blunt
+         * secure-settings reset, which switches off a Night Light, Extra Dim
+         * or colour correction the user set themselves. That is the most
+         * ordinary way there is to disable the filter.
+         *
+         * Absent means emergency, so the documented ADB command and anything
+         * arriving through [AutomationReceiver] keep the blunt behaviour they
+         * need. The receiver copies only the two documented extras into the
+         * intent it forwards, and the service is not exported, so nothing
+         * outside the app can set this.
+         */
+        const val EXTRA_ORDINARY_TURN_OFF = "com.openlumen.extra.ORDINARY_TURN_OFF"
+
+        /** The Turn off intent the foreground notification fires. */
+        internal fun ordinaryTurnOffIntent(context: Context): Intent =
+            Intent(context, LumenService::class.java)
+                .setAction(ACTION_TURN_OFF)
+                .putExtra(EXTRA_ORDINARY_TURN_OFF, true)
+
+        /**
+         * Whether a `TURN_OFF` should also run the blunt reset over rows this
+         * process may no longer own.
+         */
+        internal fun isEmergencyTurnOff(intent: Intent?): Boolean =
+            intent?.getBooleanExtra(EXTRA_ORDINARY_TURN_OFF, false) != true
+
+        const val EVENT_FILTER_STATE_CHANGED = "com.openlumen.event.FILTER_STATE_CHANGED"
+        const val EXTRA_ENABLED = "com.openlumen.extra.ENABLED"
+        const val EXTRA_ACTIVE_PRESET_KEY = "com.openlumen.extra.ACTIVE_PRESET_KEY"
+        const val EXTRA_INTENSITY = "com.openlumen.extra.INTENSITY"
+        const val EXTRA_DIM = "com.openlumen.extra.DIM"
+
+    }
+}

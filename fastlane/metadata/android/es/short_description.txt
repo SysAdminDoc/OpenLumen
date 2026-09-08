@@ -1,0 +1,1 @@
+Filtro de color de pantalla offline con drivers root y sin root. Sin red

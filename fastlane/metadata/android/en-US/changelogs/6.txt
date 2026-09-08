@@ -1,0 +1,15 @@
+v0.5.0 — Reliability, polish, Direct Boot restore.
+
+Direct Boot: tint returns on reboot before you unlock.
+
+4x1 widget highlights the active preset. Fine ±0.5% dim buttons
+for PWM-sensitive users. Perceived-brightness reduction indicator
+alongside blue suppression.
+
+About: filter the diagnostics log by level and category.
+
+Location dialog Save now works on comma-decimal locales (de/fr/es).
+
+Many under-the-hood reliability and concurrency fixes.
+
+Still no INTERNET permission.

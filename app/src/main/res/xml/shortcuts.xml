@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Launcher long-press shortcuts. The actions match
+    ShortcutActivity.ACTIONS, which a test holds to this file so a renamed
+    action cannot leave a shortcut that silently does nothing.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <shortcut
+        android:shortcutId="toggle"
+        android:enabled="true"
+        android:icon="@drawable/ic_lumen_tile"
+        android:shortcutShortLabel="@string/shortcut_toggle_short"
+        android:shortcutLongLabel="@string/shortcut_toggle_long">
+        <intent
+            android:action="com.openlumen.shortcut.TOGGLE"
+            android:targetPackage="com.openlumen"
+            android:targetClass="com.openlumen.ShortcutActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="next_preset"
+        android:enabled="true"
+        android:icon="@drawable/ic_nav_presets"
+        android:shortcutShortLabel="@string/shortcut_next_preset_short"
+        android:shortcutLongLabel="@string/shortcut_next_preset_long">
+        <intent
+            android:action="com.openlumen.shortcut.NEXT_PRESET"
+            android:targetPackage="com.openlumen"
+            android:targetClass="com.openlumen.ShortcutActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="emergency_off"
+        android:enabled="true"
+        android:icon="@drawable/ic_notification"
+        android:shortcutShortLabel="@string/shortcut_emergency_off_short"
+        android:shortcutLongLabel="@string/shortcut_emergency_off_long">
+        <intent
+            android:action="com.openlumen.shortcut.EMERGENCY_OFF"
+            android:targetPackage="com.openlumen"
+            android:targetClass="com.openlumen.ShortcutActivity" />
+    </shortcut>
+
+</shortcuts>

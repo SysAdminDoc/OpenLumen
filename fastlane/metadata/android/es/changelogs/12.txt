@@ -1,0 +1,1 @@
+Pulido de UI para v0.6.4: dialogos mas consistentes, avisos y recuperacion mas claros, objetivos tactiles mayores, estados seleccionados/desactivados mas fuertes, navegacion e interruptores con forma del proyecto y baselines de captura actualizados.

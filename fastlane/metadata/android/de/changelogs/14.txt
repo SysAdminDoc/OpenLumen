@@ -1,0 +1,1 @@
+Release-Metadaten auf v0.6.6 synchronisiert und die Anzeige der App-Version vereinheitlicht.

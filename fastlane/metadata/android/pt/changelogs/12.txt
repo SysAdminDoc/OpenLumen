@@ -1,0 +1,1 @@
+Polimento de UI no v0.6.4: dialogos mais consistentes, avisos e recuperacao mais claros, alvos de toque maiores, estados selecionado/desativado mais fortes, navegacao e interruptores no formato do projeto e baselines de captura atualizados.

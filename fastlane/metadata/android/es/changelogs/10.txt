@@ -1,0 +1,1 @@
+Servicio en primer plano refactorizado en colaboradores enfocados para motor, horario, sensor de luz, widgets y Direct Boot, conservando el comportamiento del filtro. Nueva cobertura unitaria para diferencias de refresco de widgets y restauracion de matriz en Direct Boot.

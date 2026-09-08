@@ -1,0 +1,325 @@
+package com.openlumen.engine.engines
+
+import android.app.Service
+import android.content.Context
+import android.graphics.PixelFormat
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
+import com.openlumen.engine.ColorEngine
+import com.openlumen.engine.EngineResult
+import com.openlumen.engine.EngineCapability
+import com.openlumen.engine.EngineKind
+import com.openlumen.engine.LumenMatrix
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/**
+ * Universal rootless fallback. Adds a `TYPE_APPLICATION_OVERLAY` View that paints a
+ * single tinted color over every other window. Cannot reach below the system minimum
+ * brightness in framebuffer terms — the overlay is layered above status bar / nav bar
+ * but compositor still drives the panel at the user's brightness slider value.
+ *
+ * Android 12+ untrusted-touch rule caps overlay alpha at ~0.8 when FLAG_NOT_TOUCHABLE
+ * is set. We respect that cap; users wanting harder dim need root.
+ *
+ * The overlay View itself is owned and added/removed by the foreground service that
+ * holds the engine — it must call [installView] from the service context (token).
+ *
+ * **Lifetime gotcha.** Hilt provides the engine as a singleton, so the same instance
+ * survives a foreground-service process kill / restart. On a kill the system rips
+ * the window token but [hostView] / [hostWm] stay non-null in the singleton. We
+ * detect this on every install/apply by checking [View.isAttachedToWindow]; a
+ * detached view triggers a clean re-install rather than a silent no-op.
+ */
+class OverlayEngine : ColorEngine {
+    override val kind = EngineKind.OVERLAY
+
+    /**
+     * A tinted window composited over everything: it can only darken toward a
+     * colour, never mix channels. Gamma rides the scalar projection. The dim
+     * is real darkening rather than a backlight change, so it reaches below the
+     * panel minimum, subject to the Android 12+ alpha cap.
+     */
+    override val capabilities: Set<EngineCapability> = setOf(
+        EngineCapability.PER_CHANNEL_GAMMA,
+        EngineCapability.SUB_MINIMUM_DIM
+    )
+
+    private val tag = "OpenLumen/Overlay"
+
+    // All mutation is on Dispatchers.Main from a single Service — @Volatile is defensive
+    // for the rare case `apply()` is called from a worker thread by accident.
+    @Volatile private var hostView: View? = null
+    @Volatile private var hostWm: WindowManager? = null
+    @Volatile private var lastAppliedArgb: Int = 0
+    private val viewLock = Any()
+
+    /**
+     * The context whose window token owns the overlay, remembered by the first
+     * successful [installView] (C262).
+     *
+     * `apply` used to reinstall with whatever context the call site passed. The
+     * service holds this engine as a singleton and its own context is the only
+     * one with a token that can carry `TYPE_APPLICATION_OVERLAY`, so a
+     * reinstall from anywhere else either throws or installs a window nothing
+     * owns. Holding the service context is deliberate: this engine's lifetime
+     * is the service's lifetime, and `clear` drops it.
+     */
+    @Volatile private var windowContext: Context? = null
+
+    /**
+     * Bumped every time [runOnMain] gives up waiting. The posted block reads it
+     * after it finishes and tears down anything it installed for a caller that
+     * is no longer listening (C262).
+     *
+     * Without this, a main thread that stalls past the two-second bound leaves
+     * `runOnMain` returning false while the block runs anyway and adds a
+     * full-screen tinted window. `EngineController` reads that false as
+     * "overlay unavailable" and drops the engine, so nothing owns the window
+     * and nothing will ever remove it.
+     */
+    private val abandonedInstalls = java.util.concurrent.atomic.AtomicInteger(0)
+
+    override suspend fun isAvailable(context: Context): Boolean = onMain {
+        if (Build.VERSION.SDK_INT >= 23) Settings.canDrawOverlays(context) else true
+    }
+
+    /**
+     * Must be called from a Service or Activity context that holds a window token capable
+     * of TYPE_APPLICATION_OVERLAY. Returns false if the overlay permission isn't granted
+     * or if `addView` throws (e.g. token revoked). Idempotent and safe to call after a
+     * service-process restart: a stale, detached `hostView` from the previous service
+     * incarnation is dropped first so the new service's window token is the one
+     * registered with WindowManager.
+     *
+     * WindowManager mutations must occur on the main thread. We post the
+     * work onto the main looper synchronously rather than asserting the
+     * caller's thread, so service code that ends up here from a
+     * non-Main coroutine still installs cleanly.
+     */
+    fun installView(serviceContext: Context, initial: LumenMatrix): Boolean {
+        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(serviceContext)) {
+            Log.w(tag, "installView: SYSTEM_ALERT_WINDOW not granted; overlay engine disabled")
+            return false
+        }
+        return runOnMain { synchronized(viewLock) { installViewLocked(serviceContext, initial) } }
+    }
+
+    /**
+     * Undo an install whose caller has already been told it failed. Runs on the
+     * main thread, inside the same lock the install held.
+     */
+    private fun discardAbandonedInstallLocked() {
+        val v = hostView ?: return
+        Log.w(tag, "install completed after the caller gave up; removing the orphaned window")
+        runCatching { hostWm?.removeViewImmediate(v) }
+        hostView = null
+        hostWm = null
+        windowContext = null
+        lastAppliedArgb = 0
+    }
+
+    /** True if the cached host view is still attached to a window manager. */
+    private fun isHostAttached(): Boolean {
+        val v = hostView ?: return false
+        return v.isAttachedToWindow
+    }
+
+    private fun discardStaleHostLocked() {
+        val v = hostView ?: return
+        val wm = hostWm
+        if (wm != null) {
+            // Best-effort: the underlying window token is likely already
+            // gone if we're here, so a throw is expected. Swallow it.
+            runCatching { wm.removeViewImmediate(v) }
+        }
+        hostView = null
+        hostWm = null
+        lastAppliedArgb = 0
+        // windowContext deliberately survives: this means the window died, not
+        // that ownership moved. The reinstall right after this needs to know
+        // which context's token to build against. Only clear() and the
+        // abandoned-install teardown relinquish it.
+    }
+
+    private fun installViewLocked(serviceContext: Context, initial: LumenMatrix): Boolean {
+        if (hostView != null) {
+            if (isHostAttached()) return true
+            // Carry-over from a previous service incarnation; reinstall fresh.
+            Log.d(tag, "installView: discarding stale detached view from previous session")
+            discardStaleHostLocked()
+        }
+        val initialArgb = initial.toOverlayArgb()
+        val view = View(serviceContext).apply {
+            setBackgroundColor(initialArgb)
+            isFocusable = false
+            isClickable = false
+        }
+        val lp = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.START or Gravity.TOP
+            // Cover the display cutout so the tint visibly matches the
+            // rest of the screen on notch/punch-hole devices (API 28+).
+            // Older APIs don't have cutouts to worry about.
+            if (Build.VERSION.SDK_INT >= 28) {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        }
+        val wm = serviceContext.getSystemService(Service.WINDOW_SERVICE) as? WindowManager
+            ?: run {
+                Log.e(tag, "installViewLocked: WINDOW_SERVICE unavailable")
+                return false
+            }
+        return try {
+            wm.addView(view, lp)
+            hostView = view
+            hostWm = wm
+            windowContext = serviceContext
+            lastAppliedArgb = initialArgb
+            true
+        } catch (t: Throwable) {
+            Log.e(tag, "wm.addView failed: ${t.message}", t)
+            false
+        }
+    }
+
+    override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult = onMain {
+        val argb = matrix.toOverlayArgb()
+        val installed = synchronized(viewLock) {
+            val v = hostView
+            if (v != null && isHostAttached()) {
+                if (argb != lastAppliedArgb) {
+                    v.setBackgroundColor(argb)
+                    lastAppliedArgb = argb
+                }
+                true
+            } else {
+                // Either we never installed, or the previous service's view
+                // got torn down with the process. Already on Main, so go
+                // through the locked installer directly.
+                if (v != null) discardStaleHostLocked()
+                // C262: reinstall against the context whose token owns overlay
+                // windows, not whatever the call site happened to pass.
+                installViewLocked(windowContext ?: context, matrix)
+            }
+        }
+        if (!installed) {
+            Log.w(tag, "apply: installView failed; tint will not be visible")
+            EngineResult.Failure("overlay view installation failed")
+        } else {
+            EngineResult.Success
+        }
+    }
+
+    override suspend fun clear(context: Context): EngineResult = onMain {
+        synchronized(viewLock) {
+            val v = hostView
+            val wm = hostWm
+            var failure: Throwable? = null
+            if (v != null && wm != null) {
+                runCatching { wm.removeViewImmediate(v) }
+                    .onFailure {
+                        failure = it
+                        Log.w(tag, "removeViewImmediate failed: ${it.message}")
+                    }
+            }
+            hostView = null
+            hostWm = null
+            windowContext = null
+            lastAppliedArgb = 0
+            failure?.let { return@synchronized EngineResult.Failure("overlay clear failed: ${it.message}") }
+            EngineResult.Success
+        }
+    }
+
+    /**
+     * If we're already on the Android main thread, run [block] inline so
+     * a caller that wrapped us in `runBlocking` on Main doesn't deadlock
+     * waiting for the Main dispatcher to drain a parked Looper. The
+     * `LumenService.onDestroy` shutdown path is the canonical example —
+     * `runBlocking { engine.clear(this) }` from Service.onDestroy() would
+     * otherwise wait the full timeout because the Main Looper that owns
+     * the dispatcher is parked inside runBlocking.
+     */
+    private suspend inline fun <T> onMain(crossinline block: () -> T): T =
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            block()
+        } else {
+            withContext(Dispatchers.Main) { block() }
+        }
+
+    /**
+     * Run [block] on the main looper and block the calling thread until it
+     * completes. We deliberately don't use a coroutine `withContext` here
+     * because `installView` is callable from non-suspend code (the service
+     * call site is inside `applyMutex.withLock`, which doesn't switch
+     * dispatchers).
+     *
+     * The result is published through an [AtomicBoolean] so the
+     * happens-before relationship between the Main-thread write and the
+     * caller's read is established by the latch + atomic, not just by the
+     * latch alone. A bare `var result = false` captured into the inline
+     * lambda would also work in practice (the CountDownLatch await/countDown
+     * pair carries a happens-before edge), but the explicit atomic makes
+     * the intent obvious to a future reader and survives any future
+     * refactor that drops the latch.
+     */
+    private inline fun runOnMain(crossinline block: () -> Boolean): Boolean {
+        if (Looper.myLooper() == Looper.getMainLooper()) return block()
+        val handler = Handler(Looper.getMainLooper())
+        val latch = java.util.concurrent.CountDownLatch(1)
+        val result = java.util.concurrent.atomic.AtomicBoolean(false)
+        val generation = abandonedInstalls.get()
+        val posted = handler.post {
+            try {
+                val installed = block()
+                result.set(installed)
+                // C262: the caller may already have timed out and reported
+                // failure. Anything installed now belongs to nobody, so take it
+                // back down rather than leaving a full-screen tint on screen.
+                if (installed && abandonedInstalls.get() != generation) {
+                    synchronized(viewLock) { discardAbandonedInstallLocked() }
+                }
+            } finally {
+                latch.countDown()
+            }
+        }
+        if (!posted) {
+            Log.w(tag, "installView: Handler.post rejected (looper exiting?)")
+            return false
+        }
+        // Bounded wait so a wedged main thread can't pin the caller forever.
+        return if (latch.await(MAIN_THREAD_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)) {
+            result.get()
+        } else {
+            Log.w(tag, "installView: timed out waiting for main thread")
+            abandonedInstalls.incrementAndGet()
+            false
+        }
+    }
+
+    companion object {
+        /**
+         * How long a caller waits for the main thread before treating the
+         * install as failed. Kept as a constant so the test that exercises the
+         * late-install path can wait past it deterministically.
+         */
+        const val MAIN_THREAD_TIMEOUT_SECONDS: Long = 2
+    }
+}

@@ -1,0 +1,26 @@
+# Baseline: gitleaks' own default rules, then the two things in this repo that
+# they read as secrets and are not. Without these the gate exits 1 on 46 false
+# positives, which teaches people to ignore it.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = """
+Gradle dependency verification. The long hex strings are SHA-256 artifact
+checksums and PGP key fingerprints, both public by design: they are what you
+publish so other people can check you. generic-api-key matches them on entropy
+alone.
+"""
+paths = ['''gradle/verification-metadata.*\.xml''']
+
+[[allowlists]]
+description = """
+One historical commit whose wrapped roadmap prose reads as high entropy.
+Scoped to that file in that commit: allowlisting the commit alone would also
+skip the manifest, Su.kt and PreferencesStore.kt changes it carries, so a
+secret added there would never be found on a rescan. ROADMAP.md is untracked
+now, so this only comes up on a history scan.
+"""
+condition = "AND"
+commits = ["8db400ca61b51dc98a2d940fb120cdc46fdcebe6"]
+paths = ['''^ROADMAP\.md$''']

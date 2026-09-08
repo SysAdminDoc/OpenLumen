@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the documentation first
+    url: https://github.com/SysAdminDoc/OpenLumen#readme
+    about: README and the docs/ folder cover most common questions.
+  - name: Troubleshooting
+    url: https://github.com/SysAdminDoc/OpenLumen/blob/main/docs/troubleshooting.md
+    about: Stuck-state recovery, common driver problems, and per-engine smoke tests.
+  - name: Device validation matrix
+    url: https://github.com/SysAdminDoc/OpenLumen/blob/main/docs/device-matrix.md
+    about: Find out which engines have been validated on your device.

@@ -1,0 +1,1 @@
+Se agregaron comprobaciones locales de lanzamiento para firma, permisos sin red, dependencias, SBOM, hashes de APK y lint de declaraciones de salud. Los builds de release fallan sin claves de firma o salida sin firmar solicitada explicitamente.

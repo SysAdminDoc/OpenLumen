@@ -1,0 +1,261 @@
+package com.openlumen.diagnostics
+
+import android.content.Context
+import android.util.Log
+import java.io.File
+import java.io.RandomAccessFile
+import java.time.Instant
+import java.util.Locale
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+/**
+ * Bounded, append-only local event log. Tied to roadmap candidate **C53**
+ * (Structured log viewer) and feeds the diagnostics bundle from **C52**.
+ *
+ * Design rules:
+ * - File-backed, app-private. Lives at `filesDir/diagnostics.log`.
+ * - One event per line. No JSON; each line is grep-friendly text:
+ *   `<ISO-8601 instant> <LEVEL> <category> <message>`
+ * - Size-capped at [MAX_BYTES] (~64 KB). When exceeded, the head is
+ *   trimmed to keep the most recent [TRIM_TO_BYTES] (~32 KB).
+ * - Concurrent-safe across the foreground service, UI, tile, widget
+ *   receiver, and boot receivers. The append + size check + trim is one
+ *   critical section protected by [writeLock]; without that, two callers
+ *   could observe an oversized file, read it, and write back two
+ *   truncated copies that lose each other's interleaved lines. The
+ *   intra-process lock is enough today because all callers live in the
+ *   same process, but the trim itself rewrites the whole file so
+ *   serializing is still cheap.
+ * - Never persists PII. Callers should not pass user-entered text
+ *   (locations, file URIs) into the message argument.
+ * - Like CrashLogger, the log NEVER leaves the device unless the user
+ *   manually exports/shares it.
+ */
+object DiagnosticsLog {
+
+    private const val FILENAME = "diagnostics.log"
+    private const val MAX_BYTES = 64L * 1024
+    private const val TRIM_TO_BYTES = 32 * 1024
+    private const val TAG = "OpenLumen/Diag"
+
+    // Process-wide lock for all file mutations and reads. `log` holds it over
+    // append + size check + trim; `read` and `clear` use the same identity so
+    // readers never observe a partial trim rewrite.
+    private val writeLock = Any()
+
+    /** Bounded test-mode override so unit tests can run without a real Context. */
+    private val testWriter = AtomicReference<((String) -> Unit)?>(null)
+    /**
+     * Single-threaded on purpose: the trim rewrites the whole file, and two
+     * writers on a shared pool could otherwise land lines out of the order
+     * their timestamps were taken in.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val writeScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
+
+    enum class Level { DEBUG, INFO, WARN, ERROR }
+
+    enum class Category {
+        SERVICE,        // service lifecycle (onCreate, startForeground, onDestroy)
+        ENGINE,         // engine apply / clear / probe
+        SCHEDULE,       // schedule transitions and alarms
+        SENSOR,         // light sensor lifecycle
+        PREFS,          // preference import / export / migration
+        WIDGET,         // widget refresh / click
+        TILE,           // QS tile actions
+        PROFILE         // preset switches and previous-restore
+    }
+
+    /**
+     * Record an event. The line, timestamp included, is built on the calling
+     * thread; only the file write is handed off (C263).
+     *
+     * The write used to happen inline, which meant an append and, past the
+     * size cap, a whole-file rewrite on whichever thread called.
+     * `LumenService.onCreate`, the screen and unlock receiver path and three
+     * sites in `EngineController` all reach this from the main thread.
+     * Building the line here keeps timestamps in call order even though the
+     * write is deferred, and [writeScope] is single-threaded so the writes
+     * land in that same order.
+     *
+     * Use [logBlocking] where the process may not survive long enough to
+     * drain the queue.
+     */
+    fun log(context: Context, level: Level, category: Category, message: String) {
+        val line = formatLine(level, category, message)
+        testWriter.get()?.let {
+            it.invoke(line)
+            return
+        }
+        val appContext = context.applicationContext
+        writeScope.launch { writeLine(appContext, line) }
+    }
+
+    /**
+     * Write before returning. For shutdown paths, where the process may die
+     * before a queued write runs, and for tests that read the file back
+     * immediately.
+     */
+    fun logBlocking(context: Context, level: Level, category: Category, message: String) {
+        val line = formatLine(level, category, message)
+        testWriter.get()?.let {
+            it.invoke(line)
+            return
+        }
+        writeLine(context, line)
+    }
+
+    private fun writeLine(context: Context, line: String) {
+        runCatching {
+            val f = File(context.filesDir, FILENAME)
+            synchronized(writeLock) {
+                f.appendText(line + "\n")
+                if (f.length() > MAX_BYTES) trimHeadLocked(f)
+            }
+        }.onFailure { Log.w(TAG, "log write failed: ${it.message}") }
+    }
+
+    /** Read a stable snapshot while sharing the writer/trim lock. */
+    fun read(context: Context): String {
+        val f = File(context.filesDir, FILENAME)
+        // The dialog is opened by user action, so the brief lock contention
+        // avoids exposing bytes from the middle of a trim rewrite.
+        synchronized(writeLock) {
+            return if (f.exists()) f.readText() else ""
+        }
+    }
+
+    /**
+     * Put back a snapshot [read] returned, for the undo on Clear.
+     *
+     * Anything logged since the clear is kept and the snapshot goes in front of
+     * it. Overwriting would throw away lines the user never asked to lose, and
+     * the timeline is ordered by the stamp on each line rather than by position
+     * in the file, so the order still reads correctly.
+     */
+    fun restore(context: Context, snapshot: String): Boolean {
+        if (snapshot.isBlank()) return false
+        return runCatching {
+            val f = File(context.filesDir, FILENAME)
+            synchronized(writeLock) {
+                val since = if (f.exists()) f.readText() else ""
+                f.writeText(snapshot.trimEnd('\n') + "\n" + since)
+                if (f.length() > MAX_BYTES) trimHeadLocked(f)
+            }
+            true
+        }.getOrDefault(false)
+    }
+
+    fun clear(context: Context): Boolean {
+        val f = File(context.filesDir, FILENAME)
+        synchronized(writeLock) {
+            return !f.exists() || f.delete()
+        }
+    }
+
+    /** For tests: capture writes without touching the filesystem. */
+    internal fun installTestWriter(writer: (String) -> Unit) { testWriter.set(writer) }
+    internal fun clearTestWriter() { testWriter.set(null) }
+
+    internal fun formatLine(level: Level, category: Category, message: String): String =
+        // Trim message to a sane width so a runaway log can't blow the size cap
+        // in one line.
+        "${Instant.now()} ${level.name} ${category.name} ${message.take(512)}"
+
+    /**
+     * Filter helper consumed by the About-tab diagnostics-log dialog
+     * (roadmap **C53 stretch**). Tests live in
+     * `DiagnosticsLogFormatTest`. Returns true when [line] is a
+     * well-formed log line whose level token is in [levels] and
+     * category token is in [categories]. Returns false for blank or
+     * malformed lines, so the dialog never shows a torn-write or
+     * pre-format line by accident.
+     *
+     * The format we filter against is the one [formatLine] produces:
+     * `<instant> LEVEL CATEGORY <message>` — four whitespace-separated
+     * tokens with the message taking the rest. `split(' ', limit = 4)`
+     * keeps the message intact.
+     */
+    fun lineMatches(line: String, levels: Set<String>, categories: Set<String>): Boolean {
+        if (line.isBlank()) return false
+        val tokens = line.split(' ', limit = 4)
+        if (tokens.size < 3) return false
+        val level = tokens[1]
+        val category = tokens[2]
+        return level in levels && category in categories
+    }
+
+    data class TimelineBounds(val earliest: Instant, val latest: Instant)
+
+    /** Parse the ISO-8601 timestamp at the start of a structured log line. */
+    fun lineInstant(line: String): Instant? =
+        line.substringBefore(' ', missingDelimiterValue = line)
+            .takeIf { it.isNotBlank() }
+            ?.let { token -> runCatching { Instant.parse(token) }.getOrNull() }
+
+    /** Return the time span represented by lines that pass level/category filters. */
+    fun timelineBounds(
+        lines: Iterable<String>,
+        levels: Set<String>,
+        categories: Set<String>
+    ): TimelineBounds? {
+        val instants = lines.asSequence()
+            .filter { lineMatches(it, levels, categories) }
+            .mapNotNull(::lineInstant)
+            .toList()
+        if (instants.isEmpty()) return null
+        return TimelineBounds(instants.minOrNull()!!, instants.maxOrNull()!!)
+    }
+
+    /**
+     * Apply level/category filtering first, then optional timeline and text
+     * constraints. Search is case-insensitive and covers the complete
+     * structured line so users can search either messages or tokens.
+     */
+    fun filterLines(
+        lines: Iterable<String>,
+        levels: Set<String>,
+        categories: Set<String>,
+        query: String = "",
+        from: Instant? = null,
+        through: Instant? = null
+    ): List<String> {
+        val normalizedQuery = query.trim().lowercase(Locale.ROOT)
+        return lines.filter { line ->
+            if (!lineMatches(line, levels, categories)) return@filter false
+            val instant = lineInstant(line) ?: return@filter false
+            if (from != null && instant.isBefore(from)) return@filter false
+            if (through != null && instant.isAfter(through)) return@filter false
+            normalizedQuery.isBlank() || line.lowercase(Locale.ROOT).contains(normalizedQuery)
+        }
+    }
+
+    /**
+     * Rewrite [f] to keep at most [TRIM_TO_BYTES] of tail content. Uses
+     * RandomAccessFile so we don't allocate the whole-file byte buffer on
+     * the heap when the cap is exceeded by a single append.
+     *
+     * Caller must hold [writeLock].
+     */
+    private fun trimHeadLocked(f: File) {
+        val totalLength = f.length()
+        if (totalLength <= TRIM_TO_BYTES) return
+        val cutFrom = totalLength - TRIM_TO_BYTES
+        // Read the tail into memory, then atomically rename a sibling temp
+        // file over the original. File.writeBytes() truncates in place, which
+        // is fine but less crash-safe than a rename — pick the simpler form
+        // since the worst case is losing the most recent TRIM_TO_BYTES of
+        // log on a power loss, which we can survive.
+        val tail = ByteArray(TRIM_TO_BYTES)
+        RandomAccessFile(f, "r").use { raf ->
+            raf.seek(cutFrom)
+            raf.readFully(tail)
+        }
+        f.writeBytes(tail)
+    }
+}

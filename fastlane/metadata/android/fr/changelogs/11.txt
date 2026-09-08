@@ -1,0 +1,1 @@
+Ajout de controles locaux de publication pour signature, permissions hors ligne, dependances, SBOM, hachages APK et lint des affirmations de sante. Les builds release echouent sans cles de signature ou sortie non signee explicitement demandee.

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android Auto Backup scope (pre-Android 12).
+    Include-only list: ONLY these paths are backed up.
+
+    Included:
+      datastore/  — user preferences (filter, schedule, profiles)
+      sharedpref/ — notification-prompt one-shot flags
+
+    The automation token shares the DataStore blob, so it is copied
+    too. A restored install detects that through a marker in the
+    no-backup directory and closes the automation surface instead of
+    inheriting the previous device's token (AutomationRestoreGuard).
+
+    Excluded by omission:
+      crash.log        — device-local crash log, per privacy policy
+      diagnostics.log  — device-local event log, per privacy policy
+
+    ScheduleDto.latitude/longitude and solarTimezone (user-entered approximate
+    city coordinates plus the selected IANA zone)
+    share the DataStore blob with the rest of preferences. Auto Backup only
+    includes that blob when Android reports client-side encryption; explicit
+    export remains available when encrypted backup is unavailable.
+-->
+<full-backup-content>
+    <include domain="file" path="datastore/" requireFlags="clientSideEncryption" />
+    <include domain="sharedpref" path="." />
+</full-backup-content>
