@@ -1,7 +1,0 @@
-v0.6.0 - Adaptive UI, localization, and polish.
-
-Added five UI translations, adaptive phone/tablet navigation, a large-screen Presets detail pane, sleep-countdown notification, filter-state automation broadcast, and PWM Comfort preset.
-
-Fixed light-theme coverage, translated backup/import messages, coordinate range hints, screen-reader selection states, polar solar scheduling, and bounded automation extras.
-
-No new permissions. Offline; no telemetry; F-Droid clean.

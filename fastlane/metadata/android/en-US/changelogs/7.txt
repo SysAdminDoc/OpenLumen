@@ -1,7 +1,0 @@
-v0.5.1 - Deep-audit hardening pass.
-
-Fixed stale root-engine availability after Magisk revocation, added a KCAL safety floor for kernels without kcal_min, registered the notification channel defensively, and resumed real preference observation on USER_UNLOCKED.
-
-Light-sensor collection now shares one listener, driver probes run in parallel, city search stops early, and Auto shows the engine it would pick.
-
-No new permissions. Fully offline; no telemetry; F-Droid clean.

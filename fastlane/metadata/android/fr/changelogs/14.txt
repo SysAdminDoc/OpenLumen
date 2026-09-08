@@ -1,1 +1,0 @@
-Metadonnees de maintenance v0.6.6 synchronisees et affichage de la version uniformise.
