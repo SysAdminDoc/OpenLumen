@@ -135,9 +135,14 @@
     <string name="transition_duration_subtitle">Wie sanft der Filter an Zeitplangrenzen ein- oder ausblendet. Manuelle Änderungen (Regler, Vorlagenwechsel) bleiben sofort.</string>
     <string name="transition_instant">Sofort</string>
     <string name="transition_30s">30 Sekunden</string>
+    <string name="transition_1m">1 Minute</string>
+    <string name="transition_3m">3 Minuten</string>
     <string name="transition_5m">5 Minuten</string>
     <string name="transition_15m">15 Minuten</string>
     <string name="transition_30m">30 Minuten</string>
+    <string name="transition_custom">Benutzerdefiniert</string>
+    <string name="transition_custom_value">%1$d Min.</string>
+    <string name="transition_custom_name">Benutzerdefinierte Übergangsdauer</string>
 
     <string name="driver_title">Displaytreiber</string>
     <string name="driver_auto">Automatisch (bestverfügbar)</string>

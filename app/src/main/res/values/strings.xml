@@ -160,9 +160,14 @@
     <string name="transition_duration_subtitle">How smoothly the filter fades in or out at schedule boundaries. User-driven changes (sliders, preset taps) remain instant.</string>
     <string name="transition_instant">Instant</string>
     <string name="transition_30s">30 seconds</string>
+    <string name="transition_1m">1 minute</string>
+    <string name="transition_3m">3 minutes</string>
     <string name="transition_5m">5 minutes</string>
     <string name="transition_15m">15 minutes</string>
     <string name="transition_30m">30 minutes</string>
+    <string name="transition_custom">Custom</string>
+    <string name="transition_custom_value">%1$d min</string>
+    <string name="transition_custom_name">Custom transition duration</string>
 
     <string name="driver_title">Display driver</string>
     <string name="driver_auto">Auto (best available)</string>

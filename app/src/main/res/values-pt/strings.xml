@@ -135,9 +135,14 @@
     <string name="transition_duration_subtitle">Velocidade com que o filtro aparece ou desaparece nos limites do agendamento. Alteracoes manuais (controles deslizantes, toques em predefinidos) permanecem instantaneas.</string>
     <string name="transition_instant">Instantaneo</string>
     <string name="transition_30s">30 segundos</string>
+    <string name="transition_1m">1 minuto</string>
+    <string name="transition_3m">3 minutos</string>
     <string name="transition_5m">5 minutos</string>
     <string name="transition_15m">15 minutos</string>
     <string name="transition_30m">30 minutos</string>
+    <string name="transition_custom">Personalizado</string>
+    <string name="transition_custom_value">%1$d min</string>
+    <string name="transition_custom_name">Duração de transição personalizada</string>
 
     <string name="driver_title">Driver de exibicao</string>
     <string name="driver_auto">Automático (melhor disponível)</string>

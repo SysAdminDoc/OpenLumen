@@ -135,9 +135,14 @@
     <string name="transition_duration_subtitle">Vitesse d\'apparition ou de disparition du filtre aux limites de la programmation. Les modifications manuelles (curseurs, préréglages) restent instantanées.</string>
     <string name="transition_instant">Instantané</string>
     <string name="transition_30s">30 secondes</string>
+    <string name="transition_1m">1 minute</string>
+    <string name="transition_3m">3 minutes</string>
     <string name="transition_5m">5 minutes</string>
     <string name="transition_15m">15 minutes</string>
     <string name="transition_30m">30 minutes</string>
+    <string name="transition_custom">Personnalisé</string>
+    <string name="transition_custom_value">%1$d min</string>
+    <string name="transition_custom_name">Durée de transition personnalisée</string>
 
     <string name="driver_title">Pilote d\'affichage</string>
     <string name="driver_auto">Auto (meilleur disponible)</string>
