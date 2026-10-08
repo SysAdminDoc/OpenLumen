@@ -18,6 +18,7 @@ import com.openlumen.prefs.PreferencesRecovery
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.PresetPackImportSummary
 import com.openlumen.prefs.PresetSortOrder
+import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.prefs.touchPreset
 import com.openlumen.prefs.withFilterEnabled
@@ -299,6 +300,18 @@ class OpenLumenViewModel @Inject constructor(
                     progressiveEndHour = endHour.coerceIn(0, 23),
                     progressiveEndMinute = endMinute.coerceIn(0, 59),
                     progressiveEndIntensity = endIntensity.coerceIn(0f, 1f)
+                )
+            )
+        }
+    }
+
+    override fun setDayFilter(enabled: Boolean, kelvin: Int, dim: Float) = viewModelScope.launch {
+        prefs.update {
+            it.copy(
+                schedule = it.schedule.copy(
+                    dayFilter = enabled,
+                    dayKelvin = kelvin.coerceIn(ScheduleDto.DAY_KELVIN_MIN, ScheduleDto.DAY_KELVIN_MAX),
+                    dayDim = dim.coerceIn(0f, ScheduleDto.DAY_DIM_MAX)
                 )
             )
         }

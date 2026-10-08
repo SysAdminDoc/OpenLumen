@@ -364,4 +364,10 @@
     <string name="schedule_progressive_end_title">最大になる時刻</string>
     <string name="schedule_progressive_end_intensity">深夜の強さ: %1$d%%</string>
     <string name="schedule_progressive_end_intensity_name">深夜の強さ</string>
+    <string name="schedule_day_filter_title">スケジュール外のフィルタ</string>
+    <string name="schedule_day_filter_body">オフにする代わりに、残りの時間は弱めの色温度を保ちます。スケジュール内ではプリセットが適用されます。</string>
+    <string name="schedule_day_filter_kelvin">日中の色温度: %1$d K</string>
+    <string name="schedule_day_filter_kelvin_name">日中の色温度</string>
+    <string name="schedule_day_filter_dim">日中の減光: %1$d%%</string>
+    <string name="schedule_day_filter_dim_name">日中の減光</string>
 </resources>

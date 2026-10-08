@@ -367,4 +367,10 @@
     <string name="schedule_progressive_end_title">Voll erreicht um</string>
     <string name="schedule_progressive_end_intensity">Stärke spät nachts: %1$d %%</string>
     <string name="schedule_progressive_end_intensity_name">Stärke spät nachts</string>
+    <string name="schedule_day_filter_title">Filter außerhalb des Zeitplans</string>
+    <string name="schedule_day_filter_body">Statt auszuschalten, für den Rest des Tages eine leichtere Farbtemperatur halten. Innerhalb des Zeitplans übernimmt deine Voreinstellung.</string>
+    <string name="schedule_day_filter_kelvin">Tagestemperatur: %1$d K</string>
+    <string name="schedule_day_filter_kelvin_name">Tagestemperatur</string>
+    <string name="schedule_day_filter_dim">Tagesabdunklung: %1$d %%</string>
+    <string name="schedule_day_filter_dim_name">Tagesabdunklung</string>
 </resources>

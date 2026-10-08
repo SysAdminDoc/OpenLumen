@@ -367,4 +367,10 @@
     <string name="schedule_progressive_end_title">Atteint son maximum à</string>
     <string name="schedule_progressive_end_intensity">Force en fin de nuit : %1$d %%</string>
     <string name="schedule_progressive_end_intensity_name">Force en fin de nuit</string>
+    <string name="schedule_day_filter_title">Filtre en dehors de la programmation</string>
+    <string name="schedule_day_filter_body">Au lieu de s\'éteindre, garder une température de couleur plus légère le reste de la journée. Dans la programmation, votre préréglage prend le relais.</string>
+    <string name="schedule_day_filter_kelvin">Température de jour : %1$d K</string>
+    <string name="schedule_day_filter_kelvin_name">Température de jour</string>
+    <string name="schedule_day_filter_dim">Assombrissement de jour : %1$d %%</string>
+    <string name="schedule_day_filter_dim_name">Assombrissement de jour</string>
 </resources>

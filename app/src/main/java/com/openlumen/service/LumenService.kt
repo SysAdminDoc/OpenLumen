@@ -25,6 +25,7 @@ import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.DirectBootStateStore
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.dayMatrix
 import com.openlumen.prefs.PreferencesStore
 import com.openlumen.prefs.toggledFilterEnabled
 import com.openlumen.prefs.withFilterEnabled
@@ -77,6 +78,7 @@ class LumenService : LifecycleService() {
     private lateinit var scheduleAlarms: ScheduleAlarmOrchestrator
     private lateinit var lightSubscription: LightSensorSubscription
     private lateinit var widgetBridge: WidgetBridge
+    private val lastFilterPhase = AtomicReference<FilterPhase?>(null)
     private val ambientLightGate = AmbientLightGate()
     private val directBootMirror: DirectBootMirror by lazy {
         DirectBootMirror(directBootState, tag)
@@ -606,13 +608,21 @@ class LumenService : LifecycleService() {
             thresholdLux = p.lightSensorLuxThreshold,
             lux = luxNow
         )
-        val shouldBeActive = shouldFilterBeActive(p, scheduleActive, lightActive)
+        val phase = filterPhase(p, mode, scheduleActive, lightActive)
+        val shouldBeActive = phase != FilterPhase.OFF
 
         // matrixFor applies the progressive ramp itself, so the service and
         // the Home tab's readouts cannot disagree about what is on screen.
-        val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
+        val matrix = when (phase) {
+            FilterPhase.NIGHT -> matrixFor(p)
+            FilterPhase.DAY -> p.dayMatrix()
+            FilterPhase.OFF -> LumenMatrix.IDENTITY
+        }
+        // Day to evening and back is a schedule transition like off to on, so
+        // it fades; the gate alone would treat it as a slider move and jump.
+        val phaseChanged = lastFilterPhase.getAndSet(phase).let { it != null && it != phase }
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
-        engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs)
+        engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs, ramp = phaseChanged)
         // Always reschedule — the next transition time depends on the current mode and clock.
         if (reconcileExactAlarmPermission) {
             scheduleAlarms.rescheduleIfExactAlarmPermissionChanged(mode)

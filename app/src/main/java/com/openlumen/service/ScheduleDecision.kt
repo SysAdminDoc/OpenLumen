@@ -71,6 +71,44 @@ fun mapScheduleMode(
  * to overrule either of those: a user who picks Off and walks into a dark room
  * should not have the screen tint itself.
  */
+/** Which filter the screen should carry right now. */
+enum class FilterPhase {
+    OFF,
+
+    /** The schedule window (or the light sensor): the user's preset. */
+    NIGHT,
+
+    /** Outside the window with the day filter on: [com.openlumen.prefs.dayMatrix]. */
+    DAY
+}
+
+/**
+ * [shouldFilterBeActive], plus the day filter for the hours it leaves off.
+ *
+ * The day filter only fills the gap of a schedule that has one. Always on has
+ * no gap, and the Off preset and Always off are the user saying "not now",
+ * which covers the day as well. A solar schedule without a usable location
+ * maps to [ScheduleMode.AlwaysOff], so it never opens a window and must not be
+ * read as "day forever" either.
+ */
+fun filterPhase(
+    prefs: Preferences,
+    mode: ScheduleMode,
+    scheduleActive: Boolean,
+    lightActive: Boolean
+): FilterPhase {
+    if (shouldFilterBeActive(prefs, scheduleActive, lightActive)) return FilterPhase.NIGHT
+    val hasWindow = mode is ScheduleMode.FixedTime ||
+        mode is ScheduleMode.Solar ||
+        mode is ScheduleMode.UntilNextAlarm
+    val explicitStandby = prefs.activePresetKey == Preferences.OFF_PRESET_KEY
+    return if (prefs.schedule.dayFilter && hasWindow && !explicitStandby) {
+        FilterPhase.DAY
+    } else {
+        FilterPhase.OFF
+    }
+}
+
 fun shouldFilterBeActive(
     prefs: Preferences,
     scheduleActive: Boolean,

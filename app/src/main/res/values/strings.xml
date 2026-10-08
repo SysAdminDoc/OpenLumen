@@ -373,4 +373,10 @@
     <string name="schedule_progressive_end_title">Reaches full at</string>
     <string name="schedule_progressive_end_intensity">Late-night strength: %1$d%%</string>
     <string name="schedule_progressive_end_intensity_name">Late-night strength</string>
+    <string name="schedule_day_filter_title">Filter outside the schedule</string>
+    <string name="schedule_day_filter_body">Instead of switching off, keep a lighter color temperature for the rest of the day. Your preset takes over inside the schedule.</string>
+    <string name="schedule_day_filter_kelvin">Day temperature: %1$d K</string>
+    <string name="schedule_day_filter_kelvin_name">Day temperature</string>
+    <string name="schedule_day_filter_dim">Day dim: %1$d%%</string>
+    <string name="schedule_day_filter_dim_name">Day dim</string>
 </resources>

@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlumen.R
 import com.openlumen.external.ExternalIntentResult
+import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
@@ -504,6 +505,91 @@ fun ScheduleScreen(
                                     R.string.schedule_progressive_end_intensity,
                                     (progressiveEndIntensity * 100).roundToInt()
                                 )
+                            ),
+                            colors = lumenSliderColors()
+                        )
+                    }
+                }
+            }
+        }
+
+        // Outside the window the filter used to switch off. The day filter
+        // keeps a lighter temperature there instead, so the evening preset
+        // and the day temperature hand over at the schedule's own boundaries
+        // (the same alarms, nothing new wakes the device).
+        if (
+            prefs.schedule.mode == ScheduleModeDto.Solar ||
+            prefs.schedule.mode == ScheduleModeDto.FixedTime ||
+            prefs.schedule.mode == ScheduleModeDto.UntilNextAlarm
+        ) {
+            var dayKelvin by remember(prefs.schedule.dayKelvin) {
+                mutableFloatStateOf(prefs.schedule.dayKelvin.toFloat())
+            }
+            var dayDim by remember(prefs.schedule.dayDim) {
+                mutableFloatStateOf(prefs.schedule.dayDim)
+            }
+            val saveDay = { enabled: Boolean ->
+                vm.setDayFilter(enabled, dayKelvin.roundToInt(), dayDim)
+            }
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.schedule_day_filter_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                stringResource(R.string.schedule_day_filter_body),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        LumenSwitch(
+                            checked = prefs.schedule.dayFilter,
+                            onCheckedChange = { on -> saveDay(on) }
+                        )
+                    }
+                    if (prefs.schedule.dayFilter) {
+                        val kelvinLabel = stringResource(
+                            R.string.schedule_day_filter_kelvin,
+                            dayKelvin.roundToInt()
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(kelvinLabel, style = MaterialTheme.typography.bodySmall)
+                        Slider(
+                            value = dayKelvin,
+                            onValueChange = { dayKelvin = (it / 100f).roundToInt() * 100f },
+                            onValueChangeFinished = { saveDay(true) },
+                            valueRange = ScheduleDto.DAY_KELVIN_MIN.toFloat()..ScheduleDto.DAY_KELVIN_MAX.toFloat(),
+                            steps = (ScheduleDto.DAY_KELVIN_MAX - ScheduleDto.DAY_KELVIN_MIN) / 100 - 1,
+                            modifier = Modifier.labeledSliderSemantics(
+                                name = stringResource(R.string.schedule_day_filter_kelvin_name),
+                                valueDescription = kelvinLabel
+                            ),
+                            colors = lumenSliderColors()
+                        )
+                        val dimLabel = stringResource(
+                            R.string.schedule_day_filter_dim,
+                            (dayDim * 100).roundToInt()
+                        )
+                        Text(dimLabel, style = MaterialTheme.typography.bodySmall)
+                        Slider(
+                            value = dayDim,
+                            onValueChange = { dayDim = it },
+                            onValueChangeFinished = { saveDay(true) },
+                            valueRange = 0f..ScheduleDto.DAY_DIM_MAX,
+                            modifier = Modifier.labeledSliderSemantics(
+                                name = stringResource(R.string.schedule_day_filter_dim_name),
+                                valueDescription = dimLabel
                             ),
                             colors = lumenSliderColors()
                         )

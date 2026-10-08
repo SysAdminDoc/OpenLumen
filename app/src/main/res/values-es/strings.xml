@@ -367,4 +367,10 @@
     <string name="schedule_progressive_end_title">Llega al máximo a las</string>
     <string name="schedule_progressive_end_intensity">Intensidad de madrugada: %1$d %%</string>
     <string name="schedule_progressive_end_intensity_name">Intensidad de madrugada</string>
+    <string name="schedule_day_filter_title">Filtro fuera de la programación</string>
+    <string name="schedule_day_filter_body">En lugar de apagarse, mantener una temperatura de color más suave el resto del día. Dentro de la programación se aplica tu ajuste.</string>
+    <string name="schedule_day_filter_kelvin">Temperatura de día: %1$d K</string>
+    <string name="schedule_day_filter_kelvin_name">Temperatura de día</string>
+    <string name="schedule_day_filter_dim">Atenuación de día: %1$d %%</string>
+    <string name="schedule_day_filter_dim_name">Atenuación de día</string>
 </resources>

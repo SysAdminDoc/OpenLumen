@@ -127,9 +127,20 @@ internal class EngineController(
         }
     }
 
-    suspend fun applyIfNeeded(shouldBeActive: Boolean, matrix: LumenMatrix, transitionDurationMs: Long) {
+    /**
+     * [ramp] asks for the transition fade even when the filter stays on, for
+     * the day filter handing over to the evening preset and back: to the gate
+     * that is one active target replacing another, which a slider drag also
+     * is, and a slider drag must not fade.
+     */
+    suspend fun applyIfNeeded(
+        shouldBeActive: Boolean,
+        matrix: LumenMatrix,
+        transitionDurationMs: Long,
+        ramp: Boolean = false
+    ) {
         applyGate.next(shouldBeActive, matrix)?.let { decision ->
-            val rampMs = if (decision.isStateFlip) transitionDurationMs.coerceAtLeast(0L) else 0L
+            val rampMs = if (decision.isStateFlip || ramp) transitionDurationMs.coerceAtLeast(0L) else 0L
             applyMatrix(decision, shouldBeActive, rampMs)
         }
     }

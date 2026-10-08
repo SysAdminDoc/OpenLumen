@@ -367,4 +367,10 @@
     <string name="schedule_progressive_end_title">Atinge o máximo às</string>
     <string name="schedule_progressive_end_intensity">Intensidade de madrugada: %1$d %%</string>
     <string name="schedule_progressive_end_intensity_name">Intensidade de madrugada</string>
+    <string name="schedule_day_filter_title">Filtro fora do agendamento</string>
+    <string name="schedule_day_filter_body">Em vez de desligar, mantém uma temperatura de cor mais leve no resto do dia. Dentro do agendamento vale a sua predefinição.</string>
+    <string name="schedule_day_filter_kelvin">Temperatura de dia: %1$d K</string>
+    <string name="schedule_day_filter_kelvin_name">Temperatura de dia</string>
+    <string name="schedule_day_filter_dim">Escurecimento de dia: %1$d %%</string>
+    <string name="schedule_day_filter_dim_name">Escurecimento de dia</string>
 </resources>
