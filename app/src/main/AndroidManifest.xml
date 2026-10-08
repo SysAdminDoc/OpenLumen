@@ -32,7 +32,7 @@
     <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
 
    <permission
-       android:name="com.openlumen.permission.AUTOMATION"
+       android:name="${applicationId}.permission.AUTOMATION"
         android:protectionLevel="signature"
        android:label="@string/perm_automation_label"
        android:description="@string/perm_automation_description" />
