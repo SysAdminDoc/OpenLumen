@@ -124,7 +124,7 @@
     <string name="schedule_exact_alarm_warning_body">As mudanças programadas podem atrasar porque o Android permite apenas alarmes inexatos para o OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Abrir configurações de alarmes exatos</string>
     <string name="schedule_set_location">Definir localização</string>
-    <string name="schedule_solar_location_required_short">Localização necessária</string>
+    <string name="schedule_solar_location_tap_to_set">Localização necessária. Toque para definir uma.</string>
     <string name="schedule_solar_location_required_title">O agendamento solar precisa de uma localização</string>
     <string name="schedule_solar_location_required_body">Insira uma latitude e longitude válidas antes de escolher Solar. O filtro permanece desligado até lá.</string>
     <string name="schedule_sunset_offset">Desvio do pôr do sol: %1$d min</string>

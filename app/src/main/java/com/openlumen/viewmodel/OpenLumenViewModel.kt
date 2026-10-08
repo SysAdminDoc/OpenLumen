@@ -201,6 +201,21 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    override fun setLocationAndSelectSolar(lat: Double, lng: Double, solarTimezone: String?) =
+        viewModelScope.launch {
+            if (!isValidSolarLocation(lat, lng)) return@launch
+            prefs.update {
+                it.copy(
+                    schedule = it.schedule.copy(
+                        latitude = lat,
+                        longitude = lng,
+                        solarTimezone = solarTimezone,
+                        mode = ScheduleModeDto.Solar
+                    )
+                )
+            }
+        }
+
     override fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
         prefs.update { current ->
             // C253: with force-pin on, an unavailable probe result is not

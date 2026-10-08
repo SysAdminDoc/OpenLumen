@@ -97,6 +97,9 @@ fun ScheduleScreen(
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    // Set when the dialog was opened from the Solar row with no location yet:
+    // saving it should also select the mode the user tapped.
+    var selectSolarAfterLocation by rememberSaveable { mutableStateOf(false) }
     var showProgressiveEndPicker by rememberSaveable { mutableStateOf(false) }
     var equalFixedTimesError by rememberSaveable { mutableStateOf(false) }
     var exactAlarmSettingsError by rememberSaveable { mutableStateOf(false) }
@@ -206,8 +209,17 @@ fun ScheduleScreen(
                     .fillMaxWidth()
                     .selectable(
                         selected = prefs.schedule.mode == mode,
-                        enabled = !solarUnavailable,
-                        onClick = { vm.setScheduleMode(mode) },
+                        // Still tappable without a location. The location
+                        // button lives under the Solar mode, so disabling the
+                        // row left no way to enter the first location.
+                        onClick = {
+                            if (solarUnavailable) {
+                                selectSolarAfterLocation = true
+                                showLocationDialog = true
+                            } else {
+                                vm.setScheduleMode(mode)
+                            }
+                        },
                         role = Role.RadioButton
                     )
             ) {
@@ -236,7 +248,7 @@ fun ScheduleScreen(
                         )
                         if (solarUnavailable) {
                             Text(
-                                stringResource(R.string.schedule_solar_location_required_short),
+                                stringResource(R.string.schedule_solar_location_tap_to_set),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
@@ -646,10 +658,18 @@ fun ScheduleScreen(
             initialLat = prefs.schedule.latitude,
             initialLng = prefs.schedule.longitude,
             initialTimezone = prefs.schedule.solarTimezone,
-            onDismiss = { showLocationDialog = false },
-            onSave = { lat, lng, solarTimezone ->
-                vm.setLocation(lat, lng, solarTimezone)
+            onDismiss = {
                 showLocationDialog = false
+                selectSolarAfterLocation = false
+            },
+            onSave = { lat, lng, solarTimezone ->
+                if (selectSolarAfterLocation) {
+                    vm.setLocationAndSelectSolar(lat, lng, solarTimezone)
+                } else {
+                    vm.setLocation(lat, lng, solarTimezone)
+                }
+                showLocationDialog = false
+                selectSolarAfterLocation = false
             }
         )
     }

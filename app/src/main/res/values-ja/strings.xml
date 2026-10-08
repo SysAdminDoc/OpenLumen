@@ -124,7 +124,7 @@
     <string name="schedule_exact_alarm_warning_body">Android が OpenLumen に不正確なアラームのみを許可しているため、時刻指定の切り替えが遅れることがあります。</string>
     <string name="schedule_exact_alarm_warning_action">正確なアラーム設定を開く</string>
     <string name="schedule_set_location">位置情報を設定</string>
-    <string name="schedule_solar_location_required_short">位置情報が必要です</string>
+    <string name="schedule_solar_location_tap_to_set">位置情報が必要です。タップして設定します。</string>
     <string name="schedule_solar_location_required_title">ソーラースケジュールには位置情報が必要です</string>
     <string name="schedule_solar_location_required_body">ソーラーを選択する前に、有効な緯度と経度を入力してください。位置情報を設定するまでフィルターはオフのままです。</string>
     <string name="schedule_sunset_offset">日の入りのオフセット: %1$d 分</string>

@@ -124,7 +124,7 @@
     <string name="schedule_exact_alarm_warning_body">Zeitgesteuerte Wechsel können verspätet ausgeführt werden, weil Android für OpenLumen nur ungenaue Alarme zulässt.</string>
     <string name="schedule_exact_alarm_warning_action">Einstellungen für exakte Alarme öffnen</string>
     <string name="schedule_set_location">Standort festlegen</string>
-    <string name="schedule_solar_location_required_short">Standort erforderlich</string>
+    <string name="schedule_solar_location_tap_to_set">Standort erforderlich. Tippen, um ihn festzulegen.</string>
     <string name="schedule_solar_location_required_title">Solarzeitplan benötigt einen Standort</string>
     <string name="schedule_solar_location_required_body">Geben Sie einen gültigen Breiten- und Längengrad ein, bevor Sie Solar wählen. Der Filter bleibt bis dahin ausgeschaltet.</string>
     <string name="schedule_sunset_offset">Versatz Sonnenuntergang: %1$d Min.</string>
