@@ -446,7 +446,8 @@ class PreferencesStore(
             s.progressiveEndIntensity.coerceIn(0f, 1f)
         } else {
             1f
-        }
+        },
+        locationFixAtMs = s.locationFixAtMs.coerceAtLeast(0L)
     ))
 
     /**

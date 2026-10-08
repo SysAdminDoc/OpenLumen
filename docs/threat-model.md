@@ -249,11 +249,12 @@ What we ask for, why, and what would happen if denied:
 | `POST_NOTIFICATIONS` (API 33+) | Foreground service notification visibility | Service runs but notification is silent / hidden |
 | `SCHEDULE_EXACT_ALARM` | Precise schedule transitions | Schedule fires within Doze tolerance instead of on the minute |
 | `WRITE_SECURE_SETTINGS` (granted only via ADB) | CDM engine | CDM engine unavailable; SF/KCAL/Overlay still work |
+| `ACCESS_COARSE_LOCATION` (while in use) | "Use my location" and automatic location for the solar schedule: one cached or one active coarse fix, only when the user taps the button or opens the app. Never in the background, never leaves the device (there is no `INTERNET`). | Pick a city or type coordinates, as before |
 
 Permissions we deliberately do **not** request:
 
 - `INTERNET` / `ACCESS_NETWORK_STATE` / `ACCESS_WIFI_STATE`
-- `ACCESS_*_LOCATION`
+- `ACCESS_FINE_LOCATION` / `ACCESS_BACKGROUND_LOCATION`: sunset needs a city, not a street, and the app reads location only while it is open
 - `READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE`
 - `QUERY_ALL_PACKAGES`
 - `BLUETOOTH_*`

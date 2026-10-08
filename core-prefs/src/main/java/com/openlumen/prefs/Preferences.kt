@@ -117,7 +117,24 @@ data class ScheduleDto(
     val progressiveEndMinute: Int = 0,
 
     /** Where the ramp ends. The start is the preset's own intensity. */
-    val progressiveEndIntensity: Float = 1f
+    val progressiveEndIntensity: Float = 1f,
+
+    /**
+     * Refresh [latitude]/[longitude] from coarse device location when the app
+     * is opened. Picking a city or typing coordinates turns it off, so a
+     * manual choice is never overwritten.
+     */
+    val autoLocation: Boolean = false,
+
+    /** When the automatic location was last confirmed; 0 for never. */
+    val locationFixAtMs: Long = 0L,
+
+    /**
+     * The device timezone when the location was saved. A later timezone
+     * change is the one cheap signal that the user travelled; null for a
+     * location saved before this was recorded.
+     */
+    val locationZoneId: String? = null
 )
 
 @Serializable

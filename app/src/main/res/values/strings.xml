@@ -142,6 +142,7 @@
     <string name="schedule_end">End</string>
     <string name="schedule_time_value">%1$s: %2$s</string>
     <string name="schedule_location_value">Location: %1$s</string>
+    <string name="schedule_location_value_auto">Location: %1$s (automatic)</string>
     <string name="schedule_equal_times_error">Start and end must be different. Choose Always for an all-day schedule.</string>
     <string name="schedule_timezone">Schedules use your device clock (%1$s).</string>
     <string name="schedule_solar_timezone">Solar transitions use the selected location clock (%1$s).</string>
@@ -149,7 +150,7 @@
     <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Open exact alarm settings</string>
     <string name="schedule_set_location">Set location</string>
-    <string name="schedule_solar_location_required_short">Location required</string>
+    <string name="schedule_solar_location_tap_to_set">Location required. Tap to set one.</string>
     <string name="schedule_solar_location_required_title">Solar schedule needs a location</string>
     <string name="schedule_solar_location_required_body">Enter a valid latitude and longitude before choosing Solar. The filter stays off until a location is set.</string>
     <string name="schedule_sunset_offset">Sunset offset: %1$d min</string>
@@ -332,6 +333,22 @@
     <string name="location_search_cities">Search cities</string>
     <string name="location_no_city_matches">No cities match this search.</string>
     <string name="location_use_city">Use</string>
+    <string name="location_use_mine">Use my location</string>
+    <string name="location_locating">Locating…</string>
+    <string name="location_found">Location found. Coordinates are approximate, which is plenty for sunset times.</string>
+    <string name="location_off">Location is turned off on this phone.</string>
+    <string name="location_open_settings">Open location settings</string>
+    <string name="location_denied">Location permission was denied. You can still pick a city or enter coordinates.</string>
+    <string name="location_failed">Could not get a location. Try again or pick a city.</string>
+    <string name="location_auto_title">Update automatically</string>
+    <string name="location_auto_body">Refreshes when you open OpenLumen, and only after you have moved more than 25 km. Never in the background.</string>
+    <string name="location_auto_last">Last updated %1$s</string>
+    <string name="notif_location_channel_id" translatable="false">openlumen.location</string>
+    <string name="notif_location_channel_name">Location</string>
+    <string name="notif_location_channel_desc">Tells you when a timezone change may have made the solar schedule location stale.</string>
+    <string name="notif_zone_changed_title">Timezone changed</string>
+    <string name="notif_zone_changed_auto">Open OpenLumen to update the location the sunset times are computed for.</string>
+    <string name="notif_zone_changed_manual">Sunset times are still computed for the old location. Open OpenLumen to set a new one.</string>
     <string name="notif_status_detail">%1$s · %2$s</string>
     <string name="about_version_value">Version %1$s</string>
     <string name="diag_level_debug">Debug</string>
