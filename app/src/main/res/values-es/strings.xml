@@ -244,6 +244,21 @@
 
     <string name="notif_channel_name">Estado del filtro</string>
     <string name="notif_channel_desc">Indica que OpenLumen está aplicando un filtro de color a la pantalla.</string>
+    <string name="notif_conflict_channel_name">Conflictos con ajustes del sistema</string>
+    <string name="notif_conflict_channel_desc">Avisa cuando una función de color del sistema sobrescribe el filtro.</string>
+    <string name="notif_conflict_title">Un ajuste del sistema sobrescribió el filtro</string>
+    <string name="notif_conflict_text">El filtro se ha restaurado. Abre OpenLumen para ver qué ajuste desactivar.</string>
+    <string name="system_conflict_title">Los ajustes de color del sistema anulan el filtro</string>
+    <string name="system_conflict_body">El controlador SurfaceFlinger comparte la matriz de color de la pantalla con estas funciones del sistema, y gana quien escribe último. OpenLumen restaura el filtro tras cada cambio, pero la pantalla parpadea y la función del sistema no tiene efecto visible. Desactívalas para un filtro estable.</string>
+    <string name="system_conflict_night_light_on">Luz nocturna está activada</string>
+    <string name="system_conflict_night_light_scheduled">Luz nocturna tiene su propia programación y se activará sola</string>
+    <string name="system_conflict_extra_dim_on">Atenuación extra está activada</string>
+    <string name="system_conflict_inversion_on">Inversión de colores está activada</string>
+    <string name="system_conflict_open_settings">Abrir ajustes</string>
+    <string name="system_conflict_scheduled_title">Luz nocturna del sistema está programada</string>
+    <string name="system_conflict_scheduled_body">Luz nocturna está desactivada ahora, pero su propia programación la activará, y desde entonces reemplazará el filtro en cada cambio. Pon la programación de Luz nocturna en Ninguna para un filtro estable.</string>
+    <string name="system_conflict_night_light_scheduled_at">Luz nocturna se activa a las %1$s</string>
+    <string name="system_conflict_night_light_scheduled_sunset">Luz nocturna se activa al atardecer</string>
     <string name="notif_title_filtering">OpenLumen filtrando</string>
     <string name="notif_title_standby">OpenLumen en espera</string>
     <string name="notif_status_filtering">Filtro activo</string>

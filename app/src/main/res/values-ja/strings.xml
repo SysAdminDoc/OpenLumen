@@ -244,6 +244,21 @@
 
     <string name="notif_channel_name">フィルター状態</string>
     <string name="notif_channel_desc">OpenLumen がディスプレイにカラーフィルターを適用中であることを示します。</string>
+    <string name="notif_conflict_channel_name">システム設定との競合</string>
+    <string name="notif_conflict_channel_desc">システムの色機能がフィルタを上書きしたときに通知します。</string>
+    <string name="notif_conflict_title">システム設定がフィルタを上書きしました</string>
+    <string name="notif_conflict_text">フィルタは元に戻しました。OpenLumen を開いて、オフにすべき設定を確認してください。</string>
+    <string name="system_conflict_title">システムの色設定がフィルタを上書きしています</string>
+    <string name="system_conflict_body">SurfaceFlinger ドライバは画面のカラーマトリクスをこれらのシステム機能と共有しており、最後に書き込んだ側が優先されます。OpenLumen は変更のたびにフィルタを戻しますが、画面がちらつき、システム機能も目に見える効果がありません。安定したフィルタのためにオフにしてください。</string>
+    <string name="system_conflict_night_light_on">夜間モードがオンです</string>
+    <string name="system_conflict_night_light_scheduled">夜間モードに独自のスケジュールがあり、自動でオンになります</string>
+    <string name="system_conflict_extra_dim_on">さらに輝度を下げる がオンです</string>
+    <string name="system_conflict_inversion_on">色反転がオンです</string>
+    <string name="system_conflict_open_settings">設定を開く</string>
+    <string name="system_conflict_scheduled_title">システムの夜間モードにスケジュールがあります</string>
+    <string name="system_conflict_scheduled_body">夜間モードは現在オフですが、独自のスケジュールでオンになり、その後は変更のたびにフィルタを置き換えます。フィルタを安定させるには夜間モードのスケジュールを「なし」にしてください。</string>
+    <string name="system_conflict_night_light_scheduled_at">夜間モードは %1$s に自動でオンになります</string>
+    <string name="system_conflict_night_light_scheduled_sunset">夜間モードは日の入りに自動でオンになります</string>
     <string name="notif_title_filtering">OpenLumen フィルタ適用中</string>
     <string name="notif_title_standby">OpenLumen 待機中</string>
     <string name="notif_status_filtering">フィルタ適用中</string>

@@ -244,6 +244,21 @@
 
     <string name="notif_channel_name">État du filtre</string>
     <string name="notif_channel_desc">Indique qu\'OpenLumen applique une teinte à l\'écran.</string>
+    <string name="notif_conflict_channel_name">Conflits avec les réglages du système</string>
+    <string name="notif_conflict_channel_desc">Signale qu\'une fonction de couleur du système a écrasé le filtre.</string>
+    <string name="notif_conflict_title">Un réglage du système a écrasé le filtre</string>
+    <string name="notif_conflict_text">Le filtre a été rétabli. Ouvrez OpenLumen pour voir quel réglage désactiver.</string>
+    <string name="system_conflict_title">Des réglages de couleur du système écrasent le filtre</string>
+    <string name="system_conflict_body">Le pilote SurfaceFlinger partage la matrice de couleur de l\'écran avec ces fonctions du système, et le dernier qui écrit l\'emporte. OpenLumen rétablit le filtre après chaque changement, mais l\'écran clignote et la fonction du système n\'a aucun effet visible. Désactivez-les pour un filtre stable.</string>
+    <string name="system_conflict_night_light_on">Éclairage nocturne est activé</string>
+    <string name="system_conflict_night_light_scheduled">Éclairage nocturne a sa propre programmation et s\'activera tout seul</string>
+    <string name="system_conflict_extra_dim_on">Luminosité ultra-réduite est activée</string>
+    <string name="system_conflict_inversion_on">Inversion des couleurs est activée</string>
+    <string name="system_conflict_open_settings">Ouvrir les réglages</string>
+    <string name="system_conflict_scheduled_title">L\'éclairage nocturne du système a sa propre programmation</string>
+    <string name="system_conflict_scheduled_body">L\'éclairage nocturne est désactivé pour l\'instant, mais sa propre programmation va l\'activer, et il remplacera alors le filtre à chaque changement. Réglez sa programmation sur Aucune pour un filtre stable.</string>
+    <string name="system_conflict_night_light_scheduled_at">L\'éclairage nocturne s\'active à %1$s</string>
+    <string name="system_conflict_night_light_scheduled_sunset">L\'éclairage nocturne s\'active au coucher du soleil</string>
     <string name="notif_title_filtering">OpenLumen filtre</string>
     <string name="notif_title_standby">OpenLumen en veille</string>
     <string name="notif_status_filtering">Filtre actif</string>

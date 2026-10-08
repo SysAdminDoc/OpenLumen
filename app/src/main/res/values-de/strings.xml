@@ -244,6 +244,21 @@
 
     <string name="notif_channel_name">Filterstatus</string>
     <string name="notif_channel_desc">Zeigt an, dass OpenLumen derzeit das Display einfärbt.</string>
+    <string name="notif_conflict_channel_name">Konflikte mit Systemeinstellungen</string>
+    <string name="notif_conflict_channel_desc">Meldet, wenn eine Systemfarbfunktion den Filter überschrieben hat.</string>
+    <string name="notif_conflict_title">Eine Systemeinstellung hat den Filter überschrieben</string>
+    <string name="notif_conflict_text">Der Filter wurde wiederhergestellt. Öffne OpenLumen, um zu sehen, welche Einstellung du ausschalten solltest.</string>
+    <string name="system_conflict_title">Systemfarbeinstellungen überschreiben den Filter</string>
+    <string name="system_conflict_body">Der SurfaceFlinger-Treiber teilt die Farbmatrix des Bildschirms mit diesen Systemfunktionen, und wer zuletzt schreibt, gewinnt. OpenLumen stellt den Filter nach jeder Änderung wieder her, aber der Bildschirm flackert und die Systemfunktion hat keine sichtbare Wirkung. Schalte sie aus, damit der Filter stabil bleibt.</string>
+    <string name="system_conflict_night_light_on">Nachtlicht ist an</string>
+    <string name="system_conflict_night_light_scheduled">Nachtlicht hat einen eigenen Zeitplan und schaltet sich selbst ein</string>
+    <string name="system_conflict_extra_dim_on">Extradunkel ist an</string>
+    <string name="system_conflict_inversion_on">Farbumkehr ist an</string>
+    <string name="system_conflict_open_settings">Einstellungen öffnen</string>
+    <string name="system_conflict_scheduled_title">System-Nachtlicht hat einen Zeitplan</string>
+    <string name="system_conflict_scheduled_body">Das Nachtlicht ist jetzt aus, aber sein eigener Zeitplan schaltet es ein, und ab dann ersetzt es den Filter bei jeder Änderung. Setze den Nachtlicht-Zeitplan auf „Keiner“, damit der Filter stabil bleibt.</string>
+    <string name="system_conflict_night_light_scheduled_at">Nachtlicht schaltet sich um %1$s ein</string>
+    <string name="system_conflict_night_light_scheduled_sunset">Nachtlicht schaltet sich bei Sonnenuntergang ein</string>
     <string name="notif_title_filtering">OpenLumen filtert</string>
     <string name="notif_title_standby">OpenLumen Bereitschaft</string>
     <string name="notif_status_filtering">Filter aktiv</string>

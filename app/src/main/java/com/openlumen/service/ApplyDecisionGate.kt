@@ -36,6 +36,14 @@ internal class ApplyDecisionGate {
     }
 
     /**
+     * The target last committed while the filter was meant to be on, or null
+     * when it is meant to be off or nothing has been committed. This is what
+     * the screen should show if something else has overwritten it.
+     */
+    @Synchronized
+    fun committedActiveTarget(): LumenMatrix? = lastTarget?.takeIf { lastShouldBeActive }
+
+    /**
      * Commit a target only after the engine has reported a visible success.
      * Failed operations deliberately leave the previous committed target in
      * place so the same requested state can be retried.

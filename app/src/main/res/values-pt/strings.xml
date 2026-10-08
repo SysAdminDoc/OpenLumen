@@ -244,6 +244,21 @@
 
     <string name="notif_channel_name">Status do filtro</string>
     <string name="notif_channel_desc">Indica que o OpenLumen está tingindo a tela no momento.</string>
+    <string name="notif_conflict_channel_name">Conflitos com configurações do sistema</string>
+    <string name="notif_conflict_channel_desc">Avisa quando uma função de cor do sistema substituiu o filtro.</string>
+    <string name="notif_conflict_title">Uma configuração do sistema substituiu o filtro</string>
+    <string name="notif_conflict_text">O filtro foi restaurado. Abra o OpenLumen para ver qual configuração desativar.</string>
+    <string name="system_conflict_title">As configurações de cor do sistema estão substituindo o filtro</string>
+    <string name="system_conflict_body">O driver SurfaceFlinger compartilha a matriz de cor da tela com estas funções do sistema, e vale a última que gravar. O OpenLumen restaura o filtro depois de cada mudança, mas a tela pisca e a função do sistema não tem efeito visível. Desative essas funções para um filtro estável.</string>
+    <string name="system_conflict_night_light_on">A Luz noturna está ativada</string>
+    <string name="system_conflict_night_light_scheduled">A Luz noturna tem um agendamento próprio e vai se ativar sozinha</string>
+    <string name="system_conflict_extra_dim_on">O escurecimento extra está ativado</string>
+    <string name="system_conflict_inversion_on">A inversão de cores está ativada</string>
+    <string name="system_conflict_open_settings">Abrir configurações</string>
+    <string name="system_conflict_scheduled_title">A Luz noturna do sistema está agendada</string>
+    <string name="system_conflict_scheduled_body">A Luz noturna está desativada agora, mas o próprio agendamento vai ligar a função, e a partir daí ela substitui o filtro a cada mudança. Defina o agendamento da Luz noturna como Nenhum para um filtro estável.</string>
+    <string name="system_conflict_night_light_scheduled_at">A Luz noturna liga sozinha às %1$s</string>
+    <string name="system_conflict_night_light_scheduled_sunset">A Luz noturna liga sozinha ao pôr do sol</string>
     <string name="notif_title_filtering">OpenLumen filtrando</string>
     <string name="notif_title_standby">OpenLumen em espera</string>
     <string name="notif_status_filtering">Filtro ativo</string>

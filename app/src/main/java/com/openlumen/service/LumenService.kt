@@ -10,7 +10,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.UserManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -22,6 +24,7 @@ import com.openlumen.PresetKeyResolver
 import com.openlumen.R
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.DirectBootStateStore
 import com.openlumen.prefs.Preferences
@@ -34,7 +37,9 @@ import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
 import com.openlumen.schedule.isValidSolarLocation
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
@@ -77,6 +82,9 @@ class LumenService : LifecycleService() {
     private lateinit var scheduleAlarms: ScheduleAlarmOrchestrator
     private lateinit var lightSubscription: LightSensorSubscription
     private lateinit var widgetBridge: WidgetBridge
+    private lateinit var systemColorWatcher: SystemColorSettingsWatcher
+    @Volatile private var systemColorReassertJob: Job? = null
+    @Volatile private var reportedSystemConflicts: Set<SystemColorConflict> = emptySet()
     private val ambientLightGate = AmbientLightGate()
     private val directBootMirror: DirectBootMirror by lazy {
         DirectBootMirror(directBootState, tag)
@@ -191,6 +199,12 @@ class LumenService : LifecycleService() {
             }
         )
         widgetBridge = WidgetBridge(this, tag)
+        systemColorWatcher = SystemColorSettingsWatcher(
+            resolver = contentResolver,
+            handler = Handler(Looper.getMainLooper()),
+            onChange = ::onSystemColorSettingsChanged
+        )
+        systemColorWatcher.register()
         startInForeground()
         registerScreenStateReceiver()
         ensurePreferencesObserved()
@@ -623,6 +637,79 @@ class LumenService : LifecycleService() {
     }
 
     /**
+     * Night Light, Extra Dim or colour inversion changed. On the SurfaceFlinger
+     * driver the system has just written, or is about to write, its own matrix
+     * over the filter, in both directions: switching Night Light off sends
+     * identity. Put the filter back once the system's write has landed.
+     */
+    private fun onSystemColorSettingsChanged() {
+        if (engineController.activeEngineKind() != EngineKind.SURFACE_FLINGER) return
+        val conflicts = systemColorConflicts(
+            engineController.activeEngineKind(),
+            systemColorWatcher.readState()
+        )
+        DiagnosticsLog.log(
+            this,
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.ENGINE,
+            "system colour settings changed; conflicts=${conflicts.joinToString().ifEmpty { "none" }}"
+        )
+        // A Night Light schedule has not written anything yet; the Home card
+        // names it, and the notification is kept for an actual overwrite.
+        val fresh = conflicts - reportedSystemConflicts - SystemColorConflict.NIGHT_LIGHT_SCHEDULED
+        reportedSystemConflicts = conflicts
+        if (fresh.isNotEmpty()) postSystemConflictNotification()
+        systemColorReassertJob?.cancel()
+        systemColorReassertJob = lifecycleScope.launch {
+            var waited = 0L
+            for (at in SystemColorSettingsWatcher.REASSERT_DELAYS_MS) {
+                delay(at - waited)
+                waited = at
+                engineController.reassertAfterSystemOverwrite()
+            }
+        }
+    }
+
+    /**
+     * Say once that a system feature started overwriting the filter. The
+     * filter is already being put back, so this is low importance and leads
+     * to the Home card, which names the setting and opens its screen. A
+     * conflict that stays on does not repeat; one that clears and returns
+     * does, because the user switched it back on.
+     */
+    private fun postSystemConflictNotification() {
+        runCatching {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return@runCatching
+            val channelId = getString(R.string.notif_conflict_channel_id)
+            if (nm.getNotificationChannel(channelId) == null) {
+                nm.createNotificationChannel(
+                    NotificationChannel(
+                        channelId,
+                        getString(R.string.notif_conflict_channel_name),
+                        NotificationManager.IMPORTANCE_LOW
+                    ).apply { description = getString(R.string.notif_conflict_channel_desc) }
+                )
+            }
+            val tapIntent = PendingIntent.getActivity(
+                this, 3,
+                Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val notification = NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(getString(R.string.notif_conflict_title))
+                .setContentText(getString(R.string.notif_conflict_text))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(getString(R.string.notif_conflict_text)))
+                .setContentIntent(tapIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
+            nm.notify(CONFLICT_NOTIFICATION_ID, notification)
+        }.onFailure { Log.w(tag, "system conflict notification: ${it.message}") }
+    }
+
+    /**
      * Effective `LumenMatrix` for [p]. Delegates to
      * `com.openlumen.diagnostics.MatrixPreview.matrixFor` so the service
      * and any UI preview compute exactly the same target matrix. C61's
@@ -694,6 +781,8 @@ class LumenService : LifecycleService() {
                 .onFailure { Log.w(tag, "unregisterReceiver(SCREEN_OFF): ${it.message}") }
             screenStateReceiverRegistered = false
         }
+        systemColorWatcher.unregister()
+        systemColorReassertJob?.cancel()
         engineController.cancelJobs()
         lightSubscription.cancel()
         scheduleAlarms.cancelAlarm()
@@ -730,6 +819,7 @@ class LumenService : LifecycleService() {
 
     companion object {
         private const val NOTIFICATION_ID = 4242
+        private const val CONFLICT_NOTIFICATION_ID = 4243
 
         // Documented intent actions. Tied to roadmap candidates C13 (off),
         // C16 (cycle), and C70 (Tasker/automation). See docs/automation.md

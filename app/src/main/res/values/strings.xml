@@ -280,6 +280,22 @@
     <string name="notif_channel_id" translatable="false">openlumen.filter</string>
     <string name="notif_channel_name">Filter status</string>
     <string name="notif_channel_desc">Indicates that OpenLumen is currently tinting the display.</string>
+    <string name="notif_conflict_channel_id" translatable="false">openlumen.conflicts</string>
+    <string name="notif_conflict_channel_name">Conflicts with system settings</string>
+    <string name="notif_conflict_channel_desc">Tells you when a system color feature overwrote the filter.</string>
+    <string name="notif_conflict_title">A system setting overwrote the filter</string>
+    <string name="notif_conflict_text">The filter has been restored. Open OpenLumen to see which setting to turn off.</string>
+    <string name="system_conflict_title">System color settings are overriding the filter</string>
+    <string name="system_conflict_body">The SurfaceFlinger driver shares the screen\'s color matrix with these system features, and whichever writes last wins. OpenLumen puts the filter back after every change, but the screen flickers and the system feature does nothing visible. Turn them off for a steady filter.</string>
+    <string name="system_conflict_night_light_on">Night Light is on</string>
+    <string name="system_conflict_night_light_scheduled">Night Light has its own schedule and will turn itself on</string>
+    <string name="system_conflict_extra_dim_on">Extra dim is on</string>
+    <string name="system_conflict_inversion_on">Color inversion is on</string>
+    <string name="system_conflict_open_settings">Open settings</string>
+    <string name="system_conflict_scheduled_title">System Night Light is scheduled</string>
+    <string name="system_conflict_scheduled_body">Night Light is off now, but its own schedule will switch it on, and from then it replaces the filter on every change. Set the Night Light schedule to None to keep the filter steady.</string>
+    <string name="system_conflict_night_light_scheduled_at">Night Light turns itself on at %1$s</string>
+    <string name="system_conflict_night_light_scheduled_sunset">Night Light turns itself on at sunset</string>
     <string name="notif_title_filtering">OpenLumen filtering</string>
     <string name="notif_title_standby">OpenLumen standby</string>
     <string name="notif_status_filtering">Filtering active</string>

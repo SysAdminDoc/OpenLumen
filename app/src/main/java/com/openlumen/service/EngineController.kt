@@ -134,6 +134,30 @@ internal class EngineController(
         }
     }
 
+    /** The driver currently applying, or null before the first engine is chosen. */
+    fun activeEngineKind(): EngineKind? = engine?.kind
+
+    /**
+     * Put the committed target back after the system has written its own
+     * colour matrix over it (see [SystemColorConflict]).
+     *
+     * [applyIfNeeded] cannot do this: the gate sees the same target it already
+     * committed and drops it as a duplicate. Only the SurfaceFlinger driver is
+     * overwritten this way, and only an active filter is restored; with the
+     * filter off the system's Night Light is what the user asked for. The jump
+     * is immediate because the screen is already showing the wrong colour.
+     */
+    suspend fun reassertAfterSystemOverwrite(): Boolean {
+        if (engine?.kind != EngineKind.SURFACE_FLINGER) return false
+        val target = applyGate.committedActiveTarget() ?: return false
+        return rampMutex.withLock {
+            cancelTransitionLocked()
+            val ok = applyOnce(target)
+            if (ok) applyGate.commit(shouldBeActive = true, matrix = target) else applyGate.reset()
+            ok
+        }
+    }
+
     /**
      * Drop every output this process can reach.
      *
