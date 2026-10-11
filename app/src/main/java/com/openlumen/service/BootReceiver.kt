@@ -26,6 +26,13 @@ import javax.inject.Inject
  * killed the PendingResult. [DirectBootMirror] keeps a copy of the few fields the
  * locked path needs in device-protected storage instead (C28).
  *
+ * MY_PACKAGE_REPLACED takes the same path. Installing an update kills the
+ * process and the service with it, but not the colour transform a root driver
+ * left in SurfaceFlinger, so the screen kept the last tint with nothing left
+ * to switch it at the next schedule boundary until a reboot or a manual
+ * toggle. The update is not a panic signal, so the crash-log check is skipped
+ * for it.
+ *
  * Boot-panic reset (C85):
  *
  * If the crash log was written within [PANIC_WINDOW_MS] before this boot, we treat the
@@ -41,13 +48,14 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var prefs: PreferencesStore
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        val afterUpdate = intent.action == Intent.ACTION_MY_PACKAGE_REPLACED
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED && !afterUpdate) return
 
         val pending = goAsync()
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         scope.launch {
             try {
-                if (recentCrashSuggestsPanic(context)) {
+                if (!afterUpdate && recentCrashSuggestsPanic(context)) {
                     Log.w(tag, "Recent crash log detected; forcing enabled=false")
                     runCatching {
                         prefs.update { it.copy(enabled = false) }
@@ -65,8 +73,12 @@ class BootReceiver : BroadcastReceiver() {
                     context,
                     svc,
                     tag,
-                    exemption = LumenServiceStarter.Exemption.BOOT,
-                    source = "boot"
+                    exemption = if (afterUpdate) {
+                        LumenServiceStarter.Exemption.SYSTEM_BROADCAST
+                    } else {
+                        LumenServiceStarter.Exemption.BOOT
+                    },
+                    source = if (afterUpdate) "package-replaced" else "boot"
                 )
                 if (result.started) {
                     Log.d(tag, "LumenService start scheduled")
