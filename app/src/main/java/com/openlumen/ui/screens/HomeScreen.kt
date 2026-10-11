@@ -68,6 +68,7 @@ import com.openlumen.presetLabel
 import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
+import com.openlumen.ui.components.ExactAlarmPrompt
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.ui.components.lumenSliderColors
@@ -275,6 +276,13 @@ fun HomeScreen(
         val overlayCardRelevant =
             prefs.engine == EngineKindDto.Auto || prefs.engine == EngineKindDto.Overlay
         OverlayPermissionCard(requiredByActiveEngine = overlayCardRelevant)
+        if (enableSystemActions) {
+            ExactAlarmPrompt(
+                filterEnabled = prefs.enabled,
+                mode = prefs.schedule.mode,
+                onGranted = { vm.reconcileExactAlarmPermission() }
+            )
+        }
 
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),

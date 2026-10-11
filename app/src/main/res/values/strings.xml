@@ -148,6 +148,7 @@
     <string name="schedule_exact_alarm_warning_title">Exact alarms are off</string>
     <string name="schedule_exact_alarm_warning_body">Timed schedule changes may run late because Android is only allowing inexact alarms for OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Open exact alarm settings</string>
+    <string name="exact_alarm_prompt_not_now">Not now</string>
     <string name="schedule_set_location">Set location</string>
     <string name="schedule_solar_location_required_short">Location required</string>
     <string name="schedule_solar_location_required_title">Solar schedule needs a location</string>

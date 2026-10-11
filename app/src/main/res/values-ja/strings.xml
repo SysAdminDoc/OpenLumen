@@ -123,6 +123,7 @@
     <string name="schedule_exact_alarm_warning_title">正確なアラームがオフです</string>
     <string name="schedule_exact_alarm_warning_body">Android が OpenLumen に不正確なアラームのみを許可しているため、時刻指定の切り替えが遅れることがあります。</string>
     <string name="schedule_exact_alarm_warning_action">正確なアラーム設定を開く</string>
+    <string name="exact_alarm_prompt_not_now">今はしない</string>
     <string name="schedule_set_location">位置情報を設定</string>
     <string name="schedule_solar_location_required_short">位置情報が必要です</string>
     <string name="schedule_solar_location_required_title">ソーラースケジュールには位置情報が必要です</string>
