@@ -75,6 +75,9 @@ class LumenService : LifecycleService() {
     @Volatile private var preferencesObserved: Boolean = false
     private lateinit var engineController: EngineController
     private lateinit var scheduleAlarms: ScheduleAlarmOrchestrator
+
+    /** startForeground was refused and a retry alarm is queued. */
+    private var foregroundStartBlocked = false
     private lateinit var lightSubscription: LightSensorSubscription
     private lateinit var widgetBridge: WidgetBridge
     private val ambientLightGate = AmbientLightGate()
@@ -401,10 +404,22 @@ class LumenService : LifecycleService() {
             // Android 12+ throws ForegroundServiceStartNotAllowedException if started from
             // the wrong context. Log and bail rather than crashing the process.
             Log.e(tag, "startForeground failed: ${t.message}", t)
-            lifecycleScope.launch {
-                runCatching { prefs.update { it.copy(enabled = false) } }
-                    .onFailure { Log.w(tag, "Failed to roll back enabled state: ${it.message}") }
-            }
+            DiagnosticsLog.log(
+                this,
+                DiagnosticsLog.Level.ERROR,
+                DiagnosticsLog.Category.SERVICE,
+                "startForeground refused: ${t.javaClass.simpleName}"
+            )
+            // This is also what a sticky restart after a low-memory kill hits,
+            // with the user nowhere near the app. Turning the filter off would
+            // leave the screen unfiltered until they notice, so the switch is
+            // kept and an alarm tries again; alarm starts are allowed in the
+            // background.
+            foregroundStartBlocked = true
+            scheduleAlarms.scheduleBlockedStartRetry(
+                attempt = 1,
+                delayMs = ScheduleAlarmReceiver.blockedStartRetryDelayMs(0)
+            )
             stopSelf()
         }
     }
@@ -696,7 +711,8 @@ class LumenService : LifecycleService() {
         }
         engineController.cancelJobs()
         lightSubscription.cancel()
-        scheduleAlarms.cancelAlarm()
+        // Cancelling here would also cancel the retry startInForeground queued.
+        if (!foregroundStartBlocked) scheduleAlarms.cancelAlarm()
         // Synchronously clear the engine — the lifecycleScope is about to be cancelled,
         // so a normal `launch { engine?.clear() }` would race with cancellation. We
         // block on a short timeout so we never hang shutdown if su is misbehaving.
