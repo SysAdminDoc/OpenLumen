@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
@@ -164,7 +165,11 @@ fun ScheduleScreen(
             ?.takeIf { prefs.schedule.mode == ScheduleModeDto.Solar }
         val deviceZone = ZoneId.systemDefault()
         val zone = shownZone ?: deviceZone
-        val zoneName = zoneDisplayName(zone, locale, Instant.now())
+        // A preview renders the zone name for a fixed summer day. The real
+        // date picks daylight or standard time, so the screenshot references
+        // flipped twice a year with nothing on the screen having changed.
+        val now = if (LocalInspectionMode.current) PREVIEW_INSTANT else Instant.now()
+        val zoneName = zoneDisplayName(zone, locale, now)
         Text(
             if (shownZone != null) {
                 stringResource(R.string.schedule_solar_timezone, zoneName)
@@ -759,6 +764,8 @@ internal fun formatScheduleTime(
     return LocalTime.of(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
         .format(DateTimeFormatter.ofPattern(pattern, locale))
 }
+
+private val PREVIEW_INSTANT: Instant = Instant.parse("2026-07-01T12:00:00Z")
 
 /**
  * A timezone as a person would name it, e.g. "Eastern Daylight Time" rather
