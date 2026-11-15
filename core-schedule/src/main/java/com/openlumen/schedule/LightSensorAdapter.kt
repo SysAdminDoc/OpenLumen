@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.retryWhen
@@ -97,6 +98,12 @@ class LightSensorAdapter(private val context: Context) {
                 true
             }
         }
+        // A phone without the sensor ends the readings, not the app. shareIn
+        // runs this flow in shareScope, where an exception reaches no
+        // collector and goes straight to the crash handler; the Schedule tab
+        // collects lux whatever the hardware. Availability already reads
+        // false, and the next subscriber after a stop tries again.
+        .catch { cause -> if (cause !is SensorRegistrationException) throw cause }
         .buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         .distinctUntilChanged { a, b ->
             abs(a - b) < max(abs(a) * 0.05f, 0.5f)
