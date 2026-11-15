@@ -2,7 +2,7 @@
 <!--
     AppWidgetProviderInfo for the 4x1 preset widget. Tied to C20/C123.
     Glance renders runtime content; the XML layout remains the initial /
-    picker preview surface.
+    picker preview surface. No android:configure: see widget_toggle_info.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -18,5 +18,4 @@
     android:previewLayout="@layout/widget_preset"
     android:resizeMode="horizontal"
     android:widgetCategory="home_screen"
-    android:configure=""
     tools:targetApi="s" />

@@ -12,6 +12,9 @@
       a separate 4x1 widget for preset selection (C20).
     - widgetCategory = home_screen | keyguard so it appears in both
       pickers on devices that allow lock-screen widgets.
+    - No android:configure, not even an empty one. The platform only
+      checks it for null, so "" became a configure activity with no
+      class and the Pixel launcher deleted the widget as it was dropped.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -27,5 +30,4 @@
     android:previewLayout="@layout/widget_toggle"
     android:resizeMode="none"
     android:widgetCategory="home_screen|keyguard"
-    android:configure=""
     tools:targetApi="s" />
