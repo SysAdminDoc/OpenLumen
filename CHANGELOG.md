@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The transition-duration choices on Schedule are full-size tap targets. Each row was only as tall as its text.
 - Preset names stay readable at large font sizes. At twice the normal text size the word "Rename" left room for only two or three letters of each name, so Rename is now a pencil icon, and a two-word name like Deep Sleep wraps onto a second line instead of being cut off.
 - Radio buttons on Schedule and Driver have a little space before their labels instead of touching the first letter.
+- On tablets with the dark theme, the screen headings and the Sort label on Presets were invisible because they were drawn black on black. They now use the same light text as everything else.
 
 ## [0.8.0] (2026-09-04)
 

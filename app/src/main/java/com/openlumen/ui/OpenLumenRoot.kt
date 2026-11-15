@@ -141,29 +141,49 @@ fun OpenLumenRoot(
                 )
             }
         } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                LumenNavigationRail(
-                    currentRoute = currentRoute,
-                    onDestinationSelected = onDestinationSelected
-                )
+            LumenRailLayout(
+                currentRoute = currentRoute,
+                onDestinationSelected = onDestinationSelected
+            ) { modifier ->
                 OpenLumenNavHost(
                     nav = nav,
                     startRoute = initialRoute,
                     screenModel = screenModel,
                     enableSystemActions = enableSystemActions,
                     blockedStart = blockedStart,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .statusBarsPadding()
-                        .navigationBarsPadding()
-                        .background(MaterialTheme.colorScheme.background)
+                    modifier = modifier
                 )
             }
+        }
+    }
+}
+
+/** The tablet layout: the rail on the start side and the screen beside it, in [content]'s modifier. */
+@Composable
+internal fun LumenRailLayout(
+    currentRoute: String?,
+    onDestinationSelected: (Dest) -> Unit,
+    content: @Composable (Modifier) -> Unit
+) {
+    // A Surface, not a background modifier: the Scaffold the phone layout
+    // uses also sets the content color to onBackground, and without it
+    // every text that takes the default color (the screen headings, the
+    // Sort label on Presets) was drawn black on the dark theme's black
+    // background.
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            LumenNavigationRail(
+                currentRoute = currentRoute,
+                onDestinationSelected = onDestinationSelected
+            )
+            content(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .background(MaterialTheme.colorScheme.background)
+            )
         }
     }
 }
