@@ -2,7 +2,7 @@
 
 > **Unmaintained since 2026-09-05.** OpenLumen isn't submitted to Play or to any other store, so there's no review this pack is being written for. The reasoning about *why* `specialUse` is the correct foreground-service type for a display filter is still accurate and still worth reading, because it documents a real manifest decision the app depends on. The parts about submission, review and listings describe something this project doesn't do.
 
-> Tied to roadmap candidate **C93**. F-Droid remains OpenLumen's primary distribution channel. This document exists so an optional Play Store listing can be defensible without compromising the offline philosophy. If we decide not to ship on Play, this document is still useful as a formal justification of the manifest entry.
+> Tied to roadmap candidate **C93**. OpenLumen ships as a signed APK on its GitHub releases page. This document was written for a Play listing, and today it serves as the formal justification of the manifest entry.
 
 OpenLumen declares `android:foregroundServiceType="specialUse"` in `AndroidManifest.xml`. Google requires apps using `specialUse` to:
 

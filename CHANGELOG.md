@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The release gate now knows which signing certificate to expect. It could always compare a built APK against a pinned one, and nothing was pinned, so the check it exists for could not run. The fingerprint was read from the published v0.7.1 APK rather than from the local keystore, because the question the pin answers is whether a build carries the same key as the releases people already have installed, and a keystore cannot answer that about itself. A build signed with anything else now fails the gate instead of being published.
 - The release keystore no longer sits in the repository working tree. Signing reads four environment variables and no file path, so the copy in the tree was on no code path and was pure exposure to anything that archives a directory without reading `.gitignore`.
+- The README and the guides in `docs/` read more plainly now, and they match how OpenLumen actually ships. It's a signed APK on the GitHub releases page and nowhere else, dependency updates are done by hand, and the device matrix has its first two real rows (a Galaxy S22 and an S25 Ultra).
 
 ### Added
 

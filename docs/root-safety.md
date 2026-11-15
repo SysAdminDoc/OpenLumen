@@ -103,7 +103,7 @@ Safe mode disables third-party apps. The OpenLumen service won't start and its o
 adb uninstall com.openlumen
 ```
 
-Or via the Play / F-Droid client if ADB isn't an option.
+Or from the phone's Settings, under Apps, if ADB isn't an option.
 
 ## What OpenLumen does to limit damage
 

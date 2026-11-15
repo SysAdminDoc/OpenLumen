@@ -166,8 +166,6 @@ The DaltonLens reference implementation at S285 (`libDaltonLens.c`) is the canon
 
 ## Contrast control: C64 (shipped in v0.5.0)
 
-## Contrast control: C64 (shipped in v0.5.0)
-
 Shipped as a Home-tab slider. `Preferences.contrast` (range 0.5..2.0, default 1.0) feeds through to `LumenService.applyContrast()`. The overlap with presetIntensity and gamma is real but settled with a clear UX, since contrast operates on top of intensity/gamma rather than replacing either. Bias takes effect on the SurfaceFlinger engine. The other engines get the contrast-scaled channel values without bias, which is acceptable degradation given they don't model bias at all.
 
 ## AMOLED black clamp: C66 (shipped in v0.5.0, scalar-level form)

@@ -27,7 +27,7 @@ This file is a living record. Add a row when a device is exercised against a rel
 | Xiaomi Mi 11 | 14 (HyperOS) | Xiaomi | no | ? | n/a | n/a | ? | v0.4.0 | smoke pending |
 | Generic AVD x86_64 | 35 (preview) | AOSP emu | rooted | ? | n/a | n/a | ? | v0.4.0 | emulator only |
 
-This grid starts empty by design. We've intentionally avoided fabricating results. See `CONTRIBUTING.md` for how to add rows.
+Every row here was observed on the device it names. Nothing is filled in from what a driver should do. See `CONTRIBUTING.md` for how to add rows.
 
 ## Per-engine smoke test
 

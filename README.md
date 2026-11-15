@@ -268,7 +268,7 @@ The design sketches for candidates that were considered and set aside are here t
 After 0.8.0 the work worth naming is:
 
 - A Shizuku-backed privileged path, which would reach per-app colour without root and without the accessibility service this app refuses to ship.
-- Real hardware. Every row in [docs/device-matrix.md](docs/device-matrix.md) still reads untested, so the driver table above describes what each driver does by construction rather than what anyone has watched it do. The Driver tab's Share report produces exactly what that file wants.
+- Real hardware beyond two Samsung phones. The root drivers and the system Night Light tint have no confirmed row yet in [docs/device-matrix.md](docs/device-matrix.md), and the Driver tab's Share report produces exactly what that file wants.
 
 ## License
 

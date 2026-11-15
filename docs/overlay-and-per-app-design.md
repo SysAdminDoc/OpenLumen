@@ -16,7 +16,7 @@ All five candidates need either:
 
 Each of these has a permission and privacy cost.
 
-## Foreground app detection — the options
+## Foreground app detection: the options
 
 ### Option A: `UsageStatsManager`
 
@@ -63,7 +63,7 @@ Reasoning:
 - Manual controls already exist for the high-frequency cases (installing an app, taking a photo). The "Auto-pause" candidates are convenience, not safety.
 - Shizuku is opt-in and the user explicitly installs it. The trust story is "you already trust Shizuku, so this feature exists for you."
 
-## C10 — Overlay blocked-touch troubleshooting
+## C10: Overlay blocked-touch troubleshooting
 
 This is the one candidate in this group we can address fully without foreground-app detection. We've already covered the user-facing troubleshooting in `docs/troubleshooting.md` under "The overlay blocks me from tapping an install button."
 
@@ -78,7 +78,7 @@ What we do:
 - Surface a warning info card on the Driver tab when Overlay is selected (done).
 - Mention the workaround paths in `docs/overlay-and-per-app-design.md` (this file).
 
-## C90 — Emergency unlock gesture
+## C90: Emergency unlock gesture
 
 The candidate description reads "Add optional multi-tap/long-press corner gesture plus notification/tile failsafe."
 
@@ -91,7 +91,7 @@ Options:
 
 Option 3 with a small triggerable corner is the cleanest if we ship it. For now it's **deferred.** The notification action + tile + ADB cover the practical cases. The unlock gesture is a usability nicety with a real implementation cost.
 
-## C95 / C96 — AGP 9 & Hilt Compose artifact migration
+## C95 / C96: AGP 9 & Hilt Compose artifact migration
 
 Build-tooling migrations, not user-visible features.
 
@@ -109,7 +109,7 @@ AndroidX Hilt moved `hiltViewModel()` from `androidx.hilt:hilt-navigation-compos
 
 Status: shipped 2026-05-17, on Dagger/Hilt 2.59.2 and `androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0`. Hilt is 2.60.1 now (C264), and the five Compose screens that request `OpenLumenViewModel` import the new package.
 
-## C28 — Direct Boot restore
+## C28: Direct Boot restore
 
 Direct Boot (Android 7+) lets apps run in a limited mode after a reboot but before the user unlocks the device.
 

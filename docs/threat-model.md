@@ -58,7 +58,7 @@ The engine layer is the only place that touches anything privileged. Two of the 
 
 Categorized loosely by MASVS verticals.
 
-### MASVS-STORAGE — Local data storage
+### MASVS-STORAGE: Local data storage
 
 | Risk | Severity | Mitigation |
 |---|---|---|
@@ -68,9 +68,9 @@ Categorized loosely by MASVS verticals.
 | Crash log contains stack traces with class names | Low | Local-only file (`filesDir/crash.log`), never read or sent without user action. The user can clear it from the About screen |
 | Migrations corrupt user data | Low | Pure-function migrations, tested. Sanitize always runs after, and downgrade leaves the blob unchanged |
 
-### MASVS-CRYPTO — Cryptography
+### MASVS-CRYPTO: Cryptography
 
-OpenLumen does no encryption. There's no key material, no signing and no TLS. That's intentional, since there's no network surface to encrypt. The release APK signature is the only crypto we touch, and that lives in the release workflow, not in the running app.
+OpenLumen does no encryption. There's no key material, no signing and no TLS. That's intentional, since there's no network surface to encrypt. The release APK signature is the only crypto we touch, and that happens in the local release build, not in the running app.
 
 **Future-proofing note (C121).** AndroidX Security's `EncryptedSharedPreferences` is deprecated as of late-2024 (S122). OpenLumen doesn't currently use it (we use plain DataStore with no encryption), so the deprecation doesn't affect us today. **If** a future candidate ever needs at-rest encryption (e.g. an "encrypted profile bundle" export feature, or a sensitive-secret field added to the preference schema), the modern replacement is Tink (`com.google.crypto.tink:tink-android`) wrapping a Proto DataStore. The migration path looks like:
 
@@ -81,7 +81,7 @@ OpenLumen does no encryption. There's no key material, no signing and no TLS. Th
 
 The decision today is to **defer**. We have no field that warrants the cost of bringing in Tink plus key-rotation complexity. The deprecated EncryptedSharedPreferences class would otherwise still be the path, but it's wrong for 2026, so we won't reach for it either. It's documented here so a future contributor doesn't reach for the deprecated API under time pressure.
 
-### MASVS-AUTH — Authentication
+### MASVS-AUTH: Authentication
 
 OpenLumen has no accounts and no authentication surfaces. The only "authentication" anywhere in the system is:
 
@@ -91,7 +91,7 @@ OpenLumen has no accounts and no authentication surfaces. The only "authenticati
 
 Each is the platform's responsibility. We surface the relevant grant states in the Driver tab and the driver report. On Android 17+, the driver report also declares and queries `QUERY_ADVANCED_PROTECTION_MODE` only to report Advanced Protection state.
 
-### MASVS-NETWORK — Network communication
+### MASVS-NETWORK: Network communication
 
 The manifest deliberately omits `android.permission.INTERNET`, `ACCESS_NETWORK_STATE`, and `ACCESS_WIFI_STATE`. CI fails the build if any of these reach the merged manifest (`permissions-audit` job).
 
@@ -102,7 +102,7 @@ OpenLumen also forbids these dependencies on the release classpath:
 
 There's no telemetry, analytics, remote config or crash reporting. The crash log lives in app-private storage and never leaves the device unless the user manually exports it.
 
-### MASVS-PLATFORM — Platform interaction
+### MASVS-PLATFORM: Platform interaction
 
 This is the deepest category for OpenLumen because we're a foreground service plus an overlay app plus a root-shell app.
 
@@ -115,16 +115,16 @@ This is the deepest category for OpenLumen because we're a foreground service pl
 | **Root drivers black-screen the device** | High (impact), Low (likelihood) | Auto mode selects root engines on rooted devices and falls back to Overlay on non-root devices. `TURN_OFF` hard-clears known SurfaceFlinger/KCAL state through `DisplayEmergencyReset`, Settings can pin Overlay to avoid root writes, and `docs/root-safety.md` documents recovery procedures. |
 | **`service call SurfaceFlinger` transaction rejected** | Low | The colour matrix is code 1015, verified unchanged from `android-10.0.0_r1` through `android-16.0.0_r1`. The 1023/1030/1036 ladder earlier releases probed was never sourced and has been removed. `service call` exits 0 regardless, so the probe reads the reply parcel and treats `Parcel(Error:` as a rejection. Failed writes invalidate the engine cache, and emergency-off re-sends the disable transaction. |
 
-### MASVS-CODE — Code quality
+### MASVS-CODE: Code quality
 
 | Risk | Severity | Mitigation |
 |---|---|---|
 | Non-SDK interface use in the rootless driver | None | There is none left. The `ColorDisplayManager` reflection this row used to cover was removed. `SecureSettingsEngine` calls public `Settings.Secure.putInt`, and the row names it writes are provider keys rather than hidden Java constants |
 | `su` subprocess hangs the service | Low | All `Su.runCommand`/`runShell` invocations gate on a `withTimeoutOrNull`. On timeout the process is `destroyForcibly()`'d and `-1` returned |
 | Concurrent apply/clear races on the engine | Low | `LumenService.applyMutex` serializes every engine call, and the prefs flow is `.conflate()`d so slider drags don't queue multiple su calls |
-| Lint / Dependabot drift | Low | CI runs `./gradlew :app:lint`, and Dependabot opens weekly Gradle PRs grouped by ecosystem |
+| Lint / dependency drift | Low | Lint runs in the local quality gate, and dependency updates are done by hand against the vulnerability alerts |
 
-### MASVS-PRIVACY — Privacy posture (added in rev 4)
+### MASVS-PRIVACY: Privacy posture (added in rev 4)
 
 MASVS v2.1.0 added MASVS-PRIVACY as a first-class category ([S192](https://github.com/OWASP/masvs/releases/tag/v2.1.0)). The substance was already covered across the **Data inventory** and **Permission inventory** sections below. This section makes the categorical coverage explicit.
 
@@ -141,7 +141,7 @@ MASVS v2.1.0 added MASVS-PRIVACY as a first-class category ([S192](https://githu
 | Diagnostic / telemetry surfaces | Low | `DiagnosticsLog` is ring-buffered local text that isn't auto-uploaded. The user shares it manually via SAF. |
 | AAPM transparency | Med (UX, not risk) | C130 surfaces `AdvancedProtectionManager` state in the driver report so users can see whether they're on a hardened profile and what it implies. |
 
-### MASVS-RESILIENCE — Anti-tampering / anti-debugging
+### MASVS-RESILIENCE: Anti-tampering / anti-debugging
 
 Out of scope. OpenLumen is open-source GPL software, and we don't try to prevent reverse engineering or rooting. The integrity story is:
 
