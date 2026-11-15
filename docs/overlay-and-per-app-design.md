@@ -99,7 +99,7 @@ Build-tooling migrations, not user-visible features.
 
 Status: shipped 2026-05-17.
 
-That release used AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21 and KSP 2.3.8, with AGP 9 built-in Kotlin support. The toolchain is Kotlin 2.4.10 and KSP 2.3.11 now (C264), and the arrangement below is unchanged. The Android modules no longer apply `org.jetbrains.kotlin.android`. AGP provides Kotlin source compilation, while the app still applies the Compose and serialization Kotlin plugins where needed.
+That release used AGP 9.2.1, Gradle 9.4.1, Kotlin 2.3.21 and KSP 2.3.8, with AGP 9 built-in Kotlin support. The toolchain is Kotlin 2.4.21 and KSP 2.3.14 now (C363), and the arrangement below is unchanged. The Android modules no longer apply `org.jetbrains.kotlin.android`. AGP provides Kotlin source compilation, while the app still applies the Compose and serialization Kotlin plugins where needed.
 
 The `targetSdk` remains 35 until the Android 17 validation gate (C103). That keeps platform-behavior changes separate from build-tooling churn.
 
