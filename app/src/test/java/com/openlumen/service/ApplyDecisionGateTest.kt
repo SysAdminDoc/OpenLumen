@@ -59,4 +59,15 @@ class ApplyDecisionGateTest {
             ApplyDecision(matrix = LumenMatrix.IDENTITY, isStateFlip = false)
         )
     }
+
+    @Test fun `committed active target is exposed only while active`() {
+        val gate = ApplyDecisionGate()
+        assertThat(gate.committedActiveTarget()).isNull()
+
+        gate.commit(shouldBeActive = true, matrix = warmMatrix)
+        assertThat(gate.committedActiveTarget()).isEqualTo(warmMatrix)
+
+        gate.commit(shouldBeActive = false, matrix = LumenMatrix.IDENTITY)
+        assertThat(gate.committedActiveTarget()).isNull()
+    }
 }

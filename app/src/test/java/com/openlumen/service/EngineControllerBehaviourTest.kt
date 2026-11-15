@@ -184,6 +184,54 @@ class EngineControllerBehaviourTest {
         assertThat(root.calls).isEmpty()
         assertThat(overlay.calls).containsExactly("apply")
     }
+
+    @Test fun `a system overwrite on SurfaceFlinger re-applies the committed target`() {
+        // The gate would drop the same target as a duplicate, which is how
+        // Night Light used to keep the screen after it overwrote the filter.
+        val surfaceFlinger = RecordingEngine(EngineKind.SURFACE_FLINGER)
+        val controller = controllerFor(surfaceFlinger)
+
+        val reasserted = runBlocking {
+            controller.ensureEngineFor(prefsFor(EngineKindDto.SurfaceFlinger))
+            controller.applyIfNeeded(true, Presets.NIGHT, transitionDurationMs = 0)
+            controller.applyIfNeeded(true, Presets.NIGHT, transitionDurationMs = 0)
+            controller.reassertAfterSystemOverwrite()
+        }
+
+        assertThat(reasserted).isTrue()
+        assertThat(surfaceFlinger.calls).containsExactly("apply", "apply")
+        assertThat(surfaceFlinger.applied).containsExactly(Presets.NIGHT, Presets.NIGHT)
+    }
+
+    @Test fun `a system overwrite leaves an inactive filter alone`() {
+        // With the filter off, the system's Night Light is what the user wants.
+        val surfaceFlinger = RecordingEngine(EngineKind.SURFACE_FLINGER)
+        val controller = controllerFor(surfaceFlinger)
+
+        val reasserted = runBlocking {
+            controller.ensureEngineFor(prefsFor(EngineKindDto.SurfaceFlinger))
+            controller.applyIfNeeded(false, LumenMatrix.IDENTITY, transitionDurationMs = 0)
+            surfaceFlinger.calls.clear()
+            controller.reassertAfterSystemOverwrite()
+        }
+
+        assertThat(reasserted).isFalse()
+        assertThat(surfaceFlinger.calls).isEmpty()
+    }
+
+    @Test fun `a system overwrite does not touch drivers the system cannot overwrite`() {
+        val overlay = RecordingEngine(EngineKind.OVERLAY)
+        val controller = controllerFor(overlay)
+
+        val reasserted = runBlocking {
+            controller.ensureEngineFor(prefsFor(EngineKindDto.Overlay))
+            controller.applyIfNeeded(true, Presets.NIGHT, transitionDurationMs = 0)
+            controller.reassertAfterSystemOverwrite()
+        }
+
+        assertThat(reasserted).isFalse()
+        assertThat(overlay.calls).containsExactly("apply")
+    }
 }
 
 /** Records the order of engine calls so a sequence can be asserted. */

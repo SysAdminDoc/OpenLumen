@@ -24,8 +24,8 @@ class TranslationSpellingTest {
      */
     private val homographs = mapOf(
         "fr" to setOf("a", "la", "ou", "sur", "des", "du", "applique", "desactive", "active", "arrete"),
-        "es" to setOf("esta", "que", "cuando", "como", "donde", "el", "mas", "si", "se", "tu", "mi", "de"),
-        "pt" to setOf("a", "e", "esta", "por", "pode", "para", "os", "as", "da", "de", "esta", "so")
+        "es" to setOf("esta", "que", "cuando", "como", "donde", "el", "mas", "si", "se", "tu", "mi", "de", "cambio"),
+        "pt" to setOf("a", "e", "esta", "por", "pode", "para", "os", "as", "da", "de", "esta", "so", "liga")
     )
 
     private fun strip(word: String): String =
