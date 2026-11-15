@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The filter service checked a small file on the main thread every time it started, including at boot. That check runs in the background now.
 - Both home screen widgets can be placed on Pixel phones and other launchers built the same way. The launcher removed them the moment you dropped them, because each widget declared an empty setup screen and the launcher waited for an answer from it that never came.
 - The toggle widget no longer keeps saying On after you turn the filter off with it, and the preset widget's ring goes out with the filter. Both widgets read the setting once when the launcher first drew them and kept showing that value for as long as the launcher left them running.
+- After a restart, the filter usually starts before you unlock the phone, and that copy of OpenLumen keeps running afterwards. It never turned on its crash log, so a crash later that day left `View crash log` empty. It now sets the log up as soon as you unlock.
 - Turning the filter off from the app or a widget now holds through a restart. OpenLumen keeps a copy of the filter state that it reads before the phone is unlocked, and that copy still said on, so the next reboot put the tint back on the lock screen.
 
 ## [0.8.0] (2026-09-04)

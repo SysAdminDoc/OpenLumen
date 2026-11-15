@@ -25,18 +25,16 @@ import javax.inject.Inject
  * Application root. Declared `directBootAware="true"` in the manifest so the
  * Hilt-injected `LockedBootReceiver` and the directBootAware foreground
  * service can construct their dependency graph before the user unlocks the
- * device. That means `onCreate()` may run twice for the same boot — once in
- * device-protected (locked) mode and once in credential-protected (unlocked)
- * mode — so every action here must be idempotent and must not touch
- * credential-protected storage before unlock.
+ * device. A process started that way usually keeps running after unlock, and
+ * `onCreate()` does not run again for it, so everything that needs the user
+ * unlocked goes through [AfterUnlock] instead of a one-time check here.
  *
- * - [CrashLogger] writes to credential-protected `filesDir`, so it's gated
- *   on `isUserUnlocked()`. The locked-boot path stays uninstrumented; any
- *   crash before unlock will fall through to the system handler.
- * - The notification channel is registered defensively: it's only useful
- *   after unlock (the user sees notifications then), and some OEMs throw
- *   from `NotificationManager` calls before unlock. We swallow and retry on
- *   the next Application.onCreate() (post-unlock).
+ * - [CrashLogger] writes to credential-protected `filesDir`, so it waits for
+ *   unlock. A crash before unlock falls through to the system handler.
+ * - The notification channel is only useful after unlock (the user sees
+ *   notifications then), and some OEMs throw from `NotificationManager`
+ *   calls before unlock, so it waits too, and a failure is swallowed: the
+ *   service creates the channel again before it posts.
  */
 @HiltAndroidApp
 class OpenLumenApp : Application(), Configuration.Provider {
@@ -67,13 +65,13 @@ class OpenLumenApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         installStrictModeInDebug()
-        if (isUserUnlocked()) {
-            CrashLogger.install(this)
-            registerNotificationChannel()
-        }
         // Waits for unlock when the locked-boot path started this process,
         // which stays alive past unlock with no second onCreate.
-        AfterUnlock.run(this, ::isUserUnlocked) { restoreAppSaturation() }
+        AfterUnlock.run(this, ::isUserUnlocked) {
+            CrashLogger.install(this)
+            registerNotificationChannel()
+            restoreAppSaturation()
+        }
     }
 
     /**
