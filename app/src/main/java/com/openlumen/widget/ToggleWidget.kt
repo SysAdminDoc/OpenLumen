@@ -2,11 +2,14 @@ package com.openlumen.widget
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -29,14 +32,14 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.openlumen.MainActivity
 import com.openlumen.R
+import com.openlumen.prefs.Preferences
 import com.openlumen.ui.theme.Catppuccin
 import com.openlumen.ui.theme.Latte
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * 1x1 home-screen widget rendered with Glance.
@@ -72,48 +75,47 @@ class ToggleWidget : GlanceAppWidgetReceiver() {
 
 private class ToggleGlanceWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val enabled = runCatching {
-            withTimeoutOrNull(WIDGET_READ_TIMEOUT_MS) {
-                widgetPreferencesStore(context).flow.first().enabled
-            } ?: false
-        }.getOrDefault(false)
+        val store = widgetPreferencesStore(context)
+        val initial = readWidgetPreferences(store)
+        provideContent { ToggleWidgetContent(store.flow, initial) }
+    }
+}
 
-        val label = context.getString(if (enabled) R.string.tile_on else R.string.tile_off)
-        val contentDescription = context.getString(R.string.home_toggle)
-        val toggleAction = actionSendBroadcast(
-            Intent(context, WidgetActionReceiver::class.java)
-                .setAction(WidgetActionReceiver.ACTION_TOGGLE)
+@Composable
+internal fun ToggleWidgetContent(preferences: Flow<Preferences>, initial: Preferences) {
+    val context = LocalContext.current
+    val current by rememberWidgetPreferences(preferences, initial)
+    val label = context.getString(if (current.enabled) R.string.tile_on else R.string.tile_off)
+    val toggleAction = actionSendBroadcast(
+        Intent(context, WidgetActionReceiver::class.java)
+            .setAction(WidgetActionReceiver.ACTION_TOGGLE)
+    )
+
+    Column(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .cornerRadius(WidgetColors.CornerRadius)
+            .background(WidgetColors.Surface)
+            .padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_lumen_tile),
+            contentDescription = context.getString(R.string.home_toggle),
+            modifier = GlanceModifier
+                .size(48.dp)
+                .clickable(toggleAction)
         )
-        val openAppAction = actionStartActivity<MainActivity>()
-
-        provideContent {
-            Column(
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .cornerRadius(WidgetColors.CornerRadius)
-                    .background(WidgetColors.Surface)
-                    .padding(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    provider = ImageProvider(R.drawable.ic_lumen_tile),
-                    contentDescription = contentDescription,
-                    modifier = GlanceModifier
-                        .size(48.dp)
-                        .clickable(toggleAction)
-                )
-                Spacer(modifier = GlanceModifier.height(2.dp))
-                Text(
-                    text = label,
-                    modifier = GlanceModifier.clickable(openAppAction),
-                    style = TextStyle(
-                        color = WidgetColors.Text,
-                        textAlign = TextAlign.Center
-                    )
-                )
-            }
-        }
+        Spacer(modifier = GlanceModifier.height(2.dp))
+        Text(
+            text = label,
+            modifier = GlanceModifier.clickable(actionStartActivity<MainActivity>()),
+            style = TextStyle(
+                color = WidgetColors.Text,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }
 

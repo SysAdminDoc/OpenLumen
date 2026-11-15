@@ -235,4 +235,7 @@ dependencies {
     testImplementation(libs.bouncycastle.prov)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
+    // Drives the widgets' Glance content in a test composition, so a test
+    // can change the preferences under a widget that is already showing.
+    testImplementation(libs.androidx.glance.appwidget.testing)
 }

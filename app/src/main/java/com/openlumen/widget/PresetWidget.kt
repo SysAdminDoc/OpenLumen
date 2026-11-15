@@ -2,6 +2,7 @@ package com.openlumen.widget
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -44,9 +45,8 @@ import com.openlumen.service.LumenService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * 4x1 home-screen widget rendered with Glance.
@@ -79,61 +79,63 @@ class PresetWidget : GlanceAppWidgetReceiver() {
 
 private class PresetGlanceWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val snapshot = runCatching {
-            withTimeoutOrNull(WIDGET_READ_TIMEOUT_MS) {
-                widgetPreferencesStore(context).flow.first()
-            }
-        }.getOrNull() ?: Preferences()
-
-        val activePresetKey = snapshot.activePresetKey
-        val slots = snapshot.favoritePresetKeys
-            .asSequence()
-            .mapNotNull { key -> Presets.byKey(key) }
-            .take(SLOT_COUNT)
-            .map { entry ->
-                PresetSlotUi(
-                    label = presetDisplayName(
-                        context,
-                        entry.key,
-                        entry.displayName,
-                        snapshot.presetNameOverrides[entry.key]
-                    ),
-                    color = Color(
-                        red = entry.matrix.r.coerceIn(0f, 1f),
-                        green = entry.matrix.g.coerceIn(0f, 1f),
-                        blue = entry.matrix.b.coerceIn(0f, 1f),
-                        alpha = 1f
-                    ),
-                    // C169: highlight the currently-active favorite so a
-                    // user glancing at the widget can tell at a glance
-                    // which preset is engaged without opening the app.
-                    // Active matches only when the filter is on AND the
-                    // active preset matches this slot's key — an "off"
-                    // filter would otherwise paint the last-used preset
-                    // as if it were the live one.
-                    isActive = snapshot.enabled && entry.key == activePresetKey,
-                    action = actionSendBroadcast(
-                        Intent(context, WidgetActionReceiver::class.java)
-                            .setAction(WidgetActionReceiver.ACTION_SET_PRESET)
-                            .putExtra(LumenService.EXTRA_PRESET_KEY, entry.key)
-                            .setData("openlumen-preset://${entry.key}".toUri())
-                    )
-                )
-            }
-            .toList()
-
-        val openAppAction = actionStartActivity<MainActivity>()
-        val hint = context.getString(R.string.widget_preset_hint)
-
-        provideContent {
-            if (slots.isEmpty()) {
-                EmptyPresetWidget(hint = hint, openAppAction = openAppAction)
-            } else {
-                PresetSlots(slots = slots)
-            }
-        }
+        val store = widgetPreferencesStore(context)
+        val initial = readWidgetPreferences(store)
+        provideContent { PresetWidgetContent(store.flow, initial) }
     }
 }
+
+@androidx.compose.runtime.Composable
+internal fun PresetWidgetContent(preferences: Flow<Preferences>, initial: Preferences) {
+    val context = LocalContext.current
+    val snapshot by rememberWidgetPreferences(preferences, initial)
+    val slots = presetSlots(context, snapshot)
+    if (slots.isEmpty()) {
+        EmptyPresetWidget(
+            hint = context.getString(R.string.widget_preset_hint),
+            openAppAction = actionStartActivity<MainActivity>()
+        )
+    } else {
+        PresetSlots(slots = slots)
+    }
+}
+
+private fun presetSlots(context: Context, snapshot: Preferences): List<PresetSlotUi> =
+    snapshot.favoritePresetKeys
+        .asSequence()
+        .mapNotNull { key -> Presets.byKey(key) }
+        .take(SLOT_COUNT)
+        .map { entry ->
+            PresetSlotUi(
+                label = presetDisplayName(
+                    context,
+                    entry.key,
+                    entry.displayName,
+                    snapshot.presetNameOverrides[entry.key]
+                ),
+                color = Color(
+                    red = entry.matrix.r.coerceIn(0f, 1f),
+                    green = entry.matrix.g.coerceIn(0f, 1f),
+                    blue = entry.matrix.b.coerceIn(0f, 1f),
+                    alpha = 1f
+                ),
+                // C169: highlight the currently-active favorite so a
+                // user glancing at the widget can tell at a glance
+                // which preset is engaged without opening the app.
+                // Active matches only when the filter is on AND the
+                // active preset matches this slot's key — an "off"
+                // filter would otherwise paint the last-used preset
+                // as if it were the live one.
+                isActive = snapshot.enabled && entry.key == snapshot.activePresetKey,
+                action = actionSendBroadcast(
+                    Intent(context, WidgetActionReceiver::class.java)
+                        .setAction(WidgetActionReceiver.ACTION_SET_PRESET)
+                        .putExtra(LumenService.EXTRA_PRESET_KEY, entry.key)
+                        .setData("openlumen-preset://${entry.key}".toUri())
+                )
+            )
+        }
+        .toList()
 
 private data class PresetSlotUi(
     val label: String,

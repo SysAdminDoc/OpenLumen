@@ -59,6 +59,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+androidx-glance-appwidget-testing = { module = "androidx.glance:glance-appwidget-testing", version.ref = "glance" }
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
 
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
