@@ -385,7 +385,6 @@
     <string name="presets_saved_title">Predefinições guardadas</string>
     <string name="preset_saved_badge">Guardada</string>
     <string name="preset_saved_detail">Esta predefinição guardada inclui as suas próprias definições de cor, horário, controlador e intensidade. Carregue-a na lista para a aplicar.</string>
-    <string name="preset_rename_action">Mudar nome</string>
     <string name="preset_rename_title">Mudar nome da predefinição</string>
     <string name="preset_rename_label">Nome da predefinição</string>
     <string name="preset_name_reset">Nome reposto</string>

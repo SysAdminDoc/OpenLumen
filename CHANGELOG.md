@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - German text breaks long words with a hyphen at large font sizes. "Benachrichtigungseinstellungen" used to be cut wherever the line ran out.
 - Warning lines and dialog buttons are easier to read. The purple and red used for them were too light on cards in the light theme, and a touch too dark in the dark theme.
 - The transition-duration choices on Schedule are full-size tap targets. Each row was only as tall as its text.
+- Preset names stay readable at large font sizes. At twice the normal text size the word "Rename" left room for only two or three letters of each name, so Rename is now a pencil icon, and a two-word name like Deep Sleep wraps onto a second line instead of being cut off.
+- Radio buttons on Schedule and Driver have a little space before their labels instead of touching the first letter.
 
 ## [0.8.0] (2026-09-04)
 

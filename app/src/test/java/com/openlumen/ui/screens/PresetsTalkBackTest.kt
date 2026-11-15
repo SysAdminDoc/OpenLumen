@@ -99,10 +99,12 @@ class PresetsTalkBackTest {
     @Test fun `rename and favorite buttons name the preset they act on`() {
         val spoken = presetsTab().flatMap { it.spoken() }
 
-        assertThat(spoken).doesNotContain(app.getString(R.string.preset_rename_action))
-        assertThat(spoken.filter { fills(R.string.preset_rename_named, it) }.size).isAtLeast(2)
-        assertThat(
-            spoken.filter { fills(R.string.preset_favorite_named, it) || fills(R.string.preset_unfavorite_named, it) }.size
-        ).isAtLeast(2)
+        val renames = spoken.filter { fills(R.string.preset_rename_named, it) }
+        val favorites = spoken.filter {
+            fills(R.string.preset_favorite_named, it) || fills(R.string.preset_unfavorite_named, it)
+        }
+        assertThat(renames.size).isAtLeast(2)
+        // One of each per row: no row's rename button is left unnamed.
+        assertThat(renames.size).isEqualTo(favorites.size)
     }
 }

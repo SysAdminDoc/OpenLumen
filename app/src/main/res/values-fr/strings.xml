@@ -385,7 +385,6 @@
     <string name="presets_saved_title">Préréglages enregistrés</string>
     <string name="preset_saved_badge">Enregistré</string>
     <string name="preset_saved_detail">Ce préréglage enregistré contient ses propres réglages de couleur, de programmation, de pilote et d’intensité. Chargez-le depuis la liste pour l’appliquer.</string>
-    <string name="preset_rename_action">Renommer</string>
     <string name="preset_rename_title">Renommer le préréglage</string>
     <string name="preset_rename_label">Nom du préréglage</string>
     <string name="preset_name_reset">Nom réinitialisé</string>

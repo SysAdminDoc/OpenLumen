@@ -385,7 +385,6 @@
     <string name="presets_saved_title">保存済みプリセット</string>
     <string name="preset_saved_badge">保存済み</string>
     <string name="preset_saved_detail">この保存済みプリセットには色、スケジュール、ドライバー、強度の設定が含まれます。リストから読み込んで適用できます。</string>
-    <string name="preset_rename_action">名前を変更</string>
     <string name="preset_rename_title">プリセット名を変更</string>
     <string name="preset_rename_label">プリセット名</string>
     <string name="preset_name_reset">名前をリセットしました</string>

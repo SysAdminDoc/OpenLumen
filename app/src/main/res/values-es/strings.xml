@@ -385,7 +385,6 @@
     <string name="presets_saved_title">Preajustes guardados</string>
     <string name="preset_saved_badge">Guardado</string>
     <string name="preset_saved_detail">Este preajuste guardado incluye sus propios ajustes de color, horario, controlador e intensidad. Cárgalo desde la lista para aplicarlo.</string>
-    <string name="preset_rename_action">Renombrar</string>
     <string name="preset_rename_title">Renombrar preajuste</string>
     <string name="preset_rename_label">Nombre del preajuste</string>
     <string name="preset_name_reset">Nombre restablecido</string>

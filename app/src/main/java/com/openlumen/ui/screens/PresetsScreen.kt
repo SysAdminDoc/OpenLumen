@@ -356,26 +356,26 @@ private fun PresetListPane(
                             )
                     )
                     Spacer(Modifier.size(12.dp))
+                    // Two lines: at twice the font size a 360dp phone has
+                    // room for about nine letters, so "Deep Sleep" and "PWM
+                    // Comfort" were cut short on one.
                     Text(
                         text = entryLabel,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.weight(1f),
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                     // Every row has these two buttons, so each one names its
                     // preset. TalkBack read thirteen identical "Rename" stops.
-                    val renameName = stringResource(R.string.preset_rename_named, entryLabel)
-                    LumenTextButton(
-                        onClick = { onRenamePreset(entry.key) },
-                        modifier = Modifier.semantics { contentDescription = renameName }
-                    ) {
-                        Text(
-                            stringResource(R.string.preset_rename_action),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.clearAndSetSemantics {}
+                    // A pencil rather than a "Rename" text button: at large
+                    // font sizes the word took the row and left two letters
+                    // of the preset's name.
+                    IconButton(onClick = { onRenamePreset(entry.key) }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_edit),
+                            contentDescription = stringResource(R.string.preset_rename_named, entryLabel)
                         )
                     }
                     IconButton(onClick = { onFavoriteToggle(entry.key) }) {
@@ -461,7 +461,7 @@ private fun PresetListPane(
                             text = profile.name,
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f),
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(

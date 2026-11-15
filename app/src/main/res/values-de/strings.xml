@@ -385,7 +385,6 @@
     <string name="presets_saved_title">Gespeicherte Presets</string>
     <string name="preset_saved_badge">Gespeichert</string>
     <string name="preset_saved_detail">Dieses gespeicherte Preset enthält eigene Farb-, Zeitplan-, Treiber- und Intensitätseinstellungen. Zum Anwenden aus der Liste laden.</string>
-    <string name="preset_rename_action">Umbenennen</string>
     <string name="preset_rename_title">Preset umbenennen</string>
     <string name="preset_rename_label">Preset-Name</string>
     <string name="preset_name_reset">Name zurückgesetzt</string>
