@@ -85,8 +85,31 @@ class ThemeContrastTest {
                 )
             }
 
+    /**
+     * Accents that are also text. Material writes every TextButton label in
+     * primary, on cards and in dialogs, and this app writes warning lines in
+     * error on cards. Accessibility Scanner flagged the Grayscale warning on
+     * Home: Latte Red on the card was 3.52:1, and Latte Mauve on a dialog
+     * 3.79:1, so no dialog's buttons cleared AA in the light theme.
+     */
+    private fun accentTextPairs(scheme: ColorScheme): List<Triple<String, Color, Color>> {
+        val grounds = listOf(
+            "background" to scheme.background,
+            "surface" to scheme.surface,
+            "surfaceVariant" to scheme.surfaceVariant,
+            "surfaceContainerLowest" to scheme.surfaceContainerLowest,
+            "surfaceContainerLow" to scheme.surfaceContainerLow,
+            "surfaceContainer" to scheme.surfaceContainer,
+            "surfaceContainerHigh" to scheme.surfaceContainerHigh,
+            "surfaceContainerHighest" to scheme.surfaceContainerHighest
+        )
+        return listOf("primary" to scheme.primary, "error" to scheme.error).flatMap { (accent, color) ->
+            grounds.map { (ground, background) -> Triple("$accent on $ground", color, background) }
+        }
+    }
+
     private fun failuresIn(scheme: ColorScheme): List<String> =
-        textPairs(scheme)
+        (textPairs(scheme) + accentTextPairs(scheme))
             .map { (name, fg, bg) -> name to contrast(fg, bg) }
             .filter { (_, ratio) -> ratio < 4.5 }
             .map { (name, ratio) -> "$name is %.2f:1".format(ratio) }

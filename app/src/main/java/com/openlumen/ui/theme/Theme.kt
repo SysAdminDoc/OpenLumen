@@ -13,7 +13,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.Hyphens
 
 internal val DarkColors = darkColorScheme(
-    primary = Catppuccin.Mauve,
+    primary = Catppuccin.MauveStrong,
     onPrimary = Catppuccin.Crust,
     primaryContainer = Catppuccin.Surface1,
     onPrimaryContainer = Catppuccin.Text,
@@ -56,7 +56,7 @@ internal val DarkColors = darkColorScheme(
     scrim = Catppuccin.Crust,
     outline = Catppuccin.Overlay1,
     outlineVariant = Catppuccin.Surface2,
-    error = Catppuccin.Red,
+    error = Catppuccin.RedStrong,
     onError = Catppuccin.Crust,
     errorContainer = Catppuccin.RedContainer,
     onErrorContainer = Catppuccin.Red
@@ -68,7 +68,7 @@ internal val DarkColors = darkColorScheme(
 // on light surfaces. Each role here mirrors the Mocha structure with Latte tones
 // chosen for WCAG-AA contrast (e.g. Subtext1 on the Crust card surface ≈ 4.7:1).
 internal val LightColors = lightColorScheme(
-    primary = Latte.Mauve,
+    primary = Latte.MauveStrong,
     onPrimary = Latte.Base,
     primaryContainer = Latte.Surface0,
     onPrimaryContainer = Latte.Text,
@@ -105,7 +105,7 @@ internal val LightColors = lightColorScheme(
     // be, and an outlined button drawing its border in the same colour as the
     // card behind it has no border at all.
     outlineVariant = Latte.Surface2,
-    error = Latte.Red,
+    error = Latte.RedStrong,
     onError = Latte.Base,
     errorContainer = Latte.RedContainer,
     onErrorContainer = Latte.RedText

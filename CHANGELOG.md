@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A few hints across the app read more naturally in every language.
 - With a large font size the bottom tabs no longer split words across lines ("Hom e", "Sche dule"). A label that doesn't fit gets a little smaller and keeps its words whole, in every language.
 - German text breaks long words with a hyphen at large font sizes. "Benachrichtigungseinstellungen" used to be cut wherever the line ran out.
+- Warning lines and dialog buttons are easier to read. The purple and red used for them were too light on cards in the light theme, and a touch too dark in the dark theme.
 
 ## [0.8.0] (2026-09-04)
 

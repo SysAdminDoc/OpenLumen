@@ -60,6 +60,13 @@ internal object Catppuccin {
     // the unfilled track those controls sit on, just under the 3:1 floor for
     // something you have to aim. This is the same hue, slightly lighter.
     val RedChannel = Color(0xFFF497B1)
+
+    // primary and error, which are text as well as fills: Material writes a
+    // TextButton's label in primary, and this app writes its warning lines in
+    // error, straight onto a card. Mauve there is 4.49:1 and Red 3.94:1. The
+    // same hues a shade lighter reach 4.61:1 on the card and more elsewhere.
+    val MauveStrong = Color(0xFFCDA9F7)
+    val RedStrong   = Color(0xFFF5A0B8)
 }
 
 /**
@@ -126,6 +133,13 @@ internal object Latte {
     // 5.61:1 and 5.45:1.
     val PinkStrong = Color(0xFFA32F86)
     val TealStrong = Color(0xFF0D6C72)
+
+    // primary and error as text, as in Mocha. Latte's Mauve and Red are 3.51:1
+    // and 3.52:1 on a card and under 4.5:1 on every container but the
+    // lightest, so every dialog's buttons and every warning line missed AA.
+    // Same hues, darker: 4.64:1 and 4.62:1 on the card.
+    val MauveStrong = Color(0xFF6F13E8)
+    val RedStrong   = Color(0xFFB00D30)
 
     // inversePrimary here sits on a dark inverse surface, so it is the light
     // purple. Mocha's own Mauve is 3.93:1 on it; this is 5.60:1.
