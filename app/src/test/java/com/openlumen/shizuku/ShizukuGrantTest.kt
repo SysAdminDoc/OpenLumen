@@ -1,7 +1,9 @@
 package com.openlumen.shizuku
 
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -227,6 +229,64 @@ class ShizukuGrantTest {
         assertThat(outcome).isEqualTo(ShizukuGrantOutcome.NotReady(ShizukuState.PERMISSION_DENIED))
         assertThat(gateway.requests).isEmpty()
         assertThat(gateway.commands).isEmpty()
+    }
+
+    // A prompt left open. On a device: tap Grant, press Home with Shizuku's
+    // prompt up, open OpenLumen again, and the button sat on "Waiting for
+    // Shizuku" for as long as the process lived.
+
+    @Test fun `a prompt left unanswered stops the wait once the app is back`() = runBlocking {
+        gateway.promptAnswer = null
+        commandGrants()
+        val grant = grantUnderTest()
+        val outcome = async(start = CoroutineStart.UNDISPATCHED) { grant.grant() }
+
+        grant.stopWaitingIfUnanswered()
+
+        assertThat(outcome.await()).isEqualTo(ShizukuGrantOutcome.NotReady(ShizukuState.PERMISSION_NEEDED))
+        assertThat(gateway.commands).isEmpty()
+    }
+
+    @Test fun `an answer that lands inside the grace still grants`() = runBlocking {
+        gateway.promptAnswer = null
+        commandGrants()
+        val grant = ShizukuGrant(
+            gateway = gateway,
+            packageName = PACKAGE,
+            secureSettingsGranted = { secureSettings },
+            ioDispatcher = Dispatchers.Unconfined,
+            answerGraceMillis = 200
+        )
+        val outcome = async(start = CoroutineStart.UNDISPATCHED) { grant.grant() }
+        val stop = async(start = CoroutineStart.UNDISPATCHED) { grant.stopWaitingIfUnanswered() }
+
+        // Allow closes the prompt, which brings OpenLumen back, and the
+        // answer comes in right behind it.
+        gateway.permission = true
+        gateway.permissionListener!!.invoke(ShizukuGrant.PERMISSION_REQUEST_CODE, true)
+        stop.await()
+
+        assertThat(outcome.await()).isEqualTo(ShizukuGrantOutcome.Granted)
+    }
+
+    @Test fun `an answer given after the wait stopped still reaches the state`() = runBlocking {
+        gateway.promptAnswer = null
+        val grant = grantUnderTest()
+        val outcome = async(start = CoroutineStart.UNDISPATCHED) { grant.grant() }
+        grant.stopWaitingIfUnanswered()
+        outcome.await()
+
+        gateway.permission = true
+        gateway.permissionListener!!.invoke(ShizukuGrant.PERMISSION_REQUEST_CODE, true)
+
+        assertThat(grant.state.value).isEqualTo(ShizukuState.READY)
+    }
+
+    @Test fun `with no prompt pending the app coming back changes nothing`() = runBlocking {
+        val grant = grantUnderTest()
+        grant.stopWaitingIfUnanswered()
+        assertThat(grant.state.value).isEqualTo(ShizukuState.PERMISSION_NEEDED)
+        assertThat(gateway.requests).isEmpty()
     }
 
     @Test fun `already granted touches nothing`() = runBlocking {

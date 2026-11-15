@@ -491,6 +491,9 @@ class OpenLumenViewModel @Inject constructor(
 
     override fun refreshShizuku() {
         shizukuGrant.refresh()
+        // The screen calls this on every return to the front, including one
+        // that left Shizuku's prompt open behind it.
+        viewModelScope.launch { shizukuGrant.stopWaitingIfUnanswered() }
     }
 
     override fun consumeShizukuOutcome() {

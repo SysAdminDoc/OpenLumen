@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +26,10 @@ sealed interface ShizukuGrantOutcome {
     /** WRITE_SECURE_SETTINGS is held, checked against the package manager. */
     data object Granted : ShizukuGrantOutcome
 
-    /** Shizuku was not in a state that could run the grant. */
+    /**
+     * Shizuku was not in a state that could run the grant, which includes a
+     * prompt left open and unanswered.
+     */
     data class NotReady(val state: ShizukuState) : ShizukuGrantOutcome
 
     /** The user answered Shizuku's prompt with Deny. */
@@ -56,9 +60,11 @@ class ShizukuGrant(
     private val gateway: ShizukuGateway,
     private val packageName: String,
     private val secureSettingsGranted: () -> Boolean,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val answerGraceMillis: Long = ANSWER_GRACE_MS
 ) {
-    private val pendingPermission = AtomicReference<CompletableDeferred<Boolean>?>(null)
+    /** Shizuku's answer: true allowed, false denied, null left unanswered. */
+    private val pendingPermission = AtomicReference<CompletableDeferred<Boolean?>?>(null)
 
     private val _state = MutableStateFlow(readState(gateway))
     val state: StateFlow<ShizukuState> = _state.asStateFlow()
@@ -106,7 +112,8 @@ class ShizukuGrant(
                 return ShizukuGrantOutcome.NotReady(refresh())
             }
             current = refresh()
-            if (!allowed) return ShizukuGrantOutcome.PermissionRefused
+            if (allowed == false) return ShizukuGrantOutcome.PermissionRefused
+            // Unanswered: the check below says where Shizuku stands now.
         }
         if (current != ShizukuState.READY) return ShizukuGrantOutcome.NotReady(current)
 
@@ -126,8 +133,22 @@ class ShizukuGrant(
         return ShizukuGrantOutcome.Failed(detail)
     }
 
-    private suspend fun awaitPermission(): Boolean {
-        val answer = CompletableDeferred<Boolean>()
+    /**
+     * OpenLumen is in front again while Shizuku's prompt may still be open in
+     * Shizuku's own task, after Home or a switch to another app. Waiting on
+     * would leave the button stuck on "Waiting for Shizuku" with no way to
+     * ask again. An answer that closed the prompt lands well inside the
+     * grace, so only a prompt still unanswered after it stops the wait. A
+     * later answer still reaches [state].
+     */
+    suspend fun stopWaitingIfUnanswered() {
+        val pending = pendingPermission.get() ?: return
+        delay(answerGraceMillis)
+        if (pendingPermission.compareAndSet(pending, null)) pending.complete(null)
+    }
+
+    private suspend fun awaitPermission(): Boolean? {
+        val answer = CompletableDeferred<Boolean?>()
         pendingPermission.getAndSet(answer)?.cancel()
         try {
             gateway.requestPermission(PERMISSION_REQUEST_CODE)
@@ -140,6 +161,7 @@ class ShizukuGrant(
     companion object {
         const val PERMISSION_REQUEST_CODE = 0x4C55
         const val COMMAND_TIMEOUT_MS = 15_000L
+        const val ANSWER_GRACE_MS = 1_000L
         const val WRITE_SECURE_SETTINGS = "android.permission.WRITE_SECURE_SETTINGS"
 
         fun grantCommand(packageName: String): List<String> =
