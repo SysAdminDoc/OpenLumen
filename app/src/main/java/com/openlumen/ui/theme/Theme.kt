@@ -2,11 +2,15 @@ package com.openlumen.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.Hyphens
 
 internal val DarkColors = darkColorScheme(
     primary = Catppuccin.Mauve,
@@ -132,12 +136,44 @@ fun OpenLumenTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val language = LocalConfiguration.current.locales[0].language
     CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
-            typography = MaterialTheme.typography,
+            typography = lumenTypography(MaterialTheme.typography, language),
             shapes = OpenLumenShapes,
             content = content
         )
     }
 }
+
+/**
+ * German builds compounds like "Benachrichtigungseinstellungen" that are
+ * longer than a line at large font sizes, and with hyphenation off Android
+ * cuts them at whatever letter the edge falls on. Other languages are left
+ * alone: hyphenation on everything would put hyphens through ordinary
+ * English lines that fit fine.
+ */
+internal fun lumenTypography(base: Typography, language: String): Typography {
+    if (language !in HYPHENATED_LANGUAGES) return base
+    fun TextStyle.hyphenated() = copy(hyphens = Hyphens.Auto)
+    return base.copy(
+        displayLarge = base.displayLarge.hyphenated(),
+        displayMedium = base.displayMedium.hyphenated(),
+        displaySmall = base.displaySmall.hyphenated(),
+        headlineLarge = base.headlineLarge.hyphenated(),
+        headlineMedium = base.headlineMedium.hyphenated(),
+        headlineSmall = base.headlineSmall.hyphenated(),
+        titleLarge = base.titleLarge.hyphenated(),
+        titleMedium = base.titleMedium.hyphenated(),
+        titleSmall = base.titleSmall.hyphenated(),
+        bodyLarge = base.bodyLarge.hyphenated(),
+        bodyMedium = base.bodyMedium.hyphenated(),
+        bodySmall = base.bodySmall.hyphenated(),
+        labelLarge = base.labelLarge.hyphenated(),
+        labelMedium = base.labelMedium.hyphenated(),
+        labelSmall = base.labelSmall.hyphenated()
+    )
+}
+
+private val HYPHENATED_LANGUAGES = setOf("de")
