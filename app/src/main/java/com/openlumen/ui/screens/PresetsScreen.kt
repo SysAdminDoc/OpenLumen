@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -363,11 +364,18 @@ private fun PresetListPane(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    LumenTextButton(onClick = { onRenamePreset(entry.key) }) {
+                    // Every row has these two buttons, so each one names its
+                    // preset. TalkBack read thirteen identical "Rename" stops.
+                    val renameName = stringResource(R.string.preset_rename_named, entryLabel)
+                    LumenTextButton(
+                        onClick = { onRenamePreset(entry.key) },
+                        modifier = Modifier.semantics { contentDescription = renameName }
+                    ) {
                         Text(
                             stringResource(R.string.preset_rename_action),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.clearAndSetSemantics {}
                         )
                     }
                     IconButton(onClick = { onFavoriteToggle(entry.key) }) {
@@ -377,8 +385,9 @@ private fun PresetListPane(
                                 else R.drawable.ic_favorite_border
                             ),
                             contentDescription = stringResource(
-                                if (isFavorite) R.string.preset_unfavorite
-                                else R.string.preset_favorite
+                                if (isFavorite) R.string.preset_unfavorite_named
+                                else R.string.preset_favorite_named,
+                                entryLabel
                             )
                         )
                     }
@@ -750,7 +759,7 @@ private fun profileMatrix(profile: NamedProfile): LumenMatrix {
 }
 
 @Composable
-private fun ChannelRow(
+internal fun ChannelRow(
     label: String,
     accessibleName: String,
     value: Float,
@@ -772,8 +781,10 @@ private fun ChannelRow(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             // widthIn, not width: at a large font scale a single letter needs
-            // more than 24 dp and was being cut in half.
-            modifier = Modifier.widthIn(min = 24.dp)
+            // more than 24 dp and was being cut in half. The row already says
+            // the channel's name, and merged in, this letter was read after it
+            // as "capital R".
+            modifier = Modifier.widthIn(min = 24.dp).clearAndSetSemantics {}
         )
         Spacer(Modifier.size(8.dp))
         Box(
@@ -803,8 +814,9 @@ private fun ChannelRow(
             text = meterState,
             style = MaterialTheme.typography.bodyMedium,
             // "100%" does not fit 40 dp much past the default scale, and with
-            // maxLines = 1 and no ellipsis it simply lost a character.
-            modifier = Modifier.widthIn(min = 40.dp),
+            // maxLines = 1 and no ellipsis it simply lost a character. Hidden
+            // because the row's state already says it.
+            modifier = Modifier.widthIn(min = 40.dp).clearAndSetSemantics {},
             textAlign = TextAlign.End,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis

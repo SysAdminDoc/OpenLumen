@@ -32,7 +32,7 @@ class StaticAccessibilityTest {
     }
 
     @Test fun `the channel meter reports itself as a progress bar`() {
-        val row = presets.substringAfter("private fun ChannelRow(").substringBefore("@Composable")
+        val row = presets.substringAfter("internal fun ChannelRow(").substringBefore("@Composable")
 
         assertThat(row).contains("progressBarRangeInfo")
         assertThat(row).contains("mergeDescendants = true")
@@ -42,7 +42,7 @@ class StaticAccessibilityTest {
         // The visible label is one letter, so contentDescription = label made
         // a screen reader announce the bar as "R". The full names already
         // existed for the Home sliders.
-        val row = presets.substringAfter("private fun ChannelRow(").substringBefore("@Composable")
+        val row = presets.substringAfter("internal fun ChannelRow(").substringBefore("@Composable")
 
         assertThat(row).contains("contentDescription = accessibleName")
         assertThat(row).doesNotContain("contentDescription = label")
