@@ -169,15 +169,7 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     override fun setScheduleMode(mode: ScheduleModeDto) = viewModelScope.launch {
-        prefs.update { current ->
-            if (mode == ScheduleModeDto.Solar &&
-                !isValidSolarLocation(current.schedule.latitude, current.schedule.longitude)
-            ) {
-                current
-            } else {
-                current.copy(schedule = current.schedule.copy(mode = mode))
-            }
-        }
+        prefs.update { it.withScheduleMode(mode) }
     }
 
     override fun setScheduleTimes(startH: Int, startM: Int, endH: Int, endM: Int) = viewModelScope.launch {
@@ -190,16 +182,14 @@ class OpenLumenViewModel @Inject constructor(
 
     override fun setLocation(lat: Double, lng: Double, solarTimezone: String?) = viewModelScope.launch {
         if (!isValidSolarLocation(lat, lng)) return@launch
-        prefs.update {
-            it.copy(
-                schedule = it.schedule.copy(
-                    latitude = lat,
-                    longitude = lng,
-                    solarTimezone = solarTimezone
-                )
-            )
-        }
+        prefs.update { it.withSolarLocation(lat, lng, solarTimezone, selectSolar = false) }
     }
+
+    override fun setLocationAndSelectSolar(lat: Double, lng: Double, solarTimezone: String?) =
+        viewModelScope.launch {
+            if (!isValidSolarLocation(lat, lng)) return@launch
+            prefs.update { it.withSolarLocation(lat, lng, solarTimezone, selectSolar = true) }
+        }
 
     override fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
         prefs.update { current ->

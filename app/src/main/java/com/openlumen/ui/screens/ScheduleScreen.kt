@@ -98,6 +98,9 @@ fun ScheduleScreen(
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    // Set when the dialog was opened from the Solar row with no location yet:
+    // saving it should also select the mode the user tapped.
+    var selectSolarAfterLocation by rememberSaveable { mutableStateOf(false) }
     var showProgressiveEndPicker by rememberSaveable { mutableStateOf(false) }
     var equalFixedTimesError by rememberSaveable { mutableStateOf(false) }
     var exactAlarmSettingsError by rememberSaveable { mutableStateOf(false) }
@@ -211,8 +214,15 @@ fun ScheduleScreen(
                     .fillMaxWidth()
                     .selectable(
                         selected = prefs.schedule.mode == mode,
-                        enabled = !solarUnavailable,
-                        onClick = { vm.setScheduleMode(mode) },
+                        onClick = {
+                            when (scheduleModeRowAction(mode, solarLocationValid)) {
+                                ScheduleModeRowAction.RequestLocation -> {
+                                    selectSolarAfterLocation = true
+                                    showLocationDialog = true
+                                }
+                                ScheduleModeRowAction.SelectMode -> vm.setScheduleMode(mode)
+                            }
+                        },
                         role = Role.RadioButton
                     )
             ) {
@@ -241,7 +251,7 @@ fun ScheduleScreen(
                         )
                         if (solarUnavailable) {
                             Text(
-                                stringResource(R.string.schedule_solar_location_required_short),
+                                stringResource(R.string.schedule_solar_location_tap_to_set),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
@@ -651,10 +661,18 @@ fun ScheduleScreen(
             initialLat = prefs.schedule.latitude,
             initialLng = prefs.schedule.longitude,
             initialTimezone = prefs.schedule.solarTimezone,
-            onDismiss = { showLocationDialog = false },
-            onSave = { lat, lng, solarTimezone ->
-                vm.setLocation(lat, lng, solarTimezone)
+            onDismiss = {
                 showLocationDialog = false
+                selectSolarAfterLocation = false
+            },
+            onSave = { lat, lng, solarTimezone ->
+                if (selectSolarAfterLocation) {
+                    vm.setLocationAndSelectSolar(lat, lng, solarTimezone)
+                } else {
+                    vm.setLocation(lat, lng, solarTimezone)
+                }
+                showLocationDialog = false
+                selectSolarAfterLocation = false
             }
         )
     }
@@ -743,6 +761,25 @@ internal fun shouldWarnAboutSolarLocation(
     mode: ScheduleModeDto,
     locationValid: Boolean
 ): Boolean = mode == ScheduleModeDto.Solar && !locationValid
+
+/** What tapping a schedule mode row does. */
+internal enum class ScheduleModeRowAction { SelectMode, RequestLocation }
+
+/**
+ * The Solar row stays tappable without a location. The only location button
+ * sits under the solar mode, so disabling the row left a fresh install no way
+ * to enter the first location. The tap opens the location dialog instead, and
+ * saving there selects the solar mode in the same write.
+ */
+internal fun scheduleModeRowAction(
+    mode: ScheduleModeDto,
+    solarLocationValid: Boolean
+): ScheduleModeRowAction =
+    if (mode == ScheduleModeDto.Solar && !solarLocationValid) {
+        ScheduleModeRowAction.RequestLocation
+    } else {
+        ScheduleModeRowAction.SelectMode
+    }
 
 /**
  * A schedule time as this device would write it.
