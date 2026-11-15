@@ -18,7 +18,7 @@ This file is a living record. Add a row when a device is exercised against a rel
 
 | Device | Android | OEM | Root | CDM | SF | KCAL | Overlay | Release | Notes |
 |---|---|---|---|:-:|:-:|:-:|:-:|---|---|
-| Samsung Galaxy S22 (SM-S908U1) | 16 (BP2A.250605.031.A3, S908U1UESAGZE3) | Samsung, One UI 8 | no | n/a | n/a | n/a | ✅ | main after 0.8.0 (debug) | No Night Light on this firmware, so the System Night Light driver has nothing to tint with and the probe now turns it down. Overlay keeps the panel at 120 Hz while scrolling (8.33 ms frames with the filter on and off). |
+| Samsung Galaxy S22 (SM-S908U1) | 16 (BP2A.250605.031.A3, S908U1UESAGZE3) | Samsung, One UI 8 | no | n/a | n/a | n/a | ✅ | main after 0.8.0 (debug) | No Night Light on this firmware, so the System Night Light driver has nothing to tint with and the probe now turns it down. Overlay keeps the panel at 120 Hz while scrolling (8.33 ms frames with the filter on and off). With gesture navigation the overlay covers the whole 1080x2316 panel, and the strip under the navigation handle takes the same amber as the rest of the screen. Gray out apps works through Shizuku here too: after Shizuku's prompt, Clock went fully gray, and the X gave it its color back. |
 | Samsung Galaxy S25 Ultra (SM-S938B) | 17 (CP2A.260605.016, S938BXXSDDZJ1) | Samsung, One UI | no | n/a | n/a | n/a | ✅ | main after 0.8.0 (debug) | Same as the S22. No Night Light, Auto picks Overlay with WRITE_SECURE_SETTINGS granted, and no secure row is written. |
 | Pixel 6 | 15 (AP4A.250105.002) | Google | yes (Magisk 28) | ? | ? | n/a | ? | v0.4.0 | smoke pending |
 | Pixel 8 | 15 (AP4A.250105.002) | Google | no | ? | n/a | n/a | ? | v0.4.0 | smoke pending |
