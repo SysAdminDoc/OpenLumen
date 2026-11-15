@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The release gate now knows which signing certificate to expect. It could always compare a built APK against a pinned one, and nothing was pinned, so the check it exists for could not run. The fingerprint was read from the published v0.7.1 APK rather than from the local keystore, because the question the pin answers is whether a build carries the same key as the releases people already have installed, and a keystore cannot answer that about itself. A build signed with anything else now fails the gate instead of being published.
+- The release keystore no longer sits in the repository working tree. Signing reads four environment variables and no file path, so the copy in the tree was on no code path and was pure exposure to anything that archives a directory without reading `.gitignore`.
+
 ### Added
 
 - The filter can deepen across the evening instead of arriving at full strength when the schedule opens. Off by default; when on, it starts at the preset's own intensity at sunset or your start time and reaches a strength you choose by a time you choose. It moves in steps driven by the alarm the schedule already sets rather than a ticker, so a sleeping device is not kept awake for a colour change nobody is looking at.
