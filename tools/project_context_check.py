@@ -61,7 +61,9 @@ def validate_project_context(root: Path) -> list[str]:
     normalized_context = re.sub(r"\s+", " ", context)
     build = sources["build"]
     preferences = sources["preferences"]
-    driver_source = sources["driver_source"]
+    # Collapsed like the context, so a signature split over several lines
+    # still matches its marker.
+    driver_source = re.sub(r"\s+", " ", sources["driver_source"])
 
     build_version = _first_group(BUILD_VERSION_RE, build)
     context_version = _first_group(CONTEXT_VERSION_RE, context)
@@ -95,8 +97,9 @@ def validate_project_context(root: Path) -> list[str]:
             errors.append(f"context is missing current driver contract: {contract}")
 
     required_source_markers = (
-        "fun bestAvailableKind(probes: List<Probe>): EngineKind?",
-        "fun pickBestFrom(probes: List<Probe>): ColorEngine?",
+        # C364 added the targets the Auto choice weighs.
+        "fun bestAvailableKind( probes: List<Probe>, targets: List<LumenMatrix> = emptyList() ): EngineKind?",
+        "fun pickBestFrom( probes: List<Probe>, targets: List<LumenMatrix> = emptyList() ): ColorEngine?",
         "it.available && it.engine.kind.requiresRoot",
         "it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER",
         "it.available && it.engine.kind == EngineKind.OVERLAY",
