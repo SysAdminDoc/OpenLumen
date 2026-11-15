@@ -40,12 +40,15 @@ import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
 import com.openlumen.schedule.isValidSolarLocation
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -932,6 +935,23 @@ class LumenService : LifecycleService() {
         lightSubscription.cancel()
         // Cancelling here would also cancel the retry a refused start queued.
         if (!foregroundStartBlocked) scheduleAlarms.cancelAlarm()
+        // The app and the widget turn the filter off by writing enabled=false
+        // and then stopping this service, which cancels the preferences
+        // observer before it mirrors the change. The locked-boot copy then
+        // still said on, and the next reboot brought the tint back on the
+        // lock screen. Not on Main: DataStore runs a transform in its
+        // caller's context, so a mirror write the observer already queued
+        // there would wait behind a blocked Main, and this one behind it.
+        // The process outlives a stopped service, so the write lands.
+        if (isUserUnlocked()) {
+            ServiceStopScope.launch {
+                runCatching {
+                    withTimeoutOrNull(5_000L) {
+                        if (!prefs.flow.first().enabled) directBootMirror.markDisabled()
+                    }
+                }.onFailure { Log.w(tag, "direct-boot disable on stop failed: ${it.message}") }
+            }
+        }
         // Synchronously clear the engine — the lifecycleScope is about to be cancelled,
         // so a normal `launch { engine?.clear() }` would race with cancellation. We
         // block on a short timeout so we never hang shutdown if su is misbehaving.
@@ -1057,3 +1077,9 @@ class LumenService : LifecycleService() {
 
     }
 }
+
+/**
+ * Work onDestroy hands off so it is not cut short by the service's own scope
+ * being cancelled and does not block Main while it waits on a store.
+ */
+private val ServiceStopScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
