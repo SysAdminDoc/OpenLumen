@@ -1,10 +1,6 @@
 # OpenLumen
 
-[![Version](https://img.shields.io/badge/version-0.8.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases)
-[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE)
-[![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements)
-[![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts)
-[![No INTERNET](https://img.shields.io/badge/INTERNET-not%20requested-94e2d5?style=flat-square)](#privacy)
+[![Version](https://img.shields.io/badge/version-0.8.0-cba6f7?style=flat-square)](https://github.com/SysAdminDoc/OpenLumen/releases) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0--or--later-a6e3a1?style=flat-square)](LICENSE) [![Platform: Android](https://img.shields.io/badge/platform-Android%208.0%2B-89b4fa?style=flat-square)](#requirements) [![Min SDK](https://img.shields.io/badge/minSdk-26-f9e2af?style=flat-square)](app/build.gradle.kts) [![No INTERNET](https://img.shields.io/badge/INTERNET-not%20requested-94e2d5?style=flat-square)](#privacy)
 
 <p align="center">
   <a href="https://ko-fi.com/X8K126YVER">
@@ -16,53 +12,32 @@
   <sub><em>If OpenLumen makes your display easier to use, a coffee helps me keep its device paths tested and maintained.</em></sub>
 </p>
 
-> **It changes the display, not a layer on top of it.** Three of OpenLumen's
-> four drivers work below the app layer: two write the colour transform the
-> compositor already applies, and one drives the panel through the kernel. The
-> tint reaches the status bar, the notification shade and the lock screen, and
-> it never swallows a tap. The overlay driver is the fallback for devices where
-> nothing else is reachable, not the design.
+> **OpenLumen changes the display itself instead of painting a layer over it.** Three of its four drivers work below the app layer. Two write the colour transform the compositor already applies, and one drives the panel through the kernel. The tint reaches the status bar, the notification shade and the lock screen, and it never swallows a tap. The overlay driver is only a fallback for devices where nothing else is reachable.
 
-If you came here after CF.Lumen, that is probably the sentence you were
-looking for. Most of what replaced it paints a coloured window over your
-screen, and it shows: the tint stops at the edges of the app, taps land in the
-wrong place during installs, and every screenshot comes out orange.
+If you came here after CF.Lumen, that's probably the sentence you were looking for. Most of what replaced it paints a coloured window over your screen, and you can tell. The tint stops at the edges of the app, taps land in the wrong place during installs, and every screenshot comes out orange.
 
-Two things people actually use this for:
+People mostly use it for two things.
 
-**Fixing a screen that is the wrong colour.** Some panels ship with a cast,
-usually a green one that reads as a yellow tint on white. Per-channel RGB and
-gamma let you pull it back, and the settings persist across reboots, so this
-is a calibration you make once rather than a mode you turn on at night.
+**Fixing a screen that is the wrong colour.** Some panels ship with a cast, usually a green one that reads as a yellow tint on white. Per-channel RGB and gamma let you pull it back, and the settings persist across reboots, so you calibrate once instead of turning a mode on every night.
 
-**Evening colour shift.** The usual thing: warm the screen on a schedule, by
-clock time, by sunrise and sunset for your location, or until your next alarm.
+**Evening colour shift.** This is the usual one. Warm the screen on a schedule, by clock time, by sunrise and sunset for your location, or until your next alarm.
 
-There is also a workflow some people want that no Android app really serves:
-holding the panel's hardware brightness high while dimming in software, rather
-than letting the backlight drop. Every driver here dims in software, and the
-root drivers and the system's Extra Dim can go below the panel's own minimum.
-Whether that suits you is yours to judge; see
-[docs/health-evidence.md](docs/health-evidence.md) for what is and is not
-established.
+Some people also want something no Android app really handles, which is holding the panel's hardware brightness high while dimming in software instead of letting the backlight drop. Every driver here dims in software, and the root drivers and the system's Extra Dim can go below the panel's own minimum. Whether that suits you is yours to judge. [docs/health-evidence.md](docs/health-evidence.md) covers what is and isn't established.
 
-CF.Lumen has been dormant since December 2020. Red Moon, the main open-source
-overlay-only competitor, has been unmaintained since August 2022. OpenLumen
-exists to fill that gap on Android 14 / 15 with a Compose UI, no telemetry,
-and four runtime-selectable display drivers.
+CF.Lumen has been dormant since December 2020. Red Moon, the main open-source overlay-only competitor, has been unmaintained since August 2022. OpenLumen exists to fill that gap on Android 14 / 15. It has a Compose UI and four display drivers you can switch at runtime, and it sends no telemetry.
 
 ---
 
 ## Why OpenLumen?
 
-- **Three of four drivers work below the app layer**, so the tint covers the whole screen, passes touches through and leaves screenshots untinted.
-- **Per-channel RGB and gamma** for correcting a panel's colour cast, not just warming it.
-- **No INTERNET permission, ever.** Fully offline, F-Droid-clean.
-- **Catppuccin Mocha + AMOLED true-black** Compose UI. Dark by default.
-- **Quick Settings tile** for one-tap toggling. CF.Lumen never shipped a tile.
-- **GPL-3.0-or-later**, aligned with Red Moon's lineage.
-- **Modern Android targets**: minSdk 26, targetSdk 35 (Android 15).
-- **Stack:** Kotlin · Jetpack Compose · Material 3 · Hilt · DataStore · kotlinx.serialization.
+- Three of four drivers work below the app layer, so the tint covers the whole screen, passes touches through and leaves screenshots untinted.
+- Per-channel RGB and gamma, so you can correct a panel's colour cast as well as warm it.
+- No INTERNET permission, ever. The app is fully offline and F-Droid clean.
+- A Catppuccin Mocha and AMOLED true-black Compose UI, dark by default.
+- A Quick Settings tile for one-tap toggling, which CF.Lumen never shipped.
+- Licensed GPL-3.0-or-later, which keeps it in Red Moon's lineage.
+- Current Android targets, with minSdk 26 and targetSdk 35 (Android 15).
+- Built with Kotlin, Jetpack Compose, Material 3, Hilt, DataStore and kotlinx.serialization.
 
 ## Display drivers
 
@@ -77,27 +52,13 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 
 Overlay and SecureSettings have been checked on two Samsung phones, a Galaxy S22 on Android 16 and an S25 Ultra on Android 17. Neither ships Night Light, so Auto picks Overlay on both. The two root drivers haven't been confirmed on hardware yet. [docs/device-matrix.md](docs/device-matrix.md) has the results, and if you run one, the Driver tab's Share report produces exactly what that file wants.
 
-¹ Requires granting `WRITE_SECURE_SETTINGS` once:
-`adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
+¹ You need to grant `WRITE_SECURE_SETTINGS` once, with `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
 
-The secure-settings driver writes the same rows `ColorDisplayService` watches, so
-the tint is applied by the compositor: it covers the status bar, notification
-shade and lock screen, it does not block touches, and screenshots come out
-untinted. On devices that ship Extra Dim (Android 12+, and not every OEM does) it
-also dims below the panel's minimum backlight without root, which is the one
-thing the overlay driver cannot do. Note it carries chromaticity as a colour temperature, so
-per-channel gamma and the colour-vision presets still need a root driver.
+The secure-settings driver writes the same rows `ColorDisplayService` watches, so the compositor applies the tint. It covers the status bar, notification shade and lock screen, it doesn't block touches, and screenshots come out untinted. On devices that ship Extra Dim (Android 12+, and not every OEM does) it also dims below the panel's minimum backlight without root, which is the one thing the overlay driver can't do. It carries chromaticity as a colour temperature, though, so per-channel gamma and the colour-vision presets still need a root driver.
 
-Releases through 0.7.1 shipped a `ColorDisplayManager` driver here that could not
-work on any user install: those APIs need `CONTROL_DISPLAY_COLOR_TRANSFORMS`, which
-is `signature|privileged` and cannot be granted with `pm grant`. If you tried the
-AOSP driver on an older build and saw nothing happen, that was why.
+Releases through 0.7.1 shipped a `ColorDisplayManager` driver here that couldn't work on any user install. Those APIs need `CONTROL_DISPLAY_COLOR_TRANSFORMS`, which is `signature|privileged` and can't be granted with `pm grant`. If you tried the AOSP driver on an older build and saw nothing happen, that was why.
 
-The app falls back gracefully: Auto prefers the best available root path
-(`SurfaceFlinger`, then `KCAL`). Non-root devices use Overlay by default. If
-you want a specific driver such as `SecureSettings`, Settings → Driver
-lets you pin one; if that pinned driver later probes as unavailable, OpenLumen
-resets to Auto instead of leaving the filter enabled with no visible effect.
+The app falls back gracefully. Auto prefers the best available root path (`SurfaceFlinger`, then `KCAL`), and non-root devices use Overlay by default. If you want a specific driver such as `SecureSettings`, Settings → Driver lets you pin one. If that pinned driver later probes as unavailable, OpenLumen resets to Auto instead of leaving the filter enabled with no visible effect.
 
 ## Features (v0.8.0)
 
@@ -110,9 +71,9 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Per-channel gamma sliders (γR / γG / γB, range 0.5 to 2.5)
 - Intensity slider (0 to 100% lerp toward identity) and dim slider (0 to 95%)
 - Contrast multiplier (0.5 to 2.0×)
-- AMOLED true-black clamp (opt-in; snaps very dim subpixels to fully off)
+- AMOLED true-black clamp (opt-in, snaps very dim subpixels to fully off)
 - Grayscale under any preset, so a tint stays on a gray screen (SurfaceFlinger and System Night Light drivers)
-- Blue-channel reduction indicator (physical measurement; not a sleep claim)
+- Blue-channel reduction indicator (a physical measurement, not a sleep claim)
 
 **Scheduling**
 
@@ -123,8 +84,8 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - "Until my next alarm" mode driven by the system alarm clock
 - Location from a bundled offline city picker (~95 cities, no Play Services), typed coordinates, or an optional "Use my location" button
 - "Use my location" asks for approximate (coarse) location only while the app is open. It never asks for precise or background location, and the reading never leaves the phone
-- Optional automatic location for the solar schedule: refreshed when you open the app after you've moved 15 miles (25 km) or more, with a notification if you change time zones in between
-- Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
+- Optional automatic location for the solar schedule. It refreshes when you open the app after you've moved 15 miles or more, and you get a notification if you change time zones in between
+- Ambient-light-sensor trigger (lux below the threshold engages the filter, and either that or the schedule can turn it on)
 - Live lux readout + "calibrate: use current reading" button
 - Smooth fade-in / fade-out transitions (Instant / 30 s / 1 min / 3 min / 5 min / 15 min / 30 min), or a custom length of any whole number of minutes up to 30
 - Optional progressive intensity: start at the preset's strength and reach a deeper one by a time you set, stepped by the schedule's own alarm
@@ -133,7 +94,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 
 **Command surfaces**
 
-- Quick Settings tile (subtitle shows active preset; long-press opens the app)
+- Quick Settings tile (the subtitle shows the active preset, and a long press opens the app)
 - Grayscale tile and four preset tiles that follow your favorites
 - 1 × 1 toggle widget
 - 4 × 1 favorites widget (tap a chip to switch presets)
@@ -157,16 +118,14 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 
 - No INTERNET permission, ever (local release checks reject builds that contain one)
 - No Play Services / Firebase / Google APIs (local release checks reject builds that pull them in)
-- Cloud backup includes solar coordinates only when Android reports client-side encryption; device transfer and explicit profile export remain available without that capability
-- No accessibility service, no usage-stats permission, no foreground-app detection
+- Cloud backup includes solar coordinates only when Android reports client-side encryption. Device transfer and explicit profile export stay available without it
+- No accessibility service, no usage-stats permission and no foreground-app detection
 - Permission rationale card for SYSTEM_ALERT_WINDOW (overlay driver)
-- In-app driver report (Copy or Share) with zero PII: captures device, build,
-  granted permissions, every engine's probe result
+- In-app driver report (Copy or Share) with zero PII. It captures the device, build, granted permissions and every engine's probe result
 
 ## Privacy
 
-OpenLumen requests **zero** network permissions. No telemetry, no crash reporting,
-no remote config. Verify with:
+OpenLumen requests **zero** network permissions. There's no telemetry, crash reporting or remote config. You can verify it with:
 
 ```bash
 aapt dump permissions OpenLumen-release.apk | grep INTERNET
@@ -176,9 +135,7 @@ aapt dump permissions OpenLumen-release.apk | grep INTERNET
 ## Requirements
 
 - Android 8.0 (API 26) or higher
-- For best results: root with Magisk-managed `su`, OR any Android 10+ device with
-  `WRITE_SECURE_SETTINGS` granted over ADB (the secure-settings driver rides the
-  system's own Night Light transform).
+- For best results, root with Magisk-managed `su`, or any Android 10+ device with `WRITE_SECURE_SETTINGS` granted over ADB (the secure-settings driver rides the system's own Night Light transform).
 
 ## Build
 
@@ -200,9 +157,7 @@ export OPENLUMEN_KEY_PASSWORD=...
 ./gradlew assembleRelease
 ```
 
-Those four variables are the only place the build looks. There is no
-`keystore.properties`, `signing.properties` or `local.properties` path, and
-adding one would be ignored.
+Those four variables are the only place the build looks. There is no `keystore.properties`, `signing.properties` or `local.properties` path, and adding one would be ignored.
 
 Unsigned release output is only for local reproducibility or F-Droid rebuild checks:
 
@@ -216,10 +171,7 @@ Run the full local release gate before tagging:
 py -3 tools/local_release_gate.py
 ```
 
-The gate's SPDX SBOM includes a declared/concluded SPDX license and source
-provenance for every resolved release dependency. A dependency with missing or
-prohibited metadata fails the gate unless its exact coordinate has a reviewed
-entry in `tools/sbom-license-overrides.json`.
+The gate's SPDX SBOM includes a declared/concluded SPDX license and source provenance for every resolved release dependency. A dependency with missing or prohibited metadata fails the gate unless its exact coordinate has a reviewed entry in `tools/sbom-license-overrides.json`.
 
 Review stable version-catalog updates during release planning:
 
@@ -239,13 +191,9 @@ For local reproducibility or F-Droid rebuild checks without signing keys:
 py -3 tools/local_release_gate.py --allow-unsigned-release
 ```
 
-Gate outputs are written to `build/reports/openlumen-release-gate/`:
-SBOM JSON, advisory report, release classpath, SHA-256 sums, and signature status.
+The gate writes its outputs to `build/reports/openlumen-release-gate/`. That's the SBOM JSON, the advisory report, the release classpath, SHA-256 sums and the signature status.
 
-The signed/release gate queries OSV and fails on incomplete responses, missing
-severity metadata, or unreviewed High/Critical advisories. An offline advisory
-scaffold is reserved for explicitly unsigned local/F-Droid checks:
-`py -3 tools/local_release_gate.py --allow-unsigned-release --advisory-mode offline`.
+The signed/release gate queries OSV and fails on incomplete responses, missing severity metadata or unreviewed High/Critical advisories. An offline advisory scaffold is kept for explicitly unsigned local/F-Droid checks only, run as `py -3 tools/local_release_gate.py --allow-unsigned-release --advisory-mode offline`.
 
 ## Module layout
 
@@ -298,50 +246,29 @@ OpenLumen/
 
 ## Emergency off
 
-If a release goes wrong and the overlay or root driver leaves your screen
-in a bad state, the canonical escape hatch is:
-
-The exported automation receiver requires a token you generate in the app
-(About → Automation access) on every command except this one. Turning the
-filter off is exempt on purpose: it only ever moves the filter toward off, and
-it has to keep working when the screen is too tinted to read a token off.
-The receiver's outbound filter-state broadcast is signature-protected and is
-not a general-purpose inter-app state channel.
+If a release goes wrong and the overlay or root driver leaves your screen in a bad state, this is the standard escape hatch:
 
 ```bash
 adb shell am broadcast --include-stopped-packages -a com.openlumen.action.TURN_OFF \
     -n com.openlumen/.service.AutomationReceiver
 ```
 
-This works whether or not OpenLumen is running. If the app was force-stopped or
-killed, `--include-stopped-packages` is what lets the broadcast reach it at all,
-and the receiver clears the display itself rather than waiting on a service
-Android will not let it start from the background.
+This works whether or not OpenLumen is running. If the app was force-stopped or killed, `--include-stopped-packages` is what lets the broadcast reach it at all, and the receiver clears the display itself rather than waiting on a service Android won't let it start from the background.
+
+The exported automation receiver wants a token you generate in the app (About → Automation access) for every command except this one. Turning the filter off is exempt on purpose. It only ever moves the filter toward off, and it has to keep working when the screen is too tinted to read a token off it. The receiver's outbound filter-state broadcast is signature-protected and isn't a general-purpose inter-app state channel.
 
 See [docs/root-safety.md](docs/root-safety.md) for more recovery paths.
 
 ## Roadmap
 
-Planned work is tracked in a file that lives only on the maintainer's machine,
-so there is no public backlog to read. The issue tracker is for bug reports and
-for driver reports from real hardware, not for planning; an empty tracker means
-nobody has reported anything, not that nothing is being worked on.
+Planned work is tracked in a file that lives only on the maintainer's machine, so there's no public backlog to read. The issue tracker is for bug reports and driver reports from real hardware, and planning doesn't happen there. An empty tracker means nobody has reported anything. It doesn't mean nothing is being worked on.
 
-What is on disk and readable here: design sketches for the candidates that were
-considered and set aside, in
-[docs/deferred-candidates.md](docs/deferred-candidates.md) and
-[docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md). Each
-one says whether it is waiting on something or was ruled out.
+The design sketches for candidates that were considered and set aside are here to read, in [docs/deferred-candidates.md](docs/deferred-candidates.md) and [docs/overlay-and-per-app-design.md](docs/overlay-and-per-app-design.md). Each one says whether it's waiting on something or was ruled out.
 
 After 0.8.0 the work worth naming is:
 
-- A Shizuku-backed privileged path, which would reach per-app colour without
-  root and without the accessibility service this app refuses to ship.
-- Real hardware. Every row in
-  [docs/device-matrix.md](docs/device-matrix.md) still reads untested, so the
-  driver table above describes what each driver does by construction rather
-  than what anyone has watched it do. The Driver tab's Share report produces
-  exactly what that file wants.
+- A Shizuku-backed privileged path, which would reach per-app colour without root and without the accessibility service this app refuses to ship.
+- Real hardware. Every row in [docs/device-matrix.md](docs/device-matrix.md) still reads untested, so the driver table above describes what each driver does by construction rather than what anyone has watched it do. The Driver tab's Share report produces exactly what that file wants.
 
 ## License
 
@@ -349,7 +276,5 @@ GPL-3.0-or-later. See [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-- **Chainfire (Jorrit Jongma)** for the original CF.Lumen and for documenting the
-  driver-backend approach so thoroughly that this project could be built without
-  the original source.
+- **Chainfire (Jorrit Jongma)** for the original CF.Lumen and for documenting the driver-backend approach so thoroughly that this project could be built without the original source.
 - **LibreShift/red-moon** for proving open-source overlay shifting works on Android.
