@@ -26,6 +26,10 @@ Some people also want something no Android app really handles, which is holding 
 
 CF.Lumen has been dormant since December 2020. Red Moon, the main open-source overlay-only competitor, has been unmaintained since August 2022. OpenLumen exists to fill that gap on Android 14 / 15. It has a Compose UI and four display drivers you can switch at runtime, and it sends no telemetry.
 
+| Home | Driver | Schedule |
+| --- | --- | --- |
+| ![Home tab in the dark theme with the filter on, the Amber preset at 72% and its sliders](docs/images/home-dark.png) | ![Driver tab in the dark theme listing the four drivers and which one Auto picks](docs/images/driver-dark.png) | ![Schedule tab in the light theme set to sunset to sunrise for New York, with offsets](docs/images/schedule-light.png) |
+
 ---
 
 ## Why OpenLumen?

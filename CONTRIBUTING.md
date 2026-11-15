@@ -76,6 +76,13 @@ These are non-negotiable for any PR that wants to merge:
   release build, lint, module tests, screenshot lanes, manifest permission
   checks, classpath checks, SBOM/advisory output, and signature verification;
   run it before release tags.
+- The pictures in `README.md` are plain copies of screenshot baselines from
+  `app/src/screenshotTestDebug/reference/com/openlumen/screenshot/ScreenCoverageScreenshotTestKt/`.
+  `docs/images/home-dark.png` comes from `ProductionHomeDarkPhone`, `driver-dark.png` from
+  `ProductionDriverDarkPhoneSettled` and `schedule-light.png` from `ProductionScheduleLightPhone`.
+  When a UI change moves one of those baselines, run
+  `./gradlew :app:updateDebugScreenshotTest --no-configuration-cache`, look over the new PNG and
+  copy it over its file in `docs/images/` under the same name. Keep each one under 200 KB.
 
 ## Commit messages
 

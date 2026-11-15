@@ -195,6 +195,19 @@ fun ProductionDriverDarkPhone() {
 }
 
 @PreviewTest
+@Preview(name = "Production driver dark phone", showBackground = true, widthDp = 393, heightDp = 852)
+@Composable
+fun ProductionDriverDarkPhoneSettled() {
+    // The tab as most people see it: the probe finished and nothing failed.
+    // README.md shows this one (C348).
+    ProductionScreenPreview(
+        route = "driver",
+        darkTheme = true,
+        model = PreviewScreenModel.driverSettled()
+    )
+}
+
+@PreviewTest
 @Preview(name = "Production about light phone import dialog", showBackground = true, widthDp = 393, heightDp = 852)
 @Composable
 fun ProductionAboutLightPhone() {
@@ -330,6 +343,10 @@ private class PreviewScreenModel(
             preferences = home().state.value.copy(engine = EngineKindDto.Auto),
             refreshing = true,
             probeFailure = "Driver probe failed. Try again."
+        )
+
+        fun driverSettled() = PreviewScreenModel(
+            preferences = home().state.value.copy(engine = EngineKindDto.Auto)
         )
 
         fun about() = PreviewScreenModel(

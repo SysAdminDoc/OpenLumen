@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The release keystore no longer sits in the repository working tree. Signing reads four environment variables and no file path, so the copy in the tree was on no code path and was pure exposure to anything that archives a directory without reading `.gitignore`.
 - The README and the guides in `docs/` read more plainly now, and they match how OpenLumen actually ships. It's a signed APK on the GitHub releases page and nowhere else, dependency updates are done by hand, and the device matrix has its first two real rows (a Galaxy S22 and an S25 Ultra).
 - The tests run on Robolectric 4.17 now, and none of them are pinned to Android 15 anymore. The engine and settings tests run against Android 17, the same framework they're built against, and the app's tests follow its target SDK. Robolectric 4.17 brings Bouncy Castle 1.85 on its own, so the separate pin for the earlier advisory is gone.
+- The README finally shows the app. Home and Driver in the dark theme and Schedule in the light one sit under the introduction. They're copies of the screenshot test baselines, so they come from the same renders the UI tests check, and `CONTRIBUTING.md` says how to refresh them after a UI change.
 
 ### Added
 
