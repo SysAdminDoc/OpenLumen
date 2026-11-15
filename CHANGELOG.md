@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A first build on a clean machine no longer stops at dependency verification. Based on MikolajQ's fix.
 - If the filter was on, it now comes back by itself after an app update. Before, it stayed off (or a root tint stayed stuck) until a reboot or a manual toggle. MikolajQ spotted and patched this.
 - When Android won't let the filter restart in the background, the switch stays on and OpenLumen tries again shortly. Opening the app brings it back too. It used to switch itself off without a word. Based on a patch by MikolajQ.
+- Fixed a crash when the app's battery use is set to Restricted. Android then keeps the filter out of the foreground without saying so, and the next tile tap, widget tap or schedule change killed the app half a minute later. Opening OpenLumen now gets the filter back into the foreground.
 - When Android blocks the tile or a widget from starting the filter, Home now says why and offers Try again, plus the overlay setting when that's what's missing.
 - Phones without an ambient light sensor no longer crash about six seconds after the Schedule tab opens.
 - TalkBack reads each slider once, with its name and value. Each switch row is a single stop with its title and state, where the switch alone used to say only "Off, switch".

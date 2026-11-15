@@ -1,10 +1,13 @@
 package com.openlumen.service
 
+import android.app.ActivityManager
 import android.app.AlarmManager
 import android.app.Application
 import android.app.ForegroundServiceStartNotAllowedException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Process
 import androidx.lifecycle.Lifecycle
 import com.google.common.truth.Truth.assertThat
 import com.openlumen.diagnostics.DiagnosticsLog
@@ -65,6 +68,7 @@ class LumenServiceForegroundRefusalTest {
         prefs.updateWhileLooping { it }
         DiagnosticsLog.clearTestWriter()
         LumenService.resetForegroundStateForTest()
+        shadowOf(app.getSystemService(ActivityManager::class.java)).setServices(emptyList())
     }
 
     private fun refusedService(error: Exception): ServiceController<LumenService> {
@@ -165,6 +169,61 @@ class LumenServiceForegroundRefusalTest {
             "startForeground refused ${ScheduleAlarmReceiver.MAX_BLOCKED_START_RETRIES + 1} times; waiting for the app to open"
         )
         assertThat(prefs.flow.first().enabled).isTrue()
+    }
+
+    /** What ActivityManager reports about this app's service, as Android 17 did with battery use Restricted. */
+    private fun reportServiceForeground(foreground: Boolean) {
+        val info = ActivityManager.RunningServiceInfo().apply {
+            service = ComponentName(app, LumenService::class.java)
+            pid = Process.myPid()
+            started = true
+            this.foreground = foreground
+        }
+        shadowOf(app.getSystemService(ActivityManager::class.java)).setServices(listOf(info))
+    }
+
+    private fun createdService(): ServiceController<LumenService> =
+        Robolectric.buildService(LumenService::class.java).also { services += it }.create()
+
+    @Test fun `a foreground start Android quietly ignores is not taken for one`() = runBlocking {
+        // With battery use set to Restricted, startForeground returns and
+        // nothing changes. The service took that as foreground, so opening
+        // the app never asked again, and the next startForegroundService it
+        // left unanswered killed the app 30 seconds later.
+        reportServiceForeground(false)
+        val controller = createdService()
+        settle(200)
+
+        assertThat(LumenService.inForeground).isFalse()
+        assertThat(log()).contains("startForeground ignored by Android")
+        // It keeps filtering for as long as Android lets it run.
+        assertThat(shadowOf(controller.get()).isStoppedBySelf).isFalse()
+        assertThat(prefs.flow.first().enabled).isTrue()
+    }
+
+    @Test fun `the next start asks for the foreground again`() = runBlocking {
+        reportServiceForeground(false)
+        val controller = createdService()
+        settle(200)
+        assertThat(LumenService.inForeground).isFalse()
+
+        // Opening the app is the usual next start, and Android lets that one
+        // through. Not answering it with startForeground is what got the app
+        // killed.
+        reportServiceForeground(true)
+        controller.startCommand(0, 1)
+
+        assertThat(LumenService.inForeground).isTrue()
+    }
+
+    @Test fun `a foreground service that is not listed counts as foreground`() = runBlocking {
+        // getRunningServices only promises the caller's own services, and an
+        // empty answer is no evidence of anything.
+        createdService()
+        settle(200)
+
+        assertThat(LumenService.inForeground).isTrue()
+        assertThat(log()).doesNotContain("startForeground ignored")
     }
 
     @Test fun `any other foreground failure still turns the filter off`() = runBlocking {

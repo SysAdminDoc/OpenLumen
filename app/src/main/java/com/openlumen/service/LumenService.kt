@@ -1,10 +1,12 @@
 package com.openlumen.service
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -13,6 +15,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.Process
 import android.os.UserManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -89,6 +92,9 @@ class LumenService : LifecycleService() {
      * runs, so a root tint is never left behind by a service that is gone.
      */
     private var foregroundStartBlocked = false
+
+    /** Logs the first ignored foreground start only, since every start retries it. */
+    private var foregroundIgnoredLogged = false
     private lateinit var lightSubscription: LightSensorSubscription
     private lateinit var widgetBridge: WidgetBridge
     private lateinit var systemColorWatcher: SystemColorSettingsWatcher
@@ -263,6 +269,11 @@ class LumenService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        // An instance Android left in the background asks again on every
+        // start. A start made with startForegroundService has to be answered
+        // with startForeground or Android kills the app 30 seconds later, and
+        // opening the app is usually the start that gets through.
+        if (!foregroundStartBlocked && !inForeground) startInForeground()
         if (foregroundStartBlocked) {
             // The start that created this instance still arrives after the
             // stopSelf() in onCreate. Only a turn-off is acted on, and it
@@ -448,7 +459,16 @@ class LumenService : LifecycleService() {
                 startForeground(NOTIFICATION_ID, notification)
             }
             foregroundRefusalsInARow.set(0)
-            inForeground = true
+            inForeground = foregroundHonoured()
+            if (!inForeground && !foregroundIgnoredLogged) {
+                foregroundIgnoredLogged = true
+                DiagnosticsLog.log(
+                    this,
+                    DiagnosticsLog.Level.WARN,
+                    DiagnosticsLog.Category.SERVICE,
+                    "startForeground ignored by Android; running in the background until a start lets it through"
+                )
+            }
         } catch (t: Throwable) {
             Log.e(tag, "startForeground failed: ${t.message}", t)
             if (LumenServiceStarter.isForegroundStartNotAllowed(t)) {
@@ -469,6 +489,25 @@ class LumenService : LifecycleService() {
             }
             stopSelf()
         }
+    }
+
+    /**
+     * Whether Android really made this a foreground service. With the app's
+     * battery use set to Restricted, startForeground returns normally and is
+     * ignored (Android 17 logs "not allowed due to bg restriction"), so the
+     * service runs in the background while it believes otherwise. A record
+     * that isn't listed, or a query that fails, counts as foreground: the
+     * list only promises the caller's own services and proves nothing when
+     * it comes back empty.
+     */
+    @Suppress("DEPRECATION")
+    private fun foregroundHonoured(): Boolean {
+        val am = getSystemService(ActivityManager::class.java) ?: return true
+        val me = ComponentName(this, LumenService::class.java)
+        val record = runCatching { am.getRunningServices(Int.MAX_VALUE) }.getOrNull()
+            ?.firstOrNull { it.service == me && it.pid == Process.myPid() }
+            ?: return true
+        return record.foreground
     }
 
     /**
