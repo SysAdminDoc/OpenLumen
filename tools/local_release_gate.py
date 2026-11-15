@@ -256,8 +256,10 @@ def load_expected_certificate(root: Path) -> str | None:
 
 
 def apksigner_certificate_sha256(apksigner_output: str) -> str | None:
+    # Older apksigner prints "Signer #1 certificate ...". Build-tools 37 prints
+    # one block per scheme instead ("V3.0 Signer: certificate ...").
     match = re.search(
-        r"Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F]{64})",
+        r"(?:Signer #1|V[0-9.]+ Signer:) certificate SHA-256 digest:\s*([0-9a-fA-F]{64})",
         apksigner_output,
     )
     return match.group(1).lower() if match else None

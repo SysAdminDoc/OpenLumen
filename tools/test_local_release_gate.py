@@ -387,6 +387,22 @@ Verified using v2 scheme (APK Signature Scheme v2): false
         self.assertEqual(gate.apksigner_certificate_sha256(output), digest)
         self.assertIsNone(gate.apksigner_certificate_sha256("no certificate here"))
 
+    def test_the_certificate_digest_is_read_out_of_per_scheme_apksigner_output(self):
+        # Build-tools 37 prints a block per signature scheme, where the key's
+        # own digest sits next to the certificate's and must not be taken.
+        digest = "cd" * 32
+        output = (
+            "Number of signers: 1\n"
+            "V3.0 Signer: certificate DN: CN=OpenLumen\n"
+            f"V3.0 Signer: certificate SHA-256 digest: {digest}\n"
+            f"V3.0 Signer: public key SHA-256 digest: {'ef' * 32}\n"
+        )
+
+        self.assertEqual(gate.apksigner_certificate_sha256(output), digest)
+        self.assertIsNone(
+            gate.apksigner_certificate_sha256(f"V3.0 Signer: public key SHA-256 digest: {digest}\n")
+        )
+
     def test_advisory_report_preserves_osv_severity(self):
         with patch.object(
             gate.urllib.request,
