@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On tablets with the dark theme, the screen headings and the Sort label on Presets were invisible because they were drawn black on black. They now use the same light text as everything else.
 - The overlay driver now tints the strip along the bottom of the screen where the navigation bar sits. On Android 11 and later it stopped just above it, which left a bright band under the filter (bigger with three-button navigation).
 - The filter service checked a small file on the main thread every time it started, including at boot. That check runs in the background now.
+- Both home screen widgets can be placed on Pixel phones and other launchers built the same way. The launcher removed them the moment you dropped them, because each widget declared an empty setup screen and the launcher waited for an answer from it that never came.
+- The toggle widget no longer keeps saying On after you turn the filter off with it, and the preset widget's ring goes out with the filter. Both widgets read the setting once when the launcher first drew them and kept showing that value for as long as the launcher left them running.
+- Turning the filter off from the app or a widget now holds through a restart. OpenLumen keeps a copy of the filter state that it reads before the phone is unlocked, and that copy still said on, so the next reboot put the tint back on the lock screen.
 
 ## [0.8.0] (2026-09-04)
 
