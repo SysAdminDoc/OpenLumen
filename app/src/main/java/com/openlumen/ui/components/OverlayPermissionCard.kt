@@ -1,5 +1,6 @@
 package com.openlumen.ui.components
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
@@ -107,15 +108,19 @@ fun OverlayPermissionCard(
                 )
             }
             LumenButton(onClick = {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    ("package:" + ctx.packageName).toUri()
-                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                settingsError = ExternalIntentLauncher.launch(ctx, intent) !=
-                    ExternalIntentResult.Launched
+                settingsError = openOverlaySettings(ctx) != ExternalIntentResult.Launched
             }) {
                 Text(stringResource(R.string.perm_overlay_grant))
             }
         }
     }
+}
+
+/** Opens this app's "display over other apps" setting. */
+internal fun openOverlaySettings(ctx: Context): ExternalIntentResult {
+    val intent = Intent(
+        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+        ("package:" + ctx.packageName).toUri()
+    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    return ExternalIntentLauncher.launch(ctx, intent)
 }

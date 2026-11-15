@@ -314,6 +314,13 @@
     <string name="perm_overlay_title">Permitir exibicao sobre outros aplicativos</string>
     <string name="perm_overlay_rationale">Necessario para o driver overlay sem root. Pule se usar apenas drivers com root.</string>
     <string name="perm_overlay_grant">Abrir configurações</string>
+    <string name="blocked_start_title">O filtro não ligou</string>
+    <string name="blocked_start_reason_tile">O Android não deixou o bloco de Configurações rápidas ligar o filtro enquanto o OpenLumen estava em segundo plano.</string>
+    <string name="blocked_start_reason_widget">O Android não deixou o widget ligar o filtro enquanto o OpenLumen estava em segundo plano.</string>
+    <string name="blocked_start_reason_other">O Android não deixou o filtro ligar enquanto o OpenLumen estava em segundo plano.</string>
+    <string name="blocked_start_needs_overlay">Permita que o OpenLumen seja exibido sobre outros aplicativos e o filtro liga quando você voltar.</string>
+    <string name="blocked_start_failed">Ligar pelo aplicativo também não funcionou.</string>
+    <string name="blocked_start_retry">Tentar novamente</string>
     <string name="external_intent_failed">Não foi possível abrir este ecrã. Abra as definições do Android ou escolha uma aplicação manualmente.</string>
 
     <string name="light_sensor_title">Acionamento por luz ambiente</string>

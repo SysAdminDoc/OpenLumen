@@ -64,11 +64,14 @@ import com.openlumen.diagnostics.MatrixPreview
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
-import com.openlumen.prefs.EngineKindDto
 import com.openlumen.presetLabel
 import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
+import com.openlumen.service.BlockedForegroundStartRecovery
+import com.openlumen.service.BlockedStartNotice
+import com.openlumen.ui.components.BlockedStartNoticeCard
+import com.openlumen.ui.components.BlockedStartUi
 import com.openlumen.ui.components.ExactAlarmPromptCard
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.components.SystemColorConflictCard
@@ -93,7 +96,8 @@ private const val DIM_FINE_STEP: Float = 0.005f
 @Composable
 fun HomeScreen(
     vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>(),
-    enableSystemActions: Boolean = true
+    enableSystemActions: Boolean = true,
+    blockedStart: BlockedStartUi? = null
 ) {
     val prefs by vm.state.collectAsStateWithLifecycle()
     // Nothing to draw yet. Without this the first frame after a cold start
@@ -262,22 +266,38 @@ fun HomeScreen(
     LaunchedEffect(prefs.customMatrix.gammaG) { gammaG = prefs.customMatrix.gammaG }
     LaunchedEffect(prefs.customMatrix.gammaB) { gammaB = prefs.customMatrix.gammaB }
 
+    // A refused tile or widget start, until it is retried or the filter is
+    // turned off. The notice sits at the top, so a Home that was already open
+    // and scrolled down is brought back up to it.
+    val shownBlockedStart = blockedStart?.takeIf { it.notice.visible }
+    val scrollState = rememberScrollState()
+    LaunchedEffect(shownBlockedStart?.notice?.id) {
+        if (shownBlockedStart != null) scrollState.animateScrollTo(0)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(topLevelScrollPadding()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        if (shownBlockedStart != null) {
+            BlockedStartNoticeCard(
+                notice = shownBlockedStart.notice,
+                onRetry = shownBlockedStart.onRetry
+            )
+        }
         // The overlay-permission card is only relevant if the active engine
         // selection actually needs the rootless overlay path. A root user who
         // pinned SurfaceFlinger or KCAL doesn't need SYSTEM_ALERT_WINDOW and
         // shouldn't see a permission nag. "Auto" is treated as "might use
         // overlay" because the driver probe is the only thing that knows
         // whether a higher-rank engine is actually available, and the
-        // probe runs off the UI thread.
-        val overlayCardRelevant =
-            prefs.engine == EngineKindDto.Auto || prefs.engine == EngineKindDto.Overlay
+        // probe runs off the UI thread. The blocked-start notice carries the
+        // same settings route when it is waiting on that permission.
+        val overlayCardRelevant = BlockedForegroundStartRecovery.overlayNeeded(prefs.engine) &&
+            shownBlockedStart?.notice?.phase != BlockedStartNotice.Phase.NeedsOverlay
         OverlayPermissionCard(requiredByActiveEngine = overlayCardRelevant)
         // Reads AlarmManager state, which previews and screenshots don't have.
         if (enableSystemActions) {

@@ -314,6 +314,13 @@
     <string name="perm_overlay_title">Anzeige über anderen Apps erlauben</string>
     <string name="perm_overlay_rationale">Erforderlich für den rootlosen Overlay-Treiber. Überspringen, wenn Sie nur Root-Treiber verwenden.</string>
     <string name="perm_overlay_grant">Einstellungen öffnen</string>
+    <string name="blocked_start_title">Der Filter wurde nicht gestartet</string>
+    <string name="blocked_start_reason_tile">Android hat die Schnelleinstellungs-Kachel den Filter nicht starten lassen, während OpenLumen im Hintergrund lief.</string>
+    <string name="blocked_start_reason_widget">Android hat das Widget den Filter nicht starten lassen, während OpenLumen im Hintergrund lief.</string>
+    <string name="blocked_start_reason_other">Android hat den Filter nicht starten lassen, während OpenLumen im Hintergrund lief.</string>
+    <string name="blocked_start_needs_overlay">Erlaube OpenLumen die Anzeige über anderen Apps, dann startet der Filter, sobald du zurückkommst.</string>
+    <string name="blocked_start_failed">Auch aus der App heraus hat der Start nicht geklappt.</string>
+    <string name="blocked_start_retry">Erneut versuchen</string>
     <string name="external_intent_failed">Dieser Bildschirm konnte nicht geöffnet werden. Öffnen Sie die Android-Einstellungen oder wählen Sie manuell eine App aus.</string>
 
     <string name="light_sensor_title">Umgebungslicht-Auslöser</string>

@@ -25,7 +25,11 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -46,6 +50,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.openlumen.R
+import com.openlumen.ui.components.BlockedStartUi
 import com.openlumen.ui.screens.AboutScreen
 import com.openlumen.ui.screens.DriverScreen
 import com.openlumen.ui.screens.HomeScreen
@@ -73,7 +78,8 @@ fun OpenLumenRoot(
     screenModel: OpenLumenScreenModel? = null,
     initialRoute: String = Dest.Home.route,
     enableSystemActions: Boolean = true,
-    darkTheme: Boolean? = null
+    darkTheme: Boolean? = null,
+    blockedStart: BlockedStartUi? = null
 ) {
     OpenLumenTheme(darkTheme = darkTheme ?: isSystemInDarkTheme()) {
         val nav = rememberNavController()
@@ -87,6 +93,19 @@ fun OpenLumenRoot(
                 launchSingleTop = true
                 restoreState = true
             }
+        }
+        // A tile or widget tapped while the app sat on another tab lands on
+        // Home, where the notice is, the same as a cold launch does. Once per
+        // notice, so a rotation does not pull the user back from a tab they
+        // chose afterwards.
+        val visibleBlockedStartId = blockedStart?.notice?.takeIf { it.visible }?.id
+        var routedBlockedStartId by rememberSaveable { mutableLongStateOf(0L) }
+        LaunchedEffect(visibleBlockedStartId) {
+            if (visibleBlockedStartId == null || visibleBlockedStartId == routedBlockedStartId) {
+                return@LaunchedEffect
+            }
+            routedBlockedStartId = visibleBlockedStartId
+            if (nav.currentDestination?.route != Dest.Home.route) onDestinationSelected(Dest.Home)
         }
 
         if (navigationSuiteType.usesBottomNavigation()) {
@@ -104,6 +123,7 @@ fun OpenLumenRoot(
                     startRoute = initialRoute,
                     screenModel = screenModel,
                     enableSystemActions = enableSystemActions,
+                    blockedStart = blockedStart,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
@@ -126,6 +146,7 @@ fun OpenLumenRoot(
                     startRoute = initialRoute,
                     screenModel = screenModel,
                     enableSystemActions = enableSystemActions,
+                    blockedStart = blockedStart,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -297,6 +318,7 @@ private fun OpenLumenNavHost(
     startRoute: String,
     screenModel: OpenLumenScreenModel?,
     enableSystemActions: Boolean,
+    blockedStart: BlockedStartUi?,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -305,8 +327,11 @@ private fun OpenLumenNavHost(
         modifier = modifier
     ) {
         composable(Dest.Home.route) {
-            if (screenModel == null) HomeScreen(enableSystemActions = enableSystemActions)
-            else HomeScreen(screenModel, enableSystemActions)
+            if (screenModel == null) {
+                HomeScreen(enableSystemActions = enableSystemActions, blockedStart = blockedStart)
+            } else {
+                HomeScreen(screenModel, enableSystemActions, blockedStart)
+            }
         }
         composable(Dest.Schedule.route) {
             if (screenModel == null) ScheduleScreen(enableSystemActions = enableSystemActions)

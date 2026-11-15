@@ -352,6 +352,13 @@
     <string name="perm_overlay_title">Allow display over other apps</string>
     <string name="perm_overlay_rationale">Required for the rootless overlay driver. Skip if you only use root drivers.</string>
     <string name="perm_overlay_grant">Open settings</string>
+    <string name="blocked_start_title">The filter didn\'t start</string>
+    <string name="blocked_start_reason_tile">Android wouldn\'t let the Quick Settings tile start it while OpenLumen was in the background.</string>
+    <string name="blocked_start_reason_widget">Android wouldn\'t let the widget start it while OpenLumen was in the background.</string>
+    <string name="blocked_start_reason_other">Android wouldn\'t let it start while OpenLumen was in the background.</string>
+    <string name="blocked_start_needs_overlay">Allow OpenLumen to display over other apps, and the filter starts when you come back.</string>
+    <string name="blocked_start_failed">Starting it from the app didn\'t work either.</string>
+    <string name="blocked_start_retry">Try again</string>
     <string name="external_intent_failed">Could not open that screen. Open Android Settings or choose an app manually.</string>
 
     <string name="light_sensor_title">Ambient-light trigger</string>

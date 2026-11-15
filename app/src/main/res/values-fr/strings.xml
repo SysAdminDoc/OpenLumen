@@ -314,6 +314,13 @@
     <string name="perm_overlay_title">Autoriser l\'affichage par-dessus les autres applications</string>
     <string name="perm_overlay_rationale">Requis pour le pilote de superposition sans root. Ignorez si vous n\'utilisez que des pilotes root.</string>
     <string name="perm_overlay_grant">Ouvrir les paramètres</string>
+    <string name="blocked_start_title">Le filtre n\'a pas démarré</string>
+    <string name="blocked_start_reason_tile">Android n\'a pas laissé la vignette des Réglages rapides le démarrer pendant qu\'OpenLumen était en arrière-plan.</string>
+    <string name="blocked_start_reason_widget">Android n\'a pas laissé le widget le démarrer pendant qu\'OpenLumen était en arrière-plan.</string>
+    <string name="blocked_start_reason_other">Android ne l\'a pas laissé démarrer pendant qu\'OpenLumen était en arrière-plan.</string>
+    <string name="blocked_start_needs_overlay">Autorisez OpenLumen à s\'afficher par-dessus les autres applications, et le filtre démarrera à votre retour.</string>
+    <string name="blocked_start_failed">Le démarrage depuis l\'application a échoué lui aussi.</string>
+    <string name="blocked_start_retry">Réessayer</string>
     <string name="external_intent_failed">Impossible d’ouvrir cet écran. Ouvrez les réglages Android ou choisissez une application manuellement.</string>
 
     <string name="light_sensor_title">Déclenchement par luminosité ambiante</string>

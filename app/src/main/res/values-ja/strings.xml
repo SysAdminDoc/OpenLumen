@@ -314,6 +314,13 @@
     <string name="perm_overlay_title">他のアプリの上に表示を許可</string>
     <string name="perm_overlay_rationale">rootレスのオーバーレイドライバーに必要です。rootドライバーのみ使用する場合はスキップできます。</string>
     <string name="perm_overlay_grant">設定を開く</string>
+    <string name="blocked_start_title">フィルターを開始できませんでした</string>
+    <string name="blocked_start_reason_tile">OpenLumen がバックグラウンドにあったため、Android がクイック設定タイルからの開始を許可しませんでした。</string>
+    <string name="blocked_start_reason_widget">OpenLumen がバックグラウンドにあったため、Android がウィジェットからの開始を許可しませんでした。</string>
+    <string name="blocked_start_reason_other">OpenLumen がバックグラウンドにあったため、Android が開始を許可しませんでした。</string>
+    <string name="blocked_start_needs_overlay">OpenLumen に他のアプリの上への表示を許可すると、戻ったときにフィルターが開始されます。</string>
+    <string name="blocked_start_failed">アプリからの開始もうまくいきませんでした。</string>
+    <string name="blocked_start_retry">再試行</string>
     <string name="external_intent_failed">画面を開けませんでした。Androidの設定を開くか、アプリを手動で選択してください。</string>
 
     <string name="light_sensor_title">環境光トリガー</string>
