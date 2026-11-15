@@ -128,6 +128,7 @@ The practical benefit for users is that the last active tint can come back on a 
 - **C09**: Overlay alpha cap explanation (v0.5.0).
 - **C13**: Emergency off command + About-tab affordance (v0.5.0).
 - **C99**: Event-driven ambient sampling (v0.5.0). `ACTION_SCREEN_OFF` clears the cached lux reading so stale daytime values don't trigger the filter at dusk when the device is picked up.
+- **C287**: Per-app saturation (Unreleased). This one sidesteps the foreground question entirely. `cmd color_display set-layer-saturation LEVEL CALLER TARGET`, run through Shizuku as shell, has ColorDisplayService desaturate every layer the target app draws, wherever it shows up, so nothing has to watch which app is in front. The system keeps the lowest level any caller asked for and holds the levels in memory only, so `AppSaturationRestorer` sets them again each time OpenLumen sees Shizuku come up. A process that was running before Shizuku started gets the binder only when it next comes to the foreground (Shizuku 13.6 on an API 37 emulator), which in practice means the levels return when the user opens OpenLumen. Apps come from the system's `ACTION_PICK_ACTIVITY` picker, and the manifest's launcher query is used only to read the picked app's name. The shell command is used instead of the binder call under it because that call's transaction code is a hidden field apps can't read, and a guessed code on an OEM build could hit the device-wide saturation. It's no help for C11, C12 or C69, which still need the foreground package.
 
 ## Process note
 

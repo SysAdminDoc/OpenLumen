@@ -401,5 +401,16 @@
             installed" from "installed but not started" (C254).
         -->
         <package android:name="moe.shizuku.privileged.api" />
+
+        <!--
+            Launcher apps, so the per-app saturation list can show the name of
+            an app the user picked in the system's app picker instead of its
+            package name (C287). Nothing lists or reads them otherwise; the
+            picker is the system's own and hands back only the one app chosen.
+        -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 </manifest>

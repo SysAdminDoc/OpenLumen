@@ -1,5 +1,6 @@
 package com.openlumen.viewmodel
 
+import com.openlumen.shizuku.AppSaturationOutcome
 import com.openlumen.shizuku.ShizukuGrantOutcome
 import com.openlumen.shizuku.ShizukuState
 
@@ -26,3 +27,15 @@ data class ShizukuUiState(
 internal data class ShizukuAttempt(val outcome: ShizukuGrantOutcome, val state: ShizukuState) {
     fun keptIn(now: ShizukuState): ShizukuAttempt? = takeIf { state == now }
 }
+
+/**
+ * What the Driver tab's per-app saturation card shows (C287).
+ *
+ * @property supported false before Android 10, which has no per-app color transform.
+ * @property problem why the last change did not take, until the next one does.
+ */
+data class AppSaturationUiState(
+    val supported: Boolean = true,
+    val busy: Boolean = false,
+    val problem: AppSaturationOutcome? = null
+)

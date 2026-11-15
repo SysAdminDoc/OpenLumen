@@ -28,6 +28,9 @@ import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.EngineController
 import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
+import com.openlumen.shizuku.AppSaturation
+import com.openlumen.shizuku.AppSaturationList
+import com.openlumen.shizuku.AppSaturationOutcome
 import com.openlumen.shizuku.ShizukuGrant
 import com.openlumen.shizuku.ShizukuGrantOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +47,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import javax.inject.Inject
 
@@ -53,7 +57,8 @@ class OpenLumenViewModel @Inject constructor(
     private val prefs: PreferencesStore,
     private val probe: DriverProbe,
     private val lightSensor: LightSensorAdapter,
-    private val shizukuGrant: ShizukuGrant
+    private val shizukuGrant: ShizukuGrant,
+    private val appSaturationControl: AppSaturation
 ) : AndroidViewModel(application), OpenLumenScreenModel {
 
     private val tag = "OpenLumen/ViewModel"
@@ -506,6 +511,59 @@ class OpenLumenViewModel @Inject constructor(
         is ShizukuGrantOutcome.NotReady -> "not ready (${outcome.state.reportLabel})"
         is ShizukuGrantOutcome.Failed -> "failed: ${outcome.detail}"
     }
+
+    // C287: per-app saturation. One change at a time, so a slider dragged
+    // across several stops lands on the last one it was let go at.
+    private val appSaturationMutex = Mutex()
+    private val appSaturationBusy = MutableStateFlow(false)
+    private val appSaturationProblem = MutableStateFlow<AppSaturationOutcome?>(null)
+    override val appSaturation: StateFlow<AppSaturationUiState> =
+        combine(appSaturationBusy, appSaturationProblem) { busy, problem ->
+            AppSaturationUiState(supported = appSaturationControl.supported, busy = busy, problem = problem)
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            AppSaturationUiState(supported = appSaturationControl.supported)
+        )
+
+    override fun setAppSaturation(packageName: String, level: Int) =
+        changeAppSaturation(packageName, level.coerceIn(0, Preferences.APP_SATURATION_FULL), removal = false)
+
+    override fun removeAppSaturation(packageName: String) =
+        changeAppSaturation(packageName, Preferences.APP_SATURATION_FULL, removal = true)
+
+    /** The save rules are [AppSaturationList]'s. */
+    private fun changeAppSaturation(packageName: String, level: Int, removal: Boolean) =
+        viewModelScope.launch {
+            appSaturationMutex.withLock {
+                val saved = prefs.flow.first().appSaturation
+                if (!AppSaturationList.accepts(saved, packageName, removal, Preferences.APP_SATURATION_MAX_APPS)) {
+                    return@withLock
+                }
+                appSaturationBusy.value = true
+                try {
+                    // Shizuku's own prompt, the first time; a no-op after that.
+                    shizukuGrant.allow()
+                    val outcome = appSaturationControl.set(packageName, level)
+                    val forget = removal && AppSaturationList.forgetsWithoutShizuku(outcome)
+                    DiagnosticsLog.log(
+                        getApplication(),
+                        if (outcome == AppSaturationOutcome.Applied) DiagnosticsLog.Level.INFO else DiagnosticsLog.Level.WARN,
+                        DiagnosticsLog.Category.ENGINE,
+                        "Per-app saturation ${if (removal) "removal" else level.toString()} for $packageName: $outcome" +
+                            if (forget) "; taken off the list, the system drops it at the next restart" else ""
+                    )
+                    appSaturationProblem.value = outcome.takeIf { it != AppSaturationOutcome.Applied && !forget }
+                    prefs.update { current ->
+                        AppSaturationList.after(current.appSaturation, packageName, level, removal, outcome)
+                            ?.let { current.copy(appSaturation = it) }
+                            ?: current
+                    }
+                } finally {
+                    appSaturationBusy.value = false
+                }
+            }
+        }
 
     private val _exportResult = MutableStateFlow<String?>(null)
     override val exportResult: StateFlow<String?> = _exportResult.asStateFlow()

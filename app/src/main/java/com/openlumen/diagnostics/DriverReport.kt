@@ -266,6 +266,9 @@ object DriverReport {
         }
         appendLine("Solar location: $coords")
         appendLine("Light sensor trigger: ${prefs.lightSensorEnabled}")
+        // A count only: the report gets pasted into public issues, and the
+        // package names would list apps the user has installed (C287).
+        appendLine("Per-app saturation: ${prefs.appSaturation.size} app(s)")
         appendLine()
     }
 

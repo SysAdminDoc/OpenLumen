@@ -303,7 +303,17 @@ data class Preferences(
      * because a temperature moving and its flag moving are the same event to
      * a reader.
      */
-    val secureRowsReleased: List<String> = emptyList()
+    val secureRowsReleased: List<String> = emptyList(),
+    /**
+     * Saturation for apps the user picked, by package name, from 0 (gray) to
+     * 100 (full color) (C287). The system applies it through Shizuku and
+     * forgets it at every restart, so this map is what puts it back.
+     *
+     * Device-local like [secureRowsReleased]: the package names and the
+     * Shizuku that applies them belong to this phone, so an export leaves the
+     * map out and an import keeps the one already here.
+     */
+    val appSaturation: Map<String, Int> = emptyMap()
 ) {
     companion object {
         /**
@@ -366,6 +376,16 @@ data class Preferences(
          * list. Sanitize drops the tail beyond this.
          */
         const val MAX_PROFILES: Int = 32
+
+        /** Full color for [appSaturation]: the level that leaves an app as it is. */
+        const val APP_SATURATION_FULL: Int = 100
+
+        /**
+         * Most apps [appSaturation] keeps. Each one is a command through
+         * Shizuku at every restart, and a hand-edited blob does not get to
+         * make that list unbounded.
+         */
+        const val APP_SATURATION_MAX_APPS: Int = 32
 
         /**
          * Maximum length of a [NamedProfile.name]. Long enough for "After-

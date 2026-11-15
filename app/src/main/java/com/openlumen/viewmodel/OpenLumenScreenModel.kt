@@ -153,6 +153,20 @@ interface OpenLumenScreenModel {
     /** C254: the screen has announced a successful grant. */
     fun consumeShizukuOutcome() = Unit
 
+    /**
+     * C287: whether per-app saturation can run here, whether a change is in
+     * flight, and why the last one did not take. The levels themselves are in
+     * [state], saved only once the system took them.
+     */
+    val appSaturation: StateFlow<AppSaturationUiState>
+        get() = NO_APP_SATURATION
+
+    /** C287: set one app's saturation, adding it to the list if it is new. */
+    fun setAppSaturation(packageName: String, level: Int): Job = Job()
+
+    /** C287: give one app its full color back and take it off the list. */
+    fun removeAppSaturation(packageName: String): Job = Job()
+
     companion object {
         // Shared and permanently empty. `get() = MutableStateFlow(null)` handed
         // out a new flow on every read, so anything collecting one of these in
@@ -163,5 +177,7 @@ interface OpenLumenScreenModel {
             MutableStateFlow(null)
         private val ALWAYS_LOADED: StateFlow<Boolean> = MutableStateFlow(true)
         private val NO_SHIZUKU: StateFlow<ShizukuUiState> = MutableStateFlow(ShizukuUiState())
+        private val NO_APP_SATURATION: StateFlow<AppSaturationUiState> =
+            MutableStateFlow(AppSaturationUiState())
     }
 }

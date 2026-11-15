@@ -191,7 +191,17 @@ If you have [Shizuku](https://github.com/RikkaApps/Shizuku), the Driver tab can 
 
 The button only shows while the permission is missing. It stays greyed out with a short note when Shizuku isn't installed, isn't running, or has OpenLumen blocked. In that last case, open Shizuku and allow OpenLumen from its app list. The driver report's Shizuku section says which of these you're in and whether the server runs as adb (uid 2000) or root (uid 0).
 
-The grant survives reboots, so you can uninstall Shizuku afterwards. OpenLumen only uses it for this one command.
+The grant survives reboots, so you can uninstall Shizuku afterwards if the grant is all you wanted it for. The only other thing OpenLumen uses it for is the per-app color list below.
+
+## Graying out single apps
+
+The Driver tab's **Gray out apps** card shows the apps you pick in less color, or fully gray, while the rest of the screen keeps its color. It needs Android 10 or later and [Shizuku](https://github.com/RikkaApps/Shizuku) running with OpenLumen allowed. Tap **Choose an app**, pick one in the system's app list, then move its slider. A new app starts at 0%, which is gray. The X next to an app gives it its full color back and takes it off the list.
+
+Android does the graying itself, for that app's windows only, so it works with any driver and with the filter off. If another app has asked Android to gray the same app, the lower of the two levels wins.
+
+Android forgets these levels every time the phone restarts. Once Shizuku is running again, open OpenLumen and it puts them back by itself. Until then, the apps show their full color. If a change doesn't take, the card says so, and the diagnostics part of the driver report has the reason.
+
+The list stays on the phone. Profile exports leave it out, and the driver report only says how many apps are on it.
 
 ## Backup and restore
 
@@ -212,7 +222,7 @@ OpenLumen participates in Android Auto Backup and device-to-device transfer. A r
 
 After a restore, the filter starts in the `enabled` state it was saved in. If the restored preferences reference a driver that isn't available on the new device (e.g., KCAL on a non-Qualcomm SoC), Auto mode re-probes and picks the best available engine. The overlay permission and `WRITE_SECURE_SETTINGS` grant must be re-established on the new device.
 
-To manually export/import settings across devices without cloud backup, use About → Export profile / Import profile. The JSON export includes all preferences and saved profiles. Crash and diagnostic logs are never included in exports.
+To manually export/import settings across devices without cloud backup, use About → Export profile / Import profile. The JSON export includes all preferences and saved profiles, except the few that only make sense on one phone, such as the automation token and the per-app color list. Crash and diagnostic logs are never included in exports.
 
 ## Reporting a bug
 

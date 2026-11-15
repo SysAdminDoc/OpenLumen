@@ -26,6 +26,7 @@ This file is a living record. Add a row when a device is exercised against a rel
 | OnePlus 9 | 14 | OnePlus | yes, KCAL kernel | ? | ? | ? | ? | v0.4.0 | smoke pending |
 | Xiaomi Mi 11 | 14 (HyperOS) | Xiaomi | no | ? | n/a | n/a | ? | v0.4.0 | smoke pending |
 | Generic AVD x86_64 | 35 (preview) | AOSP emu | rooted | ? | n/a | n/a | ? | v0.4.0 | emulator only |
+| Generic AVD x86_64 | 17 (CE2A.260420.051.A3, userdebug) | AOSP emu | adb root only | ? | ? | n/a | ✅ | main after 0.8.0 (debug) | Only Overlay was run. Gray out apps works through Shizuku 13.6: a picked app goes gray while the rest keep color, the overlay tint still shows on it as shades of amber, the level outlives an app restart, and the X gives the app its color back. A reboot clears the levels. With Shizuku started again they came back once OpenLumen was opened, not before. |
 
 Every row here was observed on the device it names. Nothing is filled in from what a driver should do. See `CONTRIBUTING.md` for how to add rows.
 

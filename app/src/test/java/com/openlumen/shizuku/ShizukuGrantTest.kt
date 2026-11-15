@@ -13,57 +13,8 @@ import org.junit.Test
  */
 class ShizukuGrantTest {
 
-    private class FakeGateway : ShizukuGateway {
-        var managerInstalled = true
-        var binderAlive = true
-        var preV11 = false
-        var permission = false
-        var deniedForGood = false
-        var permissionThrows = false
-
-        /** What the user answers in Shizuku's prompt; null leaves it unanswered. */
-        var promptAnswer: Boolean? = null
-
-        /** What running a command does; the default grants the permission. */
-        var onRun: (List<String>) -> ShellResult = { ShellResult(0, "") }
-
-        val requests = mutableListOf<Int>()
-        val commands = mutableListOf<List<String>>()
-        var binderListener: (() -> Unit)? = null
-        var permissionListener: ((Int, Boolean) -> Unit)? = null
-
-        override fun isManagerInstalled() = managerInstalled
-        override fun pingBinder() = binderAlive
-        override fun isPreV11() = preV11
-        override fun hasPermission(): Boolean {
-            if (permissionThrows) throw IllegalStateException("binder died")
-            return permission
-        }
-        override fun permissionDeniedForGood() = deniedForGood
-        override fun requestPermission(requestCode: Int) {
-            requests += requestCode
-            val answer = promptAnswer ?: return
-            permission = answer
-            deniedForGood = !answer
-            permissionListener?.invoke(requestCode, answer)
-        }
-        override fun serverUid(): Int? = if (binderAlive) 2000 else null
-        override fun serverVersion(): Int? = if (binderAlive) 13 else null
-        override fun observe(
-            onBinderChanged: () -> Unit,
-            onPermissionResult: (requestCode: Int, granted: Boolean) -> Unit
-        ) {
-            binderListener = onBinderChanged
-            permissionListener = onPermissionResult
-        }
-        override fun run(command: List<String>, timeoutMillis: Long): ShellResult {
-            commands += command
-            return onRun(command)
-        }
-    }
-
     private var secureSettings = false
-    private val gateway = FakeGateway()
+    private val gateway = FakeShizukuGateway()
 
     private fun grantUnderTest() = ShizukuGrant(
         gateway = gateway,
@@ -308,6 +259,50 @@ class ShizukuGrantTest {
         gateway.binderAlive = false
         assertThat(grantUnderTest().snapshot())
             .isEqualTo(ShizukuSnapshot(ShizukuState.NOT_RUNNING, serverUid = null, serverVersion = null))
+    }
+
+    // allow(), for per-app saturation (C287)
+
+    @Test fun `allow asks Shizuku once and reports ready on yes, without running anything`() = runBlocking {
+        gateway.promptAnswer = true
+
+        val state = grantUnderTest().allow()
+
+        assertThat(state).isEqualTo(ShizukuState.READY)
+        assertThat(gateway.requests).containsExactly(ShizukuGrant.PERMISSION_REQUEST_CODE)
+        assertThat(gateway.commands).isEmpty()
+    }
+
+    @Test fun `allow reports a deny as denied`() = runBlocking {
+        gateway.promptAnswer = false
+
+        assertThat(grantUnderTest().allow()).isEqualTo(ShizukuState.PERMISSION_DENIED)
+    }
+
+    @Test fun `allow does not ask when Shizuku is already allowed or cannot ask`() = runBlocking {
+        gateway.permission = true
+        assertThat(grantUnderTest().allow()).isEqualTo(ShizukuState.READY)
+
+        gateway.permission = false
+        gateway.binderAlive = false
+        assertThat(grantUnderTest().allow()).isEqualTo(ShizukuState.NOT_RUNNING)
+
+        assertThat(gateway.requests).isEmpty()
+    }
+
+    @Test fun `allow left unanswered past the grace still needs permission`() = runBlocking {
+        val grant = ShizukuGrant(
+            gateway = gateway,
+            packageName = PACKAGE,
+            secureSettingsGranted = { secureSettings },
+            ioDispatcher = Dispatchers.Unconfined,
+            answerGraceMillis = 0
+        )
+        val asking = async(start = CoroutineStart.UNDISPATCHED) { grant.allow() }
+
+        grant.stopWaitingIfUnanswered()
+
+        assertThat(asking.await()).isEqualTo(ShizukuState.PERMISSION_NEEDED)
     }
 
     private companion object {

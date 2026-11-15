@@ -431,6 +431,8 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
             }
         }
 
+        AppSaturationCard(vm = vm, levels = prefs.appSaturation)
+
         Spacer(Modifier.height(4.dp))
 
         // Driver report (C02). One button copies, one shares — pick whichever

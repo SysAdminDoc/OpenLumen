@@ -147,6 +147,25 @@ class ShizukuGrant(
         if (pendingPermission.compareAndSet(pending, null)) pending.complete(null)
     }
 
+    /**
+     * Ask for Shizuku's own permission when it has not been given, for work
+     * that needs Shizuku itself rather than the grant (C287). Returns where
+     * Shizuku stands afterwards: a prompt left unanswered leaves it at
+     * [ShizukuState.PERMISSION_NEEDED], a Deny at [ShizukuState.PERMISSION_DENIED].
+     */
+    suspend fun allow(): ShizukuState {
+        if (refresh() != ShizukuState.PERMISSION_NEEDED) return state.value
+        try {
+            awaitPermission()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: RuntimeException) {
+            // The binder died between the state read and the request; the
+            // refresh below reports it.
+        }
+        return refresh()
+    }
+
     private suspend fun awaitPermission(): Boolean? {
         val answer = CompletableDeferred<Boolean?>()
         pendingPermission.getAndSet(answer)?.cancel()

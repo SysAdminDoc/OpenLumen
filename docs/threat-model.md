@@ -133,7 +133,7 @@ MASVS v2.1.0 added MASVS-PRIVACY as a first-class category ([S192](https://githu
 | App identifies the user across installs | Low | OpenLumen doesn't collect any identifier stronger than `Build.MODEL`. No advertising ID, no Firebase ID, no Android ID, no IMEI, no MAC. Verified by the absence of `READ_PHONE_STATE` and Play Services on the release classpath. |
 | App identifies the user across devices | None | There's no network egress (no INTERNET), no account and no cloud sync. There is no cross-device identifier surface. |
 | Sensitive location data leaks | Low | Solar mode uses lat/lng the user enters, picks from the city list, or reads with "Use my location". That read is `ACCESS_COARSE_LOCATION` only, through the platform `LocationManager` while the app is open (no `FusedLocationProvider`, no Play Services, no fine or background location, no `INTERNET`). What gets saved is one coarse lat/lng (the platform already blurs it to roughly a mile), plus the time zone it was saved in and the time of the fix. Coordinates are redacted from the driver report. Coordinates appear only in the user's own exported profile JSON, which the user controls via SAF. |
-| Per-app usage data leaks | None | OpenLumen doesn't query `PACKAGE_USAGE_STATS` (rev 3 explicitly rejected C80) or `QUERY_ALL_PACKAGES`, and it doesn't iterate installed apps. |
+| Per-app usage data leaks | None | OpenLumen doesn't query `PACKAGE_USAGE_STATS` (rev 3 explicitly rejected C80) or `QUERY_ALL_PACKAGES`, and it doesn't iterate installed apps. Its one package-visibility query covers launcher apps, and it's there so the per-app saturation list (C287) can show the name of an app the user picked in the system's own app picker. Nothing walks that set. The picked package names stay on the device: profile exports leave them out and the driver report prints only how many there are. |
 | Foreground-app detection used as a tracking vector | None | C79 (Accessibility) and C80 (UsageStats) both rejected. The Shizuku path (C06) keeps task-state on-device with no network egress. |
 | Crash reporting exfiltration | None | `CrashLogger` writes only to `filesDir/crash.log` (app-private). The file is excluded from `fullBackupContent` rules. No network upload path exists. |
 | Display content / screen content extraction | None | `MediaProjection` is not used. AccessibilityService is not declared. The overlay engine sets `FLAG_NOT_TOUCHABLE` and `FLAG_NOT_FOCUSABLE` so it can't read events. |
@@ -157,7 +157,7 @@ What we store and where:
 
 | Data | Where | Backed up? | Encrypted? | Notes |
 |---|---|---|---|---|
-| Preferences blob (JSON) | DataStore (app-private) | yes (cloud + device transfer) | OS-default app storage encryption | Includes coordinates the user entered |
+| Preferences blob (JSON) | DataStore (app-private) | yes (cloud + device transfer) | OS-default app storage encryption | Includes coordinates the user entered, and the package names of the apps the user put on the per-app saturation list (C287) |
 | Direct Boot mirror | Device-protected DataStore | not intentionally backed up | Device-protected storage | Last active tint matrix, selected engine, enabled/active flags only |
 | Crash log | `filesDir/crash.log` | excluded from backup rules | OS-default | Stack traces only, no PII |
 | Adaptive icon / drawable resources | APK | n/a | n/a | Static assets |
@@ -189,7 +189,7 @@ Permissions we deliberately do **not** request:
 - `INTERNET` / `ACCESS_NETWORK_STATE` / `ACCESS_WIFI_STATE`
 - `ACCESS_FINE_LOCATION` / `ACCESS_BACKGROUND_LOCATION`: sunset needs a city, not a street, and the app reads location only while it's open
 - `READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE`
-- `QUERY_ALL_PACKAGES`
+- `QUERY_ALL_PACKAGES`: the manifest's only app query is launcher apps, used to name an app picked for per-app saturation
 - `BLUETOOTH_*`
 
 ## Review cadence

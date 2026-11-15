@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Transitions now come in 1 and 3 minutes too, plus a Custom length anywhere from 1 to 30 minutes. A duration from an imported profile that matches none of the rows now shows as Custom instead of leaving nothing selected. Based on a patch by MikolajQ.
 - A Grant with Shizuku button on the Driver tab. The System Night Light driver needs a permission that used to take a computer and an adb command. If Shizuku is running, the button grants it right on the phone. The driver report now shows whether Shizuku is installed, running and allowed.
 - Home warns you when a timed schedule runs without exact alarm access, since the switch can then be up to an hour late. The card links straight to the setting. MikolajQ's patch started this.
+- Gray out apps, on the Driver tab, takes the color out of just the apps you pick, or some of it, while everything else stays as it is. It needs Shizuku and Android 10 or newer. Each app gets its own slider and an X that gives it its full color back. Android forgets these levels when the phone restarts, so OpenLumen keeps the list and puts it back the next time you open it with Shizuku running. Your list stays on the device and isn't part of a settings export.
 
 ### Fixed
 

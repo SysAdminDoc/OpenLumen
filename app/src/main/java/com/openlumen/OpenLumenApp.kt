@@ -8,7 +8,18 @@ import android.os.StrictMode
 import android.os.UserManager
 import android.util.Log
 import androidx.work.Configuration
+import com.openlumen.diagnostics.DiagnosticsLog
+import com.openlumen.prefs.PreferencesStore
+import com.openlumen.shizuku.AppSaturation
+import com.openlumen.shizuku.AppSaturationRestorer
+import com.openlumen.shizuku.ShizukuGrant
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
 /**
  * Application root. Declared `directBootAware="true"` in the manifest so the
@@ -41,6 +52,18 @@ class OpenLumenApp : Application(), Configuration.Provider {
             .setMinimumLoggingLevel(Log.WARN)
             .build()
 
+    // Lazy so a locked-boot onCreate builds none of them: the preferences
+    // live in credential-protected storage.
+    @Inject lateinit var preferences: dagger.Lazy<PreferencesStore>
+    @Inject lateinit var appSaturation: dagger.Lazy<AppSaturation>
+    @Inject lateinit var shizukuGrant: dagger.Lazy<ShizukuGrant>
+
+    private val appScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error ->
+            Log.w(tag, "Per-app saturation restore stopped: ${error.message}")
+        }
+    )
+
     override fun onCreate() {
         super.onCreate()
         installStrictModeInDebug()
@@ -48,6 +71,31 @@ class OpenLumenApp : Application(), Configuration.Provider {
             CrashLogger.install(this)
             registerNotificationChannel()
         }
+        // Waits for unlock when the locked-boot path started this process,
+        // which stays alive past unlock with no second onCreate.
+        AfterUnlock.run(this, ::isUserUnlocked) { restoreAppSaturation() }
+    }
+
+    /**
+     * C287. The system forgets per-app saturation at every restart; put the
+     * saved levels back whenever Shizuku comes up.
+     */
+    private fun restoreAppSaturation() {
+        AppSaturationRestorer(
+            levels = preferences.get().flow.map { it.appSaturation },
+            shizukuState = { shizukuGrant.get().state },
+            saturation = appSaturation.get(),
+            report = { applied, failed ->
+                DiagnosticsLog.log(
+                    this,
+                    if (failed.isEmpty()) DiagnosticsLog.Level.INFO else DiagnosticsLog.Level.WARN,
+                    DiagnosticsLog.Category.ENGINE,
+                    "Per-app saturation restored for $applied app(s)" +
+                        if (failed.isEmpty()) "" else "; not restored: " +
+                            failed.entries.joinToString { (target, outcome) -> "$target ($outcome)" }
+                )
+            }
+        ).start(appScope)
     }
 
     /**

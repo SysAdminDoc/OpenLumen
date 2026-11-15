@@ -218,6 +218,22 @@
     <string name="driver_shizuku_refused">OpenLumen was not allowed in Shizuku, so nothing changed.</string>
     <string name="driver_shizuku_failed">Shizuku ran the grant, but the permission is still missing. The driver report has the details.</string>
     <string name="driver_shizuku_done">Granted through Shizuku</string>
+    <!-- C287: per-app saturation through Shizuku. Shizuku is a product
+         name and stays untranslated. -->
+    <string name="app_saturation_title">Gray out apps</string>
+    <string name="app_saturation_body">Show the apps you pick in less color, or in gray, while the rest of the screen keeps its color. Android does this through Shizuku and forgets it at every restart, so OpenLumen sets it again once Shizuku is running.</string>
+    <string name="app_saturation_unsupported">This needs Android 10 or later.</string>
+    <string name="app_saturation_shizuku_not_installed">This runs through Shizuku. Install Shizuku and start it, then come back here.</string>
+    <string name="app_saturation_shizuku_not_running">Shizuku is installed but not running. Open Shizuku and start it, then come back here.</string>
+    <string name="app_saturation_shizuku_outdated">This version of Shizuku is too old. Update Shizuku, then come back here.</string>
+    <string name="app_saturation_shizuku_permission_needed">Shizuku will ask whether OpenLumen may use it the first time you change something here.</string>
+    <string name="app_saturation_shizuku_permission_denied">OpenLumen is denied in Shizuku. Allow OpenLumen in Shizuku\'s list of apps, then come back here.</string>
+    <string name="app_saturation_add">Choose an app</string>
+    <string name="app_saturation_full">The list holds %1$d apps. Remove one to add another.</string>
+    <string name="app_saturation_failed">Android did not take that change. The driver report has the details.</string>
+    <string name="app_saturation_picker_missing">This phone has no app picker OpenLumen can open.</string>
+    <string name="app_saturation_remove_named">Give %1$s its full color back</string>
+    <string name="app_saturation_level_named">%1$s color</string>
     <string name="driver_copy_report">Copy report</string>
     <string name="driver_share_report">Share report</string>
     <string name="driver_report_subject">OpenLumen driver report</string>

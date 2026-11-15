@@ -158,7 +158,10 @@ class PreferencesStore(
             val current = flow.first().copy(
                 automationEnabled = false,
                 automationToken = "",
-                secureRowsReleased = emptyList()
+                secureRowsReleased = emptyList(),
+                // C287: which apps are gray here, and the Shizuku that keeps
+                // them gray, belong to this phone.
+                appSaturation = emptyMap()
             )
             val body = json.encodeToString(Preferences.serializer(), current)
             context.contentResolver.openOutputStream(uri, "wt").use { out ->
@@ -369,7 +372,8 @@ class PreferencesStore(
         automationToken = AutomationToken.sanitize(p.automationToken),
         // One entry per row the driver can hold. A hand-edited or corrupt blob
         // does not get to grow the notice without bound.
-        secureRowsReleased = p.secureRowsReleased.filter { it.isNotBlank() }.distinct().take(3)
+        secureRowsReleased = p.secureRowsReleased.filter { it.isNotBlank() }.distinct().take(3),
+        appSaturation = sanitizeAppSaturation(p.appSaturation)
     )
 
     private fun sanitizeImport(p: Preferences, enabled: Boolean = p.enabled): ImportSummary =
@@ -394,7 +398,10 @@ class PreferencesStore(
                         // fact about this phone. Importing another device's
                         // list would raise a notice about rows nothing here
                         // ever held.
-                        secureRowsReleased = current.secureRowsReleased
+                        secureRowsReleased = current.secureRowsReleased,
+                        // C287: another phone's list names apps this one may
+                        // not have, and nothing here applied them.
+                        appSaturation = current.appSaturation
                     ),
                     enabled = current.enabled
                 ),
@@ -564,3 +571,17 @@ internal fun droppedDuplicateProfileNames(list: List<NamedProfile>): List<String
         }
     return droppedEarlier.asReversed().distinct()
 }
+
+/**
+ * C287. Each key ends up as an argument to a command run through Shizuku, so
+ * only a well-formed package name survives, levels stay in range, and a
+ * hand-edited blob cannot grow the list past [Preferences.APP_SATURATION_MAX_APPS].
+ */
+internal fun sanitizeAppSaturation(levels: Map<String, Int>): Map<String, Int> =
+    levels.entries
+        .filter { (packageName, _) -> packageName.length <= MAX_PACKAGE_NAME_CHARS && PACKAGE_NAME.matches(packageName) }
+        .take(Preferences.APP_SATURATION_MAX_APPS)
+        .associate { (packageName, level) -> packageName to level.coerceIn(0, Preferences.APP_SATURATION_FULL) }
+
+private const val MAX_PACKAGE_NAME_CHARS = 255
+private val PACKAGE_NAME = Regex("""[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+""")
