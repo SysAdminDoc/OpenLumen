@@ -21,6 +21,18 @@ internal fun normalizeEqualFixedTimeSchedule(schedule: ScheduleDto): ScheduleDto
     }
 }
 
+/**
+ * Automatic location bookkeeping from a blob or an imported profile. A stamp
+ * before 1970 means never. The recorded device zone must be a real zone id or
+ * nothing: the clock receiver compares it with the zone a timezone broadcast
+ * names, and a blank or misspelt id would ask the user to update a location
+ * after every zone change.
+ */
+internal fun sanitizeAutoLocationFields(schedule: ScheduleDto): ScheduleDto = schedule.copy(
+    locationFixAtMs = schedule.locationFixAtMs.coerceAtLeast(0L),
+    locationZoneId = sanitizeSolarTimezone(schedule.locationZoneId)
+)
+
 internal fun sanitizeSolarTimezone(raw: String?): String? = raw
     ?.trim()
     ?.takeIf { it.isNotEmpty() }

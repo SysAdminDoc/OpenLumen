@@ -341,7 +341,11 @@ fun ScheduleScreen(
                                 stringResource(R.string.schedule_set_location)
                             else
                                 stringResource(
-                                    R.string.schedule_location_value,
+                                    if (prefs.schedule.autoLocation) {
+                                        R.string.schedule_location_value_auto
+                                    } else {
+                                        R.string.schedule_location_value
+                                    },
                                     String.format(Locale.ROOT, "%.3f, %.3f", lat, lng)
                                 )
                         )
@@ -707,16 +711,20 @@ fun ScheduleScreen(
             initialLat = prefs.schedule.latitude,
             initialLng = prefs.schedule.longitude,
             initialTimezone = prefs.schedule.solarTimezone,
+            initialAutoLocation = prefs.schedule.autoLocation,
+            lastAutoFixAtMs = prefs.schedule.locationFixAtMs,
             onDismiss = {
                 showLocationDialog = false
                 selectSolarAfterLocation = false
             },
-            onSave = { lat, lng, solarTimezone ->
-                if (selectSolarAfterLocation) {
-                    vm.setLocationAndSelectSolar(lat, lng, solarTimezone)
-                } else {
-                    vm.setLocation(lat, lng, solarTimezone)
-                }
+            onSave = { lat, lng, solarTimezone, autoLocation ->
+                vm.saveLocation(
+                    lat = lat,
+                    lng = lng,
+                    solarTimezone = solarTimezone,
+                    autoLocation = autoLocation,
+                    selectSolar = selectSolarAfterLocation
+                )
                 showLocationDialog = false
                 selectSolarAfterLocation = false
             }

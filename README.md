@@ -125,8 +125,9 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Fixed-time schedule with Material 3 24-hour time pickers
 - Exact-alarm warning with a settings action when Android downgrades timed transitions to inexact alarms
 - "Until my next alarm" mode driven by the system alarm clock
-- Manual location entry with bundled offline city picker (~95 cities, no Play Services)
-- No runtime location permission; solar scheduling uses coordinates the user enters
+- Location from a bundled offline city picker (~95 cities, no Play Services), typed coordinates, or an optional "Use my location" button
+- "Use my location" asks for approximate (coarse) location only while the app is open. It never asks for precise or background location, and the reading never leaves the phone
+- Optional automatic location for the solar schedule: refreshed when you open the app after you've moved 15 miles (25 km) or more, with a notification if you change time zones in between
 - Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
 - Live lux readout + "calibrate: use current reading" button
 - Smooth fade-in / fade-out transitions (Instant / 30 s / 1 min / 3 min / 5 min / 15 min / 30 min), or a custom length of any whole number of minutes up to 30

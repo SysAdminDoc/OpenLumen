@@ -34,7 +34,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import android.Manifest
+import android.content.Intent
+import android.provider.Settings
+import android.text.format.DateUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import com.openlumen.R
+import com.openlumen.external.ExternalIntentLauncher
+import com.openlumen.location.DeviceLocation
+import kotlinx.coroutines.launch
 import com.openlumen.schedule.OfflineCities
 
 /**
@@ -63,10 +74,17 @@ fun LocationEntryDialog(
     initialLat: Double?,
     initialLng: Double?,
     initialTimezone: String? = null,
+    initialAutoLocation: Boolean = false,
+    lastAutoFixAtMs: Long = 0L,
     onDismiss: () -> Unit,
-    onSave: (lat: Double, lng: Double, solarTimezone: String?) -> Unit
+    onSave: (lat: Double, lng: Double, solarTimezone: String?, autoLocation: Boolean) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var autoLocation by rememberSaveable { mutableStateOf(initialAutoLocation) }
+    var locating by remember { mutableStateOf(false) }
+    var locateStatus by rememberSaveable { mutableStateOf(LocateStatus.NONE) }
     var latText by rememberSaveable {
         mutableStateOf(initialLat?.let { formatCoord(it) } ?: "")
     }
@@ -90,6 +108,48 @@ fun LocationEntryDialog(
     // doesn't grow unboundedly. The user can refine with the query box.
     val matches = remember(query) { OfflineCities.search(query, limit = 12) }
 
+    // Which control asked, kept across the permission prompt: the switch
+    // turns automatic updates on, the button only fills the fields once.
+    var pendingFromSwitch by rememberSaveable { mutableStateOf(false) }
+    val locate: (Boolean) -> Unit = { fromSwitch ->
+        if (!DeviceLocation.isEnabled(context)) {
+            locateStatus = LocateStatus.LOCATION_OFF
+        } else {
+            locating = true
+            scope.launch {
+                val fix = DeviceLocation.fix(context)
+                locating = false
+                if (fix == null) {
+                    locateStatus = LocateStatus.FAILED
+                } else {
+                    latText = formatCoord(fix.latitude)
+                    lngText = formatCoord(fix.longitude)
+                    // The device zone is the right one for where the user is.
+                    selectedTimezone = null
+                    locateStatus = LocateStatus.FOUND
+                }
+                autoLocation = autoLocationAfterLocate(
+                    current = autoLocation,
+                    fromSwitch = fromSwitch,
+                    found = fix != null
+                )
+            }
+        }
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) locate(pendingFromSwitch) else locateStatus = LocateStatus.DENIED
+    }
+    val requestLocate: (Boolean) -> Unit = { fromSwitch ->
+        if (DeviceLocation.hasPermission(context)) {
+            locate(fromSwitch)
+        } else {
+            pendingFromSwitch = fromSwitch
+            permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = MaterialTheme.shapes.large,
@@ -107,6 +167,72 @@ fun LocationEntryDialog(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                LumenOutlinedButton(
+                    onClick = { requestLocate(false) },
+                    enabled = !locating,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        stringResource(
+                            if (locating) R.string.location_locating else R.string.location_use_mine
+                        )
+                    )
+                }
+                locateStatus.messageRes()?.let { res ->
+                    Text(
+                        stringResource(res),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (locateStatus == LocateStatus.LOCATION_OFF) {
+                    LumenTextButton(onClick = {
+                        ExternalIntentLauncher.launch(
+                            context,
+                            Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    }) { Text(stringResource(R.string.location_open_settings)) }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.location_auto_title),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            stringResource(R.string.location_auto_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        // Hidden once a fix lands here: the stored stamp
+                        // would read as older than the fix on screen.
+                        if (autoLocation && lastAutoFixAtMs > 0L && locateStatus != LocateStatus.FOUND) {
+                            Text(
+                                stringResource(
+                                    R.string.location_auto_last,
+                                    DateUtils.getRelativeTimeSpanString(
+                                        lastAutoFixAtMs,
+                                        System.currentTimeMillis(),
+                                        DateUtils.MINUTE_IN_MILLIS
+                                    )
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    LumenSwitch(
+                        checked = autoLocation,
+                        onCheckedChange = { on ->
+                            if (on) requestLocate(true) else autoLocation = false
+                        },
+                        enabled = !locating
+                    )
+                }
                 Text(
                     stringResource(R.string.location_decimal_degrees_help),
                     modifier = Modifier.fillMaxWidth()
@@ -122,6 +248,7 @@ fun LocationEntryDialog(
                     onValueChange = {
                         latText = it
                         selectedTimezone = null
+                        autoLocation = false
                     },
                     label = { Text(stringResource(R.string.location_latitude)) },
                     keyboardOptions = KeyboardOptions(
@@ -143,6 +270,7 @@ fun LocationEntryDialog(
                     onValueChange = {
                         lngText = it
                         selectedTimezone = null
+                        autoLocation = false
                     },
                     label = { Text(stringResource(R.string.location_longitude)) },
                     keyboardOptions = KeyboardOptions(
@@ -154,7 +282,7 @@ fun LocationEntryDialog(
                             val lat = latVal
                             val lng = lngVal
                             if (lat != null && lng != null && canSave) {
-                                onSave(lat, lng, selectedTimezone)
+                                onSave(lat, lng, selectedTimezone, autoLocation)
                             }
                         }
                     ),
@@ -208,6 +336,7 @@ fun LocationEntryDialog(
                                     latText = formatCoord(city.latitude)
                                     lngText = formatCoord(city.longitude)
                                     selectedTimezone = city.timezone
+                                    autoLocation = false
                                     focusManager.clearFocus()
                                 }
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -245,7 +374,7 @@ fun LocationEntryDialog(
                     val lat = latVal
                     val lng = lngVal
                     if (lat != null && lng != null && canSave) {
-                        onSave(lat, lng, selectedTimezone)
+                        onSave(lat, lng, selectedTimezone, autoLocation)
                     }
                 },
                 enabled = canSave
@@ -261,3 +390,25 @@ fun LocationEntryDialog(
 // without spinning up a Composable harness.
 private fun formatCoord(value: Double): String = CoordParsing.format(value)
 private fun parseCoord(raw: String): Double? = CoordParsing.parse(raw)
+
+/**
+ * Whether automatic updates are on after a locate attempt. Only the switch
+ * turns them on, and only once a fix arrives. "Use my location" fills the
+ * fields once: reading the location again on every app open is a separate
+ * choice the user makes with the switch, not a side effect of the button.
+ */
+internal fun autoLocationAfterLocate(current: Boolean, fromSwitch: Boolean, found: Boolean): Boolean =
+    current || (fromSwitch && found)
+
+/** The outcome of the last "Use my location" tap, shown under the button. */
+private enum class LocateStatus {
+    NONE, FOUND, LOCATION_OFF, DENIED, FAILED;
+
+    fun messageRes(): Int? = when (this) {
+        NONE -> null
+        FOUND -> R.string.location_found
+        LOCATION_OFF -> R.string.location_off
+        DENIED -> R.string.location_denied
+        FAILED -> R.string.location_failed
+    }
+}

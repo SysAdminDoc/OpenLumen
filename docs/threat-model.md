@@ -83,7 +83,7 @@ Categorized loosely by MASVS verticals.
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| DataStore blob contains coordinates the user typed in | Low | App-private credential-protected storage; redacted from driver report; profile export warns the user it includes location |
+| DataStore blob contains coordinates the user typed in, picked from the city list, or read once from coarse location | Low | App-private credential-protected storage; redacted from driver report; profile export warns the user it includes location |
 | Direct Boot mirror is readable before first unlock | Low | Mirror excludes coordinates, profile names, saved profiles, and the full preference blob; it stores only enabled/active flags, selected engine, last active matrix, and AMOLED clamp state |
 | Imported profile causes out-of-range values | Med | All values clamped in `PreferencesStore.sanitize()`; out-of-range fields fall to defaults; corrupt blob falls back to empty `Preferences()` |
 | Crash log contains stack traces with class names | Low | Local-only file (`filesDir/crash.log`), never read or sent without user action; user can clear it from the About screen |
@@ -194,7 +194,7 @@ categorical coverage explicit.
 |---|---|---|
 | App identifies the user across installs | Low | OpenLumen does not collect any identifier stronger than `Build.MODEL`. No advertising ID, no Firebase ID, no Android ID, no IMEI, no MAC. Verified by the absence of `READ_PHONE_STATE` and Play Services on the release classpath. |
 | App identifies the user across devices | None | Zero network egress (no INTERNET); zero account, zero cloud sync. There is no cross-device identifier surface. |
-| Sensitive location data leaks | Low | Solar mode uses **user-entered** lat/lng only. No `LocationManager` / `FusedLocationProvider`. Coordinates redacted from driver report. Coordinates appear only in the user's own exported profile JSON, which the user controls via SAF. |
+| Sensitive location data leaks | Low | Solar mode uses lat/lng the user enters, picks from the city list, or reads with "Use my location". That read is `ACCESS_COARSE_LOCATION` only, through the platform `LocationManager` while the app is open (no `FusedLocationProvider`, no Play Services, no fine or background location, no `INTERNET`). What gets saved is one coarse lat/lng (the platform already blurs it to roughly a mile), plus the time zone it was saved in and the time of the fix. Coordinates redacted from driver report. Coordinates appear only in the user's own exported profile JSON, which the user controls via SAF. |
 | Per-app usage data leaks | None | OpenLumen does not query `PACKAGE_USAGE_STATS` (rev 3 explicitly rejected C80). Does not query `QUERY_ALL_PACKAGES`. Does not iterate installed apps. |
 | Foreground-app detection used as a tracking vector | None | C79 (Accessibility) and C80 (UsageStats) both rejected. The Shizuku path (C06) keeps task-state on-device with no network egress. |
 | Crash reporting exfiltration | None | `CrashLogger` writes only to `filesDir/crash.log` (app-private). The file is excluded from `fullBackupContent` rules. No network upload path exists. |
@@ -233,8 +233,10 @@ What we do **not** store:
 - Identifiers stronger than `Build.MODEL` (no IMEI, no Android ID, no
   advertising ID).
 - The list of installed apps.
-- Location obtained from any platform API (we never call
-  `LocationManager` / FusedLocationProvider).
+- A location history. "Use my location" and automatic location keep only
+  the latest saved lat/lng, the time zone it was saved in and the fix time;
+  each new fix replaces the last one, and FusedLocationProvider is never
+  called.
 - Per-app usage data.
 
 ## Permission inventory
@@ -249,11 +251,12 @@ What we ask for, why, and what would happen if denied:
 | `POST_NOTIFICATIONS` (API 33+) | Foreground service notification visibility | Service runs but notification is silent / hidden |
 | `SCHEDULE_EXACT_ALARM` | Precise schedule transitions | Schedule fires within Doze tolerance instead of on the minute |
 | `WRITE_SECURE_SETTINGS` (granted only via ADB) | CDM engine | CDM engine unavailable; SF/KCAL/Overlay still work |
+| `ACCESS_COARSE_LOCATION` (while in use) | "Use my location" and automatic location for the solar schedule: one cached or one active coarse fix, only when the user taps the button or opens the app. Never in the background, never leaves the device (there is no `INTERNET`). | Pick a city or type coordinates, as before |
 
 Permissions we deliberately do **not** request:
 
 - `INTERNET` / `ACCESS_NETWORK_STATE` / `ACCESS_WIFI_STATE`
-- `ACCESS_*_LOCATION`
+- `ACCESS_FINE_LOCATION` / `ACCESS_BACKGROUND_LOCATION`: sunset needs a city, not a street, and the app reads location only while it is open
 - `READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE`
 - `QUERY_ALL_PACKAGES`
 - `BLUETOOTH_*`

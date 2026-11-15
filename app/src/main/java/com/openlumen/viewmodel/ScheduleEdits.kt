@@ -3,6 +3,7 @@ package com.openlumen.viewmodel
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.isValidSolarLocation
+import kotlin.math.abs
 
 /**
  * Schedule edits as pure transforms. Each one is applied inside a single
@@ -22,24 +23,49 @@ internal fun Preferences.withScheduleMode(mode: ScheduleModeDto): Preferences =
     }
 
 /**
- * Store a solar location and, when [selectSolar] is set, switch to the solar
- * schedule in the same write. The Solar row can be picked before any location
- * exists, and a separate mode write could reach the store first and be refused
- * by [withScheduleMode]. An unusable location leaves everything as it was.
+ * Store a solar location from the dialog and, when [selectSolar] is set,
+ * switch to the solar schedule in the same write. The Solar row can be picked
+ * before any location exists, and a separate mode write could reach the store
+ * first and be refused by [withScheduleMode]. An unusable location leaves
+ * everything as it was.
+ *
+ * [deviceZoneId] is recorded with every save: a later timezone change away
+ * from it is the signal that the user travelled. The automatic location's
+ * "last updated" stamp is cleared when [autoLocation] is off, and kept when it
+ * was already on and the coordinates are the stored ones (the dialog shows
+ * them rounded to four decimals), so saving the dialog unchanged does not
+ * claim a fix that never happened.
  */
 internal fun Preferences.withSolarLocation(
     lat: Double,
     lng: Double,
     solarTimezone: String?,
-    selectSolar: Boolean
+    selectSolar: Boolean,
+    autoLocation: Boolean,
+    nowMs: Long,
+    deviceZoneId: String
 ): Preferences {
     if (!isValidSolarLocation(lat, lng)) return this
+    val unchangedAuto = autoLocation && schedule.autoLocation &&
+        sameDialogCoordinate(schedule.latitude, lat) &&
+        sameDialogCoordinate(schedule.longitude, lng)
     return copy(
         schedule = schedule.copy(
             latitude = lat,
             longitude = lng,
             solarTimezone = solarTimezone,
+            autoLocation = autoLocation,
+            locationFixAtMs = when {
+                !autoLocation -> 0L
+                unchangedAuto -> schedule.locationFixAtMs
+                else -> nowMs
+            },
+            locationZoneId = deviceZoneId,
             mode = if (selectSolar) ScheduleModeDto.Solar else schedule.mode
         )
     )
 }
+
+/** Equal once both are rounded the way the location dialog shows them. */
+private fun sameDialogCoordinate(stored: Double?, saved: Double): Boolean =
+    stored != null && abs(stored - saved) < 0.00005 + 1e-9

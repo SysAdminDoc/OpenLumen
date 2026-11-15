@@ -86,6 +86,37 @@ Verified using v2 scheme (APK Signature Scheme v2): false
             with self.assertRaises(gate.GateError):
                 gate.assert_no_banned_permissions(manifest)
 
+    def test_manifest_permission_scan_accepts_coarse_location(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = Path(tmp) / "AndroidManifest.xml"
+            manifest.write_text(
+                """<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+                </manifest>""",
+                encoding="utf-8",
+            )
+
+            gate.assert_no_banned_permissions(manifest)
+
+    def test_manifest_permission_scan_rejects_fine_and_background_location(self):
+        for permission in (
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.ACCESS_BACKGROUND_LOCATION",
+        ):
+            with self.subTest(permission=permission), tempfile.TemporaryDirectory() as tmp:
+                manifest = Path(tmp) / "AndroidManifest.xml"
+                manifest.write_text(
+                    f"""<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+                    <uses-permission android:name="{permission}" />
+                    </manifest>""",
+                    encoding="utf-8",
+                )
+
+                with self.assertRaises(gate.GateError) as raised:
+                    gate.assert_no_banned_permissions(manifest)
+                self.assertIn(permission, str(raised.exception))
+
     def test_backup_rules_require_encryption_for_cloud_datastore(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

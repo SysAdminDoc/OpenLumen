@@ -54,4 +54,28 @@ class ScheduleSanitizerTest {
 
         assertThat(normalizeEqualFixedTimeSchedule(schedule).solarTimezone).isNull()
     }
+
+    @Test fun `automatic location keeps a real zone and a real stamp`() {
+        val schedule = ScheduleDto(
+            autoLocation = true,
+            locationFixAtMs = 1_700_000_000_000L,
+            locationZoneId = " Europe/Warsaw "
+        )
+
+        val clean = sanitizeAutoLocationFields(schedule)
+
+        assertThat(clean.locationFixAtMs).isEqualTo(1_700_000_000_000L)
+        assertThat(clean.locationZoneId).isEqualTo("Europe/Warsaw")
+        assertThat(clean.autoLocation).isTrue()
+    }
+
+    @Test fun `automatic location drops a negative stamp and a zone that does not exist`() {
+        for (zone in listOf("", "   ", "Not/AZone")) {
+            val clean = sanitizeAutoLocationFields(
+                ScheduleDto(locationFixAtMs = -1L, locationZoneId = zone)
+            )
+            assertThat(clean.locationFixAtMs).isEqualTo(0L)
+            assertThat(clean.locationZoneId).isNull()
+        }
+    }
 }

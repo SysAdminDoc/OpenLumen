@@ -29,6 +29,10 @@ BANNED_PERMISSIONS = {
     "android.permission.INTERNET",
     "android.permission.ACCESS_NETWORK_STATE",
     "android.permission.ACCESS_WIFI_STATE",
+    # The solar schedule asks for coarse location while the app is open.
+    # A precise fix or a background read would break that promise.
+    "android.permission.ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_BACKGROUND_LOCATION",
 }
 BANNED_DEPENDENCY_PATTERNS = (
     "com.google.android.gms",

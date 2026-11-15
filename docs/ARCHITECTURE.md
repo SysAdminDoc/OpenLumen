@@ -231,8 +231,17 @@ path or the AlarmManager.
 - **No background polling.** The old 60-second ticker was replaced with
   `AlarmManager` + a `BroadcastReceiver` in v0.3.0. The light sensor uses
   `SensorManager.registerListener` (event-driven, also no polling).
-- **No location permission.** Solar mode uses user-entered coordinates only.
-  FusedLocationProvider would pull in Play Services and break F-Droid.
+- **No background location.** The only location permission is
+  `ACCESS_COARSE_LOCATION`, used while the app is open: when the user taps
+  "Use my location", and on app open when they turned on automatic location
+  for the solar schedule (`AutoLocationRefresher`, at most every 15 minutes).
+  `DeviceLocation` asks the platform `LocationManager` for a cached fix
+  under 30 minutes old, else one `LocationManagerCompat.getCurrentLocation`
+  call with a 30 second timeout. FusedLocationProvider would
+  pull in Play Services and break F-Droid. Fine and background location are
+  stripped from the merged manifest. A time zone change while the app is
+  closed only posts a notification (`ScheduleClockChangeReceiver`); it never
+  reads location.
 - **No network.** The manifest deliberately omits `android.permission.INTERNET`
   and CI enforces it.
 - **No accessibility service.** Considered (see C79) but not implemented;

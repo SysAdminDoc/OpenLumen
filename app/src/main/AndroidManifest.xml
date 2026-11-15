@@ -14,6 +14,18 @@
         android:name="android.permission.QUERY_ADVANCED_PROTECTION_MODE"
         tools:ignore="UnknownPermission" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Coarse only, "while in use" only: the solar schedule needs a city, not
+         a street. It is read when the user taps "Use my location", and on app
+         open only when they turned on automatic updates for the solar
+         schedule. Never in the background, never sent anywhere. Fine and
+         background location are stripped below so no library can add them. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_BACKGROUND_LOCATION"
+        tools:node="remove" />
     <uses-permission
         android:name="android.permission.INTERNET"
         tools:node="remove" />
@@ -30,6 +42,10 @@
     -->
 
     <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
+    <!-- The location permission would otherwise imply this as required and
+         hide the app from devices without location; a city or typed
+         coordinates work everywhere. -->
+    <uses-feature android:name="android.hardware.location" android:required="false" />
 
    <permission
        android:name="com.openlumen.permission.AUTOMATION"

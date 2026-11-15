@@ -27,6 +27,6 @@ Privacidad y confianza:
 * Sin cuentas, anuncios ni muro de pago
 * Sin afirmaciones de mejora del sueno; consulta la nota Health Evidence del repositorio
 
-OpenLumen no solicita permiso de ubicacion. Los horarios solares usan coordenadas que introduces manualmente.
+La ubicación es opcional. Los horarios solares usan una ciudad que eliges, coordenadas que introduces o tu ubicación aproximada cuando tocas "Usar mi ubicación". OpenLumen solo pide la ubicación aproximada y solo mientras está abierta, nunca la ubicación precisa ni en segundo plano. Sin permiso de internet, el dato nunca sale de tu dispositivo.
 
 Codigo fuente: https://github.com/SysAdminDoc/OpenLumen

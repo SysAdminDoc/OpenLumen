@@ -135,6 +135,38 @@ class PersistedBlobDecodeTest {
         assertThat(out.toString(Charsets.UTF_8.name())).contains("\"activePresetKey\": \"night\"")
     }
 
+    @Test fun `a solar location saved before automatic location decodes as manual`() {
+        // PR #26 added three schedule fields. A blob from an older build has
+        // none of them and has to come back as a manual location with nothing
+        // recorded, so the first zone change after updating does not notify.
+        seed(
+            """{"schemaVersion":3,"schedule":{"mode":"Solar",""" +
+                """"latitude":52.2297,"longitude":21.0122}}"""
+        )
+
+        val schedule = runBlocking { store.flow.first() }.schedule
+
+        assertThat(schedule.mode).isEqualTo(ScheduleModeDto.Solar)
+        assertThat(schedule.latitude).isEqualTo(52.2297)
+        assertThat(schedule.autoLocation).isFalse()
+        assertThat(schedule.locationFixAtMs).isEqualTo(0L)
+        assertThat(schedule.locationZoneId).isNull()
+    }
+
+    @Test fun `automatic location bookkeeping from a hand-edited blob is cleaned`() {
+        seed(
+            """{"schemaVersion":3,"schedule":{"mode":"Solar","latitude":52.2297,""" +
+                """"longitude":21.0122,"autoLocation":true,"locationFixAtMs":-5,""" +
+                """"locationZoneId":"Mars/Olympus"}}"""
+        )
+
+        val schedule = runBlocking { store.flow.first() }.schedule
+
+        assertThat(schedule.autoLocation).isTrue()
+        assertThat(schedule.locationFixAtMs).isEqualTo(0L)
+        assertThat(schedule.locationZoneId).isNull()
+    }
+
     @Test fun `a good blob leaves no recovery record`() {
         // Positive control for the corruption case: the record has to come
         // from the failure, not from every read. Same store instance, so a

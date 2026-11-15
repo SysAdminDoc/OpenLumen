@@ -112,7 +112,9 @@ anything, so this does not apply to them.
 |---|---|---|
 | Fixed-time end at 7:00 but tint stays on past 7:00 | `SCHEDULE_EXACT_ALARM` revoked | Settings → Apps → OpenLumen → Alarms & reminders → allow |
 | Schedule fires hours late | Doze with `setAndAllowWhileIdle` fallback (no exact-alarm permission) | Grant the exact-alarm permission as above |
-| Solar mode shows "Set location" forever | You haven't entered coordinates | Schedule tab → Set location → enter decimal lat/lng (no degree symbols) |
+| Solar mode shows "Set location" forever | You haven't entered coordinates | Schedule tab → Set location → pick a city, tap "Use my location", or enter decimal lat/lng (no degree symbols) |
+| "Use my location" says location is off or could not get a location | Location is off in system settings, or the phone has no recent fix | Tap "Open location settings" and turn it on, or pick a city instead. OpenLumen only asks for approximate location |
+| A "Timezone changed" notification after travel | The solar location was saved in another time zone | Open OpenLumen and set the location again. With automatic location on, opening the app updates it once you're 15 miles (25 km) away |
 | Solar transitions are wildly wrong | Wrong hemisphere sign in coordinates | Northern hemisphere is positive latitude; western hemisphere is negative longitude (e.g. NYC = 40.71, -74.00) |
 | Tint flips at the wrong minute | Device time is wrong | Settings → System → Date & time → "Set automatically" |
 

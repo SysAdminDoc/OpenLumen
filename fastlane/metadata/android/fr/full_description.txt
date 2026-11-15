@@ -28,6 +28,6 @@ Confidentialite et confiance:
 * Aucun compte, aucune publicite, aucun paywall
 * Aucune promesse d'amelioration du sommeil; consultez la note Health Evidence du depot
 
-OpenLumen ne demande pas l'autorisation de localisation. Les horaires solaires utilisent les coordonnees que vous saisissez.
+La localisation est facultative. Les horaires solaires utilisent une ville que vous choisissez, des coordonnées que vous saisissez ou votre position approximative quand vous touchez "Utiliser ma position". OpenLumen ne demande que la position approximative, et seulement quand l'application est ouverte, jamais la position précise ni en arrière-plan. Sans autorisation internet, elle ne quitte jamais votre appareil.
 
 Code source: https://github.com/SysAdminDoc/OpenLumen

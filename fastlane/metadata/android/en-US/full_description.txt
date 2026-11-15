@@ -38,7 +38,10 @@ Privacy and trust:
 * No "improves your sleep" claims — see the Health Evidence note in the
   repository
 
-OpenLumen does not request location permission. Solar schedules use
-coordinates you enter yourself.
+Location is optional. Solar schedules use a city you pick, coordinates
+you type, or your approximate location when you tap "Use my location".
+OpenLumen asks for approximate location only while it is open, never for
+precise or background location, and with no internet permission the
+reading never leaves your phone.
 
 Source code: https://github.com/SysAdminDoc/OpenLumen

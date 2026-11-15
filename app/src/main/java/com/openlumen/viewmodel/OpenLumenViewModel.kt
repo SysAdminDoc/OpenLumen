@@ -10,6 +10,7 @@ import com.openlumen.PresetKeyResolver
 import com.openlumen.R
 import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
+import com.openlumen.location.ZoneChangeNotice
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.ImportSummary
 import com.openlumen.prefs.NamedProfile
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -180,16 +182,31 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
-    override fun setLocation(lat: Double, lng: Double, solarTimezone: String?) = viewModelScope.launch {
+    override fun saveLocation(
+        lat: Double,
+        lng: Double,
+        solarTimezone: String?,
+        autoLocation: Boolean,
+        selectSolar: Boolean
+    ) = viewModelScope.launch {
         if (!isValidSolarLocation(lat, lng)) return@launch
-        prefs.update { it.withSolarLocation(lat, lng, solarTimezone, selectSolar = false) }
-    }
-
-    override fun setLocationAndSelectSolar(lat: Double, lng: Double, solarTimezone: String?) =
-        viewModelScope.launch {
-            if (!isValidSolarLocation(lat, lng)) return@launch
-            prefs.update { it.withSolarLocation(lat, lng, solarTimezone, selectSolar = true) }
+        val now = System.currentTimeMillis()
+        val deviceZone = ZoneId.systemDefault().id
+        prefs.update {
+            it.withSolarLocation(
+                lat = lat,
+                lng = lng,
+                solarTimezone = solarTimezone,
+                selectSolar = selectSolar,
+                autoLocation = autoLocation,
+                nowMs = now,
+                deviceZoneId = deviceZone
+            )
         }
+        // The saved location now carries the device zone, so a "timezone
+        // changed" notice from an earlier hop no longer applies.
+        ZoneChangeNotice.cancel(getApplication())
+    }
 
     override fun setEngine(kind: EngineKindDto) = viewModelScope.launch {
         prefs.update { current ->

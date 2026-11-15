@@ -27,6 +27,6 @@ Datenschutz und Vertrauen:
 * Keine Konten, keine Werbung, keine Bezahlschranke
 * Keine Versprechen zur Schlafverbesserung; siehe Health-Evidence-Notiz im Repository
 
-OpenLumen fordert keine Standortberechtigung an. Solare Zeitplaene nutzen Koordinaten, die du selbst eingibst.
+Der Standort ist optional. Solare Zeitpläne nutzen eine Stadt, die du auswählst, Koordinaten, die du eingibst, oder deinen ungefähren Standort, wenn du auf "Meinen Standort verwenden" tippst. OpenLumen fragt nur nach dem ungefähren Standort und nur, solange die App geöffnet ist, nie nach dem genauen Standort oder dem Standort im Hintergrund. Ohne Internetberechtigung verlässt er dein Gerät nie.
 
 Quellcode: https://github.com/SysAdminDoc/OpenLumen

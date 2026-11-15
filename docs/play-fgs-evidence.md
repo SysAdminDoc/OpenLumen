@@ -55,8 +55,11 @@ OpenLumen does not match any specific category:
 - **Not `dataSync`**: we do no network sync.
 - **Not `mediaPlayback` / `mediaProjection`**: we don't record or
   project the screen.
-- **Not `location`**: we never request location permission. Solar
-  schedules use user-entered coordinates.
+- **Not `location`**: the service never reads location. The app holds
+  `ACCESS_COARSE_LOCATION` for the solar schedule's "Use my location"
+  button and its optional automatic refresh, and reads it only from the
+  open activity. No background location permission is requested, and
+  fine and background location are stripped from the merged manifest.
 - **Not `health`**: we explicitly do **not** claim health benefits
   (see `docs/health-evidence.md`).
 - **Not `shortService`**: filter sessions run indefinitely while the
@@ -98,9 +101,12 @@ The narrative below is what we'd submit to a Play reviewer.
 > The service runs only while the user has the filter enabled. It
 > stops itself the moment the user disables the filter from any
 > surface. It does not collect data, does not access the network, and
-> does not request `INTERNET`, `ACCESS_NETWORK_STATE`, location, or
-> microphone permissions. CI fails the build on any such permission
-> reaching the merged manifest.
+> does not request `INTERNET`, `ACCESS_NETWORK_STATE`, precise or
+> background location, or microphone permissions. The service never
+> reads location; the app's optional approximate location is read only
+> while the app is open, to set the sunset schedule. The release gate
+> fails the build if a network, precise location or background location
+> permission reaches the merged manifest.
 
 ## Evidence checklist
 

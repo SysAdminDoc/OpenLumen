@@ -5,8 +5,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.openlumen.location.ZoneChangeNotice
+import com.openlumen.location.changedZoneId
+import com.openlumen.location.shouldNotifyZoneChange
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
+import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -30,6 +34,14 @@ class ScheduleClockChangeReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
             try {
                 val current = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) { prefs.flow.first() }
+                if (current != null) {
+                    val zone = changedZoneId(intent.getStringExtra(EXTRA_TIME_ZONE))
+                    when (zoneNoticeFor(intent.action, current.schedule, zone)) {
+                        ZoneNotice.POST -> ZoneChangeNotice.post(context, current.schedule.autoLocation)
+                        ZoneNotice.CANCEL -> ZoneChangeNotice.cancel(context)
+                        ZoneNotice.NONE -> Unit
+                    }
+                }
                 if (current == null || !shouldReconcile(current)) {
                     Log.d(TAG, "Clock changed; no active timed schedule")
                     return@launch
@@ -61,11 +73,17 @@ class ScheduleClockChangeReceiver : BroadcastReceiver() {
         }
     }
 
+    /** What a clock broadcast does to the "timezone changed" notice. */
+    internal enum class ZoneNotice { POST, CANCEL, NONE }
+
     companion object {
         const val ACTION_TIME_CHANGED = Intent.ACTION_TIME_CHANGED
         const val ACTION_DATE_CHANGED = Intent.ACTION_DATE_CHANGED
         const val ACTION_TIMEZONE_CHANGED = Intent.ACTION_TIMEZONE_CHANGED
         const val ACTION_NEXT_ALARM_CLOCK_CHANGED = AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED
+
+        /** The new zone id, carried by ACTION_TIMEZONE_CHANGED. */
+        internal const val EXTRA_TIME_ZONE = "time-zone"
 
         private const val TAG = "OpenLumen/ClockChange"
         private const val PREFERENCES_TIMEOUT_MS = 8_000L
@@ -85,6 +103,21 @@ class ScheduleClockChangeReceiver : BroadcastReceiver() {
                 ScheduleModeDto.UntilNextAlarm -> true
                 ScheduleModeDto.AlwaysOff,
                 ScheduleModeDto.AlwaysOn -> false
+            }
+
+        /**
+         * Only a timezone change touches the notice. It is posted when the
+         * zone moved away from the one the solar location was saved in, and
+         * taken down when a later change brings the device back to that zone,
+         * so a round trip does not leave a notice saying the location is
+         * stale. Deliberately independent of the master switch: a schedule
+         * that is off today uses this location the next time it is on.
+         */
+        internal fun zoneNoticeFor(action: String?, schedule: ScheduleDto, deviceZoneId: String): ZoneNotice =
+            when {
+                action != ACTION_TIMEZONE_CHANGED -> ZoneNotice.NONE
+                shouldNotifyZoneChange(schedule, deviceZoneId) -> ZoneNotice.POST
+                else -> ZoneNotice.CANCEL
             }
     }
 }

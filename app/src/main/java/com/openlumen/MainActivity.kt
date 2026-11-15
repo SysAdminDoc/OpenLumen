@@ -5,13 +5,18 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import com.openlumen.location.AutoLocationRefresher
 import com.openlumen.service.BlockedForegroundStartRecovery
 import com.openlumen.service.LumenServiceStarter
 import com.openlumen.ui.OpenLumenRoot
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var autoLocation: AutoLocationRefresher
     private var blockedStartPending = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +29,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         retryBlockedStartIfReady()
+        lifecycleScope.launch { autoLocation.refresh(applicationContext) }
     }
 
     override fun onNewIntent(intent: android.content.Intent) {

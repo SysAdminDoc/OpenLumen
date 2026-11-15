@@ -270,7 +270,6 @@ private class PreviewScreenModel(
     override fun restoreDeletedProfile(profile: NamedProfile): Job = Job()
     override fun setScheduleMode(mode: ScheduleModeDto): Job = Job()
     override fun setScheduleTimes(startH: Int, startM: Int, endH: Int, endM: Int): Job = Job()
-    override fun setLocation(lat: Double, lng: Double, solarTimezone: String?): Job = Job()
     override fun setEngine(kind: EngineKindDto): Job = Job()
     override fun setIntensity(value: Float): Job = Job()
     override fun setDim(value: Float): Job = Job()

@@ -27,6 +27,6 @@ Privacidade e confianca:
 * Sem contas, anuncios ou paywall
 * Sem afirmacoes de melhora do sono; consulte a nota Health Evidence no repositorio
 
-OpenLumen nao solicita permissao de localizacao. Agendas solares usam coordenadas inseridas manualmente.
+A localização é opcional. Agendas solares usam uma cidade que você escolhe, coordenadas que você digita ou sua localização aproximada quando você toca em "Usar minha localização". O OpenLumen só pede a localização aproximada, e só enquanto está aberto, nunca a localização precisa nem em segundo plano. Sem permissão de internet, ela nunca sai do seu dispositivo.
 
 Codigo-fonte: https://github.com/SysAdminDoc/OpenLumen

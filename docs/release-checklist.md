@@ -106,6 +106,9 @@ aapt dump permissions app/build/outputs/apk/debug/app-debug.apk \
 
 - [ ] Confirmed: `INTERNET` is not in the merged manifest.
 - [ ] Confirmed: `ACCESS_NETWORK_STATE` is not in the merged manifest.
+- [ ] Confirmed: the only location permission is `ACCESS_COARSE_LOCATION`
+      (`aapt dump permissions ... | grep -i location` prints that one line,
+      with no `ACCESS_FINE_LOCATION` or `ACCESS_BACKGROUND_LOCATION`).
 - [ ] Confirmed: no Play Services, Firebase, or GMS dependency in
       `build/reports/openlumen-release-gate/releaseRuntimeClasspath.txt`.
 
