@@ -402,6 +402,8 @@
     <string name="about_profiles_rename">Umbenennen</string>
     <string name="about_profiles_rename_title">Profil umbenennen</string>
     <string name="about_diag_log_timeline">Zeitbereich</string>
+    <string name="about_diag_log_timeline_start">Bereichsanfang</string>
+    <string name="about_diag_log_timeline_end">Bereichsende</string>
     <string name="about_diag_log_search">Gefilterte Zeilen durchsuchen</string>
     <string name="notif_status_detail">%1$s · %2$s</string>
     <string name="about_version_value">Version %1$s</string>
@@ -435,7 +437,6 @@
     <string name="shortcut_next_preset_long">Nächstes Favoriten-Preset</string>
     <string name="shortcut_emergency_off_short">Aus</string>
     <string name="shortcut_emergency_off_long">Filter erzwungen ausschalten</string>
-    <string name="about_diag_log_timeline_state">Von %1$s bis %2$s</string>
     <string name="widget_preset_slot">Preset %1$s</string>
     <string name="widget_preset_slot_active">Preset %1$s, aktiv</string>
     <string name="schedule_progressive_title">Im Lauf des Abends verstärken</string>

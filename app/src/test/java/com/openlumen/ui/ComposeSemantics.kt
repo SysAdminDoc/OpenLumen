@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import java.time.Duration
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowDialog
 
 /**
  * Just enough of a Compose test harness to read and click what a composable
@@ -27,6 +28,13 @@ internal object ComposeSemantics {
 
     fun nodes(activity: Activity): List<SemanticsNode> {
         val root = activity.window.decorView.findComposeRoot()
+            ?: return emptyList()
+        return root.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+    }
+
+    /** The dialog shown last, which draws in its own window, not the activity's. */
+    fun dialogNodes(): List<SemanticsNode> {
+        val root = ShadowDialog.getLatestDialog()?.window?.decorView?.findComposeRoot()
             ?: return emptyList()
         return root.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
     }

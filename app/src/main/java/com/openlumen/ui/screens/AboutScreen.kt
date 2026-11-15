@@ -10,7 +10,10 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,8 +61,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -82,7 +92,6 @@ import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenFilterChip
 import com.openlumen.ui.components.LumenSwitch
 import com.openlumen.ui.components.LumenTextButton
-import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
 import java.time.Instant
@@ -1197,29 +1206,49 @@ private fun DiagnosticsLogDialog(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        RangeSlider(
-                            value = timelineStartFraction..timelineEndFraction,
-                            onValueChange = { range ->
-                                timelineStartFraction = range.start
-                                timelineEndFraction = range.endInclusive
-                            },
-                            valueRange = 0f..1f,
-                            steps = 0,
-                            // Without this the control has no name at all and
-                            // TalkBack announces two unlabelled adjustable
-                            // handles, which is unusable: there is no way to
-                            // tell which end you are dragging.
-                            modifier = Modifier.labeledSliderSemantics(
-                                name = stringResource(R.string.about_diag_log_timeline),
-                                valueDescription = stringResource(
-                                    R.string.about_diag_log_timeline_state,
-                                    formatLogInstant(bounds.earliest, timelineStartFraction, bounds, locale),
-                                    formatLogInstant(bounds.latest, timelineEndFraction, bounds, locale)
-                                )
+                        val startName = stringResource(R.string.about_diag_log_timeline_start)
+                        val endName = stringResource(R.string.about_diag_log_timeline_end)
+                        val startTime = formatLogInstant(bounds.earliest, timelineStartFraction, bounds, locale)
+                        val endTime = formatLogInstant(bounds.latest, timelineEndFraction, bounds, locale)
+                        // Material's thumbs read their raw fraction ("0.0,
+                        // slider", then "Range start" as a stop of its own),
+                        // and a thumb's own state wins over anything set in
+                        // its slot. So the RangeSlider is drawn and dragged
+                        // as usual but hidden from TalkBack, and two
+                        // adjustable stand-ins over its halves say what each
+                        // end is and the time it is at.
+                        Box {
+                            RangeSlider(
+                                value = timelineStartFraction..timelineEndFraction,
+                                onValueChange = { range ->
+                                    timelineStartFraction = range.start
+                                    timelineEndFraction = range.endInclusive
+                                },
+                                valueRange = 0f..1f,
+                                steps = 0,
+                                modifier = Modifier.clearAndSetSemantics {}
                             )
-                        )
+                            Row(Modifier.matchParentSize()) {
+                                TimelineEndSemantics(
+                                    name = startName,
+                                    time = startTime,
+                                    value = timelineStartFraction,
+                                    allowed = 0f..timelineEndFraction,
+                                    onValueChange = { timelineStartFraction = it }
+                                )
+                                TimelineEndSemantics(
+                                    name = endName,
+                                    time = endTime,
+                                    value = timelineEndFraction,
+                                    allowed = timelineStartFraction..1f,
+                                    onValueChange = { timelineEndFraction = it }
+                                )
+                            }
+                        }
+                        // The stand-ins already say these times, and two bare
+                        // dates with no label were two more stops.
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -1339,6 +1368,40 @@ internal fun profileRenameCollides(
 ): Boolean {
     val existing = Profiles.findByName(current, newName.trim()) ?: return false
     return !existing.name.equals(oldName, ignoreCase = true)
+}
+
+/**
+ * One end of the diagnostics timeline as TalkBack sees it: an adjustable
+ * control with a name and the time it is at. It draws nothing and takes no
+ * touches, so the RangeSlider under it still does the dragging.
+ */
+@Composable
+private fun RowScope.TimelineEndSemantics(
+    name: String,
+    time: String,
+    value: Float,
+    allowed: ClosedFloatingPointRange<Float>,
+    onValueChange: (Float) -> Unit
+) {
+    Box(
+        Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .semantics(mergeDescendants = true) {
+                text = AnnotatedString(name)
+                stateDescription = time
+                progressBarRangeInfo = ProgressBarRangeInfo(value, 0f..1f)
+                setProgress { target ->
+                    val next = target.coerceIn(allowed.start, allowed.endInclusive)
+                    if (next == value) {
+                        false
+                    } else {
+                        onValueChange(next)
+                        true
+                    }
+                }
+            }
+    )
 }
 
 /**

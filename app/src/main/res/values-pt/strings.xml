@@ -402,6 +402,8 @@
     <string name="about_profiles_rename">Mudar nome</string>
     <string name="about_profiles_rename_title">Mudar nome do perfil</string>
     <string name="about_diag_log_timeline">Intervalo de tempo</string>
+    <string name="about_diag_log_timeline_start">Início do intervalo</string>
+    <string name="about_diag_log_timeline_end">Fim do intervalo</string>
     <string name="about_diag_log_search">Pesquisar nas linhas filtradas</string>
     <string name="notif_status_detail">%1$s · %2$s</string>
     <string name="about_version_value">Versão %1$s</string>
@@ -435,7 +437,6 @@
     <string name="shortcut_next_preset_long">Predefinição favorita seguinte</string>
     <string name="shortcut_emergency_off_short">Forçar</string>
     <string name="shortcut_emergency_off_long">Forçar o desligamento do filtro</string>
-    <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
     <string name="widget_preset_slot">Predefinição %1$s</string>
     <string name="widget_preset_slot_active">Predefinição %1$s, ativa</string>
     <string name="schedule_progressive_title">Reforçar ao longo da noite</string>

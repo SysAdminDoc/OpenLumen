@@ -402,6 +402,8 @@
     <string name="about_profiles_rename">Renombrar</string>
     <string name="about_profiles_rename_title">Renombrar perfil</string>
     <string name="about_diag_log_timeline">Intervalo de tiempo</string>
+    <string name="about_diag_log_timeline_start">Inicio del rango</string>
+    <string name="about_diag_log_timeline_end">Fin del rango</string>
     <string name="about_diag_log_search">Buscar en las líneas filtradas</string>
     <string name="notif_status_detail">%1$s · %2$s</string>
     <string name="about_version_value">Versión %1$s</string>
@@ -435,7 +437,6 @@
     <string name="shortcut_next_preset_long">Siguiente ajuste favorito</string>
     <string name="shortcut_emergency_off_short">Apagar</string>
     <string name="shortcut_emergency_off_long">Forzar el apagado del filtro</string>
-    <string name="about_diag_log_timeline_state">De %1$s a %2$s</string>
     <string name="widget_preset_slot">Ajuste %1$s</string>
     <string name="widget_preset_slot_active">Ajuste %1$s, activo</string>
     <string name="schedule_progressive_title">Intensificar a lo largo de la tarde</string>

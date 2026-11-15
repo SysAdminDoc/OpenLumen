@@ -5,15 +5,14 @@ import java.io.File
 import org.junit.Test
 
 /**
- * C280. Every Slider is labelled through labeledSliderSemantics, and the four
- * controls that are not Sliders were not: the diagnostics range slider carried
- * no semantics at all, so TalkBack announced two unnamed adjustable handles
- * with no way to tell which end you had hold of, and the per-channel meter is
- * two nested Boxes, which is a picture as far as a screen reader is concerned.
+ * C280. Every Slider is labelled through labeledSliderSemantics, and the
+ * controls that are not Sliders were not: the per-channel meter is two nested
+ * Boxes, which is a picture as far as a screen reader is concerned. The
+ * diagnostics range slider is covered through its semantics tree in
+ * DiagnosticsTimelineTalkBackTest.
  *
- * These are Compose modifiers with no value seam, and this module has no
- * Compose test harness, so the assertions are on the source. That is the thing
- * that regressed.
+ * These are Compose modifiers with no value seam, so the assertions are on
+ * the source. That is the thing that regressed.
  */
 class StaticAccessibilityTest {
 
@@ -22,14 +21,6 @@ class StaticAccessibilityTest {
     private val about = source("ui/screens/AboutScreen.kt")
     private val presets = source("ui/screens/PresetsScreen.kt")
     private val home = source("ui/screens/HomeScreen.kt")
-
-    @Test fun `the diagnostics range slider has a name and a state`() {
-        val block = about.substringAfter("RangeSlider(").substringBefore("Row(")
-
-        assertThat(block).contains("labeledSliderSemantics")
-        assertThat(block).contains("R.string.about_diag_log_timeline")
-        assertThat(block).contains("about_diag_log_timeline_state")
-    }
 
     @Test fun `the channel meter reports itself as a progress bar`() {
         val row = presets.substringAfter("internal fun ChannelRow(").substringBefore("@Composable")

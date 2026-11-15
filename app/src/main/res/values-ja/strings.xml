@@ -402,6 +402,8 @@
     <string name="about_profiles_rename">名前を変更</string>
     <string name="about_profiles_rename_title">プロファイル名を変更</string>
     <string name="about_diag_log_timeline">時間範囲</string>
+    <string name="about_diag_log_timeline_start">範囲の開始</string>
+    <string name="about_diag_log_timeline_end">範囲の終了</string>
     <string name="about_diag_log_search">フィルター済み行を検索</string>
     <string name="notif_status_detail">%1$s · %2$s</string>
     <string name="about_version_value">バージョン %1$s</string>
@@ -432,7 +434,6 @@
     <string name="shortcut_next_preset_long">次のお気に入りプリセット</string>
     <string name="shortcut_emergency_off_short">強制オフ</string>
     <string name="shortcut_emergency_off_long">フィルターを強制的に切る</string>
-    <string name="about_diag_log_timeline_state">%1$s から %2$s まで</string>
     <string name="widget_preset_slot">プリセット %1$s</string>
     <string name="widget_preset_slot_active">プリセット %1$s、適用中</string>
     <string name="schedule_progressive_title">夜が深まるほど強く</string>

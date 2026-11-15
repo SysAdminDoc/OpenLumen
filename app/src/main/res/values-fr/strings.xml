@@ -402,6 +402,8 @@
     <string name="about_profiles_rename">Renommer</string>
     <string name="about_profiles_rename_title">Renommer le profil</string>
     <string name="about_diag_log_timeline">Plage temporelle</string>
+    <string name="about_diag_log_timeline_start">Début de la plage</string>
+    <string name="about_diag_log_timeline_end">Fin de la plage</string>
     <string name="about_diag_log_search">Rechercher dans les lignes filtrées</string>
     <string name="notif_status_detail">%1$s · %2$s</string>
     <string name="about_version_value">Version %1$s</string>
@@ -435,7 +437,6 @@
     <string name="shortcut_next_preset_long">Préréglage favori suivant</string>
     <string name="shortcut_emergency_off_short">Arrêt</string>
     <string name="shortcut_emergency_off_long">Forcer l\'arrêt du filtre</string>
-    <string name="about_diag_log_timeline_state">De %1$s à %2$s</string>
     <string name="widget_preset_slot">Préréglage %1$s</string>
     <string name="widget_preset_slot_active">Préréglage %1$s, actif</string>
     <string name="schedule_progressive_title">Renforcer au fil de la soirée</string>
