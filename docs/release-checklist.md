@@ -1,38 +1,18 @@
 # Release Checklist
 
-> Every release goes through this list. If a step doesn't apply, mark it
-> N/A in the release issue — don't silently skip.
+> Every release goes through this list. If a step doesn't apply, mark it N/A in the release issue instead of silently skipping it.
 
 Tied to roadmap candidate **C45**.
 
 ## 1. Pre-flight (a week before tag)
 
 - [ ] No open issues with the `release-blocker` label.
-- [ ] Roadmap "Now" tier has no items still claimed for this release that
-      aren't merged.
-- [ ] CHANGELOG `[Unreleased]` section has at least one entry per merged PR
-      that changed user-facing behavior.
-- [ ] Dependency review: run `python tools/dependency_update_review.py`
-      and inspect the official release-note URL, compatibility-risk note,
-      required commands, and verification-metadata impact for every
-      `update-available` entry. The command exits 1 if any reference is
-      `unresolved`, which means the review could not be trusted rather than
-      that an update is waiting. Resolve metadata failures and document any
-      exact-version intentional hold in `tools/dependency_update_policy.json`.
-      No transitive advisories newer than 30 days uncategorized.
-- [ ] Artifact provenance cadence: for every published release retain the
-      signed APK, Git tag, SHA-256 sums, SBOM, and advisory report together.
-      If a GitHub Actions attestation workflow is enabled, attach its v4
-      provenance bundle to the same release; this repository currently has no
-      Actions workflow, so the local release gate must not be described as an
-      automated attestation.
-- [ ] Local release gate review: confirm `tools/local_release_gate.py`
-      still covers strict dependency verification, manifest permission
-      checks, release classpath checks, SBOM/advisory output, SHA-256 sums,
-      signature verification, health-claim lint, tests, screenshot
-      validation, and Roborazzi.
-- [ ] On-device smoke run on the primary device (see `docs/device-matrix.md`
-      for the per-engine checklist).
+- [ ] Roadmap "Now" tier has no items still claimed for this release that aren't merged.
+- [ ] CHANGELOG `[Unreleased]` section has at least one entry per merged PR that changed user-facing behavior.
+- [ ] Dependency review: run `python tools/dependency_update_review.py` and inspect the official release-note URL, compatibility-risk note, required commands, and verification-metadata impact for every `update-available` entry. The command exits 1 if any reference is `unresolved`, which means the review couldn't be trusted rather than that an update is waiting. Resolve metadata failures and document any exact-version intentional hold in `tools/dependency_update_policy.json`. No transitive advisories newer than 30 days uncategorized.
+- [ ] Artifact provenance cadence: for every published release retain the signed APK, Git tag, SHA-256 sums, SBOM, and advisory report together. If a GitHub Actions attestation workflow is enabled, attach its v4 provenance bundle to the same release. This repository currently has no Actions workflow, so the local release gate must not be described as an automated attestation.
+- [ ] Local release gate review: confirm `tools/local_release_gate.py` still covers strict dependency verification, manifest permission checks, release classpath checks, SBOM/advisory output, SHA-256 sums, signature verification, health-claim lint, tests, screenshot validation, and Roborazzi.
+- [ ] On-device smoke run on the primary device (see `docs/device-matrix.md` for the per-engine checklist).
 
 ## 2. Prepare the release on main
 
@@ -43,10 +23,8 @@ git pull
 
 - [ ] Bump `versionCode` and `versionName` in `app/build.gradle.kts`.
 - [ ] Update `README.md` "Features (vX.Y.Z)" pointer.
-- [ ] Move `CHANGELOG.md` `[Unreleased]` into a dated `[X.Y.Z] — YYYY-MM-DD`
-      section.
-- [ ] Delete any shipped items from `ROADMAP.md`; completed work belongs in
-      git history and `CHANGELOG.md`.
+- [ ] Move `CHANGELOG.md` `[Unreleased]` into a dated `[X.Y.Z] — YYYY-MM-DD` section.
+- [ ] Delete any shipped items from `ROADMAP.md`. Completed work belongs in git history and `CHANGELOG.md`.
 
 ## 3. Build verification and release gate (locally)
 
@@ -62,40 +40,20 @@ For local reproducibility or F-Droid rebuild checks without signing keys:
 py -3 tools/local_release_gate.py --allow-unsigned-release
 ```
 
-The gate runs strict dependency verification, debug/release builds, unit
-tests, lint, screenshot validation, Roborazzi verification, merged-manifest
-permission checks, release-classpath checks, SBOM and advisory output,
-SHA-256 sums, and APK signature verification.
+The gate runs strict dependency verification, debug/release builds, unit tests, lint, screenshot validation, Roborazzi verification, merged-manifest permission checks, release-classpath checks, SBOM and advisory output, SHA-256 sums, and APK signature verification.
 
-It refuses to report success on an empty result. A classpath that resolves
-to zero dependencies fails, because that produces an SBOM with no packages
-and an advisory scan that checks nothing. Any report it promises but leaves
-empty fails too.
+It refuses to report success on an empty result. A classpath that resolves to zero dependencies fails, because that produces an SBOM with no packages and an advisory scan that checks nothing. Any report it promises but leaves empty fails too.
 
-On the signed path it also pins the signing certificate. `apksigner`
-verifying an APK proves it is signed, not that it is signed with this
-project's key, so the gate compares the signer's SHA-256 against
-`tools/release-signing-certificate.json`. If that file is absent the gate
-fails and prints the observed fingerprint, so recording it is a deliberate
-one-time step rather than something that can be skipped by accident.
+On the signed path it also pins the signing certificate. `apksigner` verifying an APK proves it's signed, not that it's signed with this project's key, so the gate compares the signer's SHA-256 against `tools/release-signing-certificate.json`. If that file is absent, the gate fails and prints the observed fingerprint, so recording it is a deliberate one-time step rather than something that can be skipped by accident.
 
-- [ ] `./gradlew clean` — confirm a clean slate.
-- [ ] `py -3 tools/local_release_gate.py` succeeds with signing
-      environment set.
-- [ ] `./gradlew :app:lint` has no new lint errors at severity `error`.
-      Optional: `./gradlew :app:updateLintBaseline` once to capture
-      pre-existing warnings into `app/lint-baseline.xml`, then add
-      `lint { baseline = file("lint-baseline.xml") }` to
-      `app/build.gradle.kts` so future runs surface only new findings.
-      Not done yet; tracked as informal maintainer follow-up rather
-      than a roadmap candidate.
-- [ ] Manual install on at least one device. App opens, the toggle works,
-      the schedule fires within 2 minutes when set to a near-future time.
+- [ ] Run `./gradlew clean` to confirm a clean slate.
+- [ ] `py -3 tools/local_release_gate.py` succeeds with signing environment set.
+- [ ] `./gradlew :app:lint` has no new lint errors at severity `error`. Optional: `./gradlew :app:updateLintBaseline` once to capture pre-existing warnings into `app/lint-baseline.xml`, then add `lint { baseline = file("lint-baseline.xml") }` to `app/build.gradle.kts` so future runs surface only new findings. It isn't done yet and is tracked as an informal maintainer follow-up rather than a roadmap candidate.
+- [ ] Manual install on at least one device. The app opens, the toggle works, and the schedule fires within 2 minutes when set to a near-future time.
 
 ## 4. Permission proof (no-INTERNET assertion)
 
-The local release gate runs this automatically, but this command is a
-manual spot check when investigating failures:
+The local release gate runs this automatically, but this command is a manual spot check when investigating failures:
 
 ```bash
 ./gradlew :app:assembleDebug
@@ -106,24 +64,14 @@ aapt dump permissions app/build/outputs/apk/debug/app-debug.apk \
 
 - [ ] Confirmed: `INTERNET` is not in the merged manifest.
 - [ ] Confirmed: `ACCESS_NETWORK_STATE` is not in the merged manifest.
-- [ ] Confirmed: the only location permission is `ACCESS_COARSE_LOCATION`
-      (`aapt dump permissions ... | grep -i location` prints that one line,
-      with no `ACCESS_FINE_LOCATION` or `ACCESS_BACKGROUND_LOCATION`).
-- [ ] Confirmed: no Play Services, Firebase, or GMS dependency in
-      `build/reports/openlumen-release-gate/releaseRuntimeClasspath.txt`.
+- [ ] Confirmed: the only location permission is `ACCESS_COARSE_LOCATION` (`aapt dump permissions ... | grep -i location` prints that one line, with no `ACCESS_FINE_LOCATION` or `ACCESS_BACKGROUND_LOCATION`).
+- [ ] Confirmed: no Play Services, Firebase, or GMS dependency in `build/reports/openlumen-release-gate/releaseRuntimeClasspath.txt`.
 
 ## 5. Signed release build
 
-The release keystore lives at `~/.android/openlumen-release/openlumen-release.jks`,
-outside the repository, with a second copy under `C:\_claude-backups\OpenLumen\`.
-It is the only thing that can sign an update every existing install will accept,
-so losing it means no installed copy of OpenLumen can ever be updated again.
+The release keystore lives at `~/.android/openlumen-release/openlumen-release.jks`, outside the repository, with a second copy under `C:\_claude-backups\OpenLumen\`. It's the only thing that can sign an update every existing install will accept, so losing it means no installed copy of OpenLumen can ever be updated again.
 
-**Never put a copy in the working tree.** It used to sit in the repository root,
-where it was gitignored and on no code path at all: the build reads the four
-`OPENLUMEN_*` variables and nothing else, so the file was pure exposure. One
-`git add -f`, one archive of the directory, or one backup tool that does not
-read `.gitignore` and the signing key leaves with it.
+**Never put a copy in the working tree.** It used to sit in the repository root, where it was gitignored and on no code path at all. The build reads the four `OPENLUMEN_*` variables and nothing else, so the file was pure exposure. One `git add -f`, one archive of the directory, or one backup tool that doesn't read `.gitignore`, and the signing key leaves with it.
 
 ```bash
 export OPENLUMEN_KEYSTORE=~/.android/openlumen-release/openlumen-release.jks
@@ -133,25 +81,17 @@ export OPENLUMEN_KEY_PASSWORD=...
 py -3 tools/local_release_gate.py
 ```
 
-- [ ] `app/build/outputs/apk/release/app-release.apk` exists and is signed
-      with v1, v2, and v3 signatures (`apksigner verify -v` to confirm).
-- [ ] Release builds without the full `OPENLUMEN_*` signing environment fail
-      unless `-Popenlumen.allowUnsignedRelease=true` is passed explicitly.
-      Use that override only for local reproducibility or F-Droid rebuild
-      checks, never for a published release artifact.
-- [ ] APK size delta vs previous release is justifiable (a sudden +1 MB
-      means a dependency landed; investigate before shipping).
+- [ ] `app/build/outputs/apk/release/app-release.apk` exists and is signed with v1, v2, and v3 signatures (`apksigner verify -v` to confirm).
+- [ ] Release builds without the full `OPENLUMEN_*` signing environment fail unless `-Popenlumen.allowUnsignedRelease=true` is passed explicitly. Use that override only for local reproducibility or F-Droid rebuild checks, never for a published release artifact.
+- [ ] APK size delta vs previous release is justifiable (a sudden +1 MB means a dependency landed, so investigate before shipping).
 
 ## 6. Reproducibility checks
 
 See `docs/reproducible-build.md` for the full procedure. Quick version:
 
-- [ ] Build twice in clean checkouts, identical environment. SHA-256 of the
-      APK matches.
-- [ ] Recorded build environment: JDK version, AGP version, Gradle version,
-      OS, locale.
-- [ ] If reproducibility broke, do **not** ship until the cause is
-      identified (timestamps in resources, non-deterministic codegen, etc).
+- [ ] Build twice in clean checkouts with an identical environment. The SHA-256 of the APK matches.
+- [ ] Recorded build environment: JDK version, AGP version, Gradle version, OS, locale.
+- [ ] If reproducibility broke, **don't** ship until the cause is identified (timestamps in resources, non-deterministic codegen, etc).
 
 ## 7. Tag and push
 
@@ -178,25 +118,16 @@ gh release create v$VERSION \
     --notes-file /tmp/openlumen-release-notes.md
 ```
 
-- [ ] Release on the Releases page has the signed APK, `SHA256SUMS`, SBOM,
-      and advisory report.
-- [ ] Manually inspect the SHA-256: it must match the one you computed in
-      step 3.
-- [ ] Release notes are pulled from CHANGELOG; do not paste raw
-      diff stats.
+- [ ] Release on the Releases page has the signed APK, `SHA256SUMS`, SBOM, and advisory report.
+- [ ] Manually inspect the SHA-256. It must match the one you computed in step 3.
+- [ ] Release notes are pulled from CHANGELOG. Don't paste raw diff stats.
 
 ## 9. Publish
 
 - [ ] Flip the GitHub release from draft to published.
-- [ ] Confirm the published release actually serves the APK. Every check above
-      this line reads the working tree, which is exactly where the evidence of
-      not publishing does not exist: `gh release view v<version>` should list
-      the signed APK and `sbom.spdx.json` as assets.
+- [ ] Confirm the published release actually serves the APK. Every check above this line reads the working tree, which is exactly where the evidence of not publishing doesn't exist. `gh release view v<version>` should list the signed APK and `sbom.spdx.json` as assets.
 
-The release is the GitHub release. There is no store step: OpenLumen is not
-submitted to Play, F-Droid or anywhere else, and there is no developer
-registration to complete. `fastlane/metadata/android/` is kept for its
-changelogs and descriptions, not because anything consumes it.
+The release is the GitHub release. There's no store step. OpenLumen isn't submitted to Play, F-Droid or anywhere else, and there's no developer registration to complete. `fastlane/metadata/android/` is kept for its changelogs and descriptions, not because anything consumes it.
 
 ## 10. Post-release
 
@@ -207,15 +138,12 @@ changelogs and descriptions, not because anything consumes it.
 
 ## Rollback plan
 
-If a release introduces a black-screen / stuck-tint / drained-battery
-regression:
+If a release introduces a black-screen / stuck-tint / drained-battery regression:
 
-1. Mark the GitHub release as "Pre-release" (hides it from F-Droid index
-   updates).
+1. Mark the GitHub release as "Pre-release" (hides it from F-Droid index updates).
 2. Open a release-blocker issue describing the symptom and affected devices.
-3. Cut a `vX.Y.Z+1` hotfix from the previous tag, cherry-pick the fix only,
-   and run this checklist again.
-4. Never delete a published tag — it breaks F-Droid's reproducibility audit.
+3. Cut a `vX.Y.Z+1` hotfix from the previous tag, cherry-pick the fix only, and run this checklist again.
+4. Never delete a published tag, because it breaks F-Droid's reproducibility audit.
 
 ## Emergency off (for users hit by a bad release)
 
