@@ -233,6 +233,10 @@ class OpenLumenViewModel @Inject constructor(
         prefs.update { it.copy(amoledBlackClamp = enabled) }
     }
 
+    override fun dismissSecureRowsReleased() = viewModelScope.launch {
+        prefs.update { it.copy(secureRowsReleased = emptyList()) }
+    }
+
     /** Contrast multiplier (C64). 1.0 = identity. */
     override fun setContrast(value: Float) = viewModelScope.launch {
         prefs.update {

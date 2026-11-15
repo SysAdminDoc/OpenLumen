@@ -112,6 +112,12 @@ interface OpenLumenScreenModel {
     /** C253: use a pinned driver even when its probe reports unavailable. */
     fun setForcePinnedEngine(force: Boolean): Job = Job()
 
+    /**
+     * Dismiss the notice that the secure-settings driver gave a system row back
+     * because something else changed it (C346).
+     */
+    fun dismissSecureRowsReleased(): Job = Job()
+
     companion object {
         // Shared and permanently empty. `get() = MutableStateFlow(null)` handed
         // out a new flow on every read, so anything collecting one of these in

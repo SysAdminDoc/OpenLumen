@@ -143,7 +143,8 @@ class LumenService : LifecycleService() {
             prefs = prefs,
             scope = lifecycleScope,
             isUserUnlocked = ::isUserUnlocked,
-            logTag = tag
+            logTag = tag,
+            onSecureRowsReleased = ::onSecureRowsReleased
         )
         scheduleAlarms = ScheduleAlarmOrchestrator(
             context = this,
@@ -649,6 +650,34 @@ class LumenService : LifecycleService() {
 
     private fun isUserUnlocked(): Boolean =
         (getSystemService(Context.USER_SERVICE) as? UserManager)?.isUserUnlocked != false
+
+    /**
+     * The secure-settings driver let go of rows something else changed (C346).
+     *
+     * The filter goes off rather than fighting for the rows back. The user
+     * reached into system Settings, Quick Settings or another app and set the
+     * value they want; it is already on screen and it is already right. Taking
+     * it back on the next ramp step is the defect this exists to end, so the
+     * only honest thing left is to stop claiming a filter is running when the
+     * thing rendering it now belongs to someone else, and to say so.
+     */
+    private suspend fun onSecureRowsReleased(released: Map<String, String>) {
+        if (released.isEmpty()) return
+        DiagnosticsLog.log(
+            this,
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.ENGINE,
+            "secure rows changed outside OpenLumen, ownership released: " +
+                released.values.joinToString("; ")
+        )
+        if (!isUserUnlocked()) return
+        prefs.update { current ->
+            current.copy(
+                enabled = false,
+                secureRowsReleased = released.keys.sorted()
+            )
+        }
+    }
 
     private suspend fun restoreDirectBootState() {
         if (isUserUnlocked()) return

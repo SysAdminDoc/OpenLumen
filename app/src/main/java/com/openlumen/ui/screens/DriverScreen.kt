@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -50,6 +51,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.R
 import com.openlumen.engine.EngineKind
 import com.openlumen.engine.DriverProbe
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.external.ExternalIntentLauncher
 import com.openlumen.external.ExternalIntentResult
 import com.openlumen.prefs.EngineKindDto
@@ -286,6 +288,45 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
             )
         }
 
+        // A system row the driver was holding changed underneath it, so the
+        // filter stepped aside and turned itself off (C346). Errors here are
+        // the user's own setting winning, not a fault, so this reads as a
+        // notice rather than an error surface.
+        if (prefs.secureRowsReleased.isNotEmpty()) {
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        stringResource(R.string.driver_secure_rows_released_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.semantics { heading() }
+                    )
+                    // Resolved before the join, not inside it: stringResource is
+                    // itself @Composable and cannot be called from a lambda the
+                    // compiler does not see as composable scope.
+                    // The one localised list separator in the app; ja uses a
+                    // full-width comma.
+                    val separator = stringResource(R.string.preset_capability_separator)
+                    val rowNames = prefs.secureRowsReleased
+                        .map { stringResource(secureRowLabelRes(it)) }
+                        .joinToString(separator = separator)
+                    Text(
+                        stringResource(R.string.driver_secure_rows_released_body, rowNames),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LumenOutlinedButton(onClick = { vm.dismissSecureRowsReleased() }) {
+                        Text(stringResource(R.string.driver_secure_rows_released_dismiss))
+                    }
+                }
+            }
+        }
+
         // Overlay alpha cap explainer (C09): visible when the Overlay engine is
         // either currently selected or the only available rootless engine the
         // user is likely to land on.
@@ -440,6 +481,20 @@ private fun engineKindLabelRes(kind: EngineKind): Int = when (kind) {
 private fun hasWriteSecureSettings(context: Context): Boolean =
     context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
         PackageManager.PERMISSION_GRANTED
+
+/**
+ * Human name for a secure row OpenLumen let go of (C346). The key itself is
+ * what the diagnostics log records; a user reading the Driver tab needs the
+ * name of the setting they just changed. An unknown key falls back to the
+ * generic label rather than showing a raw provider key.
+ */
+@StringRes
+private fun secureRowLabelRes(key: String): Int = when (key) {
+    SecureSettingsEngine.KEY_NIGHT_ACTIVATED -> R.string.secure_row_night_display
+    SecureSettingsEngine.KEY_REDUCE_BRIGHT_ACTIVATED -> R.string.secure_row_extra_dim
+    SecureSettingsEngine.KEY_CORRECTION_MODE -> R.string.secure_row_color_correction
+    else -> R.string.secure_row_unknown
+}
 
 /**
  * Render the exact adb command the user needs to run. We tie it to the

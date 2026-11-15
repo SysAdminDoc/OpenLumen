@@ -155,7 +155,11 @@ class PreferencesStore(
      */
     suspend fun exportTo(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val current = flow.first().copy(automationEnabled = false, automationToken = "")
+            val current = flow.first().copy(
+                automationEnabled = false,
+                automationToken = "",
+                secureRowsReleased = emptyList()
+            )
             val body = json.encodeToString(Preferences.serializer(), current)
             context.contentResolver.openOutputStream(uri, "wt").use { out ->
                 checkNotNull(out) { "openOutputStream returned null for $uri" }
@@ -362,7 +366,10 @@ class PreferencesStore(
         transitionDurationMs = p.transitionDurationMs.coerceIn(0L, Preferences.TRANSITION_MAX_MS),
         contrast = p.contrast.finiteIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX, default = 1.0f),
         savedProfiles = sanitizeProfiles(p.savedProfiles),
-        automationToken = AutomationToken.sanitize(p.automationToken)
+        automationToken = AutomationToken.sanitize(p.automationToken),
+        // One entry per row the driver can hold. A hand-edited or corrupt blob
+        // does not get to grow the notice without bound.
+        secureRowsReleased = p.secureRowsReleased.filter { it.isNotBlank() }.distinct().take(3)
     )
 
     private fun sanitizeImport(p: Preferences, enabled: Boolean = p.enabled): ImportSummary =
@@ -382,7 +389,12 @@ class PreferencesStore(
                 preferences = sanitize(
                     summary.preferences.copy(
                         automationEnabled = current.automationEnabled,
-                        automationToken = current.automationToken
+                        automationToken = current.automationToken,
+                        // C346: which secure rows this phone handed back is a
+                        // fact about this phone. Importing another device's
+                        // list would raise a notice about rows nothing here
+                        // ever held.
+                        secureRowsReleased = current.secureRowsReleased
                     ),
                     enabled = current.enabled
                 ),

@@ -158,6 +158,13 @@
     <string name="driver_grant_secure_settings">WRITE_SECURE_SETTINGS über ADB erteilen</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Der erweiterte Schutzmodus kann Funktionen abschalten, die auf Bedienungshilfen beruhen. OpenLumen nutzt weder Bedienungshilfen noch Nutzungszugriff und ist davon nicht betroffen. Der Treiberbericht hält den Plattformzustand fest, sofern das Gerät ihn bereitstellt.</string>
+    <string name="driver_secure_rows_released_title">Eine Systemeinstellung wurde geändert</string>
+    <string name="driver_secure_rows_released_body">Etwas außerhalb von OpenLumen hat %1$s geändert, während der Filter die Einstellung verwendet hat. Der Filter wurde abgeschaltet und Ihr Wert bleibt unangetastet. Schalten Sie ihn wieder ein, um die Einstellung erneut zu übernehmen.</string>
+    <string name="driver_secure_rows_released_dismiss">Verstanden</string>
+    <string name="secure_row_night_display">Nachtlicht</string>
+    <string name="secure_row_extra_dim">Extra dunkel</string>
+    <string name="secure_row_color_correction">Farbkorrektur</string>
+    <string name="secure_row_unknown">eine Anzeigeeinstellung</string>
     <string name="driver_grant_status_granted">Auf diesem Gerät erteilt.</string>
     <string name="driver_grant_status_not_granted">Nicht erteilt. Der System-Nachtlicht-Treiber ist erst verfügbar, wenn diese Berechtigung über den folgenden ADB-Befehl erteilt wird.</string>
     <string name="driver_copy_command">Befehl kopieren</string>

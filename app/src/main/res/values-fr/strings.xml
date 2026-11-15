@@ -158,6 +158,13 @@
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Protection avancée Android</string>
     <string name="driver_aapm_explanation">Le mode de protection avancée peut désactiver les fonctions qui reposent sur l\'accessibilité. OpenLumen n\'utilise ni l\'accessibilité ni l\'accès aux données d\'utilisation, il n\'est donc pas concerné. Le rapport de pilote note l\'état de la plateforme lorsque l\'appareil l\'expose.</string>
+    <string name="driver_secure_rows_released_title">Un réglage système a changé</string>
+    <string name="driver_secure_rows_released_body">Quelque chose en dehors d\'OpenLumen a modifié %1$s pendant que le filtre s\'en servait. Le filtre s\'est donc arrêté et votre valeur est restée telle quelle. Réactivez-le pour reprendre le réglage.</string>
+    <string name="driver_secure_rows_released_dismiss">Compris</string>
+    <string name="secure_row_night_display">Éclairage nocturne</string>
+    <string name="secure_row_extra_dim">Extra sombre</string>
+    <string name="secure_row_color_correction">correction des couleurs</string>
+    <string name="secure_row_unknown">un réglage d\'affichage</string>
     <string name="driver_grant_status_granted">Accordée sur cet appareil.</string>
     <string name="driver_grant_status_not_granted">Non accordée. Le pilote Éclairage nocturne système reste indisponible tant que cette autorisation n\'est pas accordée par la commande ADB ci-dessous.</string>
     <string name="driver_copy_command">Copier la commande</string>

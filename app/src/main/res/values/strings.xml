@@ -183,6 +183,14 @@
     <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Advanced Protection Mode can switch off features that rely on Accessibility. OpenLumen uses neither Accessibility nor usage access, so it is unaffected. The driver report records the platform state where the device exposes it.</string>
+    <!-- C346: a secure row OpenLumen was holding changed underneath it. -->
+    <string name="driver_secure_rows_released_title">A system setting changed</string>
+    <string name="driver_secure_rows_released_body">Something outside OpenLumen changed %1$s while the filter was using it, so the filter switched off and left your value alone. Turn it back on to take the setting over again.</string>
+    <string name="driver_secure_rows_released_dismiss">Got it</string>
+    <string name="secure_row_night_display">Night Light</string>
+    <string name="secure_row_extra_dim">Extra Dim</string>
+    <string name="secure_row_color_correction">colour correction</string>
+    <string name="secure_row_unknown">a display setting</string>
     <string name="driver_grant_status_granted">Granted on this device.</string>
     <string name="driver_grant_status_not_granted">Not granted. The System Night Light driver is unavailable until this is granted via the ADB command below.</string>
     <string name="driver_copy_command">Copy command</string>

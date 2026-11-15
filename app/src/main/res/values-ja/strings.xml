@@ -158,6 +158,13 @@
     <string name="driver_grant_secure_settings">ADB で WRITE_SECURE_SETTINGS を許可する</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">高度な保護モードは、ユーザー補助機能に依存する機能を無効にすることがあります。OpenLumen はユーザー補助機能も使用状況へのアクセスも使わないため、影響を受けません。ドライバーレポートには、端末が公開している場合に限りプラットフォームの状態を記録します。</string>
+    <string name="driver_secure_rows_released_title">システム設定が変更されました</string>
+    <string name="driver_secure_rows_released_body">フィルターが使用中に、OpenLumen 以外の何かが %1$s を変更しました。フィルターをオフにし、変更された値はそのままにしてあります。もう一度その設定を使うには、フィルターをオンに戻してください。</string>
+    <string name="driver_secure_rows_released_dismiss">OK</string>
+    <string name="secure_row_night_display">夜間モード</string>
+    <string name="secure_row_extra_dim">さらに輝度を下げる</string>
+    <string name="secure_row_color_correction">色補正</string>
+    <string name="secure_row_unknown">画面設定</string>
     <string name="driver_grant_status_granted">このデバイスで許可済みです。</string>
     <string name="driver_grant_status_not_granted">未許可です。以下の ADB コマンドで許可するまで システムの夜間モード ドライバーは利用できません。</string>
     <string name="driver_copy_command">コマンドをコピー</string>

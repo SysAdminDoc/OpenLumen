@@ -33,7 +33,13 @@ internal class EngineController(
     private val prefs: PreferencesStore,
     private val scope: CoroutineScope,
     private val isUserUnlocked: () -> Boolean,
-    private val logTag: String
+    private val logTag: String,
+    /**
+     * Called when the secure-settings driver lets go of a row because the user
+     * or another app changed it (C346). Defaulted so the existing tests, which
+     * exercise the engine ladder rather than the watch, construct unchanged.
+     */
+    private val onSecureRowsReleased: suspend (Map<String, String>) -> Unit = {}
 ) {
     @Volatile private var engine: ColorEngine? = null
     @Volatile private var transitionJob: Job? = null
@@ -43,6 +49,7 @@ internal class EngineController(
     private val applyGate = ApplyDecisionGate()
     @Volatile private var cachedAutoKind: EngineKind? = null
     @Volatile private var lastEngineSelection: EngineKindDto? = null
+    private val secureWatch = SecureSettingsWatch(context, scope, onSecureRowsReleased)
 
     /**
      * True once the blind root sweep has run with nothing applied since (C325).
@@ -93,6 +100,10 @@ internal class EngineController(
         if (current?.kind == want) return
         cancelTransition()
         applyMutex.withLock {
+            // The outgoing engine is about to be cleared, so whatever it owned
+            // it no longer owns. Waiting for the next apply to notice would
+            // leave an observer registered against a released row.
+            secureWatch.stop()
             current?.let {
                 escalateClearFailure(
                     "engine.clear() during switch",
@@ -191,6 +202,7 @@ internal class EngineController(
                     )
                 }
                 .onFailure { Log.w(logTag, "root hard clear failed: ${it.message}") }
+            secureWatch.stop()
             engine = null
             lastApplied = null
             applyGate.reset()
@@ -237,6 +249,7 @@ internal class EngineController(
     fun cancelJobs() {
         transitionJob?.cancel()
         transitionJob = null
+        secureWatch.stop()
     }
 
     /**
@@ -254,6 +267,7 @@ internal class EngineController(
      */
     suspend fun clearActiveEngineForShutdown() {
         val current = engine ?: return
+        secureWatch.stop()
         runCatching { current.clear(context) }
     }
 
@@ -443,6 +457,11 @@ internal class EngineController(
                 when (result) {
                     EngineResult.Success -> {
                         lastApplied = matrix
+                        // After the write, because which rows are owned is
+                        // decided by the apply that just ran: a neutral preset
+                        // hands Night Light back and a session that never dims
+                        // never takes the Extra Dim rows at all.
+                        secureWatch.sync(current)
                         return@withLock true
                     }
                     is EngineResult.Failure -> {

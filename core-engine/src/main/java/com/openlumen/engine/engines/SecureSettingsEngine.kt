@@ -14,6 +14,8 @@ import com.openlumen.engine.EngineResult
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.LumenMatrix
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -64,6 +66,42 @@ internal fun shouldRestoreColorCorrection(
     currentMode: Int,
     lastAppliedMode: Int
 ): Boolean = currentActive && currentMode == lastAppliedMode
+
+/**
+ * Ownership and restorability are the same question asked at two different
+ * times. A row stops being ours the moment the device stops holding the value
+ * we would have been willing to restore from, so these are the three
+ * predicates above negated rather than a second set of rules that could drift
+ * from them.
+ *
+ * The difference is only when the question is asked. Until now it was asked at
+ * [SecureSettingsEngine.clear] time, which is late enough that every apply in
+ * between has already written over whatever the user did: `apply` re-takes a
+ * tinted row on every ramp step and slider move, and records the temperature
+ * it just wrote as the one it owns, which erases the evidence the clear-time
+ * check depends on. Asking on the content-provider callback instead means the
+ * change is seen once, at the moment it happens, while the record still says
+ * what we wrote.
+ */
+internal fun nightDisplayIsForeign(
+    currentActive: Boolean,
+    currentTemperature: Int,
+    lastAppliedTemperature: Int
+): Boolean = !shouldRestoreNightDisplay(currentActive, currentTemperature, lastAppliedTemperature)
+
+/** @see nightDisplayIsForeign */
+internal fun reduceBrightColorsIsForeign(
+    currentActive: Boolean,
+    currentLevel: Int,
+    lastAppliedLevel: Int
+): Boolean = !shouldRestoreReduceBrightColors(currentActive, currentLevel, lastAppliedLevel)
+
+/** @see nightDisplayIsForeign */
+internal fun colorCorrectionIsForeign(
+    currentActive: Boolean,
+    currentMode: Int,
+    lastAppliedMode: Int
+): Boolean = !shouldRestoreColorCorrection(currentActive, currentMode, lastAppliedMode)
 
 /**
  * Rootless framework-level driver, written against `Settings.Secure`.
@@ -163,6 +201,33 @@ class SecureSettingsEngine : ColorEngine {
 
     @Volatile private var nightOwned: Boolean = false
 
+    /**
+     * Rows this session handed back because something else changed them, by
+     * activation key.
+     *
+     * Dropping the owned flag alone is not enough to stop touching a row.
+     * `apply` re-takes any row it does not already hold, so the very next ramp
+     * step or slider move would capture the user's new value as the original
+     * and write over it, which is the whole defect. A released row stays
+     * released for the rest of the session; [clear] is what starts a new one,
+     * because by then the user has turned the filter off and on again and is
+     * asking for it back.
+     */
+    @Volatile private var releasedRows: Set<String> = emptySet()
+
+    /**
+     * Serialises [apply], [clear] and [releaseForeignRows].
+     *
+     * The foreign-change check runs on its own coroutine, started by a
+     * `ContentObserver`, while a ramp may be writing these rows from another IO
+     * thread. `apply` writes a row and only then records the value it wrote, so
+     * a check landing between the two read our own new temperature against the
+     * previous record, called it foreign, and switched the filter off halfway
+     * through a fade. Holding one lock across the write and its record closes
+     * that window: by the time the check runs, the record matches the row.
+     */
+    private val rowLock = Mutex()
+
     /** Last record written to disk, so a ramp does not rewrite it 600 times. */
     @Volatile private var lastPersistedRecord: String? = null
 
@@ -195,6 +260,9 @@ class SecureSettingsEngine : ColorEngine {
     }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult =
+        rowLock.withLock { applyLocked(context, matrix) }
+
+    private suspend fun applyLocked(context: Context, matrix: LumenMatrix): EngineResult =
         withContext(Dispatchers.IO) {
             if (!hasSecureSettingsGrant(context)) {
                 Log.w(tag, "apply: WRITE_SECURE_SETTINGS not granted")
@@ -259,7 +327,7 @@ class SecureSettingsEngine : ColorEngine {
                 // row we had not touched, and the ownership checks then refused
                 // to restore anything for the rest of the session.
 
-                if (tinted) {
+                if (tinted && KEY_NIGHT_ACTIVATED !in releasedRows) {
                     // Taking the row now, so read what the user has right now.
                     // A session hands Night Light back whenever it moves to a
                     // neutral preset, and they are free to change it before the
@@ -283,7 +351,7 @@ class SecureSettingsEngine : ColorEngine {
                     nightOwned = false
                 }
 
-                if (correction != Daltonizer.NONE) {
+                if (correction != Daltonizer.NONE && KEY_CORRECTION_MODE !in releasedRows) {
                     if (!correctionOwned) recaptureColorCorrection(cr)
                     Settings.Secure.putInt(cr, KEY_CORRECTION_MODE, correction.secureValue)
                     Settings.Secure.putInt(cr, KEY_CORRECTION_ENABLED, 1)
@@ -303,7 +371,7 @@ class SecureSettingsEngine : ColorEngine {
                 }
 
                 if (dimSupported) {
-                    if (dimLevel > 0) {
+                    if (dimLevel > 0 && KEY_REDUCE_BRIGHT_ACTIVATED !in releasedRows) {
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_LEVEL, dimLevel)
                         Settings.Secure.putInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 1)
                         ownership = ownership?.copy(lastAppliedDimLevel = dimLevel)
@@ -334,7 +402,10 @@ class SecureSettingsEngine : ColorEngine {
             EngineResult.Success
         }
 
-    override suspend fun clear(context: Context): EngineResult = withContext(Dispatchers.IO) {
+    override suspend fun clear(context: Context): EngineResult =
+        rowLock.withLock { clearLocked(context) }
+
+    private suspend fun clearLocked(context: Context): EngineResult = withContext(Dispatchers.IO) {
         if (!hasSecureSettingsGrant(context)) {
             return@withContext EngineResult.Failure("WRITE_SECURE_SETTINGS not granted")
         }
@@ -414,6 +485,9 @@ class SecureSettingsEngine : ColorEngine {
             dimOwned = false
             correctionOwned = false
             nightOwned = false
+            // The filter is off. Turning it on again is the user asking for
+            // these rows back, so the session's hand-backs do not carry over.
+            releasedRows = emptySet()
             clearPersistedOwnership(context)
         } catch (t: Throwable) {
             Log.w(tag, "secure-settings clear failed: ${t.message}")
@@ -422,6 +496,105 @@ class SecureSettingsEngine : ColorEngine {
             )
         }
         EngineResult.Success
+    }
+
+    /**
+     * The secure rows this session currently claims, as `Settings.Secure` keys.
+     *
+     * These are what there is any point watching: a row nobody claims cannot be
+     * taken away, and the user is free to do what they like with it. Both keys
+     * of a pair are listed because either one moving is a change of state —
+     * a temperature edited while the flag stays on is still the user taking the
+     * row back.
+     */
+    fun ownedKeys(): Set<String> = buildSet {
+        if (ownership == null) return@buildSet
+        if (nightOwned) {
+            add(KEY_NIGHT_ACTIVATED)
+            add(KEY_NIGHT_TEMPERATURE)
+        }
+        if (dimOwned) {
+            add(KEY_REDUCE_BRIGHT_ACTIVATED)
+            add(KEY_REDUCE_BRIGHT_LEVEL)
+        }
+        if (correctionOwned) {
+            add(KEY_CORRECTION_ENABLED)
+            add(KEY_CORRECTION_MODE)
+        }
+    }
+
+    /**
+     * Re-read the rows this session claims and let go of any the device no
+     * longer holds our value for. Returns each activation key released, mapped
+     * to the values the device holds now so the diagnostics log can say what
+     * the row was changed to. Empty when everything is still ours.
+     *
+     * Releasing is the whole action. It is not a prelude to writing something
+     * back: the user changed the row, their value is already on screen and
+     * correct, and the only thing OpenLumen owes them is to stop overwriting
+     * it on the next ramp step. Dropping the owned flag does exactly that,
+     * because `apply` only re-takes a row it does not already hold, and `clear`
+     * only hands back a row it does.
+     *
+     * Reads and writes a content provider and a file, so callers must be off
+     * the main thread. The `ContentObserver` this is written for hands the
+     * check to an IO coroutine for that reason, and [rowLock] keeps it from
+     * landing in the middle of an apply.
+     */
+    suspend fun releaseForeignRows(context: Context): Map<String, String> =
+        rowLock.withLock { releaseForeignRowsLocked(context) }
+
+    private fun releaseForeignRowsLocked(context: Context): Map<String, String> {
+        if (!hasSecureSettingsGrant(context)) return emptyMap()
+        val owned = ownership ?: return emptyMap()
+        val cr = context.contentResolver
+        val released = linkedMapOf<String, String>()
+        runCatching {
+            val nightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0)
+            val nightTemperature =
+                Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
+            if (nightOwned && nightDisplayIsForeign(
+                    currentActive = nightActive == 1,
+                    currentTemperature = nightTemperature,
+                    lastAppliedTemperature = owned.lastAppliedTemperature
+                )
+            ) {
+                nightOwned = false
+                released[KEY_NIGHT_ACTIVATED] =
+                    "$KEY_NIGHT_ACTIVATED=$nightActive $KEY_NIGHT_TEMPERATURE=$nightTemperature"
+            }
+            val dimActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0)
+            val dimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
+            if (dimOwned && reduceBrightColorsIsForeign(
+                    currentActive = dimActive == 1,
+                    currentLevel = dimLevel,
+                    lastAppliedLevel = owned.lastAppliedDimLevel
+                )
+            ) {
+                dimOwned = false
+                released[KEY_REDUCE_BRIGHT_ACTIVATED] =
+                    "$KEY_REDUCE_BRIGHT_ACTIVATED=$dimActive $KEY_REDUCE_BRIGHT_LEVEL=$dimLevel"
+            }
+            val correctionActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0)
+            val correctionMode =
+                Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
+            if (correctionOwned && colorCorrectionIsForeign(
+                    currentActive = correctionActive == 1,
+                    currentMode = correctionMode,
+                    lastAppliedMode = owned.lastAppliedCorrectionMode
+                )
+            ) {
+                correctionOwned = false
+                released[KEY_CORRECTION_MODE] =
+                    "$KEY_CORRECTION_ENABLED=$correctionActive $KEY_CORRECTION_MODE=$correctionMode"
+            }
+        }.onFailure { Log.w(tag, "foreign-row check failed: ${it.message}") }
+        if (released.isNotEmpty()) {
+            Log.i(tag, "released secure rows changed outside OpenLumen: ${released.values}")
+            releasedRows = releasedRows + released.keys
+            persistOwnership(context)
+        }
+        return released
     }
 
     /**

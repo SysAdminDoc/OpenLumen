@@ -158,6 +158,13 @@
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection do Android</string>
     <string name="driver_aapm_explanation">O modo de protecção avançada pode desligar funcionalidades que dependem da acessibilidade. O OpenLumen não usa acessibilidade nem acesso à utilização, por isso não é afectado. O relatório do controlador regista o estado da plataforma quando o dispositivo o disponibiliza.</string>
+    <string name="driver_secure_rows_released_title">Uma definição do sistema mudou</string>
+    <string name="driver_secure_rows_released_body">Algo fora do OpenLumen alterou %1$s enquanto o filtro a estava a usar, por isso o filtro desligou-se e deixou o seu valor como está. Volte a ligá-lo para assumir a definição novamente.</string>
+    <string name="driver_secure_rows_released_dismiss">Percebi</string>
+    <string name="secure_row_night_display">Luz noturna</string>
+    <string name="secure_row_extra_dim">Escurecimento extra</string>
+    <string name="secure_row_color_correction">correção de cor</string>
+    <string name="secure_row_unknown">uma definição do ecrã</string>
     <string name="driver_grant_status_granted">Concedido neste dispositivo.</string>
     <string name="driver_grant_status_not_granted">Não concedido. O driver Luz noturna do sistema fica indisponível até que seja concedido pelo comando ADB abaixo.</string>
     <string name="driver_copy_command">Copiar comando</string>

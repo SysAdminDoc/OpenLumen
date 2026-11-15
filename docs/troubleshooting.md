@@ -80,6 +80,32 @@ This is the worst case. Try in order:
 | `KCAL` | Stock kernel without KCAL patch | Check: `adb shell ls /sys/devices/platform/kcal_ctrl.0/`. If empty, your kernel doesn't have KCAL — use SurfaceFlinger |
 | `Overlay` | `SYSTEM_ALERT_WINDOW` denied | Always-available; permission rationale card on Home prompts you |
 
+## "I changed Night Light myself and the filter switched off"
+
+That is deliberate, and the Driver tab says so when it happens.
+
+The rootless driver does not paint its own layer. It writes the same system
+rows the Night Light, Extra Dim and colour-correction switches write, which
+means those rows have two authors: OpenLumen and you. Quick Settings writes
+them, the system sunset schedule writes them, Digital Wellbeing writes them at
+bedtime, and so does any other app you have granted `WRITE_SECURE_SETTINGS`.
+
+When OpenLumen notices that a row it was holding now carries a value it did not
+write, it lets that row go and turns the filter off rather than taking it back.
+The alternative is worse: the filter re-applies on every ramp step and every
+slider move, so a version that fought for the row would overwrite whatever you
+had just set, a second or two after you set it.
+
+| What you did | What happens | To get the filter back |
+|---|---|---|
+| Changed the Night Light slider or switch while a warm preset was running | Filter switches off, your temperature stays | Turn the filter on again; it takes the row over from where you left it |
+| Turned colour correction off while a colour-vision preset was running | Filter switches off, correction stays off | Turn the filter on again |
+| Changed Extra Dim while a dimmed preset was running | Filter switches off, your level stays | Turn the filter on again |
+| Nothing, and it happened anyway | Another app holding `WRITE_SECURE_SETTINGS` is writing the same rows | Check the diagnostics timeline on the About tab: the entry names the row and the value that arrived |
+
+The root drivers (`SurfaceFlinger`, `KCAL`) do not share their rows with
+anything, so this does not apply to them.
+
 ## "Schedule doesn't fire"
 
 | Symptom | Likely cause | Try |

@@ -144,7 +144,11 @@ root-hiding setups.
   observes. Replaced a `ColorDisplayManager` reflection engine that could not
   work on a user install, because those setters need
   `CONTROL_DISPLAY_COLOR_TRANSFORMS` and `pm grant` cannot grant it. Cached after first
-  successful load. Gated on `WRITE_SECURE_SETTINGS` being granted.
+  successful load. Gated on `WRITE_SECURE_SETTINGS` being granted. While it
+  holds a row, `SecureSettingsWatch` keeps a `ContentObserver` on it; a value
+  OpenLumen did not write releases the row, logs what it became, turns the
+  filter off and shows a notice on the Driver screen, so neither the next ramp
+  step nor the next clear writes over a setting the user chose.
 - **`SurfaceFlingerEngine`** — `service call SurfaceFlinger <code>` via `su`.
   The colour matrix is transaction 1015, unchanged from `android-10.0.0_r1`
   through `android-16.0.0_r1`. The probe issues the disable transaction and

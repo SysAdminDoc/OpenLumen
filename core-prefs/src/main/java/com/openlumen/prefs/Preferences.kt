@@ -237,7 +237,24 @@ data class Preferences(
      *
      * Only meaningful when [engine] is not [EngineKindDto.Auto].
      */
-    val forcePinnedEngine: Boolean = false
+    val forcePinnedEngine: Boolean = false,
+    /**
+     * `Settings.Secure` rows the secure-settings driver handed back because
+     * something outside OpenLumen changed them while it held them (C346).
+     *
+     * Runtime state, not configuration: it records a thing that happened to
+     * this device, so it is excluded from profile snapshots and from export
+     * like `enabled` is. Non-empty means the Driver tab shows the notice; the
+     * user dismisses it, and enabling the filter again clears it, because the
+     * next apply re-takes whatever rows it needs and the old news would then
+     * be describing a state that no longer exists.
+     *
+     * Holds activation keys only (`night_display_activated`,
+     * `reduce_bright_colors_activated`, `accessibility_display_daltonizer`),
+     * because a temperature moving and its flag moving are the same event to
+     * a reader.
+     */
+    val secureRowsReleased: List<String> = emptyList()
 ) {
     companion object {
         /**
@@ -332,7 +349,12 @@ fun Preferences.withFilterEnabled(enabled: Boolean): Preferences {
     return copy(
         enabled = true,
         activePresetKey = restoredPreset,
-        schedule = schedule.activatingForManualOn()
+        schedule = schedule.activatingForManualOn(),
+        // Turning the filter back on is the user answering the notice. The
+        // next apply re-takes whatever rows it needs, so a list of rows given
+        // up before that would be describing a state that no longer holds
+        // (C346).
+        secureRowsReleased = emptyList()
     )
 }
 
