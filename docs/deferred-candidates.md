@@ -88,25 +88,23 @@ The full reasoning lives in [docs/play-fgs-evidence.md](play-fgs-evidence.md). T
 
 **Why deferred**: the CI gate now exists, but full tab coverage needs a deliberate fixture design so goldens don't churn on localization, fonts, or unrelated content changes.
 
-## Connected permission flow tests: C84 (hardware-blocked)
+## Connected permission flow tests: C84 (open)
 
-**Status**: emulator-only.
+**Status**: the flows were checked by hand on an API 37 emulator on 2026-11-15, and the automated tests are still to write.
+
+The hand check covered taking the overlay permission away (a tile tap turns the filter back off and Home shows the permission card), the exact-alarm fallback, and the foreground notification. The results are in [android-17-readiness.md](android-17-readiness.md).
 
 **Plan**:
 
-1. Add `androidx.test.uiautomator` to `androidTestImplementation`.
+1. Add `androidx.test.uiautomator` to `androidTestImplementation`. The project has no `androidTest` source set yet.
 2. Write tests that exercise `SYSTEM_ALERT_WINDOW`, `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, and the system installer overlay-blocked-touch behavior.
-3. Run on a CI runner with an attached emulator (`reactivecircus/android-emulator-runner`).
+3. Run them on a local emulator.
 
-**Why deferred**: same as C83. It needs CI infrastructure that isn't configured.
+## SurfaceView / TextureView overlay regression: C91 (checked)
 
-## SurfaceView / TextureView overlay regression: C91 (hardware-blocked)
+**Status**: checked on 2026-11-15, on an API 37 emulator.
 
-**Status**: hardware-only.
-
-**Plan**: smoke test against an app that uses SurfaceView (a video player, YouTube, a camera viewfinder) on each device in `docs/device-matrix.md`. It captures whether the overlay alpha is correctly composited or skipped on the SurfaceView surface.
-
-**Why deferred**: needs real apps and real devices to reproduce.
+A white test clip playing in a video player's SurfaceView measured (254, 164, 94) under the amber preset, so the overlay tints SurfaceView content like everything else. Each phone row in [device-matrix.md](device-matrix.md) can add its own line when someone repeats it there.
 
 ## One-handed / foldable / split-screen: C92 (hardware-blocked)
 
@@ -116,20 +114,17 @@ The full reasoning lives in [docs/play-fgs-evidence.md](play-fgs-evidence.md). T
 
 **Why deferred**: out of reach in this development environment.
 
-## Accessibility scanner / font scale / CVD contrast: C55, C56, C57 (hardware-blocked)
+## Accessibility scanner / font scale / CVD contrast: C55, C56, C57 (done)
 
-**Status**: needs Google's Accessibility Scanner app and a real device.
+**Status**: done on 2026-11-15, on an API 37 emulator.
 
-A static pass on 2026-06-15 improved recoverability and visual consistency. Profile deletion now has undo recovery, diagnostics/location chips use the project shape system, widget labels use larger centered ellipsized text, and stale light-theme screenshot baselines were refreshed. The device-scanner and font-scale evidence below is still pending.
+A static pass on 2026-06-15 improved recoverability and visual consistency. Profile deletion now has undo recovery, diagnostics/location chips use the project shape system, widget labels use larger centered ellipsized text, and stale light-theme screenshot baselines were refreshed.
 
-**Plan**:
+**What the device pass found**:
 
-1. Install Accessibility Scanner on a Pixel.
-2. Run it against each of OpenLumen's tabs.
-3. Fix any flagged items (label coverage, touch target size, contrast).
-4. Capture screenshots at 1.0×, 1.3×, 1.5× font scale to verify layouts don't break.
-
-**Why deferred**: the tooling needs a real device.
+- Accessibility Scanner 2.5.1 ran over every tab in the light and dark themes. It flagged the purple and red used for warning text and dialog buttons as too light, and the transition-duration rows as too short to tap. Both are fixed, and a rescan came back clean for them. What it still flags is disabled controls, which the contrast rule exempts: the Calibrate button while the ambient trigger is off, the driver rows that aren't available on the device, and Save in the Rename dialog while the name is empty.
+- At 1.3, 1.5 and 2.0 font scale, and in German at 1.0, the bottom tab labels split words and preset names ran out of room beside the Rename button. German compounds also broke mid-word. All three are fixed and covered by tests.
+- With protanopia, deuteranopia and tritanopia simulated over each tab, nothing carries its meaning by color alone.
 
 ## Melanopic / circadian estimate UI: C61 (shipped as blue-channel reduction)
 
@@ -198,13 +193,11 @@ The shipped form is the scalar-level clamp, not the per-pixel framebuffer transf
 
 **Why deferred**: we already expose `am startservice` intent commands which work for every automation tool we've seen. Adding a socket adds attack surface for marginal capability gain.
 
-## Work profile / multi-user behavior: C81 (Later)
+## Work profile / multi-user behavior: C81 (checked)
 
-**Status**: Later-tier.
+**Status**: checked on 2026-11-15, on an API 37 emulator with a managed work profile.
 
-**Plan**: test that OpenLumen on a personal profile correctly ignores the work profile (no foreground-app detection across the profile boundary), and that the overlay correctly covers the work profile from the personal-profile service.
-
-**Why deferred**: requires a multi-user device setup. It's mostly a validation pass once C11/C12 land.
+The overlay running in the personal profile tints the work profile's apps edge to edge, so nothing extra is needed there. The other half of the original plan, keeping foreground-app detection on its own side of the profile boundary, has nothing to check until C11 or C12 add foreground-app detection, and it belongs to their acceptance when they do.
 
 ## System brightness write support: C86 (Under Consideration)
 

@@ -58,6 +58,20 @@ When the first stable Android 17 image lands (June 2026):
 10. After a long-running overlay + smooth-transition smoke, inspect recent `ApplicationExitInfo` entries for `MemoryLimiter:AnonSwap`.
 11. Run the app on a sw600dp emulator/tablet/foldable or in desktop-windowing mode. Rotate/resize while each tab is open and confirm state is retained and controls stay reachable.
 
+### Results on the stable image (2026-11-15)
+
+These came from an API 37 emulator on CE2A.260420.051.A3 with a debug build, plus the Galaxy S25 Ultra row in the device matrix. A Pixel on Android 17 (step 1) is still missing.
+
+- Step 2 passes. The tile shows its subtitle ("Filter off" after a tap turned the filter off).
+- Step 3 half passes. With the overlay permission taken away, a tile tap starts the service, finds no usable driver and turns the filter off again, and Home shows the overlay permission card. Nothing in quick settings tells you why, which is now a roadmap item.
+- Step 4 passes, and the C106 row in [wake-and-vitals.md](wake-and-vitals.md) has the details.
+- Step 5 passes. Tapping the notification opens the app, and both widgets toggle and follow the filter. Getting there needed two fixes: launchers deleted the widgets because of an empty configure attribute, and the toggle widget kept saying On after a turn-off.
+- Step 8 is half done. The platform reports Advanced Protection as disabled, which is what the report's line is built from. The report text itself wasn't read, because the emulator's clipboard can't be read from the shell.
+- Step 10 found no `MemoryLimiter` exits. Besides package updates, the exit history had one "timeout publishing content providers" and one "INVALID START".
+- Step 11 found text beside the tablet rail drawn black on black in the dark theme, which is fixed.
+
+Also checked on the same image: the overlay tints video in a `SurfaceView`, it covers the navigation bar strip again after a fix, it tints a work profile's apps from the personal profile, and with exact alarms revoked the service comes back within a second and sets an inexact alarm for the schedule end.
+
 ## Migration path
 
 We will:

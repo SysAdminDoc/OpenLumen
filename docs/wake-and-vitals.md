@@ -127,7 +127,7 @@ Run this on a release build with a normal user-unlocked boot:
 | 14 | pending | ? | pending | C106 row. Verify `specialUse` FGS start after `BOOT_COMPLETED` |
 | 15 | pending | ? | pending | C106 row. Verify alongside SAW/FGS background restrictions |
 | 16 | pending | ? | pending | C106 row. Verify receiver timeout behavior remains bounded |
-| 17 | pending | ? | pending | C106 row. Verify before any target-SDK 36/37 bump |
+| 17 | Emulator, CE2A.260420.051.A3, debug build | ✅ | Emulator run, 2026-11-15 | `LockedBootReceiver` started the process before unlock and the overlay filter was back in the foreground once the boot finished. An app update over a running filter brought the service back in about 2 seconds too. Not yet repeated on a phone, since the phones here aren't rebooted for tests. |
 
 ## Future work
 
