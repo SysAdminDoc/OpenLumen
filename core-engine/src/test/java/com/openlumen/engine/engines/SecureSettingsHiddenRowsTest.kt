@@ -48,7 +48,11 @@ class SecureSettingsHiddenRowsTest {
         Settings.Secure.getInt(cr, key, default)
     }
 
-    private fun deviceEngine() = SecureSettingsEngine(hiddenExtraDim, extraDimShipped = { true })
+    private fun deviceEngine() = SecureSettingsEngine(
+        hiddenExtraDim,
+        extraDimShipped = { true },
+        nightDisplayShipped = { true }
+    )
 
     private fun secure(key: String) = Settings.Secure.getInt(resolver, key, -1)
 

@@ -44,7 +44,12 @@ class SecureSettingsCorrectionTest {
         // Deep Sleep and PWM Comfort in full on devices with no Extra Dim,
         // while apply dropped the dim without a word. The probe already knows
         // which rows the device took, so the answer comes from there.
-        val engine = SecureSettingsEngine()
+        // Robolectric's framework config has no Night Light either, and this
+        // test is about the dim, so that one is stood in.
+        val engine = SecureSettingsEngine(
+            { cr, key, default -> Settings.Secure.getInt(cr, key, default) },
+            nightDisplayShipped = { true }
+        )
         assertThat(engine.supportsReduceBrightColors(context)).isFalse()
 
         val available = engine.isAvailable(context)

@@ -23,6 +23,8 @@ new ones.
 
 | Device | Android | OEM | Root | CDM | SF | KCAL | Overlay | Release | Notes |
 |---|---|---|---|:-:|:-:|:-:|:-:|---|---|
+| Samsung Galaxy S22 (SM-S908U1) | 16 (BP2A.250605.031.A3, S908U1UESAGZE3) | Samsung, One UI 8 | no | — | — | — | ✅ | main after 0.8.0 (debug) | No Night Light on this firmware, so the System Night Light driver has nothing to tint with and the probe now turns it down. Overlay keeps the panel at 120 Hz while scrolling (8.33 ms frames with the filter on and off). |
+| Samsung Galaxy S25 Ultra (SM-S938B) | 17 (CP2A.260605.016, S938BXXSDDZJ1) | Samsung, One UI | no | — | — | — | ✅ | main after 0.8.0 (debug) | Same as the S22: no Night Light, Auto picks Overlay with WRITE_SECURE_SETTINGS granted, and no secure row is written. |
 | Pixel 6 | 15 (AP4A.250105.002) | Google | yes (Magisk 28) | ? | ? | — | ? | v0.4.0 | smoke pending |
 | Pixel 8 | 15 (AP4A.250105.002) | Google | no | ? | — | — | ? | v0.4.0 | smoke pending |
 | Samsung Galaxy S23 | 14 (One UI 6.1) | Samsung | no | ? | — | — | ? | v0.4.0 | smoke pending |
@@ -137,9 +139,16 @@ install and the secure-settings writer replaced it.
   ```bash
   adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS
   ```
-- On some Samsung firmwares, the grant succeeds but the reflected method
-  silently no-ops. Mark such cases 🟡 and capture the device + firmware
-  build number.
+- Samsung phones ship without Night Light (`config_nightDisplayAvailable`
+  is false on the Galaxy S22 with Android 16 and the S25 Ultra with
+  Android 17; Eye Comfort Shield replaces it). The rows still accept
+  writes and nothing changes on screen, so the probe checks that config and
+  turns the driver down. Mark the column `—` on such a device.
+- From Android 12 a user app can't read the Extra Dim rows
+  (`reduce_bright_colors_*`), even with the grant: the read throws a
+  `SecurityException`. The driver checks once and leaves Extra Dim alone
+  where it can't read it, so "secure keys accepted" in the diagnostics
+  report won't list it on those devices.
 
 ## SurfaceFlinger specifics
 

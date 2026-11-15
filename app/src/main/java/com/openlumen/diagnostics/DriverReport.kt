@@ -209,6 +209,9 @@ object DriverReport {
                             "    secure keys accepted: " +
                                 if (accepted.isEmpty()) "(none)" else accepted.joinToString()
                         )
+                        if (e.probedWithoutNightLight) {
+                            appendLine("    night light: not on this device")
+                        }
                     }
                     else -> Unit
                 }

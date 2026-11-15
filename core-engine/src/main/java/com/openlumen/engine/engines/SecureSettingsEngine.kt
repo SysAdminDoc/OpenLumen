@@ -161,7 +161,9 @@ class SecureSettingsEngine internal constructor(
      */
     private val readRow: (ContentResolver, String, Int) -> Int,
     /** Overrides the framework's Extra Dim config, which Robolectric reports as absent. */
-    private val extraDimShipped: ((Context) -> Boolean)? = null
+    private val extraDimShipped: ((Context) -> Boolean)? = null,
+    /** Same, for Night Light. */
+    private val nightDisplayShipped: ((Context) -> Boolean)? = null
 ) : ColorEngine {
     constructor() : this({ cr, key, default -> Settings.Secure.getInt(cr, key, default) })
 
@@ -197,6 +199,15 @@ class SecureSettingsEngine internal constructor(
     private val tag = "OpenLumen/SecureSettings"
 
     @Volatile private var ownership: Ownership? = null
+
+    /**
+     * Set by the probe. False until one has run, the same way [acceptedKeys]
+     * stays empty, so a driver nobody probed keeps its declared shape.
+     */
+    @Volatile private var nightLightMissing: Boolean = false
+
+    /** For the diagnostics report: the last probe found no Night Light here. */
+    val probedWithoutNightLight: Boolean get() = nightLightMissing
 
     /**
      * True once this session has written the Extra Dim rows. Sessions that
@@ -261,7 +272,15 @@ class SecureSettingsEngine internal constructor(
         // Probe by writing each key's *current* value back. That exercises the
         // real permission check and the provider's key allowlist without
         // changing anything the user can see.
-        val nightOk = rewriteInPlace(context, KEY_NIGHT_ACTIVATED)
+        // A device without Night Light still accepts the rows, so the write
+        // probe alone passed and every tint was a silent no-op. Samsung ships
+        // its own Eye Comfort Shield in place of it (Galaxy S22, Android 16).
+        val nightShipped = supportsNightDisplay(context)
+        nightLightMissing = !nightShipped
+        if (!nightShipped) {
+            Log.i(tag, "device ships no Night Light; the secure-settings driver has nothing to tint with")
+        }
+        val nightOk = nightShipped && rewriteInPlace(context, KEY_NIGHT_ACTIVATED)
         val dimOk = supportsReduceBrightColors(context) &&
             rewriteInPlace(context, KEY_REDUCE_BRIGHT_ACTIVATED)
         acceptedKeys = buildList {
@@ -303,6 +322,15 @@ class SecureSettingsEngine internal constructor(
             val tinted = !isNeutralChromaticity(matrix) &&
                 (matrix.daltonizer == Daltonizer.NONE || matrix.desaturation >= 0.5f)
             val correction = matrix.daltonizer
+            // Pinning the driver gets past the probe, so a tint can still
+            // arrive here on a device the probe found without Night Light.
+            // The rows would take it and nothing would change on screen.
+            if (tinted && nightLightMissing) {
+                Log.w(tag, "apply: a tint needs Night Light and this device has none")
+                return@withContext EngineResult.Failure(
+                    "This device has no Night Light, so the system settings driver cannot tint the screen"
+                )
+            }
 
             try {
                 val cr = context.contentResolver
@@ -908,6 +936,19 @@ class SecureSettingsEngine internal constructor(
     @Volatile private var reduceBrightReadable: Boolean? = null
 
     /**
+     * Night Light is not on every device either. `ColorDisplayManager.isNightDisplayAvailable`
+     * reads `config_nightDisplayAvailable`, looked up the same way as Extra Dim.
+     */
+    internal fun supportsNightDisplay(context: Context): Boolean {
+        nightDisplayShipped?.let { return it(context) }
+        return runCatching {
+            val res = context.resources
+            val id = res.getIdentifier(CONFIG_NIGHT_DISPLAY_AVAILABLE, "bool", "android")
+            id != 0 && res.getBoolean(id)
+        }.getOrDefault(false)
+    }
+
+    /**
      * Extra Dim is not on every device: `ColorDisplayManager.isReduceBrightColorsAvailable`
      * reads `config_reduceBrightColorsAvailable`, which we look up by name through
      * public `Resources` APIs rather than reflecting on the hidden helper.
@@ -1006,6 +1047,7 @@ class SecureSettingsEngine internal constructor(
         const val KEY_CORRECTION_MODE = "accessibility_display_daltonizer"
 
         private const val CONFIG_REDUCE_BRIGHT_AVAILABLE = "config_reduceBrightColorsAvailable"
+        private const val CONFIG_NIGHT_DISPLAY_AVAILABLE = "config_nightDisplayAvailable"
 
         /** `AUTO_MODE_DISABLED` in ColorDisplayManager: activation follows the flag we write. */
         const val AUTO_MODE_MANUAL: Int = 0
