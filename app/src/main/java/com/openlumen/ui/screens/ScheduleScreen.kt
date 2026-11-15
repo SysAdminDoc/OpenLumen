@@ -4,6 +4,7 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
@@ -674,9 +675,13 @@ fun ScheduleScreen(
                     isCustomTransitionSelected(prefs.transitionDurationMs, customChosen)
                 @Composable
                 fun TransitionOption(selected: Boolean, label: String, onClick: () -> Unit) {
+                    // 48dp tall, the size of a tap target. The RadioButton has
+                    // no onClick of its own, so Material does not pad it out,
+                    // and the row was only as tall as its text.
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .selectable(
                                 selected = selected,
                                 onClick = onClick,
