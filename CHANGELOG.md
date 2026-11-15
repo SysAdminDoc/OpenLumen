@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A schedule can keep a day filter for the hours outside its window, with its own temperature and dim, so a mild tint can run all day and your preset takes over in the evening. The screen fades between the two at each edge instead of jumping, and Grayscale stays on through the day when you've switched it on. MikolajQ wrote the patch this grew from.
 - `Use my location` fills in the solar schedule from one approximate reading while the app is open, and an optional switch keeps it current after you travel more than about 15 miles. When the time zone changes, a notification asks you to check the schedule. Precise and background location are never requested. Thanks to MikolajQ for the patch.
 - Transitions now come in 1 and 3 minutes too, plus a Custom length anywhere from 1 to 30 minutes. A duration from an imported profile that matches none of the rows now shows as Custom instead of leaving nothing selected. Based on a patch by MikolajQ.
+- A Grant with Shizuku button on the Driver tab. The System Night Light driver needs a permission that used to take a computer and an adb command. If Shizuku is running, the button grants it right on the phone. The driver report now shows whether Shizuku is installed, running and allowed.
+- Home warns you when a timed schedule runs without exact alarm access, since the switch can then be up to an hour late. The card links straight to the setting. MikolajQ's patch started this.
 
 ### Fixed
 
@@ -32,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The System Night Light driver now works on Android 12 and newer. Those versions can refuse an app's read of the Extra Dim settings (both Samsung phones tested do), and the driver read them every time it switched on, so the apply failed before Night Light was touched while Home still said the filter was on. It now checks once whether it can read those settings and leaves Extra Dim alone if it can't. The emergency reset had a related gap: one unreadable setting made it miss a colour correction that was still on.
 - Samsung phones ship without Night Light, and the System Night Light driver no longer gets picked on them. The settings it writes are still there and take a value, so the driver looked available, Auto chose it over the overlay, and every tint quietly did nothing. It now checks whether the phone has Night Light before offering itself, so Auto lands on the Overlay driver (checked on a Galaxy S22 with Android 16 and an S25 Ultra with Android 17). If you'd picked the driver by hand, OpenLumen falls back to Auto. If you force-pinned it, colour correction still goes through it, a tint is refused instead of passing for applied, and the diagnostics report notes that the phone has no Night Light.
 - The Sunset to sunrise schedule can be picked on a fresh install. It stayed greyed out until a location existed, and the only button that sets one sat inside that same section. Tapping it without a location now opens the location dialog, and saving there turns the schedule on. MikolajQ found and fixed this one.
+- Debug builds now install next to the release build. They claimed the same automation permission, so Android refused whichever one went on second. Thanks to MikolajQ.
+- A first build on a clean machine no longer stops at dependency verification. Based on MikolajQ's fix.
+- If the filter was on, it now comes back by itself after an app update. Before, it stayed off (or a root tint stayed stuck) until a reboot or a manual toggle. MikolajQ spotted and patched this.
+- When Android won't let the filter restart in the background, the switch stays on and OpenLumen tries again shortly. Opening the app brings it back too. It used to switch itself off without a word. Based on a patch by MikolajQ.
+- When Android blocks the tile or a widget from starting the filter, Home now says why and offers Try again, plus the overlay setting when that's what's missing.
+- Phones without an ambient light sensor no longer crash about six seconds after the Schedule tab opens.
+- TalkBack reads each slider once, with its name and value. Each switch row is a single stop with its title and state, where the switch alone used to say only "Off, switch".
+- The Rename and favorite buttons on Presets now say which preset they're for, so TalkBack no longer reads a dozen identical "Rename" buttons. The channel meters in a preset's detail read once too.
+- Each end of the diagnostics timeline can be moved with TalkBack and reads the time it's at. It used to read "0.0" for both ends.
+- A few hints across the app read more naturally in every language.
 
 ## [0.8.0] (2026-09-04)
 
