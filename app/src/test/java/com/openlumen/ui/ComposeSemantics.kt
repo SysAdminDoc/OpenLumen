@@ -32,6 +32,13 @@ internal object ComposeSemantics {
         return root.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
     }
 
+    /** Every node on its own, so a Text inside a merged tab keeps its layout action. */
+    fun unmergedNodes(activity: Activity): List<SemanticsNode> {
+        val root = activity.window.decorView.findComposeRoot()
+            ?: return emptyList()
+        return root.semanticsOwner.getAllSemanticsNodes(mergingEnabled = false)
+    }
+
     /** The dialog shown last, which draws in its own window, not the activity's. */
     fun dialogNodes(): List<SemanticsNode> {
         val root = ShadowDialog.getLatestDialog()?.window?.decorView?.findComposeRoot()

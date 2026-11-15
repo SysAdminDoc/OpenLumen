@@ -3,6 +3,7 @@ package com.openlumen.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,11 +40,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -60,7 +69,7 @@ import com.openlumen.ui.theme.OpenLumenTheme
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import androidx.compose.foundation.isSystemInDarkTheme
 
-private sealed class Dest(val route: String, val labelRes: Int, val iconRes: Int) {
+internal sealed class Dest(val route: String, val labelRes: Int, val iconRes: Int) {
     data object Home     : Dest("home",     R.string.nav_home,     R.drawable.ic_nav_home)
     data object Schedule : Dest("schedule", R.string.nav_schedule, R.drawable.ic_nav_schedule)
     data object Presets  : Dest("presets",  R.string.nav_presets,  R.drawable.ic_nav_presets)
@@ -160,7 +169,7 @@ fun OpenLumenRoot(
 }
 
 @Composable
-private fun LumenBottomNavigation(
+internal fun LumenBottomNavigation(
     currentRoute: String?,
     onDestinationSelected: (Dest) -> Unit
 ) {
@@ -275,17 +284,86 @@ private fun LumenDestinationItem(
                 tint = if (selected) selectedColor else unselectedColor
             )
         }
-        Text(
+        NavDestinationLabel(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
             color = if (selected) selectedColor else unselectedColor,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            selected = selected
         )
     }
 }
+
+/**
+ * A tab label gets a line per word, up to two, and shrinks until every word
+ * fits whole. At 2x font size "Schedule" split into "Sche" and "dule" in a
+ * phone-width bar, and "Controlador" and "Startseite" split even at 1x.
+ */
+@Composable
+internal fun NavDestinationLabel(text: String, color: Color, selected: Boolean) {
+    val theme = MaterialTheme.typography.labelMedium
+    // Sized in the selected weight, the wider one, so a label keeps its size when picked.
+    val sizing = theme.copy(
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
+        // In em, so the line spacing comes down with a label that shrinks.
+        lineHeight = (theme.lineHeight.value / theme.fontSize.value).em
+    )
+    val maxLines = navLabelMaxLines(text)
+    val measurer = rememberTextMeasurer()
+    val floor = with(LocalDensity.current) { NAV_LABEL_FLOOR.toSp() }
+    BoxWithConstraints(contentAlignment = Alignment.Center) {
+        val fontSize = remember(text, sizing, constraints, floor) {
+            navLabelFontSize(measurer, text, sizing, constraints, maxLines, floor)
+        }
+        Text(
+            text = text,
+            style = sizing.copy(
+                fontSize = fontSize,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+            ),
+            color = color,
+            maxLines = maxLines
+        )
+    }
+}
+
+/** A word that does not fit is broken mid-word, so a line per word is the most a label may take. */
+internal fun navLabelMaxLines(text: String): Int = navLabelWords(text).size.coerceIn(1, 2)
+
+private fun navLabelWords(text: String): List<String> = text.trim().split(Regex("\\s+"))
+
+/**
+ * The largest size, from the theme's down to [floor], at which every word of
+ * [text] fits the width whole and the label fits the height. Words are
+ * measured on their own and rounded up, so a word that fits here is never the
+ * one the line breaker splits.
+ */
+internal fun navLabelFontSize(
+    measurer: TextMeasurer,
+    text: String,
+    style: TextStyle,
+    constraints: Constraints,
+    maxLines: Int,
+    floor: TextUnit
+): TextUnit {
+    val words = navLabelWords(text)
+    val bounds = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
+    var size = style.fontSize.value
+    while (size > floor.value) {
+        val candidate = style.copy(fontSize = size.sp)
+        val wordsFit = words.all { word ->
+            measurer.measure(word, candidate, softWrap = false, maxLines = 1).size.width <= constraints.maxWidth
+        }
+        if (wordsFit && !measurer.measure(text, candidate, maxLines = maxLines, constraints = bounds).hasVisualOverflow) {
+            return size.sp
+        }
+        size -= NAV_LABEL_STEP_SP
+    }
+    return floor
+}
+
+/** Absolute, so it does not grow with the font size it is there to make room for. */
+private val NAV_LABEL_FLOOR = 8.dp
+private const val NAV_LABEL_STEP_SP = 0.5f
 
 internal data class NavigationRailMetrics(
     val width: Dp,
