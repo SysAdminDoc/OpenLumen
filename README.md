@@ -115,6 +115,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Intensity slider (0 to 100% lerp toward identity) and dim slider (0 to 95%)
 - Contrast multiplier (0.5 to 2.0×)
 - AMOLED true-black clamp (opt-in; snaps very dim subpixels to fully off)
+- Grayscale under any preset, so a tint stays on a gray screen (SurfaceFlinger and System Night Light drivers)
 - Blue-channel reduction indicator (physical measurement; not a sleep claim)
 
 **Scheduling**
@@ -135,6 +136,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 **Command surfaces**
 
 - Quick Settings tile (subtitle shows active preset; long-press opens the app)
+- Grayscale tile and four preset tiles that follow your favorites
 - 1 × 1 toggle widget
 - 4 × 1 favorites widget (tap a chip to switch presets)
 - Foreground-service notification with Turn-off and Next-preset actions

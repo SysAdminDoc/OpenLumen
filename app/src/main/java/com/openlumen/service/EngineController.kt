@@ -11,6 +11,7 @@ import com.openlumen.engine.EngineKind
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
 import com.openlumen.engine.engines.OverlayEngine
+import com.openlumen.engine.withGrayscale
 import com.openlumen.prefs.DirectBootState
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.Preferences
@@ -39,7 +40,14 @@ internal class EngineController(
      * or another app changed it (C346). Defaulted so the existing tests, which
      * exercise the engine ladder rather than the watch, construct unchanged.
      */
-    private val onSecureRowsReleased: suspend (Map<String, String>) -> Unit = {}
+    private val onSecureRowsReleased: suspend (Map<String, String>) -> Unit = {},
+    /**
+     * True while the system shows the screen in gray by itself (LineageOS
+     * reading mode, or grayscale colour correction). The SurfaceFlinger
+     * driver replaces the matrix that gray lives in, so it has to carry the
+     * gray itself (#32).
+     */
+    private val systemGrayscale: () -> Boolean = { false }
 ) {
     @Volatile private var engine: ColorEngine? = null
     @Volatile private var transitionJob: Job? = null
@@ -50,6 +58,12 @@ internal class EngineController(
     @Volatile private var cachedAutoKind: EngineKind? = null
     @Volatile private var lastEngineSelection: EngineKindDto? = null
     private val secureWatch = SecureSettingsWatch(context, scope, onSecureRowsReleased)
+
+    /**
+     * Set when a turn-off left the system's own gray on screen rather than
+     * identity (#32), so the shutdown sweep that follows does not wipe it.
+     */
+    @Volatile private var systemGrayHandedBack = false
 
     /**
      * True once the blind root sweep has run with nothing applied since (C325).
@@ -185,6 +199,7 @@ internal class EngineController(
     suspend fun hardClearOutputs(reason: String, blunt: Boolean = false) {
         cancelTransition()
         applyMutex.withLock {
+            val clearedEngine = engine
             engine?.let {
                 reportResult("engine.clear() during hard clear", runCatching {
                     it.clear(context)
@@ -226,6 +241,10 @@ internal class EngineController(
                     )
                 }
                 .onFailure { Log.w(logTag, "root hard clear failed: ${it.message}") }
+            // An emergency reset clears everything on purpose. An ordinary
+            // turn-off only takes the filter away and gives back what the
+            // system was showing underneath it.
+            if (!blunt) handBackSystemGrayscale(clearedEngine)
             secureWatch.stop()
             engine = null
             lastApplied = null
@@ -292,7 +311,35 @@ internal class EngineController(
     suspend fun clearActiveEngineForShutdown() {
         val current = engine ?: return
         secureWatch.stop()
+        if (handBackSystemGrayscale(current)) return
         runCatching { current.clear(context) }
+    }
+
+    /**
+     * Leave the system's own gray on screen when the SurfaceFlinger driver lets
+     * go (#32).
+     *
+     * Clearing the driver's matrix sends identity, and the system does not
+     * re-send the reading-mode or grayscale matrix it had there until that
+     * setting next changes, so turning the filter off on a gray screen used to
+     * bring the colour back. Writing the bare gray instead leaves the screen
+     * the way the system has it; when the user later switches the gray off,
+     * the system writes identity over this itself.
+     */
+    private suspend fun handBackSystemGrayscale(current: ColorEngine?): Boolean {
+        if (current?.kind != EngineKind.SURFACE_FLINGER || !systemGrayscale()) return false
+        val ok = runCatching { current.apply(context, LumenMatrix.IDENTITY.withGrayscale(1f)) }
+            .getOrNull() == EngineResult.Success
+        systemGrayHandedBack = ok
+        if (ok) {
+            DiagnosticsLog.log(
+                context,
+                DiagnosticsLog.Level.INFO,
+                DiagnosticsLog.Category.ENGINE,
+                "turn-off: left the system's grayscale on the SurfaceFlinger matrix"
+            )
+        }
+        return ok
     }
 
     /**
@@ -304,7 +351,7 @@ internal class EngineController(
         // stopSelf() follows a hard clear by milliseconds on the ordinary
         // paths, so this is usually the third identical sweep of one turn-off
         // (C325). It still runs when the service is stopped some other way.
-        if (rootTransformsSwept) return
+        if (rootTransformsSwept || systemGrayHandedBack) return
         runCatching { DisplayEmergencyReset.clearRootTransforms(context = null) }
             .onSuccess { result ->
                 if (result.surfaceFlingerCodes.isNotEmpty() || result.kcalPaths.isNotEmpty()) {
@@ -476,7 +523,17 @@ internal class EngineController(
                 // documented here already (C256, C257), and both leave a
                 // transform the blunt sweep is the only thing that can clear.
                 rootTransformsSwept = false
-                val result = runCatching { current.apply(context, matrix) }
+                systemGrayHandedBack = false
+                // The gate, the ramp and lastApplied all deal in the target
+                // the user chose. Only what reaches the driver carries the
+                // system's gray, so a change to that setting can be picked up
+                // by re-applying the same target.
+                val output = if (current.kind == EngineKind.SURFACE_FLINGER && systemGrayscale()) {
+                    matrix.withGrayscale(1f)
+                } else {
+                    matrix
+                }
+                val result = runCatching { current.apply(context, output) }
                     .getOrElse { EngineResult.Failure(it.message ?: "exception") }
                 when (result) {
                     EngineResult.Success -> {

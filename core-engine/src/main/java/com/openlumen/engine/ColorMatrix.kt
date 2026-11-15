@@ -73,7 +73,21 @@ data class LumenMatrix(
     val matrixGb: Float = 0f,
     val matrixBr: Float = 0f,
     val matrixBg: Float = 0f,
-    val matrixBb: Float = 1f
+    val matrixBb: Float = 1f,
+    /**
+     * How far the picture goes to gray underneath a tint, 0 to 1 (#32).
+     *
+     * The full-matrix path already carries the gray stage in the matrix
+     * fields, so this is for the drivers that cannot multiply. The
+     * secure-settings driver reads it as "select the system's monochromacy
+     * mode and keep Night Light on at the tint's temperature", which the
+     * system composes into a tinted gray. It is only set when [r], [g] and
+     * [b] are a tint the user chose. A grayscale or colour-vision preset's
+     * scalars are a fallback for its correction mode, not a tint, so
+     * [withGrayscale] leaves this at zero for those and the mode alone
+     * renders them.
+     */
+    val desaturation: Float = 0f
 ) {
     /** Scale factor [0,1] for a final brightness reduction beyond panel minimum. */
     val effectiveDim: Float get() = dim.finiteIn(0f, 0.95f, default = 0f)
@@ -240,7 +254,8 @@ data class LumenMatrix(
             matrixGb = lerpF(fromMatrix[5], toMatrix[5], u),
             matrixBr = lerpF(fromMatrix[6], toMatrix[6], u),
             matrixBg = lerpF(fromMatrix[7], toMatrix[7], u),
-            matrixBb = lerpF(fromMatrix[8], toMatrix[8], u)
+            matrixBb = lerpF(fromMatrix[8], toMatrix[8], u),
+            desaturation = lerpF(desaturation, target.desaturation, u)
         )
     }
 
@@ -264,7 +279,8 @@ data class LumenMatrix(
             biasB = biasB * u,
             gammaR = 1f + (gammaR - 1f) * u,
             gammaG = 1f + (gammaG - 1f) * u,
-            gammaB = 1f + (gammaB - 1f) * u
+            gammaB = 1f + (gammaB - 1f) * u,
+            desaturation = desaturation * u
         )
         if (!hasColorMatrix) return scalar
         return scalar.copy(

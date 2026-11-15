@@ -70,6 +70,7 @@ interface OpenLumenScreenModel {
     fun setIntensity(value: Float): Job
     fun setDim(value: Float): Job
     fun setAmoledBlackClamp(enabled: Boolean): Job
+    fun setGrayscale(enabled: Boolean): Job
     fun setContrast(value: Float): Job
     fun setCustomRgb(r: Float, g: Float, b: Float): Job
     fun setCustomKelvin(kelvin: Int): Job

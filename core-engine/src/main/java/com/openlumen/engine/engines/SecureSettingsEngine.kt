@@ -284,7 +284,12 @@ class SecureSettingsEngine : ColorEngine {
             // Light on underneath the correction at a temperature nobody asked
             // for. Protan's fallback reads as cool, which pushed the screen
             // bluer than no filter at all (C298).
-            val tinted = matrix.daltonizer == Daltonizer.NONE && !isNeutralChromaticity(matrix)
+            // The exception is a gray stage under a tint the user chose (#32).
+            // Monochromacy plus Night Light is how the system draws a tinted
+            // gray, so there both rows are wanted; `desaturation` is only set
+            // when the scalars are that tint rather than a fallback.
+            val tinted = !isNeutralChromaticity(matrix) &&
+                (matrix.daltonizer == Daltonizer.NONE || matrix.desaturation >= 0.5f)
             val correction = matrix.daltonizer
 
             try {

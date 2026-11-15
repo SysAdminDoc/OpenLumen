@@ -275,6 +275,7 @@ private class PreviewScreenModel(
     override fun setIntensity(value: Float): Job = Job()
     override fun setDim(value: Float): Job = Job()
     override fun setAmoledBlackClamp(enabled: Boolean): Job = Job()
+    override fun setGrayscale(enabled: Boolean): Job = Job()
     override fun setContrast(value: Float): Job = Job()
     override fun setCustomRgb(r: Float, g: Float, b: Float): Job = Job()
     override fun setCustomKelvin(kelvin: Int): Job = Job()

@@ -29,7 +29,8 @@ object Profiles {
         favoritePresetKeys = current.favoritePresetKeys,
         transitionDurationMs = current.transitionDurationMs,
         contrast = current.contrast,
-        amoledBlackClamp = current.amoledBlackClamp
+        amoledBlackClamp = current.amoledBlackClamp,
+        grayscale = current.grayscale
     )
 
     /**
@@ -57,6 +58,7 @@ object Profiles {
             transitionDurationMs = snapshot.transitionDurationMs,
             contrast = snapshot.contrast,
             amoledBlackClamp = snapshot.amoledBlackClamp,
+            grayscale = snapshot.grayscale,
             previousPresetKey = current.activePresetKey
                 .takeIf {
                     it != Preferences.CUSTOM_PRESET_KEY && it != snapshot.activePresetKey

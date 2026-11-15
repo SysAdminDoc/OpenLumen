@@ -25,6 +25,9 @@
     <string name="home_luminance_reduction">体感輝度を%1$d%%削減</string>
     <string name="home_amoled_clamp_title">AMOLED 完全黒</string>
     <string name="home_amoled_clamp_subtitle">非常に暗いサブピクセルを完全にオフにします。液晶パネルでは効果がありません。</string>
+    <string name="home_grayscale_title">グレースケール</string>
+    <string name="home_grayscale_subtitle">先に色を抜いてからグレーに色味を付けます。アンバーはアンバーのまま、ほかの色は画面に出ません。</string>
+    <string name="home_grayscale_unsupported">オーバーレイと KCAL のドライバーは色味を付けることしかできないため、効果はありません。システムの夜間モードと SurfaceFlinger では表示できます。</string>
     <string name="home_kelvin_title">色温度</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d ケルビン</string>
@@ -95,6 +98,7 @@
     <string name="diff_light_sensor_threshold">照度センサーしきい値 (lux)</string>
     <string name="diff_contrast">コントラスト</string>
     <string name="diff_amoled_clamp">AMOLED 完全黒</string>
+    <string name="diff_grayscale">グレースケール</string>
     <string name="diff_sunset_offset">日の入りのオフセット（分）</string>
     <string name="diff_sunrise_offset">日の出のオフセット（分）</string>
     <string name="diff_favorites">お気に入り</string>
@@ -266,6 +270,10 @@
     <string name="system_conflict_scheduled_body">夜間モードは現在オフですが、独自のスケジュールでオンになり、その後は変更のたびにフィルタを置き換えます。フィルタを安定させるには夜間モードのスケジュールを「なし」にしてください。</string>
     <string name="system_conflict_night_light_scheduled_at">夜間モードは %1$s に自動でオンになります</string>
     <string name="system_conflict_night_light_scheduled_sunset">夜間モードは日の入りに自動でオンになります</string>
+    <string name="system_conflict_overlay_gray_title">システムのグレースケールが色味をグレーにしています</string>
+    <string name="system_conflict_overlay_gray_body">オーバーレイ ドライバーは色味を画面の一部として描くため、システムのグレースケールが色味の色も抜いてしまいます。グレーの上に色味を残すには、システムの設定をオフにして、システムの夜間モードまたは SurfaceFlinger ドライバーでホーム タブのグレースケール スイッチを使ってください。</string>
+    <string name="system_conflict_reading_mode_on">読書モードがオンです</string>
+    <string name="system_conflict_grayscale_correction_on">グレースケールの色補正がオンです</string>
     <string name="notif_title_filtering">OpenLumen フィルタ適用中</string>
     <string name="notif_title_standby">OpenLumen 待機中</string>
     <string name="notif_status_filtering">フィルタ適用中</string>
@@ -285,6 +293,12 @@
     <string name="tile_on">オン</string>
     <string name="tile_subtitle_off">フィルターオフ</string>
     <string name="tile_subtitle_on">%1$s</string>
+    <string name="tile_label_grayscale">グレースケール</string>
+    <string name="tile_label_preset_1">プリセット 1</string>
+    <string name="tile_label_preset_2">プリセット 2</string>
+    <string name="tile_label_preset_3">プリセット 3</string>
+    <string name="tile_label_preset_4">プリセット 4</string>
+    <string name="tile_subtitle_slot_empty">プリセットでお気に入りをマーク</string>
     <string name="widget_preset_hint">お気に入りをプリセットでマークすると、ここに表示されます</string>
 
     <string name="perm_automation_label">OpenLumen 自動化</string>

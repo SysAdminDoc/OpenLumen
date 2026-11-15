@@ -108,6 +108,80 @@
                 android:value="com.openlumen.MainActivity" />
         </service>
 
+        <!--
+            Grayscale and favourite-slot tiles (#32). Tiles are fixed in the
+            manifest, so the preset tiles follow the first four favourites.
+        -->
+        <service
+            android:name=".service.GrayscaleTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_lumen_tile"
+            android:label="@string/tile_label_grayscale"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.PREFERENCES_ACTIVITY"
+                android:value="com.openlumen.MainActivity" />
+        </service>
+
+        <service
+            android:name=".service.PresetSlot1TileService"
+            android:exported="true"
+            android:icon="@drawable/ic_lumen_tile"
+            android:label="@string/tile_label_preset_1"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.PREFERENCES_ACTIVITY"
+                android:value="com.openlumen.MainActivity" />
+        </service>
+
+        <service
+            android:name=".service.PresetSlot2TileService"
+            android:exported="true"
+            android:icon="@drawable/ic_lumen_tile"
+            android:label="@string/tile_label_preset_2"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.PREFERENCES_ACTIVITY"
+                android:value="com.openlumen.MainActivity" />
+        </service>
+
+        <service
+            android:name=".service.PresetSlot3TileService"
+            android:exported="true"
+            android:icon="@drawable/ic_lumen_tile"
+            android:label="@string/tile_label_preset_3"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.PREFERENCES_ACTIVITY"
+                android:value="com.openlumen.MainActivity" />
+        </service>
+
+        <service
+            android:name=".service.PresetSlot4TileService"
+            android:exported="true"
+            android:icon="@drawable/ic_lumen_tile"
+            android:label="@string/tile_label_preset_4"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.PREFERENCES_ACTIVITY"
+                android:value="com.openlumen.MainActivity" />
+        </service>
+
         <receiver
             android:name=".service.BootReceiver"
             android:directBootAware="true"

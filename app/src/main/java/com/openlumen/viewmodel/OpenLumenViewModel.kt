@@ -229,6 +229,10 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     /** AMOLED true-black clamp (C66). Off by default; safe no-op on LCD. */
+    override fun setGrayscale(enabled: Boolean) = viewModelScope.launch {
+        prefs.update { it.copy(grayscale = enabled) }
+    }
+
     override fun setAmoledBlackClamp(enabled: Boolean) = viewModelScope.launch {
         prefs.update { it.copy(amoledBlackClamp = enabled) }
     }

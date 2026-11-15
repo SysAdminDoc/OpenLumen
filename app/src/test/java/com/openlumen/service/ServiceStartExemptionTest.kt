@@ -22,6 +22,7 @@ class ServiceStartExemptionTest {
         val callers = mapOf(
             "MainActivity.kt" to "USER_INTERACTION",
             "service/LumenTileService.kt" to "USER_INTERACTION",
+            "service/QuickActionTiles.kt" to "USER_INTERACTION",
             "service/BootReceiver.kt" to "BOOT",
             "service/LockedBootReceiver.kt" to "BOOT",
             "service/ScheduleAlarmReceiver.kt" to "EXACT_ALARM",

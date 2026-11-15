@@ -973,6 +973,7 @@ private fun describeDiff(
         enabledLabel(context, current.amoledBlackClamp),
         enabledLabel(context, next.amoledBlackClamp)
     )
+    diff(R.string.diff_grayscale, enabledLabel(context, current.grayscale), enabledLabel(context, next.grayscale))
     diff(R.string.diff_light_sensor, enabledLabel(context, current.lightSensorEnabled), enabledLabel(context, next.lightSensorEnabled))
     if (current.lightSensorEnabled || next.lightSensorEnabled) {
         diff(

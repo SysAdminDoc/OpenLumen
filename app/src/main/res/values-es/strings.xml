@@ -25,6 +25,9 @@
     <string name="home_luminance_reduction">Brillo percibido reducido en %1$d%%</string>
     <string name="home_amoled_clamp_title">Negro puro AMOLED</string>
     <string name="home_amoled_clamp_subtitle">Fuerza los subpíxeles muy tenues a apagarse por completo. Sin efecto en paneles LCD.</string>
+    <string name="home_grayscale_title">Escala de grises</string>
+    <string name="home_grayscale_subtitle">Primero quita el color y luego tiñe el gris, así el ámbar sigue siendo ámbar sin otros colores en pantalla.</string>
+    <string name="home_grayscale_unsupported">Los controladores Overlay y KCAL solo pueden teñir, así que no tiene efecto con ellos. Luz nocturna del sistema y SurfaceFlinger sí pueden mostrarlo.</string>
     <string name="home_kelvin_title">Temperatura de color</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
@@ -95,6 +98,7 @@
     <string name="diff_light_sensor_threshold">Umbral del sensor de luz (lux)</string>
     <string name="diff_contrast">Contraste</string>
     <string name="diff_amoled_clamp">Negro puro AMOLED</string>
+    <string name="diff_grayscale">Escala de grises</string>
     <string name="diff_sunset_offset">Desfase del atardecer (min)</string>
     <string name="diff_sunrise_offset">Desfase del amanecer (min)</string>
     <string name="diff_favorites">Favoritos</string>
@@ -266,6 +270,10 @@
     <string name="system_conflict_scheduled_body">Luz nocturna está desactivada ahora, pero su propia programación la activará, y desde entonces reemplazará el filtro en cada cambio. Pon la programación de Luz nocturna en Ninguna para un filtro estable.</string>
     <string name="system_conflict_night_light_scheduled_at">Luz nocturna se activa a las %1$s</string>
     <string name="system_conflict_night_light_scheduled_sunset">Luz nocturna se activa al atardecer</string>
+    <string name="system_conflict_overlay_gray_title">La escala de grises del sistema vuelve gris el tinte</string>
+    <string name="system_conflict_overlay_gray_body">El controlador Overlay dibuja su tinte dentro de la imagen, así que la escala de grises del sistema también le quita el color al tinte. Para mantener el tinte sobre el gris, desactiva el ajuste del sistema y usa el interruptor Escala de grises de la pestaña Inicio con el controlador Luz nocturna del sistema o SurfaceFlinger.</string>
+    <string name="system_conflict_reading_mode_on">El modo lectura está activado</string>
+    <string name="system_conflict_grayscale_correction_on">La corrección de color en escala de grises está activada</string>
     <string name="notif_title_filtering">OpenLumen filtrando</string>
     <string name="notif_title_standby">OpenLumen en espera</string>
     <string name="notif_status_filtering">Filtro activo</string>
@@ -285,6 +293,12 @@
     <string name="tile_on">Activado</string>
     <string name="tile_subtitle_off">Filtro desactivado</string>
     <string name="tile_subtitle_on">%1$s</string>
+    <string name="tile_label_grayscale">Escala de grises</string>
+    <string name="tile_label_preset_1">Ajuste 1</string>
+    <string name="tile_label_preset_2">Ajuste 2</string>
+    <string name="tile_label_preset_3">Ajuste 3</string>
+    <string name="tile_label_preset_4">Ajuste 4</string>
+    <string name="tile_subtitle_slot_empty">Marque un favorito en Ajustes predefinidos</string>
     <string name="widget_preset_hint">Marque favoritos en Ajustes predefinidos para llenar estos espacios</string>
 
     <string name="perm_automation_label">Automatización de OpenLumen</string>

@@ -85,6 +85,13 @@ class LumenService : LifecycleService() {
     private lateinit var systemColorWatcher: SystemColorSettingsWatcher
     @Volatile private var systemColorReassertJob: Job? = null
     @Volatile private var reportedSystemConflicts: Set<SystemColorConflict> = emptySet()
+
+    /**
+     * Whether the system is showing the screen in gray by itself, read when
+     * the watcher registers and again on every change it reports, so an apply
+     * never has to make Binder calls to find out (#32).
+     */
+    @Volatile private var systemGrayscaleActive = false
     private val ambientLightGate = AmbientLightGate()
     private val directBootMirror: DirectBootMirror by lazy {
         DirectBootMirror(directBootState, tag)
@@ -152,7 +159,8 @@ class LumenService : LifecycleService() {
             scope = lifecycleScope,
             isUserUnlocked = ::isUserUnlocked,
             logTag = tag,
-            onSecureRowsReleased = ::onSecureRowsReleased
+            onSecureRowsReleased = ::onSecureRowsReleased,
+            systemGrayscale = { systemGrayscaleActive }
         )
         scheduleAlarms = ScheduleAlarmOrchestrator(
             context = this,
@@ -206,6 +214,7 @@ class LumenService : LifecycleService() {
             onChange = ::onSystemColorSettingsChanged
         )
         systemColorWatcher.register()
+        systemGrayscaleActive = systemColorWatcher.readState().systemGrayscale
         startInForeground()
         registerScreenStateReceiver()
         ensurePreferencesObserved()
@@ -644,11 +653,10 @@ class LumenService : LifecycleService() {
      * identity. Put the filter back once the system's write has landed.
      */
     private fun onSystemColorSettingsChanged() {
+        val state = systemColorWatcher.readState()
+        systemGrayscaleActive = state.systemGrayscale
         if (engineController.activeEngineKind() != EngineKind.SURFACE_FLINGER) return
-        val conflicts = systemColorConflicts(
-            engineController.activeEngineKind(),
-            systemColorWatcher.readState()
-        )
+        val conflicts = systemColorConflicts(engineController.activeEngineKind(), state)
         DiagnosticsLog.log(
             this,
             DiagnosticsLog.Level.WARN,

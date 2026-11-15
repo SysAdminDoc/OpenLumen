@@ -24,7 +24,8 @@ data class ProfileSnapshot(
     val favoritePresetKeys: List<String>,
     val transitionDurationMs: Long,
     val contrast: Float = 1.0f,
-    val amoledBlackClamp: Boolean = false
+    val amoledBlackClamp: Boolean = false,
+    val grayscale: Boolean = false
 )
 
 @Serializable
@@ -86,7 +87,9 @@ data class MatrixDto(
      * does not depend on core-engine, and so that a mode written by a newer
      * build degrades to none instead of failing the whole decode.
      */
-    val daltonizer: String? = null
+    val daltonizer: String? = null,
+    /** [com.openlumen.engine.LumenMatrix.desaturation]; zero for every stored preset. */
+    val desaturation: Float = 0f
 )
 
 @Serializable
@@ -191,6 +194,16 @@ data class Preferences(
      * `LumenService.matrixFor()`.
      */
     val contrast: Float = 1.0f,
+    /**
+     * Take the screen to gray before the preset's tint, so amber stays amber
+     * with the colour taken out (#32). A modifier on whatever preset is
+     * active rather than a preset of its own, so it can be switched on and
+     * off without losing the tint. Rendered by the SurfaceFlinger driver as a
+     * matrix and by the secure-settings driver as the system's monochromacy
+     * mode under Night Light; the overlay and KCAL cannot take colour out of
+     * the picture and ignore it.
+     */
+    val grayscale: Boolean = false,
     /**
      * Previous named-preset key, tracked across user-driven preset changes so
      * the "Undo last preset change" action and the in-app

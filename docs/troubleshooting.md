@@ -157,6 +157,25 @@ screen, and the package installer intent. PackageInstaller may stay as
 `REVIEW` on emulators that resolve the intent but do not keep a stable visible
 installer window; keep that line in the issue instead of rewriting it.
 
+## "LineageOS reading mode and the filter cancel each other"
+
+Reading mode is a gray matrix the system applies to the whole screen. Whether
+it combines with a tint depends on where the driver puts its colour.
+
+| Driver | With reading mode on |
+|---|---|
+| SurfaceFlinger (root) | The driver writes the same matrix reading mode lives in. It draws the gray under the tint itself, so you get a tinted gray, and turning the filter off leaves reading mode as it was. |
+| System Night Light | The system draws its gray first and Night Light over it, so the two combine into a tinted gray by themselves. |
+| KCAL (root) | KCAL scales the panel after the system's matrix, so the tint lands on top of the gray. |
+| Overlay | The overlay is part of the picture the system grays, so the tint goes gray too. Home names the setting. Switch reading mode off and use one of the drivers above for a tint over gray. |
+
+The same applies to colour correction set to Grayscale.
+
+If you want gray with a tint and don't need the system's reading mode for
+anything else, the Grayscale switch on Home does it from inside OpenLumen. It
+keeps whichever preset is active and can be flipped from the Grayscale tile in
+Quick Settings. It works on the SurfaceFlinger and System Night Light drivers.
+
 ## "Tile is missing from Quick Settings"
 
 1. Open Quick Settings → edit (pencil icon) → drag "OpenLumen" into the
@@ -165,6 +184,9 @@ installer window; keep that line in the issue instead of rewriting it.
    long-press an empty QS slot.
 3. On a fresh install, the tile may not appear until the app has been
    opened once.
+4. Grayscale and Preset 1 to 4 are separate tiles in the same list. A preset
+   tile follows that place in your favorites and shows as unavailable while
+   the place is empty.
 
 ## "After a crash the filter doesn't come back on reboot"
 

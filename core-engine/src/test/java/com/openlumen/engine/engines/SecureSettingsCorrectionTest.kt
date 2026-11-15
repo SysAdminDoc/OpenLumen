@@ -8,6 +8,7 @@ import com.openlumen.engine.EngineResult
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
 import com.openlumen.engine.unsupportedBy
+import com.openlumen.engine.withGrayscale
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -115,6 +116,31 @@ class SecureSettingsCorrectionTest {
         // changing nothing on screen.
         assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(MISSING)
         assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE)).isEqualTo(MISSING)
+    }
+
+    @Test fun `amber over gray keeps Night Light on under the system grayscale`() = runBlocking {
+        // #32. The system draws monochromacy first and Night Light over it, so
+        // both rows together are how this driver shows a tinted gray. The C298
+        // rule that a correction mode carries no temperature is about a
+        // preset's fallback scalars, and these scalars are the user's tint.
+        SecureSettingsEngine().apply(context, Presets.AMBER.withGrayscale(1f))
+
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_ENABLED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_MODE))
+            .isEqualTo(Daltonizer.MONOCHROMACY.secureValue)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(1)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_TEMPERATURE))
+            .isLessThan(SecureSettingsEngine.DEFAULT_TEMPERATURE)
+    }
+
+    @Test fun `the grayscale switch on a correction preset adds no Night Light`() = runBlocking {
+        // Positive control for the rule above: Protan's scalars are a cool
+        // fallback, and taking them for a tint would turn the screen bluer.
+        SecureSettingsEngine().apply(context, Presets.byKey("protan")!!.matrix.withGrayscale(1f))
+
+        assertThat(secure(SecureSettingsEngine.KEY_CORRECTION_MODE))
+            .isEqualTo(Daltonizer.MONOCHROMACY.secureValue)
+        assertThat(secure(SecureSettingsEngine.KEY_NIGHT_ACTIVATED)).isEqualTo(MISSING)
     }
 
     @Test fun `a warm preset still writes its colour temperature`() = runBlocking {

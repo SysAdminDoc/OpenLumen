@@ -25,6 +25,9 @@
     <string name="home_luminance_reduction">Wahrgenommene Helligkeit um %1$d%% reduziert</string>
     <string name="home_amoled_clamp_title">AMOLED Tiefschwarz</string>
     <string name="home_amoled_clamp_subtitle">Sehr dunkle Subpixel werden vollständig abgeschaltet. Keine Wirkung bei LCD-Panels.</string>
+    <string name="home_grayscale_title">Graustufen</string>
+    <string name="home_grayscale_subtitle">Zuerst wird die Farbe entfernt und dann das Grau getönt, sodass Bernstein Bernstein bleibt und keine anderen Farben zu sehen sind.</string>
+    <string name="home_grayscale_unsupported">Die Treiber Overlay und KCAL können nur tönen, deshalb hat das bei ihnen keine Wirkung. System-Nachtlicht und SurfaceFlinger können es darstellen.</string>
     <string name="home_kelvin_title">Farbtemperatur</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
@@ -95,6 +98,7 @@
     <string name="diff_light_sensor_threshold">Lichtsensor-Schwellenwert (Lux)</string>
     <string name="diff_contrast">Kontrast</string>
     <string name="diff_amoled_clamp">AMOLED Tiefschwarz</string>
+    <string name="diff_grayscale">Graustufen</string>
     <string name="diff_sunset_offset">Versatz Sonnenuntergang (Min.)</string>
     <string name="diff_sunrise_offset">Versatz Sonnenaufgang (Min.)</string>
     <string name="diff_favorites">Favoriten</string>
@@ -266,6 +270,10 @@
     <string name="system_conflict_scheduled_body">Das Nachtlicht ist jetzt aus, aber sein eigener Zeitplan schaltet es ein, und ab dann ersetzt es den Filter bei jeder Änderung. Setze den Nachtlicht-Zeitplan auf „Keiner“, damit der Filter stabil bleibt.</string>
     <string name="system_conflict_night_light_scheduled_at">Nachtlicht schaltet sich um %1$s ein</string>
     <string name="system_conflict_night_light_scheduled_sunset">Nachtlicht schaltet sich bei Sonnenuntergang ein</string>
+    <string name="system_conflict_overlay_gray_title">System-Graustufen machen die Tönung grau</string>
+    <string name="system_conflict_overlay_gray_body">Der Overlay-Treiber zeichnet seine Tönung ins Bild, daher nehmen die Graustufen des Systems auch der Tönung die Farbe. Damit die Tönung über dem Grau bleibt, schalten Sie die Systemeinstellung aus und verwenden Sie den Graustufen-Schalter auf der Startseite mit dem Treiber System-Nachtlicht oder SurfaceFlinger.</string>
+    <string name="system_conflict_reading_mode_on">Lesemodus ist an</string>
+    <string name="system_conflict_grayscale_correction_on">Farbkorrektur Graustufen ist an</string>
     <string name="notif_title_filtering">OpenLumen filtert</string>
     <string name="notif_title_standby">OpenLumen Bereitschaft</string>
     <string name="notif_status_filtering">Filter aktiv</string>
@@ -285,6 +293,12 @@
     <string name="tile_on">An</string>
     <string name="tile_subtitle_off">Filter aus</string>
     <string name="tile_subtitle_on">%1$s</string>
+    <string name="tile_label_grayscale">Graustufen</string>
+    <string name="tile_label_preset_1">Vorlage 1</string>
+    <string name="tile_label_preset_2">Vorlage 2</string>
+    <string name="tile_label_preset_3">Vorlage 3</string>
+    <string name="tile_label_preset_4">Vorlage 4</string>
+    <string name="tile_subtitle_slot_empty">Favoriten unter Vorlagen markieren</string>
     <string name="widget_preset_hint">Markieren Sie Favoriten unter Vorlagen, um diese Plätze zu füllen</string>
 
     <string name="perm_automation_label">OpenLumen-Automatisierung</string>

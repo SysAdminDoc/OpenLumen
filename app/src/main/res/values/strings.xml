@@ -26,6 +26,9 @@
     <string name="home_luminance_reduction">Perceived brightness reduced by %1$d%%</string>
     <string name="home_amoled_clamp_title">AMOLED true-black</string>
     <string name="home_amoled_clamp_subtitle">Snap very dim subpixels to fully off. No effect on LCD panels.</string>
+    <string name="home_grayscale_title">Grayscale</string>
+    <string name="home_grayscale_subtitle">Take the color out first and tint the gray, so amber stays amber with no other colors on screen.</string>
+    <string name="home_grayscale_unsupported">The Overlay and KCAL drivers can only tint, so this has no effect on them. System Night Light and SurfaceFlinger can show it.</string>
     <string name="home_kelvin_title">Color temperature</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
@@ -120,6 +123,7 @@
     <string name="diff_light_sensor_threshold">Light sensor threshold (lux)</string>
     <string name="diff_contrast">Contrast</string>
     <string name="diff_amoled_clamp">AMOLED true-black</string>
+    <string name="diff_grayscale">Grayscale</string>
     <string name="diff_sunset_offset">Sunset offset (min)</string>
     <string name="diff_sunrise_offset">Sunrise offset (min)</string>
     <string name="diff_favorites">Favorites</string>
@@ -304,6 +308,10 @@
     <string name="system_conflict_scheduled_body">Night Light is off now, but its own schedule will switch it on, and from then it replaces the filter on every change. Set the Night Light schedule to None to keep the filter steady.</string>
     <string name="system_conflict_night_light_scheduled_at">Night Light turns itself on at %1$s</string>
     <string name="system_conflict_night_light_scheduled_sunset">Night Light turns itself on at sunset</string>
+    <string name="system_conflict_overlay_gray_title">System grayscale is graying the tint</string>
+    <string name="system_conflict_overlay_gray_body">The Overlay driver draws its tint into the picture, so the system\'s grayscale takes the color out of the tint as well. To keep the tint over gray, turn the system setting off and use the Grayscale switch on the Home tab with the System Night Light or SurfaceFlinger driver.</string>
+    <string name="system_conflict_reading_mode_on">Reading mode is on</string>
+    <string name="system_conflict_grayscale_correction_on">Grayscale color correction is on</string>
     <string name="notif_title_filtering">OpenLumen filtering</string>
     <string name="notif_title_standby">OpenLumen standby</string>
     <string name="notif_status_filtering">Filtering active</string>
@@ -323,6 +331,12 @@
     <string name="tile_on">On</string>
     <string name="tile_subtitle_off">Filter off</string>
     <string name="tile_subtitle_on">%1$s</string>
+    <string name="tile_label_grayscale">Grayscale</string>
+    <string name="tile_label_preset_1">Preset 1</string>
+    <string name="tile_label_preset_2">Preset 2</string>
+    <string name="tile_label_preset_3">Preset 3</string>
+    <string name="tile_label_preset_4">Preset 4</string>
+    <string name="tile_subtitle_slot_empty">Mark a favorite in Presets</string>
     <string name="widget_preset_hint">Mark favorites in Presets to fill these slots</string>
 
     <string name="perm_automation_label">OpenLumen automation</string>

@@ -4,6 +4,7 @@ import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
 import com.openlumen.engine.composeDim
 import com.openlumen.engine.withContrast
+import com.openlumen.engine.withGrayscale
 
 /**
  * The [LumenMatrix] a [Preferences] snapshot resolves to.
@@ -33,6 +34,9 @@ fun Preferences.effectiveMatrix(): LumenMatrix {
             amoledClamp = amoledBlackClamp
         )
         .withContrast(contrast.coerceIn(Preferences.CONTRAST_MIN, Preferences.CONTRAST_MAX))
+        // Last, so the gray is taken from the source pixel and everything
+        // above, tint, dim and contrast included, is applied to it.
+        .let { if (grayscale) it.withGrayscale(1f) else it }
 }
 
 /**
@@ -95,7 +99,8 @@ fun MatrixDto.toMatrix(amoledClamp: Boolean = false): LumenMatrix = LumenMatrix(
     matrixBb = matrixBb,
     daltonizer = com.openlumen.engine.Daltonizer.entries
         .firstOrNull { it.name == daltonizer }
-        ?: com.openlumen.engine.Daltonizer.NONE
+        ?: com.openlumen.engine.Daltonizer.NONE,
+    desaturation = if (desaturation.isFinite()) desaturation.coerceIn(0f, 1f) else 0f
 )
 
 /** The inverse of [toMatrix]. */
@@ -120,5 +125,6 @@ fun LumenMatrix.toDto(): MatrixDto = MatrixDto(
     matrixBr = matrixBr,
     matrixBg = matrixBg,
     matrixBb = matrixBb,
-    daltonizer = daltonizer.takeIf { it != com.openlumen.engine.Daltonizer.NONE }?.name
+    daltonizer = daltonizer.takeIf { it != com.openlumen.engine.Daltonizer.NONE }?.name,
+    desaturation = desaturation
 )

@@ -61,6 +61,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.R
 import com.openlumen.diagnostics.MatrixPreview
+import com.openlumen.engine.EngineKind
 import com.openlumen.engine.Kelvin
 import com.openlumen.engine.Presets
 import com.openlumen.prefs.EngineKindDto
@@ -280,11 +281,10 @@ fun HomeScreen(
 
         // Only while the filter is on: with it off, the system's Night Light
         // is not overwriting anything and is what the user asked for.
+        val probes by vm.probes.collectAsStateWithLifecycle()
+        val expectedEngine = expectedEngineKind(prefs.engine, prefs.forcePinnedEngine, probes)
         if (prefs.enabled) {
-            val probes by vm.probes.collectAsStateWithLifecycle()
-            SystemColorConflictCard(
-                engine = expectedEngineKind(prefs.engine, prefs.forcePinnedEngine, probes)
-            )
+            SystemColorConflictCard(engine = expectedEngine)
         }
 
         Card(
@@ -542,6 +542,40 @@ fun HomeScreen(
                         checked = prefs.amoledBlackClamp,
                         onCheckedChange = vm::setAmoledBlackClamp,
                         modifier = Modifier.semantics { contentDescription = amoledLabel }
+                    )
+                }
+
+                // Grayscale under the tint (#32). The overlay and KCAL can only
+                // scale the channels, so say so rather than show a switch that
+                // seems to do nothing.
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.home_grayscale_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            stringResource(R.string.home_grayscale_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (expectedEngine == EngineKind.OVERLAY || expectedEngine == EngineKind.KCAL) {
+                            Text(
+                                stringResource(R.string.home_grayscale_unsupported),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                    val grayscaleLabel = stringResource(R.string.home_grayscale_title)
+                    LumenSwitch(
+                        checked = prefs.grayscale,
+                        onCheckedChange = vm::setGrayscale,
+                        modifier = Modifier.semantics { contentDescription = grayscaleLabel }
                     )
                 }
             }

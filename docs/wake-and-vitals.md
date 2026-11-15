@@ -31,7 +31,7 @@ report says which exemption failed rather than only that something did.
 | Start path | Exemption | Why it holds |
 |---|---|---|
 | `MainActivity` recovery | `USER_INTERACTION` | The activity is in the foreground. |
-| `LumenTileService.onClick` | `USER_INTERACTION` | The user tapped the tile. |
+| `LumenTileService.onClick`, `FilterActionTileService.onClick` | `USER_INTERACTION` | The user tapped the tile (the main one, Grayscale, or a preset tile). |
 | `WidgetActionReceiver` | `USER_INTERACTION` | The user tapped the widget; the platform exempts widget interaction. |
 | `ShortcutActivity` | `USER_INTERACTION` | A launcher shortcut starts an activity of ours first. |
 | `BootReceiver`, `LockedBootReceiver` | `BOOT` | `BOOT_COMPLETED` and `LOCKED_BOOT_COMPLETED` are exempt. |

@@ -40,7 +40,9 @@ import com.openlumen.service.systemColorConflicts
 
 /**
  * Names the system colour features that overwrite the SurfaceFlinger driver's
- * matrix, each with a button to the screen that turns it off.
+ * matrix, each with a button to the screen that turns it off. Under the overlay
+ * driver it names the system grayscale modes instead, which take the colour out
+ * of the overlay's tint along with everything else (#32).
  *
  * The service already puts the filter back after every change, but while one
  * of these is on the user sees a flicker on each change and the system feature
@@ -53,7 +55,7 @@ internal fun SystemColorConflictCard(
     engine: EngineKind?,
     modifier: Modifier = Modifier
 ) {
-    if (engine != EngineKind.SURFACE_FLINGER) return
+    if (engine != EngineKind.SURFACE_FLINGER && engine != EngineKind.OVERLAY) return
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var state by remember(engine) { mutableStateOf(readSystemColorState(ctx.contentResolver)) }
@@ -72,6 +74,7 @@ internal fun SystemColorConflictCard(
     // something happening on screen; saying "overriding" for it read as
     // wrong to anyone looking at Night Light switched off.
     val onlyScheduled = conflicts == setOf(SystemColorConflict.NIGHT_LIGHT_SCHEDULED)
+    val overlay = engine == EngineKind.OVERLAY
     var settingsError by rememberSaveable { mutableStateOf(false) }
 
     Card(
@@ -85,16 +88,22 @@ internal fun SystemColorConflictCard(
         ) {
             Text(
                 stringResource(
-                    if (onlyScheduled) R.string.system_conflict_scheduled_title
-                    else R.string.system_conflict_title
+                    when {
+                        overlay -> R.string.system_conflict_overlay_gray_title
+                        onlyScheduled -> R.string.system_conflict_scheduled_title
+                        else -> R.string.system_conflict_title
+                    }
                 ),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Text(
                 stringResource(
-                    if (onlyScheduled) R.string.system_conflict_scheduled_body
-                    else R.string.system_conflict_body
+                    when {
+                        overlay -> R.string.system_conflict_overlay_gray_body
+                        onlyScheduled -> R.string.system_conflict_scheduled_body
+                        else -> R.string.system_conflict_body
+                    }
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -152,6 +161,9 @@ private fun SystemColorConflict.label(state: SystemColorState): String = when (t
     }
     SystemColorConflict.EXTRA_DIM_ON -> stringResource(R.string.system_conflict_extra_dim_on)
     SystemColorConflict.COLOR_INVERSION_ON -> stringResource(R.string.system_conflict_inversion_on)
+    SystemColorConflict.READING_MODE_ON -> stringResource(R.string.system_conflict_reading_mode_on)
+    SystemColorConflict.GRAYSCALE_CORRECTION_ON ->
+        stringResource(R.string.system_conflict_grayscale_correction_on)
 }
 
 /**

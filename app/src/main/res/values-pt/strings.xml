@@ -25,6 +25,9 @@
     <string name="home_luminance_reduction">Brilho percebido reduzido em %1$d%%</string>
     <string name="home_amoled_clamp_title">Preto absoluto AMOLED</string>
     <string name="home_amoled_clamp_subtitle">Desliga subpixels muito escuros completamente. Sem efeito em paineis LCD.</string>
+    <string name="home_grayscale_title">Escala de cinza</string>
+    <string name="home_grayscale_subtitle">Primeiro tira a cor e depois tinge o cinza, assim o âmbar continua âmbar sem outras cores na tela.</string>
+    <string name="home_grayscale_unsupported">Os drivers Overlay e KCAL só conseguem tingir, então isso não tem efeito com eles. Luz noturna do sistema e SurfaceFlinger conseguem mostrar.</string>
     <string name="home_kelvin_title">Temperatura de cor</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
@@ -53,7 +56,7 @@
     <string name="presets_custom">RGB personalizado</string>
     <string name="preset_name_off">Desligado</string>
     <string name="preset_name_night">Noturno</string>
-    <string name="preset_name_amber">Ambar</string>
+    <string name="preset_name_amber">Âmbar</string>
     <string name="preset_name_red">Vermelho</string>
     <string name="preset_name_salmon">Salmao</string>
     <string name="preset_name_sepia">Sepia</string>
@@ -95,6 +98,7 @@
     <string name="diff_light_sensor_threshold">Limiar do sensor de luz (lux)</string>
     <string name="diff_contrast">Contraste</string>
     <string name="diff_amoled_clamp">Preto absoluto AMOLED</string>
+    <string name="diff_grayscale">Escala de cinza</string>
     <string name="diff_sunset_offset">Desvio do pôr do sol (min)</string>
     <string name="diff_sunrise_offset">Desvio do nascer do sol (min)</string>
     <string name="diff_favorites">Favoritos</string>
@@ -266,6 +270,10 @@
     <string name="system_conflict_scheduled_body">A Luz noturna está desativada agora, mas o próprio agendamento vai ligar a função, e a partir daí ela substitui o filtro a cada mudança. Defina o agendamento da Luz noturna como Nenhum para um filtro estável.</string>
     <string name="system_conflict_night_light_scheduled_at">A Luz noturna liga sozinha às %1$s</string>
     <string name="system_conflict_night_light_scheduled_sunset">A Luz noturna liga sozinha ao pôr do sol</string>
+    <string name="system_conflict_overlay_gray_title">A escala de cinza do sistema está deixando o tom cinza</string>
+    <string name="system_conflict_overlay_gray_body">O driver Overlay desenha o seu tom dentro da imagem, então a escala de cinza do sistema também tira a cor do tom. Para manter o tom sobre o cinza, desligue a definição do sistema e use o interruptor Escala de cinza da aba Início com o driver Luz noturna do sistema ou SurfaceFlinger.</string>
+    <string name="system_conflict_reading_mode_on">O modo de leitura está ativado</string>
+    <string name="system_conflict_grayscale_correction_on">A correção de cor em escala de cinza está ativada</string>
     <string name="notif_title_filtering">OpenLumen filtrando</string>
     <string name="notif_title_standby">OpenLumen em espera</string>
     <string name="notif_status_filtering">Filtro ativo</string>
@@ -285,6 +293,12 @@
     <string name="tile_on">Ligado</string>
     <string name="tile_subtitle_off">Filtro desligado</string>
     <string name="tile_subtitle_on">%1$s</string>
+    <string name="tile_label_grayscale">Escala de cinza</string>
+    <string name="tile_label_preset_1">Predefinido 1</string>
+    <string name="tile_label_preset_2">Predefinido 2</string>
+    <string name="tile_label_preset_3">Predefinido 3</string>
+    <string name="tile_label_preset_4">Predefinido 4</string>
+    <string name="tile_subtitle_slot_empty">Marque um favorito em Predefinidos</string>
     <string name="widget_preset_hint">Marque favoritos em Predefinidos para preencher estes espacos</string>
 
     <string name="perm_automation_label">Automação do OpenLumen</string>
