@@ -1,5 +1,6 @@
 package com.openlumen.engine.engines
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -152,7 +153,18 @@ internal fun colorCorrectionIsForeign(
  * matrix-capable path uses Viénot 1999, so the two do not render identically;
  * [EngineCapability.SYSTEM_COLOR_CORRECTION] is how that is disclosed.
  */
-class SecureSettingsEngine : ColorEngine {
+class SecureSettingsEngine internal constructor(
+    /**
+     * Every row read goes through here. The rows are shared with the system
+     * and Robolectric serves them from a plain map, so this is how a test
+     * stands in for a device that refuses a read.
+     */
+    private val readRow: (ContentResolver, String, Int) -> Int,
+    /** Overrides the framework's Extra Dim config, which Robolectric reports as absent. */
+    private val extraDimShipped: ((Context) -> Boolean)? = null
+) : ColorEngine {
+    constructor() : this({ cr, key, default -> Settings.Secure.getInt(cr, key, default) })
+
     override val kind = EngineKind.COLOR_DISPLAY_MANAGER
 
     /**
@@ -271,7 +283,7 @@ class SecureSettingsEngine : ColorEngine {
 
             val temperature = temperatureFor(matrix)
             val dimLevel = reduceBrightColorsLevel(matrix.effectiveDim)
-            val dimSupported = supportsReduceBrightColors(context)
+            val dimSupported = reduceBrightColorsUsable(context)
             // A grayscale or colour-vision preset has no tint to carry: its
             // chromaticity normalises to white, so asking for a colour
             // temperature produces the neutral 6500 K and switching Night Light
@@ -303,18 +315,23 @@ class SecureSettingsEngine : ColorEngine {
                 if (ownership == null) {
                     ownership = Ownership(
                         original = SystemState(
-                            nightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
-                            nightTemperature = Settings.Secure.getInt(
+                            nightActive = readRow(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
+                            nightTemperature = readRow(
                                 cr,
                                 KEY_NIGHT_TEMPERATURE,
                                 DEFAULT_TEMPERATURE
                             ),
-                            nightAutoMode = Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, 0),
-                            dimActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1,
-                            dimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0),
+                            nightAutoMode = readRow(cr, KEY_NIGHT_AUTO_MODE, 0),
+                            // Only where the rows can be read at all: on
+                            // Android 12 and later they are hidden from apps,
+                            // and reading one threw here and failed every
+                            // apply, Night Light included.
+                            dimActive = dimSupported &&
+                                readRow(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1,
+                            dimLevel = if (dimSupported) readRow(cr, KEY_REDUCE_BRIGHT_LEVEL, 0) else 0,
                             correctionActive =
-                                Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1,
-                            correctionMode = Settings.Secure.getInt(
+                                readRow(cr, KEY_CORRECTION_ENABLED, 0) == 1,
+                            correctionMode = readRow(
                                 cr,
                                 KEY_CORRECTION_MODE,
                                 Daltonizer.NONE.secureValue
@@ -436,7 +453,7 @@ class SecureSettingsEngine : ColorEngine {
                 // a hand-back that declined to touch activation can still owe
                 // the user their schedule back.
                 val currentAutoMode =
-                    Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
+                    readRow(cr, KEY_NIGHT_AUTO_MODE, AUTO_MODE_MANUAL)
                 if (currentAutoMode == AUTO_MODE_MANUAL &&
                     owned.original.nightAutoMode != AUTO_MODE_MANUAL
                 ) {
@@ -445,8 +462,8 @@ class SecureSettingsEngine : ColorEngine {
             }
 
             if (dimOwned && supportsReduceBrightColors(context)) {
-                val currentDimActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1
-                val currentDimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
+                val currentDimActive = readRow(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1
+                val currentDimLevel = readRow(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
                 if (
                     shouldRestoreReduceBrightColors(
                         currentActive = currentDimActive,
@@ -466,8 +483,8 @@ class SecureSettingsEngine : ColorEngine {
             }
             if (correctionOwned) {
                 val currentMode =
-                    Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
-                val currentActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1
+                    readRow(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
+                val currentActive = readRow(cr, KEY_CORRECTION_ENABLED, 0) == 1
                 if (
                     shouldRestoreColorCorrection(
                         currentActive = currentActive,
@@ -555,9 +572,9 @@ class SecureSettingsEngine : ColorEngine {
         val cr = context.contentResolver
         val released = linkedMapOf<String, String>()
         runCatching {
-            val nightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0)
+            val nightActive = readRow(cr, KEY_NIGHT_ACTIVATED, 0)
             val nightTemperature =
-                Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
+                readRow(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
             if (nightOwned && nightDisplayIsForeign(
                     currentActive = nightActive == 1,
                     currentTemperature = nightTemperature,
@@ -568,21 +585,26 @@ class SecureSettingsEngine : ColorEngine {
                 released[KEY_NIGHT_ACTIVATED] =
                     "$KEY_NIGHT_ACTIVATED=$nightActive $KEY_NIGHT_TEMPERATURE=$nightTemperature"
             }
-            val dimActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0)
-            val dimLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
-            if (dimOwned && reduceBrightColorsIsForeign(
-                    currentActive = dimActive == 1,
-                    currentLevel = dimLevel,
-                    lastAppliedLevel = owned.lastAppliedDimLevel
-                )
-            ) {
-                dimOwned = false
-                released[KEY_REDUCE_BRIGHT_ACTIVATED] =
-                    "$KEY_REDUCE_BRIGHT_ACTIVATED=$dimActive $KEY_REDUCE_BRIGHT_LEVEL=$dimLevel"
+            // Only a row this session wrote, which means one it could read.
+            // Reading it regardless threw where the rows are hidden and
+            // skipped the correction check below.
+            if (dimOwned) {
+                val dimActive = readRow(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0)
+                val dimLevel = readRow(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
+                if (reduceBrightColorsIsForeign(
+                        currentActive = dimActive == 1,
+                        currentLevel = dimLevel,
+                        lastAppliedLevel = owned.lastAppliedDimLevel
+                    )
+                ) {
+                    dimOwned = false
+                    released[KEY_REDUCE_BRIGHT_ACTIVATED] =
+                        "$KEY_REDUCE_BRIGHT_ACTIVATED=$dimActive $KEY_REDUCE_BRIGHT_LEVEL=$dimLevel"
+                }
             }
-            val correctionActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0)
+            val correctionActive = readRow(cr, KEY_CORRECTION_ENABLED, 0)
             val correctionMode =
-                Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
+                readRow(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
             if (correctionOwned && colorCorrectionIsForeign(
                     currentActive = correctionActive == 1,
                     currentMode = correctionMode,
@@ -615,13 +637,13 @@ class SecureSettingsEngine : ColorEngine {
         ownership = ownership?.let { owned ->
             owned.copy(
                 original = owned.original.copy(
-                    nightActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
-                    nightTemperature = Settings.Secure.getInt(
+                    nightActive = readRow(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
+                    nightTemperature = readRow(
                         cr,
                         KEY_NIGHT_TEMPERATURE,
                         DEFAULT_TEMPERATURE
                     ),
-                    nightAutoMode = Settings.Secure.getInt(cr, KEY_NIGHT_AUTO_MODE, 0)
+                    nightAutoMode = readRow(cr, KEY_NIGHT_AUTO_MODE, 0)
                 )
             )
         }
@@ -633,8 +655,8 @@ class SecureSettingsEngine : ColorEngine {
             owned.copy(
                 original = owned.original.copy(
                     correctionActive =
-                        Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1,
-                    correctionMode = Settings.Secure.getInt(
+                        readRow(cr, KEY_CORRECTION_ENABLED, 0) == 1,
+                    correctionMode = readRow(
                         cr,
                         KEY_CORRECTION_MODE,
                         Daltonizer.NONE.secureValue
@@ -654,9 +676,9 @@ class SecureSettingsEngine : ColorEngine {
      */
     private fun handBackNightDisplay(cr: android.content.ContentResolver) {
         val owned = ownership ?: return
-        val currentActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1
+        val currentActive = readRow(cr, KEY_NIGHT_ACTIVATED, 0) == 1
         val currentTemperature =
-            Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
+            readRow(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE)
         if (
             !shouldRestoreNightDisplay(
                 currentActive = currentActive,
@@ -688,9 +710,9 @@ class SecureSettingsEngine : ColorEngine {
     /** Give the colour correction back, if the row is still the one we selected. */
     private fun handBackColorCorrection(cr: android.content.ContentResolver) {
         val owned = ownership ?: return
-        val currentActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1
+        val currentActive = readRow(cr, KEY_CORRECTION_ENABLED, 0) == 1
         val currentMode =
-            Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
+            readRow(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue)
         if (
             !shouldRestoreColorCorrection(
                 currentActive = currentActive,
@@ -801,20 +823,20 @@ class SecureSettingsEngine : ColorEngine {
         // changed since.
         val cr = context.contentResolver
         nightOwned = values[11] == 1 && shouldRestoreNightDisplay(
-            currentActive = Settings.Secure.getInt(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
+            currentActive = readRow(cr, KEY_NIGHT_ACTIVATED, 0) == 1,
             currentTemperature =
-                Settings.Secure.getInt(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE),
+                readRow(cr, KEY_NIGHT_TEMPERATURE, DEFAULT_TEMPERATURE),
             lastAppliedTemperature = adopted.lastAppliedTemperature
         )
-        dimOwned = values[12] == 1 && shouldRestoreReduceBrightColors(
-            currentActive = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1,
-            currentLevel = Settings.Secure.getInt(cr, KEY_REDUCE_BRIGHT_LEVEL, 0),
+        dimOwned = values[12] == 1 && reduceBrightColorsReadable(cr) && shouldRestoreReduceBrightColors(
+            currentActive = readRow(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0) == 1,
+            currentLevel = readRow(cr, KEY_REDUCE_BRIGHT_LEVEL, 0),
             lastAppliedLevel = adopted.lastAppliedDimLevel
         )
         correctionOwned = values[13] == 1 && shouldRestoreColorCorrection(
-            currentActive = Settings.Secure.getInt(cr, KEY_CORRECTION_ENABLED, 0) == 1,
+            currentActive = readRow(cr, KEY_CORRECTION_ENABLED, 0) == 1,
             currentMode =
-                Settings.Secure.getInt(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue),
+                readRow(cr, KEY_CORRECTION_MODE, Daltonizer.NONE.secureValue),
             lastAppliedMode = adopted.lastAppliedCorrectionMode
         )
         Log.i(
@@ -844,17 +866,46 @@ class SecureSettingsEngine : ColorEngine {
      */
     private fun rewriteInPlace(context: Context, key: String): Boolean = runCatching {
         val cr = context.contentResolver
-        val current = Settings.Secure.getInt(cr, key, 0)
+        val current = readRow(cr, key, 0)
         if (!Settings.Secure.putInt(cr, key, current)) return@runCatching false
         // Read back rather than trusting the write's return value. A provider
         // that accepts the call and drops the row would otherwise pass the
         // probe and then apply nothing, which is exactly the failure mode the
         // old class-presence check had.
-        Settings.Secure.getInt(cr, key, Int.MIN_VALUE) == current
+        readRow(cr, key, Int.MIN_VALUE) == current
     }.getOrElse {
         Log.d(tag, "probe write rejected for $key: ${it.message}")
         false
     }
+
+    /**
+     * Extra Dim this driver can actually drive: the device ships it and the
+     * rows answer a read. Every write is paired with a read of what the user
+     * had, so a row that cannot be read is a row this driver leaves alone.
+     */
+    private fun reduceBrightColorsUsable(context: Context): Boolean =
+        supportsReduceBrightColors(context) && reduceBrightColorsReadable(context.contentResolver)
+
+    /**
+     * Android 12 restricted reads of `@hide` settings to system apps for
+     * anything targeting it, and the Extra Dim rows are not on the readable
+     * list, so the read throws a `SecurityException` even with
+     * `WRITE_SECURE_SETTINGS` granted. Seen on a Galaxy S22 on Android 16,
+     * where it failed every apply. Night Light and the correction rows are
+     * on the list and read normally.
+     */
+    private fun reduceBrightColorsReadable(cr: ContentResolver): Boolean =
+        reduceBrightReadable ?: runCatching {
+            readRow(cr, KEY_REDUCE_BRIGHT_ACTIVATED, 0)
+            readRow(cr, KEY_REDUCE_BRIGHT_LEVEL, 0)
+            true
+        }.getOrElse {
+            Log.i(tag, "Extra Dim rows are not readable here; this driver does not dim (${it.message})")
+            false
+        }.also { reduceBrightReadable = it }
+
+    /** The answer cannot change inside a process, and a ramp asks 600 times. */
+    @Volatile private var reduceBrightReadable: Boolean? = null
 
     /**
      * Extra Dim is not on every device: `ColorDisplayManager.isReduceBrightColorsAvailable`
@@ -863,6 +914,7 @@ class SecureSettingsEngine : ColorEngine {
      */
     internal fun supportsReduceBrightColors(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < REDUCE_BRIGHT_COLORS_MIN_API) return false
+        extraDimShipped?.let { return it(context) }
         return runCatching {
             // context.resources, not Resources.getSystem(): AOSP's own
             // isReduceBrightColorsAvailable reads through a Context, so a
@@ -1008,16 +1060,22 @@ class SecureSettingsEngine : ColorEngine {
          * as off but the display is still tinted", which is exactly the state a
          * killed process leaves behind.
          */
-        fun anyTransformIsOn(context: Context): Boolean {
+        fun anyTransformIsOn(
+            context: Context,
+            readRow: (ContentResolver, String) -> Int = { cr, key -> Settings.Secure.getInt(cr, key, 0) }
+        ): Boolean {
             if (Build.VERSION.SDK_INT < MIN_API) return false
             val cr = context.contentResolver
-            return runCatching {
-                listOf(
-                    KEY_NIGHT_ACTIVATED,
-                    KEY_REDUCE_BRIGHT_ACTIVATED,
-                    KEY_CORRECTION_ENABLED
-                ).any { Settings.Secure.getInt(cr, it, 0) == 1 }
-            }.getOrDefault(false)
+            // One catch per row. The Extra Dim row throws on read from Android
+            // 12 on, and under a single catch that throw answered false for a
+            // colour correction still on behind it.
+            return listOf(
+                KEY_NIGHT_ACTIVATED,
+                KEY_REDUCE_BRIGHT_ACTIVATED,
+                KEY_CORRECTION_ENABLED
+            ).any { key ->
+                runCatching { readRow(cr, key) == 1 }.getOrDefault(false)
+            }
         }
 
         /**
