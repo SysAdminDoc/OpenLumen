@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preset names stay readable at large font sizes. At twice the normal text size the word "Rename" left room for only two or three letters of each name, so Rename is now a pencil icon, and a two-word name like Deep Sleep wraps onto a second line instead of being cut off.
 - Radio buttons on Schedule and Driver have a little space before their labels instead of touching the first letter.
 - On tablets with the dark theme, the screen headings and the Sort label on Presets were invisible because they were drawn black on black. They now use the same light text as everything else.
+- The filter service checked a small file on the main thread every time it started, including at boot. That check runs in the background now.
 
 ## [0.8.0] (2026-09-04)
 

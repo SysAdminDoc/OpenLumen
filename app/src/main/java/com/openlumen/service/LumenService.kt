@@ -40,6 +40,7 @@ import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isActive
 import com.openlumen.schedule.isValidSolarLocation
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -838,8 +839,9 @@ class LumenService : LifecycleService() {
         // Before anything reads the automation surface: preferences restored
         // from another device carry that device's token, and the contract
         // everywhere else is that the token never leaves the device it was
-        // minted on.
-        lifecycleScope.launch {
+        // minted on. On IO: both calls touch a file, and onCreate is on the
+        // main thread.
+        lifecycleScope.launch(Dispatchers.IO) {
             runCatching {
                 AutomationRestoreGuard.reconcile(this@LumenService, prefs)
                 AutomationRestoreGuard.claimInstall(this@LumenService)
