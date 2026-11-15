@@ -23,9 +23,9 @@ class TranslationSpellingTest {
      * typo in one of its spellings.
      */
     private val homographs = mapOf(
-        "fr" to setOf("a", "la", "ou", "sur", "des", "du", "applique", "desactive", "active", "arrete", "teinte"),
+        "fr" to setOf("a", "la", "ou", "sur", "des", "du", "applique", "desactive", "active", "arrete", "teinte", "installe"),
         "es" to setOf("esta", "que", "cuando", "como", "donde", "el", "mas", "si", "se", "tu", "mi", "de", "cambio"),
-        "pt" to setOf("a", "e", "esta", "por", "pode", "para", "os", "as", "da", "de", "esta", "so", "liga")
+        "pt" to setOf("a", "e", "esta", "por", "pode", "para", "os", "as", "da", "de", "esta", "so", "liga", "usa")
     )
 
     private fun strip(word: String): String =
