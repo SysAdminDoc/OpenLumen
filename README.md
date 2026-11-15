@@ -129,7 +129,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - No runtime location permission; solar scheduling uses coordinates the user enters
 - Ambient-light-sensor trigger (lux below threshold engages filter; OR with schedule)
 - Live lux readout + "calibrate: use current reading" button
-- Smooth fade-in / fade-out transitions (Instant / 30 s / 5 min / 15 min / 30 min)
+- Smooth fade-in / fade-out transitions (Instant / 30 s / 1 min / 3 min / 5 min / 15 min / 30 min), or a custom length of any whole number of minutes up to 30
 - Optional progressive intensity: start at the preset's strength and reach a deeper one by a time you set, stepped by the schedule's own alarm
 - Schedule timezone hint so fixed-time windows are unambiguous after travel
 

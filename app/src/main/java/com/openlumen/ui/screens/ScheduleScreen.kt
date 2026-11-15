@@ -557,39 +557,85 @@ fun ScheduleScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                val options = listOf(
-                    0L to stringResource(R.string.transition_instant),
-                    30_000L to stringResource(R.string.transition_30s),
-                    5L * 60_000L to stringResource(R.string.transition_5m),
-                    15L * 60_000L to stringResource(R.string.transition_15m),
-                    30L * 60_000L to stringResource(R.string.transition_30m)
-                )
-                options.forEach { (durationMs, label) ->
+                // Stays on Custom for the rest of this visit when the user
+                // picked it, so dragging the slider onto a preset value (both
+                // ends included) does not collapse it under their finger.
+                var customChosen by rememberSaveable { mutableStateOf(false) }
+                val customSelected =
+                    isCustomTransitionSelected(prefs.transitionDurationMs, customChosen)
+                @Composable
+                fun TransitionOption(selected: Boolean, label: String, onClick: () -> Unit) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .selectable(
-                                selected = prefs.transitionDurationMs == durationMs,
-                                onClick = { vm.setTransitionDuration(durationMs) },
+                                selected = selected,
+                                onClick = onClick,
                                 role = Role.RadioButton
                             )
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = prefs.transitionDurationMs == durationMs,
+                            selected = selected,
                             onClick = null
                         )
                         Text(
                             label,
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (prefs.transitionDurationMs == durationMs) {
-                                FontWeight.SemiBold
-                            } else {
-                                FontWeight.Normal
-                            }
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                         )
                     }
+                }
+                TRANSITION_PRESET_DURATIONS_MS.forEach { durationMs ->
+                    TransitionOption(
+                        selected = isTransitionPresetSelected(
+                            durationMs,
+                            prefs.transitionDurationMs,
+                            customChosen
+                        ),
+                        label = stringResource(transitionPresetLabelRes(durationMs)),
+                        onClick = {
+                            customChosen = false
+                            vm.setTransitionDuration(durationMs)
+                        }
+                    )
+                }
+                TransitionOption(
+                    selected = customSelected,
+                    label = stringResource(R.string.transition_custom),
+                    onClick = {
+                        if (!customSelected) {
+                            customChosen = true
+                            vm.setTransitionDuration(CUSTOM_TRANSITION_DEFAULT_MS)
+                        }
+                    }
+                )
+                if (customSelected) {
+                    var customMinutes by remember(prefs.transitionDurationMs) {
+                        mutableFloatStateOf(
+                            customTransitionMinutes(prefs.transitionDurationMs).toFloat()
+                        )
+                    }
+                    val customLabel = stringResource(
+                        R.string.transition_custom_value,
+                        customMinutes.roundToInt()
+                    )
+                    Text(customLabel, style = MaterialTheme.typography.bodySmall)
+                    Slider(
+                        value = customMinutes,
+                        onValueChange = { customMinutes = it.roundToInt().toFloat() },
+                        onValueChangeFinished = {
+                            vm.setTransitionDuration(customMinutes.roundToInt() * 60_000L)
+                        },
+                        valueRange = 1f..CUSTOM_TRANSITION_MAX_MIN.toFloat(),
+                        steps = CUSTOM_TRANSITION_SLIDER_STEPS,
+                        modifier = Modifier.labeledSliderSemantics(
+                            name = stringResource(R.string.transition_custom_name),
+                            valueDescription = customLabel
+                        ),
+                        colors = lumenSliderColors()
+                    )
                 }
             }
         }
@@ -816,3 +862,54 @@ internal fun zoneDisplayName(zone: ZoneId, locale: Locale, now: Instant): String
     val timeZone = TimeZone.getTimeZone(zone)
     return timeZone.getDisplayName(timeZone.inDaylightTime(Date.from(now)), TimeZone.LONG, locale)
 }
+
+/** The transition rows above Custom, in the order shown. */
+internal val TRANSITION_PRESET_DURATIONS_MS: List<Long> = listOf(
+    0L,
+    30_000L,
+    60_000L,
+    3L * 60_000L,
+    5L * 60_000L,
+    15L * 60_000L,
+    30L * 60_000L
+)
+
+internal fun transitionPresetLabelRes(durationMs: Long): Int = when (durationMs) {
+    0L -> R.string.transition_instant
+    30_000L -> R.string.transition_30s
+    60_000L -> R.string.transition_1m
+    3L * 60_000L -> R.string.transition_3m
+    5L * 60_000L -> R.string.transition_5m
+    15L * 60_000L -> R.string.transition_15m
+    30L * 60_000L -> R.string.transition_30m
+    else -> throw IllegalArgumentException("not a transition preset: $durationMs")
+}
+
+/**
+ * Custom is whatever the presets are not, so a stored value that matches none
+ * of them (an import, a hand-edited profile) still selects a row instead of
+ * leaving the group empty. [customChosen] keeps it selected after the user
+ * picked it and slid onto a preset value.
+ */
+internal fun isCustomTransitionSelected(storedMs: Long, customChosen: Boolean): Boolean =
+    customChosen || storedMs !in TRANSITION_PRESET_DURATIONS_MS
+
+internal fun isTransitionPresetSelected(
+    presetMs: Long,
+    storedMs: Long,
+    customChosen: Boolean
+): Boolean = !isCustomTransitionSelected(storedMs, customChosen) && presetMs == storedMs
+
+/** Where Custom starts when picked from a preset: a value no preset holds. */
+internal const val CUSTOM_TRANSITION_DEFAULT_MS = 10L * 60_000L
+
+/** The custom slider's top, in whole minutes: the stored maximum. */
+internal const val CUSTOM_TRANSITION_MAX_MIN =
+    (com.openlumen.prefs.Preferences.TRANSITION_MAX_MS / 60_000L).toInt()
+
+/** Ticks between the ends, so every whole minute from 1 to the top is a stop. */
+internal const val CUSTOM_TRANSITION_SLIDER_STEPS = CUSTOM_TRANSITION_MAX_MIN - 2
+
+/** The slider stop for a stored duration: the nearest whole minute it allows. */
+internal fun customTransitionMinutes(storedMs: Long): Int =
+    (storedMs / 60_000.0).roundToInt().coerceIn(1, CUSTOM_TRANSITION_MAX_MIN)
