@@ -584,7 +584,7 @@ class LumenService : LifecycleService() {
                     putExtra(EXTRA_INTENSITY, state.intensity)
                     putExtra(EXTRA_DIM, state.dim)
                 },
-                "com.openlumen.permission.AUTOMATION"
+                automationPermission(this)
             )
         }.onFailure { Log.w(tag, "filter state broadcast failed: ${it.message}") }
     }
@@ -911,6 +911,16 @@ class LumenService : LifecycleService() {
         const val EXTRA_ACTIVE_PRESET_KEY = "com.openlumen.extra.ACTIVE_PRESET_KEY"
         const val EXTRA_INTENSITY = "com.openlumen.extra.INTENSITY"
         const val EXTRA_DIM = "com.openlumen.extra.DIM"
+
+        /**
+         * The signature permission [EVENT_FILTER_STATE_CHANGED] is scoped to.
+         * The manifest declares it as `${applicationId}.permission.AUTOMATION`,
+         * so the release keeps `com.openlumen.permission.AUTOMATION` and the
+         * debug build gets a name of its own instead of colliding with an
+         * installed release (INSTALL_FAILED_DUPLICATE_PERMISSION).
+         */
+        internal fun automationPermission(context: Context): String =
+            "${context.packageName}.permission.AUTOMATION"
 
     }
 }
