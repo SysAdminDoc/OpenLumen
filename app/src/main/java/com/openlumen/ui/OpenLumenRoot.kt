@@ -26,9 +26,11 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -52,6 +54,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -93,7 +96,21 @@ fun OpenLumenRoot(
     OpenLumenTheme(darkTheme = darkTheme ?: isSystemInDarkTheme()) {
         val nav = rememberNavController()
         val backStack by nav.currentBackStackEntryAsState()
-        val currentRoute = backStack?.destination?.route
+        // The back stack answers only after the first frame, which left that
+        // frame with no tab marked (C372). Until it does, mark the last
+        // destination, or the start route. The listener runs inside
+        // navigate() and popBackStack(), so the saved route can't trail the
+        // saved back stack when a tap lands just before a rotation.
+        val backStackRoute = backStack?.destination?.route
+        var lastRoute by rememberSaveable { mutableStateOf(initialRoute) }
+        DisposableEffect(nav) {
+            val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+                destination.route?.let { lastRoute = it }
+            }
+            nav.addOnDestinationChangedListener(listener)
+            onDispose { nav.removeOnDestinationChangedListener(listener) }
+        }
+        val currentRoute = backStackRoute ?: lastRoute
         val navigationSuiteType = NavigationSuiteScaffoldDefaults
             .calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
         val onDestinationSelected: (Dest) -> Unit = { dest ->
