@@ -13,6 +13,7 @@ import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.engine.engines.SurfaceFlingerEngine
 import com.openlumen.prefs.Preferences
 import com.openlumen.service.ExactAlarmAccess
+import com.openlumen.shizuku.ShizukuSnapshot
 import java.lang.reflect.InvocationTargetException
 import java.time.Instant
 
@@ -32,14 +33,19 @@ import java.time.Instant
 object DriverReport {
 
     /** Bump when the layout changes so we can spot stale-format reports. */
-    private const val REPORT_VERSION = 2
+    private const val REPORT_VERSION = 3
     private const val QUERY_ADVANCED_PROTECTION_MODE =
         "android.permission.QUERY_ADVANCED_PROTECTION_MODE"
 
+    /**
+     * @param shizuku what Shizuku reported (C254), or null when the caller
+     *   did not check, which the report says rather than guessing.
+     */
     fun build(
         context: Context,
         prefs: Preferences,
-        probes: List<DriverProbe.Probe>
+        probes: List<DriverProbe.Probe>,
+        shizuku: ShizukuSnapshot? = null
     ): String = buildString {
         appendHeader()
         appendApp(context)
@@ -47,6 +53,7 @@ object DriverReport {
         appendPermissions(context)
         appendAdvancedProtection(context)
         appendRootManagers(context)
+        appendShizuku(shizuku)
         appendProbes(probes)
         appendConfig(prefs)
         appendDiagnostics(context)
@@ -74,6 +81,31 @@ object DriverReport {
             appendLine("none detected")
         } else {
             installed.forEach { appendLine("${it.name}: ${it.packageName}") }
+        }
+        appendLine()
+    }
+
+    /**
+     * Shizuku, the on-device route to WRITE_SECURE_SETTINGS (C254). Added in
+     * report v3. The uid says how the server was started: 2000 is adb
+     * (wireless debugging or a computer), 0 is root.
+     */
+    private fun StringBuilder.appendShizuku(shizuku: ShizukuSnapshot?) {
+        appendLine("Shizuku")
+        appendLine("---")
+        if (shizuku == null) {
+            appendLine("State: not checked")
+        } else {
+            appendLine("State: ${shizuku.state.reportLabel}")
+            shizuku.serverUid?.let { uid ->
+                val how = when (uid) {
+                    0 -> " (root)"
+                    2000 -> " (adb)"
+                    else -> ""
+                }
+                appendLine("Server uid: $uid$how")
+            }
+            shizuku.serverVersion?.let { appendLine("Server API: $it") }
         }
         appendLine()
     }

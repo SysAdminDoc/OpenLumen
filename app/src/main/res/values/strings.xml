@@ -203,8 +203,21 @@
     <string name="secure_row_color_correction">colour correction</string>
     <string name="secure_row_unknown">a display setting</string>
     <string name="driver_grant_status_granted">Granted on this device.</string>
-    <string name="driver_grant_status_not_granted">Not granted. The System Night Light driver is unavailable until this is granted via the ADB command below.</string>
+    <string name="driver_grant_status_not_granted">Not granted. The System Night Light driver is unavailable until this is granted with the ADB command below or with Shizuku.</string>
     <string name="driver_copy_command">Copy command</string>
+    <!-- C254: the on-device route to the grant above. Shizuku is a product
+         name and stays untranslated. -->
+    <string name="driver_shizuku_grant">Grant with Shizuku</string>
+    <string name="driver_shizuku_granting">Waiting for Shizuku…</string>
+    <string name="driver_shizuku_not_installed">No computer? Shizuku can run this grant on the device itself. Install Shizuku and start it, then come back here.</string>
+    <string name="driver_shizuku_not_running">Shizuku is installed but not running. Open Shizuku and start it, then come back here.</string>
+    <string name="driver_shizuku_outdated">This version of Shizuku is too old to run the grant. Update Shizuku, then come back here.</string>
+    <string name="driver_shizuku_permission_needed">Shizuku will ask whether OpenLumen may use it. Allow it to finish the grant.</string>
+    <string name="driver_shizuku_permission_denied">OpenLumen is denied in Shizuku. Allow OpenLumen in Shizuku\'s list of apps, then come back here.</string>
+    <string name="driver_shizuku_ready">Shizuku is running and OpenLumen is allowed.</string>
+    <string name="driver_shizuku_refused">OpenLumen was not allowed in Shizuku, so nothing changed.</string>
+    <string name="driver_shizuku_failed">Shizuku ran the grant, but the permission is still missing. The driver report has the details.</string>
+    <string name="driver_shizuku_done">Granted through Shizuku</string>
     <string name="driver_copy_report">Copy report</string>
     <string name="driver_share_report">Share report</string>
     <string name="driver_report_subject">OpenLumen driver report</string>

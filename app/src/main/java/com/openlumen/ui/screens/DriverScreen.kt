@@ -34,10 +34,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,11 +60,14 @@ import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.external.ExternalIntentLauncher
 import com.openlumen.external.ExternalIntentResult
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.shizuku.ShizukuGrantOutcome
+import com.openlumen.shizuku.ShizukuState
 import com.openlumen.ui.components.CommandBlock
 import com.openlumen.ui.components.LumenButton
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.viewmodel.OpenLumenScreenModel
 import com.openlumen.viewmodel.OpenLumenViewModel
+import com.openlumen.viewmodel.ShizukuUiState
 
 @Composable
 fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>()) {
@@ -366,7 +374,19 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Read here so a Shizuku grant recomposes this card and the
+                // permission check below runs again (C254).
+                val shizuku by vm.shizuku.collectAsStateWithLifecycle()
                 val granted = hasWriteSecureSettings(ctx)
+                val grantedThroughShizuku = stringResource(R.string.driver_shizuku_done)
+                // Here rather than in the Shizuku action, which leaves
+                // composition the moment the grant lands.
+                LaunchedEffect(shizuku.outcome) {
+                    if (shizuku.outcome == ShizukuGrantOutcome.Granted) {
+                        Toast.makeText(ctx, grantedThroughShizuku, Toast.LENGTH_SHORT).show()
+                        vm.consumeShizukuOutcome()
+                    }
+                }
                 Text(
                     stringResource(R.string.driver_grant_secure_settings),
                     style = MaterialTheme.typography.titleSmall
@@ -396,6 +416,9 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(stringResource(R.string.driver_copy_command)) }
+                if (!granted) {
+                    ShizukuGrantAction(shizuku = shizuku, vm = vm)
+                }
             }
         }
 
@@ -481,6 +504,68 @@ private fun engineKindLabelRes(kind: EngineKind): Int = when (kind) {
 private fun hasWriteSecureSettings(context: Context): Boolean =
     context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
         PackageManager.PERMISSION_GRANTED
+
+/**
+ * The on-device route to WRITE_SECURE_SETTINGS (C254), under the adb command.
+ * Enabled only when Shizuku can act on a tap; otherwise the line under it
+ * says what to do in Shizuku first. Shizuku's own prompt is the only
+ * question asked, and it is Shizuku's to ask.
+ */
+@Composable
+private fun ShizukuGrantAction(shizuku: ShizukuUiState, vm: OpenLumenScreenModel) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    // Installing, starting or allowing happens in Shizuku's own app, so look
+    // again whenever this screen comes back to the front.
+    DisposableEffect(lifecycleOwner, vm) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) vm.refreshShizuku()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val actionable = shizuku.state == ShizukuState.READY ||
+        shizuku.state == ShizukuState.PERMISSION_NEEDED
+    LumenOutlinedButton(
+        onClick = { vm.grantWithShizuku() },
+        enabled = actionable && !shizuku.granting,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            stringResource(
+                if (shizuku.granting) R.string.driver_shizuku_granting else R.string.driver_shizuku_grant
+            )
+        )
+    }
+    Text(
+        stringResource(shizukuStateRes(shizuku.state)),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    val problem = when (shizuku.outcome) {
+        ShizukuGrantOutcome.PermissionRefused -> R.string.driver_shizuku_refused
+        is ShizukuGrantOutcome.Failed -> R.string.driver_shizuku_failed
+        // NotReady is the state line above; Granted hides this action.
+        else -> null
+    }
+    if (problem != null) {
+        Text(
+            stringResource(problem),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+        )
+    }
+}
+
+@StringRes
+private fun shizukuStateRes(state: ShizukuState): Int = when (state) {
+    ShizukuState.NOT_INSTALLED -> R.string.driver_shizuku_not_installed
+    ShizukuState.NOT_RUNNING -> R.string.driver_shizuku_not_running
+    ShizukuState.OUTDATED -> R.string.driver_shizuku_outdated
+    ShizukuState.PERMISSION_NEEDED -> R.string.driver_shizuku_permission_needed
+    ShizukuState.PERMISSION_DENIED -> R.string.driver_shizuku_permission_denied
+    ShizukuState.READY -> R.string.driver_shizuku_ready
+}
 
 /**
  * Human name for a secure row OpenLumen let go of (C346). The key itself is

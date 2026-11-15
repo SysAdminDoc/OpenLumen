@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.openlumen.PresetKeyResolver
 import com.openlumen.R
+import com.openlumen.diagnostics.DiagnosticsLog
 import com.openlumen.diagnostics.DriverReport
 import com.openlumen.engine.DriverProbe
 import com.openlumen.location.ZoneChangeNotice
@@ -27,8 +28,11 @@ import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.EngineController
 import com.openlumen.service.LumenService
 import com.openlumen.service.LumenServiceStarter
+import com.openlumen.shizuku.ShizukuGrant
+import com.openlumen.shizuku.ShizukuGrantOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +51,8 @@ class OpenLumenViewModel @Inject constructor(
     application: Application,
     private val prefs: PreferencesStore,
     private val probe: DriverProbe,
-    private val lightSensor: LightSensorAdapter
+    private val lightSensor: LightSensorAdapter,
+    private val shizukuGrant: ShizukuGrant
 ) : AndroidViewModel(application), OpenLumenScreenModel {
 
     private val tag = "OpenLumen/ViewModel"
@@ -385,6 +390,21 @@ class OpenLumenViewModel @Inject constructor(
         // Keep repeated taps single-flight at the UI boundary. DriverProbe
         // also serializes this generation with service-side resolution.
         if (!probeMutex.tryLock()) return@launch
+        probeHoldingLock()
+    }
+
+    /**
+     * Probe after a permission change. A probe already in flight started
+     * before the change and would publish stale results, so this waits it out
+     * and runs again instead of dropping out the way a repeated tap does.
+     */
+    private suspend fun probeAfterGrant() {
+        probeMutex.lock()
+        probeHoldingLock()
+    }
+
+    /** The probe itself. The caller holds [probeMutex]; this releases it. */
+    private suspend fun probeHoldingLock() {
         _probesRefreshing.value = true
         _probeError.value = null
         try {
@@ -430,7 +450,50 @@ class OpenLumenViewModel @Inject constructor(
      * pulled from the Android `Context`. No I/O.
      */
     override fun buildDriverReport(): String =
-        DriverReport.build(getApplication(), state.value, _probes.value)
+        DriverReport.build(getApplication(), state.value, _probes.value, shizukuGrant.snapshot())
+
+    private val shizukuGranting = MutableStateFlow(false)
+    private val shizukuOutcome = MutableStateFlow<ShizukuGrantOutcome?>(null)
+    override val shizuku: StateFlow<ShizukuUiState> =
+        combine(shizukuGrant.state, shizukuGranting, shizukuOutcome) { state, granting, outcome ->
+            ShizukuUiState(state = state, granting = granting, outcome = outcome)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, ShizukuUiState(shizukuGrant.state.value))
+
+    override fun grantWithShizuku() = viewModelScope.launch {
+        // Single-flight: a second tap while Shizuku's prompt is up would ask twice.
+        if (!shizukuGranting.compareAndSet(expect = false, update = true)) return@launch
+        shizukuOutcome.value = null
+        try {
+            val outcome = shizukuGrant.grant()
+            DiagnosticsLog.log(
+                getApplication(),
+                if (outcome == ShizukuGrantOutcome.Granted) DiagnosticsLog.Level.INFO else DiagnosticsLog.Level.WARN,
+                DiagnosticsLog.Category.ENGINE,
+                "Shizuku grant of WRITE_SECURE_SETTINGS: ${describe(outcome)}"
+            )
+            // The System Night Light driver's availability turns on this
+            // permission; show the result without asking for a refresh.
+            if (outcome == ShizukuGrantOutcome.Granted) probeAfterGrant()
+            shizukuOutcome.value = outcome
+        } finally {
+            shizukuGranting.value = false
+        }
+    }
+
+    override fun refreshShizuku() {
+        shizukuGrant.refresh()
+    }
+
+    override fun consumeShizukuOutcome() {
+        shizukuOutcome.value = null
+    }
+
+    private fun describe(outcome: ShizukuGrantOutcome): String = when (outcome) {
+        ShizukuGrantOutcome.Granted -> "granted"
+        ShizukuGrantOutcome.PermissionRefused -> "OpenLumen was denied in Shizuku"
+        is ShizukuGrantOutcome.NotReady -> "not ready (${outcome.state.reportLabel})"
+        is ShizukuGrantOutcome.Failed -> "failed: ${outcome.detail}"
+    }
 
     private val _exportResult = MutableStateFlow<String?>(null)
     override val exportResult: StateFlow<String?> = _exportResult.asStateFlow()

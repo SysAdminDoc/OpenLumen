@@ -133,6 +133,26 @@ interface OpenLumenScreenModel {
      */
     fun dismissSecureRowsReleased(): Job = Job()
 
+    /**
+     * C254: where Shizuku stands and how the last grant through it went.
+     * Defaults to "not installed", which hides nothing but disables the
+     * action, so a harness that never mentions Shizuku draws the common case.
+     */
+    val shizuku: StateFlow<ShizukuUiState>
+        get() = NO_SHIZUKU
+
+    /**
+     * C254: grant WRITE_SECURE_SETTINGS through Shizuku, asking for Shizuku's
+     * own permission first when needed, then re-probe the drivers.
+     */
+    fun grantWithShizuku(): Job = Job()
+
+    /** C254: read Shizuku's state again, for a screen coming back to the front. */
+    fun refreshShizuku() = Unit
+
+    /** C254: the screen has announced a successful grant. */
+    fun consumeShizukuOutcome() = Unit
+
     companion object {
         // Shared and permanently empty. `get() = MutableStateFlow(null)` handed
         // out a new flow on every read, so anything collecting one of these in
@@ -142,5 +162,6 @@ interface OpenLumenScreenModel {
         private val NO_PENDING_PRESET_PACK: StateFlow<OpenLumenViewModel.PendingPresetPack?> =
             MutableStateFlow(null)
         private val ALWAYS_LOADED: StateFlow<Boolean> = MutableStateFlow(true)
+        private val NO_SHIZUKU: StateFlow<ShizukuUiState> = MutableStateFlow(ShizukuUiState())
     }
 }
