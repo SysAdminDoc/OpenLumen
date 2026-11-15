@@ -180,6 +180,12 @@ class OverlayEngine : ColorEngine {
                 layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
             }
+            // Fit no system bars. FLAG_LAYOUT_IN_SCREEN only lifts the status
+            // bar, so from API 30 the window otherwise stopped at the
+            // navigation bar and left the bottom of the screen untinted.
+            if (Build.VERSION.SDK_INT >= 30) {
+                fitInsetsTypes = 0
+            }
         }
         val wm = serviceContext.getSystemService(Service.WINDOW_SERVICE) as? WindowManager
             ?: run {

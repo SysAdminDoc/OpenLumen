@@ -111,6 +111,23 @@ class OverlayEngineInstallTest {
         assertThat(shadow.views.single()).isNotSameInstanceAs(first)
     }
 
+    @Test fun `the window reaches under the navigation bar as well as the status bar`() {
+        // A window fits the system bars unless told otherwise. The in-screen
+        // flag lifts that for the status bar only, so on Android 11 and later
+        // the tint stopped at the navigation bar and left a bright, untinted
+        // strip along the bottom of the screen: 48 pixels with gesture
+        // navigation on a 720x1600 Android 17 emulator, more with buttons.
+        val engine = OverlayEngine()
+        engine.installView(context, Presets.OFF)
+
+        val lp = (shadowOf(windowManager()) as ShadowWindowManagerImpl)
+            .views.single().layoutParams as WindowManager.LayoutParams
+
+        assertThat(lp.fitInsetsTypes).isEqualTo(0)
+        assertThat(lp.layoutInDisplayCutoutMode)
+            .isEqualTo(WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS)
+    }
+
     @Test fun `clearing removes the window`() = kotlinx.coroutines.runBlocking {
         val engine = OverlayEngine()
         engine.installView(context, Presets.OFF)
