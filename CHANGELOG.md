@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After a restart, the filter usually starts before you unlock the phone, and that copy of OpenLumen keeps running afterwards. It never turned on its crash log, so a crash later that day left `View crash log` empty. It now sets the log up as soon as you unlock.
 - Turning the filter off from the app or a widget now holds through a restart. OpenLumen keeps a copy of the filter state that it reads before the phone is unlocked, and that copy still said on, so the next reboot put the tint back on the lock screen.
 
+### Security
+
+- The build moved to Kotlin 2.4.21 and KSP 2.3.14. Kotlin 2.4.10 had an unsafe deserialization bug in its build cache (GHSA-r937-wjx7-w2jp), so the Gradle build cache was switched off while we waited for a fixed release. It's back on, and builds reuse cached work again. Nothing changes in the app itself.
+
 ## [0.8.0] (2026-09-04)
 
 ### Breaking
