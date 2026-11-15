@@ -69,7 +69,7 @@ aapt dump permissions app/build/outputs/apk/debug/app-debug.apk \
 
 ## 5. Signed release build
 
-The release keystore lives at `~/.android/openlumen-release/openlumen-release.jks`, outside the repository, with a second copy under `C:\_claude-backups\OpenLumen\`. It's the only thing that can sign an update every existing install will accept, so losing it means no installed copy of OpenLumen can ever be updated again.
+The release keystore lives at `~/.android/openlumen-release/openlumen-release.jks`, outside the repository, with a second copy kept in an offline backup. It's the only thing that can sign an update every existing install will accept, so losing it means no installed copy of OpenLumen can ever be updated again.
 
 **Never put a copy in the working tree.** It used to sit in the repository root, where it was gitignored and on no code path at all. The build reads the four `OPENLUMEN_*` variables and nothing else, so the file was pure exposure. One `git add -f`, one archive of the directory, or one backup tool that doesn't read `.gitignore`, and the signing key leaves with it.
 
