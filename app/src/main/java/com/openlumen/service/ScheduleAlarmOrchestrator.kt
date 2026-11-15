@@ -120,6 +120,15 @@ internal class ScheduleAlarmOrchestrator(
         cancelScheduledAlarms(alarms)
     }
 
+    /**
+     * From Android 12 only an exact alarm the app holds permission for puts a
+     * background foreground-service start on the temporary allow list. An
+     * inexact allow-while-idle alarm still wakes the receiver, but its start
+     * is refused for the same reason the first one was, so the retry is exact
+     * whenever it can be. Inexact is the fallback, which still helps where
+     * something else allows the start (Android 11 and below, or overlay
+     * access on 12 to 14).
+     */
     @Synchronized
     fun scheduleBlockedStartRetry(attempt: Int, delayMs: Long) {
         lastScheduleSignature = null
@@ -128,13 +137,23 @@ internal class ScheduleAlarmOrchestrator(
         cancelScheduledAlarms(alarms)
         val pi = blockedStartRetryPendingIntent(attempt)
         val triggerMs = nowMs() + delayMs.coerceAtLeast(1_000L)
+        val exactAllowed = runCatching { alarms.canScheduleExactAlarms() }.getOrDefault(false)
         runCatching {
-            alarms.setAndAllowWhileIdle(triggerMs, pi)
+            val exact = exactAllowed && try {
+                alarms.setExactAndAllowWhileIdle(triggerMs, pi)
+                true
+            } catch (e: SecurityException) {
+                // Revoked between the check and the call.
+                Log.w(logTag, "exact blocked-service retry rejected, falling back: ${e.message}")
+                false
+            }
+            if (!exact) alarms.setAndAllowWhileIdle(triggerMs, pi)
             DiagnosticsLog.log(
                 context,
                 DiagnosticsLog.Level.WARN,
                 DiagnosticsLog.Category.SCHEDULE,
-                "scheduled blocked-service retry $attempt in ${delayMs / 1000}s"
+                "scheduled blocked-service retry $attempt in ${delayMs / 1000}s " +
+                    if (exact) "(exact)" else "(inexact)"
             )
         }.onFailure {
             Log.e(logTag, "could not schedule blocked-service retry: ${it.message}")

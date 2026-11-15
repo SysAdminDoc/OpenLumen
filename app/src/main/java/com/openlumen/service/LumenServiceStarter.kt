@@ -105,6 +105,6 @@ object LumenServiceStarter {
             .onFailure { Log.w(logTag, "Could not open app after blocked service start: ${it.message}", it) }
     }
 
-    private fun isForegroundStartNotAllowed(t: Throwable): Boolean =
+    internal fun isForegroundStartNotAllowed(t: Throwable): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && t is ForegroundServiceStartNotAllowedException
 }

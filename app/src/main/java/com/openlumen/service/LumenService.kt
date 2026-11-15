@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -80,6 +81,14 @@ class LumenService : LifecycleService() {
     @Volatile private var preferencesObserved: Boolean = false
     private lateinit var engineController: EngineController
     private lateinit var scheduleAlarms: ScheduleAlarmOrchestrator
+
+    /**
+     * startForeground was refused and an alarm is queued to try again. This
+     * instance is only stopping: it must not apply the filter, and nothing
+     * it does may cancel that alarm. The shutdown sweep in onDestroy still
+     * runs, so a root tint is never left behind by a service that is gone.
+     */
+    private var foregroundStartBlocked = false
     private lateinit var lightSubscription: LightSensorSubscription
     private lateinit var widgetBridge: WidgetBridge
     private lateinit var systemColorWatcher: SystemColorSettingsWatcher
@@ -217,6 +226,9 @@ class LumenService : LifecycleService() {
         systemColorWatcher.register()
         systemGrayscaleActive = systemColorWatcher.readState().systemGrayscale
         startInForeground()
+        // Observing preferences would apply the filter from a service that is
+        // about to stop, and its first reschedule would cancel the retry.
+        if (foregroundStartBlocked) return
         registerScreenStateReceiver()
         ensurePreferencesObserved()
     }
@@ -251,6 +263,19 @@ class LumenService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        if (foregroundStartBlocked) {
+            // The start that created this instance still arrives after the
+            // stopSelf() in onCreate. Only a turn-off is acted on, and it
+            // drops the retry first so the alarm cannot switch the filter
+            // back on afterwards.
+            if (intent?.action == ACTION_TURN_OFF) {
+                scheduleAlarms.cancelAlarm()
+                lifecycleScope.launch {
+                    turnOffImmediately("intent", blunt = isEmergencyTurnOff(intent))
+                }
+            }
+            return START_NOT_STICKY
+        }
         ensurePreferencesObserved()
         when (intent?.action) {
             ACTION_DIRECT_BOOT_RESTORE -> lifecycleScope.launch {
@@ -422,16 +447,61 @@ class LumenService : LifecycleService() {
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
+            foregroundRefusalsInARow.set(0)
+            inForeground = true
         } catch (t: Throwable) {
-            // Android 12+ throws ForegroundServiceStartNotAllowedException if started from
-            // the wrong context. Log and bail rather than crashing the process.
             Log.e(tag, "startForeground failed: ${t.message}", t)
-            lifecycleScope.launch {
-                runCatching { prefs.update { it.copy(enabled = false) } }
-                    .onFailure { Log.w(tag, "Failed to roll back enabled state: ${it.message}") }
+            if (LumenServiceStarter.isForegroundStartNotAllowed(t)) {
+                onForegroundStartRefused()
+            } else {
+                // Anything else (a bad service type, a missing permission) is
+                // not going to change on its own, so retrying would only loop.
+                DiagnosticsLog.log(
+                    this,
+                    DiagnosticsLog.Level.ERROR,
+                    DiagnosticsLog.Category.SERVICE,
+                    "startForeground failed: ${t.javaClass.simpleName}; filter turned off"
+                )
+                lifecycleScope.launch {
+                    runCatching { prefs.update { it.copy(enabled = false) } }
+                        .onFailure { Log.w(tag, "Failed to roll back enabled state: ${it.message}") }
+                }
             }
             stopSelf()
         }
+    }
+
+    /**
+     * Android 12+ refused the foreground start because the app is in the
+     * background. A sticky restart after a low-memory kill lands here with
+     * the user nowhere near the app, and turning the filter off then left the
+     * screen unfiltered until they noticed. The switch stays on instead and
+     * an alarm tries again; MainActivity also restarts it on the next visit.
+     */
+    private fun onForegroundStartRefused() {
+        foregroundStartBlocked = true
+        val refusals = foregroundRefusalsInARow.incrementAndGet()
+        if (refusals > ScheduleAlarmReceiver.MAX_BLOCKED_START_RETRIES) {
+            // A start the alarm itself got through and that was still
+            // refused here. Waking every minute would not change that.
+            DiagnosticsLog.log(
+                this,
+                DiagnosticsLog.Level.WARN,
+                DiagnosticsLog.Category.SERVICE,
+                "startForeground refused $refusals times; waiting for the app to open"
+            )
+            return
+        }
+        DiagnosticsLog.log(
+            this,
+            DiagnosticsLog.Level.WARN,
+            DiagnosticsLog.Category.SERVICE,
+            "startForeground refused; filter kept on, retry $refusals queued"
+        )
+        scheduleAlarms.scheduleBlockedStartRetry(
+            attempt = refusals,
+            delayMs = ScheduleAlarmReceiver.blockedStartRetryDelayMs(refusals - 1)
+        )
     }
 
     private val lastNotificationActive = AtomicReference<Boolean?>(null)
@@ -816,9 +886,11 @@ class LumenService : LifecycleService() {
         }
         systemColorWatcher.unregister()
         systemColorReassertJob?.cancel()
+        inForeground = false
         engineController.cancelJobs()
         lightSubscription.cancel()
-        scheduleAlarms.cancelAlarm()
+        // Cancelling here would also cancel the retry a refused start queued.
+        if (!foregroundStartBlocked) scheduleAlarms.cancelAlarm()
         // Synchronously clear the engine — the lifecycleScope is about to be cancelled,
         // so a normal `launch { engine?.clear() }` would race with cancellation. We
         // block on a short timeout so we never hang shutdown if su is misbehaving.
@@ -853,6 +925,26 @@ class LumenService : LifecycleService() {
     companion object {
         private const val NOTIFICATION_ID = 4242
         private const val CONFLICT_NOTIFICATION_ID = 4243
+
+        /**
+         * Whether an instance in this process holds its foreground slot. A
+         * service runs in its app's process, so false also covers "not
+         * running at all" after the process was killed.
+         */
+        @Volatile var inForeground: Boolean = false
+            private set
+
+        /**
+         * Refused foreground starts since the last one that went through.
+         * Bounds the retries so a start that keeps being refused cannot keep
+         * waking the phone.
+         */
+        private val foregroundRefusalsInARow = AtomicInteger(0)
+
+        internal fun resetForegroundStateForTest() {
+            inForeground = false
+            foregroundRefusalsInARow.set(0)
+        }
 
         // Documented intent actions. Tied to roadmap candidates C13 (off),
         // C16 (cycle), and C70 (Tasker/automation). See docs/automation.md

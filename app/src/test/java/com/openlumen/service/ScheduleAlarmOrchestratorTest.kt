@@ -74,16 +74,41 @@ class ScheduleAlarmOrchestratorTest {
        )
    }
 
-    @Test fun `blocked start retry uses bounded inexact alarm`() {
+    @Test fun `blocked start retry is exact when exact alarms are allowed`() {
+        // Only an exact alarm lets the receiver it wakes start a foreground
+        // service from the background on Android 12+. An inexact retry is
+        // refused for the same reason the first start was.
         val alarms = FakeScheduleAlarmOps(exactAllowed = true)
 
         orchestrator(alarms).scheduleBlockedStartRetry(attempt = 2, delayMs = 5_000L)
 
-        assertThat(alarms.exactCalls).isEqualTo(0)
-        assertThat(alarms.inexactCalls).isEqualTo(1)
+        assertThat(alarms.exactCalls).isEqualTo(1)
+        assertThat(alarms.inexactCalls).isEqualTo(0)
         assertThat(alarms.cancelCalls).isEqualTo(3)
         assertThat(alarms.lastPendingIntent?.isBroadcast).isTrue()
-        assertThat(logs.any { it.contains("scheduled blocked-service retry 2 in 5s") }).isTrue()
+        assertThat(logs.any { it.contains("scheduled blocked-service retry 2 in 5s (exact)") }).isTrue()
+    }
+
+    @Test fun `blocked start retry falls back to inexact without exact alarm access`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = false)
+
+        orchestrator(alarms).scheduleBlockedStartRetry(attempt = 1, delayMs = 60_000L)
+
+        assertThat(alarms.exactCalls).isEqualTo(0)
+        assertThat(alarms.inexactCalls).isEqualTo(1)
+        assertThat(alarms.lastPendingIntent?.isBroadcast).isTrue()
+        assertThat(logs.any { it.contains("scheduled blocked-service retry 1 in 60s (inexact)") }).isTrue()
+    }
+
+    @Test fun `blocked start retry falls back to inexact when the exact alarm is refused`() {
+        val alarms = FakeScheduleAlarmOps(exactAllowed = true, throwOnExact = true)
+
+        orchestrator(alarms).scheduleBlockedStartRetry(attempt = 1, delayMs = 60_000L)
+
+        assertThat(alarms.exactCalls).isEqualTo(1)
+        assertThat(alarms.inexactCalls).isEqualTo(1)
+        assertThat(alarms.lastPendingIntent?.isBroadcast).isTrue()
+        assertThat(logs.any { it.contains("scheduled blocked-service retry 1 in 60s (inexact)") }).isTrue()
     }
 
     @Test fun `permission reconciliation rearms once per permission state`() {
