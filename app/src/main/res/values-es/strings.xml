@@ -31,11 +31,11 @@
     <string name="home_kelvin_title">Temperatura de color</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
-    <string name="home_kelvin_hint">Más cálido (K más bajo) intensifica los rojos; más frío (K más alto) realza los azules. 6500 K es blanco neutro.</string>
-    <string name="home_kelvin_preset_hint">Disponible para RGB personalizado; selecciona Personalizado para editar esta temperatura</string>
+    <string name="home_kelvin_hint">Más cálido (K más bajo) intensifica los rojos y más frío (K más alto) realza los azules. 6500 K es blanco neutro.</string>
+    <string name="home_kelvin_preset_hint">Disponible para RGB personalizado. Selecciona Personalizado para editar esta temperatura.</string>
     <string name="home_preview">Vista previa</string>
     <string name="home_gamma_title">Gamma por canal</string>
-    <string name="home_gamma_hint">1.0 = neutro. Valores más altos elevan los tonos medios; más bajos los profundizan.</string>
+    <string name="home_gamma_hint">1.0 = neutro. Valores más altos elevan los tonos medios y más bajos los profundizan.</string>
     <string name="home_gamma_value">%1$.2f</string>
     <string name="home_gamma_state">%1$s gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
@@ -165,7 +165,7 @@
     <string name="driver_auto_resolved_none">Auto: no hay ningún controlador disponible. Conceder el permiso de superposición instala la alternativa de superposición.</string>
     <string name="driver_color_contract">SurfaceFlinger conserva la matriz de color completa. Luz nocturna del sistema, KCAL y Overlay usan una aproximación escalar: el contraste coincide en el punto blanco transformado, pero los negros y medios tonos pueden diferir.</string>
     <string name="driver_force_pinned">Usar este controlador aunque parezca no disponible</string>
-    <string name="driver_force_pinned_body">Los gestores de root responden de forma distinta. KernelSU y APatch nunca preguntan, así que un controlador sin root ahí suele necesitar solo que añadas OpenLumen a la lista del gestor. Magisk sí pregunta, y una respuesta lenta parece falta de root. Activa esto para intentarlo igualmente; si de verdad no puede funcionar, el filtro informa del error en vez de volver a Auto.</string>
+    <string name="driver_force_pinned_body">Los gestores de root responden de forma distinta. KernelSU y APatch nunca preguntan, así que un controlador sin root ahí suele necesitar solo que añadas OpenLumen a la lista del gestor. Magisk sí pregunta, y una respuesta lenta parece falta de root. Activa esto para intentarlo igualmente. Si de verdad no puede funcionar, el filtro informa del error en vez de volver a Auto.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS mediante ADB</string>
     <string name="driver_aapm_title">Advanced Protection de Android</string>
     <string name="driver_aapm_explanation">El modo de protección avanzada puede desactivar funciones basadas en accesibilidad. OpenLumen no usa accesibilidad ni acceso al uso, así que no le afecta. El informe del controlador registra el estado de la plataforma cuando el dispositivo lo expone.</string>
@@ -341,7 +341,7 @@
     <string name="light_sensor_threshold">Umbral: %1$d lux</string>
     <string name="light_sensor_threshold_state">Umbral de %1$d lux</string>
     <string name="light_sensor_threshold_name">Umbral de luz ambiental</string>
-    <string name="light_sensor_hysteresis">Se activa por debajo de %1$d lux; se desactiva por encima de %2$d lux para evitar parpadeos</string>
+    <string name="light_sensor_hysteresis">Se activa por debajo de %1$d lux y se desactiva por encima de %2$d lux para evitar parpadeos</string>
     <string name="light_sensor_threshold_set">Umbral fijado en %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrar: usar la lectura actual como umbral</string>
 
@@ -375,7 +375,7 @@
     <string name="backup_exported">Exportado</string>
     <string name="backup_export_failed">Error al exportar: %1$s</string>
     <string name="backup_imported">Importado</string>
-    <string name="backup_imported_skipped_duplicates">Importado; perfiles duplicados omitidos: %1$s</string>
+    <string name="backup_imported_skipped_duplicates">Importado. Perfiles duplicados omitidos: %1$s</string>
     <string name="backup_import_failed">Error al importar: %1$s</string>
     <string name="error_unknown">Error desconocido</string>
     <string name="presets_sort_label">Ordenar</string>

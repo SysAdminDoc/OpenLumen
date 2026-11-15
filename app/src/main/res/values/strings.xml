@@ -32,11 +32,11 @@
     <string name="home_kelvin_title">Color temperature</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
-    <string name="home_kelvin_hint">Warmer (lower K) deepens reds; cooler (higher K) lifts blues. 6500 K is neutral white.</string>
-    <string name="home_kelvin_preset_hint">Available for Custom RGB; select Custom to edit this temperature</string>
+    <string name="home_kelvin_hint">Warmer (lower K) deepens reds, and cooler (higher K) lifts blues. 6500 K is neutral white.</string>
+    <string name="home_kelvin_preset_hint">Available for Custom RGB. Select Custom to edit this temperature.</string>
     <string name="home_preview">Preview</string>
     <string name="home_gamma_title">Per-channel gamma</string>
-    <string name="home_gamma_hint">1.0 = neutral. Higher lifts mid-tones; lower deepens them.</string>
+    <string name="home_gamma_hint">1.0 = neutral. Higher lifts mid-tones and lower deepens them.</string>
     <string name="home_gamma_value">%1$.2f</string>
     <string name="home_gamma_state">%1$s gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
@@ -104,7 +104,7 @@
     <string name="backup_exported">Exported</string>
     <string name="backup_export_failed">Export failed: %1$s</string>
     <string name="backup_imported">Imported</string>
-    <string name="backup_imported_skipped_duplicates">Imported; skipped duplicate profiles: %1$s</string>
+    <string name="backup_imported_skipped_duplicates">Imported. Skipped duplicate profiles: %1$s</string>
     <string name="backup_import_failed">Import failed: %1$s</string>
     <string name="backup_preset_pack_exported">Preset pack exported</string>
     <string name="backup_preset_pack_imported">Preset pack imported: %1$d added, %2$d replaced</string>
@@ -190,7 +190,7 @@
     <string name="driver_auto_resolved_none">Auto: no driver available. Granting overlay permission installs the Overlay fallback.</string>
     <string name="driver_color_contract">SurfaceFlinger preserves the full color matrix. System Night Light, KCAL, and Overlay use a scalar approximation: contrast matches the transformed white point, while black and midtones may differ.</string>
     <string name="driver_force_pinned">Use this driver even if it looks unavailable</string>
-    <string name="driver_force_pinned_body">Root managers answer differently. KernelSU and APatch never prompt, so a driver that cannot get root there usually just needs OpenLumen added to the manager\'s allowlist. Magisk does prompt, and a slow answer reads as no root. Turn this on to try the driver anyway; if it really cannot run, the filter reports the error instead of switching back to Auto.</string>
+    <string name="driver_force_pinned_body">Root managers answer differently. KernelSU and APatch never prompt, so a driver that cannot get root there usually just needs OpenLumen added to the manager\'s allowlist. Magisk does prompt, and a slow answer reads as no root. Turn this on to try the driver anyway. If it really can\'t run, the filter reports the error instead of switching back to Auto.</string>
     <string name="driver_grant_secure_settings">Grant WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Advanced Protection Mode can switch off features that rely on Accessibility. OpenLumen uses neither Accessibility nor usage access, so it is unaffected. The driver report records the platform state where the device exposes it.</string>
@@ -381,7 +381,7 @@
     <string name="light_sensor_threshold">Threshold: %1$d lux</string>
     <string name="light_sensor_threshold_state">%1$d lux threshold</string>
     <string name="light_sensor_threshold_name">Ambient-light threshold</string>
-    <string name="light_sensor_hysteresis">Engages below %1$d lux; disengages above %2$d lux to prevent flicker</string>
+    <string name="light_sensor_hysteresis">Engages below %1$d lux and disengages above %2$d lux to prevent flicker</string>
     <string name="light_sensor_threshold_set">Threshold set to %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrate: use current reading as threshold</string>
 

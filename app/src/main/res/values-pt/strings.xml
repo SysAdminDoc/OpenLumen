@@ -31,11 +31,11 @@
     <string name="home_kelvin_title">Temperatura de cor</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
-    <string name="home_kelvin_hint">Mais quente (K menor) intensifica os vermelhos; mais frio (K maior) realca os azuis. 6500 K e branco neutro.</string>
-    <string name="home_kelvin_preset_hint">Disponível para RGB personalizado; selecione Personalizado para editar esta temperatura</string>
+    <string name="home_kelvin_hint">Mais quente (K menor) intensifica os vermelhos e mais frio (K maior) realca os azuis. 6500 K e branco neutro.</string>
+    <string name="home_kelvin_preset_hint">Disponível para RGB personalizado. Selecione Personalizado para editar esta temperatura.</string>
     <string name="home_preview">Visualizar</string>
     <string name="home_gamma_title">Gama por canal</string>
-    <string name="home_gamma_hint">1.0 = neutro. Valores maiores clareiam tons médios; menores escurecem.</string>
+    <string name="home_gamma_hint">1.0 = neutro. Valores maiores clareiam tons médios e menores escurecem.</string>
     <string name="home_gamma_value">%1$.2f</string>
     <string name="home_gamma_state">%1$s gama %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
@@ -165,7 +165,7 @@
     <string name="driver_auto_resolved_none">Auto: nenhum controlador disponível. Conceder a permissão de sobreposição instala a alternativa de sobreposição.</string>
     <string name="driver_color_contract">O SurfaceFlinger preserva a matriz de cores completa. Luz noturna do sistema, KCAL e Overlay usam uma aproximação escalar: o contraste corresponde ao ponto branco transformado, mas pretos e tons médios podem variar.</string>
     <string name="driver_force_pinned">Usar este controlador mesmo que pareça indisponível</string>
-    <string name="driver_force_pinned_body">Os gestores de root respondem de forma diferente. O KernelSU e o APatch nunca perguntam, por isso um controlador sem root aí costuma apenas precisar que adicione o OpenLumen à lista do gestor. O Magisk pergunta, e uma resposta lenta parece falta de root. Active isto para tentar mesmo assim; se não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
+    <string name="driver_force_pinned_body">Os gestores de root respondem de forma diferente. O KernelSU e o APatch nunca perguntam, por isso um controlador sem root aí costuma apenas precisar que adicione o OpenLumen à lista do gestor. O Magisk pergunta, e uma resposta lenta parece falta de root. Active isto para tentar mesmo assim. Se não puder mesmo funcionar, o filtro comunica o erro em vez de voltar a Auto.</string>
     <string name="driver_grant_secure_settings">Conceder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Advanced Protection do Android</string>
     <string name="driver_aapm_explanation">O modo de protecção avançada pode desligar funcionalidades que dependem da acessibilidade. O OpenLumen não usa acessibilidade nem acesso à utilização, por isso não é afectado. O relatório do controlador regista o estado da plataforma quando o dispositivo o disponibiliza.</string>
@@ -341,7 +341,7 @@
     <string name="light_sensor_threshold">Limiar: %1$d lux</string>
     <string name="light_sensor_threshold_state">limiar de %1$d lux</string>
     <string name="light_sensor_threshold_name">Limiar de luz ambiente</string>
-    <string name="light_sensor_hysteresis">Ativa abaixo de %1$d lux; desativa acima de %2$d lux para evitar cintilação</string>
+    <string name="light_sensor_hysteresis">Ativa abaixo de %1$d lux e desativa acima de %2$d lux para evitar cintilação</string>
     <string name="light_sensor_threshold_set">Limiar definido em %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrar: usar leitura atual como limiar</string>
 
@@ -375,7 +375,7 @@
     <string name="backup_exported">Exportado</string>
     <string name="backup_export_failed">Falha na exportação: %1$s</string>
     <string name="backup_imported">Importado</string>
-    <string name="backup_imported_skipped_duplicates">Importado; perfis duplicados ignorados: %1$s</string>
+    <string name="backup_imported_skipped_duplicates">Importado. Perfis duplicados ignorados: %1$s</string>
     <string name="backup_import_failed">Falha na importação: %1$s</string>
     <string name="error_unknown">Erro desconhecido</string>
     <string name="presets_sort_label">Ordenar</string>

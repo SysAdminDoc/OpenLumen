@@ -31,11 +31,11 @@
     <string name="home_kelvin_title">Farbtemperatur</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
-    <string name="home_kelvin_hint">Wärmer (niedrigere K) verstärkt Rottöne; kühler (höhere K) hebt Blautöne an. 6500 K ist neutrales Weiß.</string>
-    <string name="home_kelvin_preset_hint">Für benutzerdefiniertes RGB verfügbar; zum Bearbeiten „Benutzerdefiniert“ auswählen</string>
+    <string name="home_kelvin_hint">Wärmer (niedrigere K) verstärkt Rottöne, kühler (höhere K) hebt Blautöne an. 6500 K ist neutrales Weiß.</string>
+    <string name="home_kelvin_preset_hint">Für benutzerdefiniertes RGB verfügbar. Zum Bearbeiten „Benutzerdefiniert“ auswählen.</string>
     <string name="home_preview">Vorschau</string>
     <string name="home_gamma_title">Gamma pro Kanal</string>
-    <string name="home_gamma_hint">1,0 = neutral. Höhere Werte heben Mitteltöne an; niedrigere vertiefen sie.</string>
+    <string name="home_gamma_hint">1,0 = neutral. Höhere Werte heben Mitteltöne an, niedrigere vertiefen sie.</string>
     <string name="home_gamma_value">%1$.2f</string>
     <string name="home_gamma_state">%1$s Gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
@@ -165,7 +165,7 @@
     <string name="driver_auto_resolved_none">Auto: kein Treiber verfügbar. Mit der Overlay-Berechtigung wird der Overlay-Fallback eingerichtet.</string>
     <string name="driver_color_contract">SurfaceFlinger erhält die vollständige Farbmatrix. System-Nachtlicht, KCAL und Overlay verwenden eine skalare Näherung: Der Kontrast entspricht dem transformierten Weißpunkt, während Schwarz- und Mitteltöne abweichen können.</string>
     <string name="driver_force_pinned">Diesen Treiber auch nutzen, wenn er nicht verfuegbar wirkt</string>
-    <string name="driver_force_pinned_body">Root-Manager antworten unterschiedlich. KernelSU und APatch fragen nie nach, ein Treiber ohne Root braucht dort also meist nur OpenLumen in der Freigabeliste des Managers. Magisk fragt nach, und eine langsame Antwort wirkt wie fehlendes Root. Aktiviere dies, um den Treiber trotzdem zu versuchen; wenn er wirklich nicht laufen kann, meldet der Filter den Fehler, statt zu Auto zurückzuwechseln.</string>
+    <string name="driver_force_pinned_body">Root-Manager antworten unterschiedlich. KernelSU und APatch fragen nie nach, ein Treiber ohne Root braucht dort also meist nur OpenLumen in der Freigabeliste des Managers. Magisk fragt nach, und eine langsame Antwort wirkt wie fehlendes Root. Aktiviere dies, um den Treiber trotzdem zu versuchen. Wenn er wirklich nicht laufen kann, meldet der Filter den Fehler, statt zu Auto zurückzuwechseln.</string>
     <string name="driver_grant_secure_settings">WRITE_SECURE_SETTINGS über ADB erteilen</string>
     <string name="driver_aapm_title">Android Advanced Protection</string>
     <string name="driver_aapm_explanation">Der erweiterte Schutzmodus kann Funktionen abschalten, die auf Bedienungshilfen beruhen. OpenLumen nutzt weder Bedienungshilfen noch Nutzungszugriff und ist davon nicht betroffen. Der Treiberbericht hält den Plattformzustand fest, sofern das Gerät ihn bereitstellt.</string>
@@ -341,7 +341,7 @@
     <string name="light_sensor_threshold">Schwellenwert: %1$d Lux</string>
     <string name="light_sensor_threshold_state">%1$d Lux Schwellenwert</string>
     <string name="light_sensor_threshold_name">Schwellenwert für Umgebungslicht</string>
-    <string name="light_sensor_hysteresis">Aktivierung unter %1$d Lux; Deaktivierung über %2$d Lux gegen Flackern</string>
+    <string name="light_sensor_hysteresis">Aktivierung unter %1$d Lux, Deaktivierung über %2$d Lux gegen Flackern</string>
     <string name="light_sensor_threshold_set">Schwelle auf %1$d Lux gesetzt</string>
     <string name="light_sensor_calibrate">Kalibrieren: aktuellen Messwert als Schwellenwert verwenden</string>
 
@@ -375,7 +375,7 @@
     <string name="backup_exported">Exportiert</string>
     <string name="backup_export_failed">Export fehlgeschlagen: %1$s</string>
     <string name="backup_imported">Importiert</string>
-    <string name="backup_imported_skipped_duplicates">Importiert; doppelte Profile übersprungen: %1$s</string>
+    <string name="backup_imported_skipped_duplicates">Importiert. Doppelte Profile übersprungen: %1$s</string>
     <string name="backup_import_failed">Import fehlgeschlagen: %1$s</string>
     <string name="error_unknown">Unbekannter Fehler</string>
     <string name="presets_sort_label">Sortieren</string>

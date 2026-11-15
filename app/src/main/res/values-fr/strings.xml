@@ -31,11 +31,11 @@
     <string name="home_kelvin_title">Température de couleur</string>
     <string name="home_kelvin_value">%1$d K</string>
     <string name="home_kelvin_state">%1$d Kelvin</string>
-    <string name="home_kelvin_hint">Plus chaud (K bas) renforce les rouges ; plus froid (K haut) accentue les bleus. 6500 K correspond au blanc neutre.</string>
-    <string name="home_kelvin_preset_hint">Disponible pour le profil personnalisé ; sélectionnez Personnalisé pour modifier cette température</string>
+    <string name="home_kelvin_hint">Plus chaud (K bas) renforce les rouges, plus froid (K haut) accentue les bleus. 6500 K correspond au blanc neutre.</string>
+    <string name="home_kelvin_preset_hint">Disponible pour le profil personnalisé. Sélectionnez Personnalisé pour modifier cette température.</string>
     <string name="home_preview">Aperçu</string>
     <string name="home_gamma_title">Gamma par canal</string>
-    <string name="home_gamma_hint">1,0 = neutre. Plus élevé rehausse les tons moyens ; plus bas les assombrit.</string>
+    <string name="home_gamma_hint">1,0 = neutre. Plus élevé rehausse les tons moyens, plus bas les assombrit.</string>
     <string name="home_gamma_value">%1$.2f</string>
     <string name="home_gamma_state">Gamma %1$s %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
@@ -165,7 +165,7 @@
     <string name="driver_auto_resolved_none">Auto : aucun pilote disponible. Accorder l\'autorisation de superposition installe la solution de repli.</string>
     <string name="driver_color_contract">SurfaceFlinger conserve la matrice de couleurs complète. Éclairage nocturne système, KCAL et Overlay utilisent une approximation scalaire : le contraste correspond au point blanc transformé, mais les noirs et les tons moyens peuvent différer.</string>
     <string name="driver_force_pinned">Utiliser ce pilote même s\'il semble indisponible</string>
-    <string name="driver_force_pinned_body">Les gestionnaires de root ne répondent pas de la même façon. KernelSU et APatch ne demandent jamais rien, donc un pilote sans root y réclame en général juste d\'ajouter OpenLumen à la liste du gestionnaire. Magisk demande, et une réponse lente ressemble à une absence de root. Activez ceci pour essayer quand même ; si le pilote ne peut vraiment pas tourner, le filtre signale l\'erreur au lieu de revenir en Auto.</string>
+    <string name="driver_force_pinned_body">Les gestionnaires de root ne répondent pas de la même façon. KernelSU et APatch ne demandent jamais rien, donc un pilote sans root y réclame en général juste d\'ajouter OpenLumen à la liste du gestionnaire. Magisk demande, et une réponse lente ressemble à une absence de root. Activez ceci pour essayer quand même. Si le pilote ne peut vraiment pas tourner, le filtre signale l\'erreur au lieu de revenir en Auto.</string>
     <string name="driver_grant_secure_settings">Accorder WRITE_SECURE_SETTINGS via ADB</string>
     <string name="driver_aapm_title">Protection avancée Android</string>
     <string name="driver_aapm_explanation">Le mode de protection avancée peut désactiver les fonctions qui reposent sur l\'accessibilité. OpenLumen n\'utilise ni l\'accessibilité ni l\'accès aux données d\'utilisation, il n\'est donc pas concerné. Le rapport de pilote note l\'état de la plateforme lorsque l\'appareil l\'expose.</string>
@@ -341,7 +341,7 @@
     <string name="light_sensor_threshold">Seuil : %1$d lux</string>
     <string name="light_sensor_threshold_state">Seuil de %1$d lux</string>
     <string name="light_sensor_threshold_name">Seuil de lumière ambiante</string>
-    <string name="light_sensor_hysteresis">Activation sous %1$d lux ; désactivation au-dessus de %2$d lux pour éviter le scintillement</string>
+    <string name="light_sensor_hysteresis">Activation sous %1$d lux, désactivation au-dessus de %2$d lux pour éviter le scintillement</string>
     <string name="light_sensor_threshold_set">Seuil réglé sur %1$d lux</string>
     <string name="light_sensor_calibrate">Calibrer : utiliser la mesure actuelle comme seuil</string>
 
@@ -375,7 +375,7 @@
     <string name="backup_exported">Exporté</string>
     <string name="backup_export_failed">Échec de l\'exportation : %1$s</string>
     <string name="backup_imported">Importé</string>
-    <string name="backup_imported_skipped_duplicates">Importé ; profils en double ignorés : %1$s</string>
+    <string name="backup_imported_skipped_duplicates">Importé. Profils en double ignorés : %1$s</string>
     <string name="backup_import_failed">Échec de l\'importation : %1$s</string>
     <string name="error_unknown">Erreur inconnue</string>
     <string name="presets_sort_label">Trier</string>
