@@ -303,6 +303,23 @@
         </provider>
 
         <!--
+            Optional Shizuku tier (C254). A running Shizuku server (or Sui)
+            hands this app its binder through this provider, which is how the
+            Driver tab can grant WRITE_SECURE_SETTINGS without a computer.
+            Exported because the server calls it from another process, and
+            guarded by INTERACT_ACROSS_USERS_FULL, a signature permission only
+            system, shell and root callers hold. The library requires
+            multiprocess="false" and throws at startup otherwise.
+        -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <!--
             1x1 toggle widget (roadmap C19/C123). Glance renders the
             widget; ACTION_REFRESH still lets LumenService nudge all
             instances after each prefs emission.
@@ -378,5 +395,11 @@
         <package android:name="com.topjohnwu.magisk" />
         <package android:name="me.weishu.kernelsu" />
         <package android:name="me.bmax.apatch" />
+
+        <!--
+            The Shizuku manager, so the Driver tab can tell "Shizuku is not
+            installed" from "installed but not started" (C254).
+        -->
+        <package android:name="moe.shizuku.privileged.api" />
     </queries>
 </manifest>

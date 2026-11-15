@@ -24,6 +24,9 @@ robolectric = "4.16.1"
 # 1.84. Test scope only, but the release gate queries every resolved
 # coordinate, so it has to be pinned rather than explained away.
 bouncycastle = "1.84"
+# Optional on-device grant of WRITE_SECURE_SETTINGS (C254). MIT. A local
+# binder client only; it adds no permission beyond its own API_V23 marker.
+shizuku = "13.1.5"
 
 junit = "4.13.2"
 truth = "1.4.5"
@@ -66,6 +69,8 @@ androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "d
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "shizuku" }
+shizuku-provider = { module = "dev.rikka.shizuku:provider", version.ref = "shizuku" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

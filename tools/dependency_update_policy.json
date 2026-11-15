@@ -91,6 +91,11 @@
       "module": "AndroidX WorkManager",
       "area": "androidx"
     },
+    "shizuku": {
+      "url": "https://github.com/RikkaApps/Shizuku-API/releases",
+      "module": "Shizuku API and provider (optional on-device permission grant)",
+      "area": "androidx"
+    },
     "screenshot": {
       "url": "https://developer.android.com/studio/preview/features#screenshot-testing",
       "module": "Compose screenshot testing",

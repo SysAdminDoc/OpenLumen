@@ -220,6 +220,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
 
+    // C254: optional Shizuku grant of WRITE_SECURE_SETTINGS.
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
+
     screenshotTestImplementation(libs.screenshot.validation.api)
     screenshotTestImplementation(libs.compose.ui.tooling)
 
