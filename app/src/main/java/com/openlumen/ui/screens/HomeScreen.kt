@@ -69,6 +69,7 @@ import com.openlumen.presetLabel
 import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LumenOutlinedButton
 import com.openlumen.ui.components.LumenSwitch
+import com.openlumen.ui.components.ExactAlarmPromptCard
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.components.SystemColorConflictCard
 import com.openlumen.ui.components.expectedEngineKind
@@ -278,6 +279,14 @@ fun HomeScreen(
         val overlayCardRelevant =
             prefs.engine == EngineKindDto.Auto || prefs.engine == EngineKindDto.Overlay
         OverlayPermissionCard(requiredByActiveEngine = overlayCardRelevant)
+        // Reads AlarmManager state, which previews and screenshots don't have.
+        if (enableSystemActions) {
+            ExactAlarmPromptCard(
+                filterEnabled = prefs.enabled,
+                mode = prefs.schedule.mode,
+                onGranted = { vm.reconcileExactAlarmPermission() }
+            )
+        }
 
         // Only while the filter is on: with it off, the system's Night Light
         // is not overwriting anything and is what the user asked for.

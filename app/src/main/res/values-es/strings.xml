@@ -128,6 +128,7 @@
     <string name="schedule_exact_alarm_warning_title">Las alarmas exactas están desactivadas</string>
     <string name="schedule_exact_alarm_warning_body">Los cambios programados pueden ejecutarse tarde porque Android solo permite alarmas inexactas para OpenLumen.</string>
     <string name="schedule_exact_alarm_warning_action">Abrir ajustes de alarmas exactas</string>
+    <string name="exact_alarm_prompt_not_now">Ahora no</string>
     <string name="schedule_set_location">Establecer ubicación</string>
     <string name="schedule_solar_location_tap_to_set">Se necesita una ubicación. Toca para establecerla.</string>
     <string name="schedule_solar_location_required_title">El horario solar necesita una ubicación</string>
