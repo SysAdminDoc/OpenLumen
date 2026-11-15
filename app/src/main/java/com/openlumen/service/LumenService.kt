@@ -92,6 +92,7 @@ class LumenService : LifecycleService() {
      * never has to make Binder calls to find out (#32).
      */
     @Volatile private var systemGrayscaleActive = false
+    private val filterPhaseTracker = FilterPhaseTracker()
     private val ambientLightGate = AmbientLightGate()
     private val directBootMirror: DirectBootMirror by lazy {
         DirectBootMirror(directBootState, tag)
@@ -617,6 +618,9 @@ class LumenService : LifecycleService() {
      *
      * The light sensor acts as an "additional" trigger — it can engage the filter even
      * outside the user's schedule window, useful for dark-room sessions during the day.
+     *
+     * Outside both, the day filter (when it is on) keeps its own temperature on
+     * screen instead of identity; see [filterPhase].
      */
     private suspend fun applyIfShouldBeActive(
         p: Preferences,
@@ -630,13 +634,14 @@ class LumenService : LifecycleService() {
             thresholdLux = p.lightSensorLuxThreshold,
             lux = luxNow
         )
-        val shouldBeActive = shouldFilterBeActive(p, scheduleActive, lightActive)
-
-        // matrixFor applies the progressive ramp itself, so the service and
-        // the Home tab's readouts cannot disagree about what is on screen.
-        val matrix = if (shouldBeActive) matrixFor(p) else LumenMatrix.IDENTITY
+        val phase = filterPhase(p, mode, scheduleActive, lightActive)
+        val shouldBeActive = phase != FilterPhase.OFF
+        val matrix = phaseMatrix(p, phase)
+        // Day to evening and back is a schedule transition like off to on, so
+        // it fades; the gate alone would treat it as a slider move and jump.
+        val phaseChanged = filterPhaseTracker.changedTo(phase)
         directBootMirror.mirror(p, active = shouldBeActive, matrix = matrix)
-        engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs)
+        engineController.applyIfNeeded(shouldBeActive, matrix, p.transitionDurationMs, ramp = phaseChanged)
         // Always reschedule — the next transition time depends on the current mode and clock.
         if (reconcileExactAlarmPermission) {
             scheduleAlarms.rescheduleIfExactAlarmPermissionChanged(mode)
@@ -717,15 +722,6 @@ class LumenService : LifecycleService() {
             nm.notify(CONFLICT_NOTIFICATION_ID, notification)
         }.onFailure { Log.w(tag, "system conflict notification: ${it.message}") }
     }
-
-    /**
-     * Effective `LumenMatrix` for [p]. Delegates to
-     * `com.openlumen.diagnostics.MatrixPreview.matrixFor` so the service
-     * and any UI preview compute exactly the same target matrix. C61's
-     * blue-suppression indicator depends on this parity.
-     */
-    private fun matrixFor(p: Preferences): LumenMatrix =
-        com.openlumen.diagnostics.MatrixPreview.matrixFor(p)
 
     private fun ensurePreferencesObserved() {
         if (preferencesObserved || !isUserUnlocked()) return

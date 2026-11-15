@@ -319,6 +319,10 @@ class OpenLumenViewModel @Inject constructor(
         }
     }
 
+    override fun setDayFilter(enabled: Boolean, kelvin: Int, dim: Float) = viewModelScope.launch {
+        prefs.update { it.withDayFilter(enabled, kelvin, dim) }
+    }
+
     override fun setScheduleOffsets(sunsetMin: Int, sunriseMin: Int) = viewModelScope.launch {
         prefs.update {
             it.copy(schedule = it.schedule.copy(

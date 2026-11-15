@@ -1,6 +1,7 @@
 package com.openlumen.viewmodel
 
 import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.isValidSolarLocation
 import kotlin.math.abs
@@ -65,6 +66,20 @@ internal fun Preferences.withSolarLocation(
         )
     )
 }
+
+/**
+ * The day filter switch and both of its sliders in one write, so turning it on
+ * keeps the temperature and dim the card is showing. A value the sliders
+ * cannot produce is pulled back into range rather than stored.
+ */
+internal fun Preferences.withDayFilter(enabled: Boolean, kelvin: Int, dim: Float): Preferences =
+    copy(
+        schedule = schedule.copy(
+            dayFilter = enabled,
+            dayKelvin = kelvin.coerceIn(ScheduleDto.DAY_KELVIN_MIN, ScheduleDto.DAY_KELVIN_MAX),
+            dayDim = if (dim.isFinite()) dim.coerceIn(0f, ScheduleDto.DAY_DIM_MAX) else 0f
+        )
+    )
 
 /** Equal once both are rounded the way the location dialog shows them. */
 private fun sameDialogCoordinate(stored: Double?, saved: Double): Boolean =

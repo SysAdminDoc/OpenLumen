@@ -78,4 +78,27 @@ class ScheduleSanitizerTest {
             assertThat(clean.locationZoneId).isNull()
         }
     }
+
+    @Test fun `day filter values outside their range are pulled back in`() {
+        val low = sanitizeDayFilterFields(ScheduleDto(dayFilter = true, dayKelvin = 100, dayDim = -1f))
+        val high = sanitizeDayFilterFields(ScheduleDto(dayFilter = true, dayKelvin = 99_999, dayDim = 7.5f))
+
+        assertThat(low.dayKelvin).isEqualTo(ScheduleDto.DAY_KELVIN_MIN)
+        assertThat(low.dayDim).isEqualTo(0f)
+        assertThat(high.dayKelvin).isEqualTo(ScheduleDto.DAY_KELVIN_MAX)
+        assertThat(high.dayDim).isEqualTo(ScheduleDto.DAY_DIM_MAX)
+        assertThat(high.dayFilter).isTrue()
+    }
+
+    @Test fun `a day dim that is not a number falls back to no dim`() {
+        for (dim in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+            assertThat(sanitizeDayFilterFields(ScheduleDto(dayDim = dim)).dayDim).isEqualTo(0f)
+        }
+    }
+
+    @Test fun `day filter values in range are kept`() {
+        val schedule = ScheduleDto(dayFilter = true, dayKelvin = 5500, dayDim = 0.3f)
+
+        assertThat(sanitizeDayFilterFields(schedule)).isEqualTo(schedule)
+    }
 }

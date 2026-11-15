@@ -1,13 +1,17 @@
 package com.openlumen.service
 
+import com.openlumen.diagnostics.MatrixPreview
+import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
+import com.openlumen.prefs.dayMatrix
 import com.openlumen.schedule.ScheduleMode
 import com.openlumen.schedule.isValidSolarLocation
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The two decisions the service makes that a user can see: which schedule is
@@ -61,6 +65,81 @@ fun mapScheduleMode(
         ),
         nextAlarmAt = nextAlarmAt
     )
+}
+
+/** Which filter the screen should carry right now. */
+enum class FilterPhase {
+    OFF,
+
+    /** The schedule window (or the light sensor): the user's preset. */
+    NIGHT,
+
+    /** Outside the window with the day filter on: [com.openlumen.prefs.dayMatrix]. */
+    DAY
+}
+
+/**
+ * [shouldFilterBeActive], plus the day filter for the hours it leaves off.
+ *
+ * The day filter only fills the gap of a schedule that has one. Always on has
+ * no gap, and the Off preset and Always off are the user saying "not now",
+ * which covers the day as well. A solar schedule without a usable location
+ * maps to [ScheduleMode.AlwaysOff], so it never opens a window and must not be
+ * read as "day forever" either.
+ */
+fun filterPhase(
+    prefs: Preferences,
+    mode: ScheduleMode,
+    scheduleActive: Boolean,
+    lightActive: Boolean
+): FilterPhase {
+    if (shouldFilterBeActive(prefs, scheduleActive, lightActive)) return FilterPhase.NIGHT
+    val hasWindow = mode is ScheduleMode.FixedTime ||
+        mode is ScheduleMode.Solar ||
+        mode is ScheduleMode.UntilNextAlarm
+    val explicitStandby = prefs.activePresetKey == Preferences.OFF_PRESET_KEY
+    return if (prefs.schedule.dayFilter && hasWindow && !explicitStandby) {
+        FilterPhase.DAY
+    } else {
+        FilterPhase.OFF
+    }
+}
+
+/**
+ * What the screen carries in [phase]. The service applies this and mirrors it
+ * for Direct Boot, so a reboot outside the window restores the day filter and
+ * one inside it restores the preset.
+ *
+ * The night side goes through `MatrixPreview.matrixFor`, which applies the
+ * progressive ramp, so the service and the Home tab's readouts cannot disagree
+ * about what is on screen (C61's blue-suppression indicator depends on it).
+ */
+fun phaseMatrix(
+    prefs: Preferences,
+    phase: FilterPhase,
+    now: ZonedDateTime = ZonedDateTime.now()
+): LumenMatrix = when (phase) {
+    FilterPhase.NIGHT -> MatrixPreview.matrixFor(prefs, now)
+    FilterPhase.DAY -> prefs.dayMatrix()
+    FilterPhase.OFF -> LumenMatrix.IDENTITY
+}
+
+/**
+ * Remembers the phase the service last applied, so the hand-over between the
+ * day filter and the preset fades like an off to on flip. To the apply gate
+ * that hand-over is one active target replacing another, which a slider drag
+ * also is, and a slider drag must not fade.
+ *
+ * The first phase a service instance sees counts as a change. A fresh service
+ * has nothing on screen and the gate fades or snaps it in as usual, but one
+ * that restored a tint before the first unlock has, and that restored phase
+ * can be stale by the time the user unlocks: a reboot at 19:59 restores the
+ * day filter, and an unlock at 20:05 has to fade into the preset, not jump.
+ */
+internal class FilterPhaseTracker {
+    private val last = AtomicReference<FilterPhase?>(null)
+
+    fun changedTo(phase: FilterPhase): Boolean = last.getAndSet(phase) != phase
 }
 
 /**

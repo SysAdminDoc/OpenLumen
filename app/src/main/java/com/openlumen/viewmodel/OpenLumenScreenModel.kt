@@ -95,6 +95,7 @@ interface OpenLumenScreenModel {
         autoLocation: Boolean,
         selectSolar: Boolean
     ): Job = Job()
+    fun setDayFilter(enabled: Boolean, kelvin: Int, dim: Float): Job = Job()
     fun reconcileExactAlarmPermission(): Job
     fun setLightSensor(enabled: Boolean, threshold: Float): Job
     fun setTransitionDuration(durationMs: Long): Job

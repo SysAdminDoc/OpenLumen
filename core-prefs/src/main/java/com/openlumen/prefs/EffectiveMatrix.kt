@@ -1,5 +1,6 @@
 package com.openlumen.prefs
 
+import com.openlumen.engine.Kelvin
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
 import com.openlumen.engine.composeDim
@@ -37,6 +38,28 @@ fun Preferences.effectiveMatrix(): LumenMatrix {
         // Last, so the gray is taken from the source pixel and everything
         // above, tint, dim and contrast included, is applied to it.
         .let { if (grayscale) it.withGrayscale(1f) else it }
+}
+
+/**
+ * The matrix for the hours outside the schedule window when
+ * [ScheduleDto.dayFilter] is on: a plain colour temperature with its own dim.
+ *
+ * Deliberately not the preset path above. The day filter is a second, simpler
+ * setting, so the evening preset's intensity, gamma and contrast do not leak
+ * into it; the AMOLED clamp is a property of the panel, not the preset, and
+ * carries over.
+ */
+fun Preferences.dayMatrix(): LumenMatrix {
+    val rgb = Kelvin.toRgb(
+        schedule.dayKelvin.coerceIn(ScheduleDto.DAY_KELVIN_MIN, ScheduleDto.DAY_KELVIN_MAX)
+    )
+    return LumenMatrix(
+        r = rgb.r,
+        g = rgb.g,
+        b = rgb.b,
+        dim = schedule.dayDim.takeIf { it.isFinite() }?.coerceIn(0f, ScheduleDto.DAY_DIM_MAX) ?: 0f,
+        amoledClamp = amoledBlackClamp
+    )
 }
 
 /**

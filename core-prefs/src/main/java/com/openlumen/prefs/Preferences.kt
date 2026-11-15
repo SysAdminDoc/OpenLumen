@@ -137,8 +137,27 @@ data class ScheduleDto(
      * change is the one cheap signal that the user travelled; null for a
      * location saved before this was recorded.
      */
-    val locationZoneId: String? = null
-)
+    val locationZoneId: String? = null,
+
+    /**
+     * Keep a lighter filter outside the schedule window instead of none, so
+     * the evening preset takes over at the window and [dayKelvin] holds the
+     * rest of the day.
+     *
+     * Off by default and additive with defaults, like the ramp above, so an
+     * existing schedule decodes unchanged.
+     */
+    val dayFilter: Boolean = false,
+    val dayKelvin: Int = DEFAULT_DAY_KELVIN,
+    val dayDim: Float = 0f
+) {
+    companion object {
+        const val DEFAULT_DAY_KELVIN = 4000
+        const val DAY_KELVIN_MIN = 2500
+        const val DAY_KELVIN_MAX = 6500
+        const val DAY_DIM_MAX = 0.95f
+    }
+}
 
 @Serializable
 enum class ScheduleModeDto { AlwaysOn, AlwaysOff, FixedTime, Solar, UntilNextAlarm }

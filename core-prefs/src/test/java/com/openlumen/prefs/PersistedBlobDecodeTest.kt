@@ -167,6 +167,78 @@ class PersistedBlobDecodeTest {
         assertThat(schedule.locationZoneId).isNull()
     }
 
+    @Test fun `a schedule saved before the day filter decodes with it off`() {
+        // PR #27 added three more schedule fields. An existing schedule has to
+        // keep switching off outside its window after the update.
+        seed(
+            """{"schemaVersion":3,"schedule":{"mode":"FixedTime","startHour":20,""" +
+                """"startMinute":0,"endHour":7,"endMinute":0}}"""
+        )
+
+        val schedule = runBlocking { store.flow.first() }.schedule
+
+        assertThat(schedule.mode).isEqualTo(ScheduleModeDto.FixedTime)
+        assertThat(schedule.dayFilter).isFalse()
+        assertThat(schedule.dayKelvin).isEqualTo(ScheduleDto.DEFAULT_DAY_KELVIN)
+        assertThat(schedule.dayDim).isEqualTo(0f)
+    }
+
+    @Test fun `day filter values from a hand-edited blob are clamped on read`() {
+        seed(
+            """{"schemaVersion":3,"schedule":{"mode":"FixedTime","startHour":20,""" +
+                """"endHour":7,"dayFilter":true,"dayKelvin":100,"dayDim":7.5}}"""
+        )
+
+        val schedule = runBlocking { store.flow.first() }.schedule
+
+        assertThat(schedule.dayFilter).isTrue()
+        assertThat(schedule.dayKelvin).isEqualTo(ScheduleDto.DAY_KELVIN_MIN)
+        assertThat(schedule.dayDim).isEqualTo(ScheduleDto.DAY_DIM_MAX)
+    }
+
+    @Test fun `an export and import carry the day filter, in a saved profile too`() {
+        val day = ScheduleDto(
+            mode = ScheduleModeDto.FixedTime,
+            startHour = 20,
+            endHour = 7,
+            dayFilter = true,
+            dayKelvin = 5500,
+            dayDim = 0.2f
+        )
+        runBlocking {
+            store.update { current ->
+                Profiles.saveCurrentAs(current.copy(schedule = day), "Workday")
+            }
+        }
+        val out = ByteArrayOutputStream()
+        val exportUri = Uri.parse("content://test/day-export.json")
+        shadowOf(context.contentResolver).registerOutputStream(exportUri, out)
+        runBlocking { store.exportTo(exportUri) }
+
+        // Wipe the live schedule, then bring the file back. The profile entry
+        // is edited out of range on the way to prove imports clamp it.
+        runBlocking { store.update { it.copy(schedule = ScheduleDto(), savedProfiles = emptyList()) } }
+        val exported = out.toString(Charsets.UTF_8.name())
+        val tampered = exported.replaceFirst(
+            Regex("(\"savedProfiles\"[\\s\\S]*?\"dayKelvin\": )5500"),
+            "$199999"
+        )
+        assertThat(tampered).isNotEqualTo(exported)
+        val importUri = Uri.parse("content://test/day-import.json")
+        shadowOf(context.contentResolver)
+            .registerInputStream(importUri, tampered.byteInputStream(Charsets.UTF_8))
+        val result = runBlocking { store.importFrom(importUri) }
+
+        assertThat(result.isSuccess).isTrue()
+        val loaded = runBlocking { store.flow.first() }
+        assertThat(loaded.schedule.dayFilter).isTrue()
+        assertThat(loaded.schedule.dayKelvin).isEqualTo(5500)
+        assertThat(loaded.schedule.dayDim).isEqualTo(0.2f)
+        val profile = loaded.savedProfiles.single { it.name == "Workday" }.snapshot.schedule
+        assertThat(profile.dayFilter).isTrue()
+        assertThat(profile.dayKelvin).isEqualTo(ScheduleDto.DAY_KELVIN_MAX)
+    }
+
     @Test fun `a good blob leaves no recovery record`() {
         // Positive control for the corruption case: the record has to come
         // from the failure, not from every read. Same store instance, so a

@@ -132,6 +132,7 @@ resets to Auto instead of leaving the filter enabled with no visible effect.
 - Live lux readout + "calibrate: use current reading" button
 - Smooth fade-in / fade-out transitions (Instant / 30 s / 1 min / 3 min / 5 min / 15 min / 30 min), or a custom length of any whole number of minutes up to 30
 - Optional progressive intensity: start at the preset's strength and reach a deeper one by a time you set, stepped by the schedule's own alarm
+- Optional day filter for the hours outside the schedule, with its own colour temperature (2500 to 6500 K) and dim. The screen fades to your preset when the window opens and back when it closes
 - Schedule timezone hint so fixed-time windows are unambiguous after travel
 
 **Command surfaces**

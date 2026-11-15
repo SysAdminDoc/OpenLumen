@@ -443,7 +443,7 @@ class PreferencesStore(
         matrixBb = m.matrixBb.finiteIn(MATRIX_COEFF_MIN, MATRIX_COEFF_MAX, default = 1f)
     )
 
-    private fun sanitizeSchedule(s: ScheduleDto): ScheduleDto = normalizeEqualFixedTimeSchedule(sanitizeAutoLocationFields(s.copy(
+    private fun sanitizeSchedule(s: ScheduleDto): ScheduleDto = normalizeEqualFixedTimeSchedule(sanitizeDayFilterFields(sanitizeAutoLocationFields(s.copy(
         startHour = s.startHour.coerceIn(0, 23),
         startMinute = s.startMinute.coerceIn(0, 59),
         endHour = s.endHour.coerceIn(0, 23),
@@ -459,7 +459,7 @@ class PreferencesStore(
         } else {
             1f
         }
-    )))
+    ))))
 
     /**
      * Bounds: name non-blank + ≤ 48 chars; library size capped at 32

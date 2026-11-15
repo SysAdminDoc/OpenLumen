@@ -33,6 +33,20 @@ internal fun sanitizeAutoLocationFields(schedule: ScheduleDto): ScheduleDto = sc
     locationZoneId = sanitizeSolarTimezone(schedule.locationZoneId)
 )
 
+/**
+ * Day filter values from a blob or an imported profile. The Kelvin goes
+ * straight into the colour matrix and the dim scales every channel, so a
+ * NaN or out-of-range value would paint the whole day black or white.
+ */
+internal fun sanitizeDayFilterFields(schedule: ScheduleDto): ScheduleDto = schedule.copy(
+    dayKelvin = schedule.dayKelvin.coerceIn(ScheduleDto.DAY_KELVIN_MIN, ScheduleDto.DAY_KELVIN_MAX),
+    dayDim = if (schedule.dayDim.isFinite()) {
+        schedule.dayDim.coerceIn(0f, ScheduleDto.DAY_DIM_MAX)
+    } else {
+        0f
+    }
+)
+
 internal fun sanitizeSolarTimezone(raw: String?): String? = raw
     ?.trim()
     ?.takeIf { it.isNotEmpty() }
