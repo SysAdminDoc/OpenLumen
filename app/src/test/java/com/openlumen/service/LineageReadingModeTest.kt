@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * #32. LineageOS keeps reading mode in its own settings provider, which only
@@ -20,7 +19,6 @@ import org.robolectric.annotation.Config
  * ways it can answer, and check the read stays quiet where it is missing.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class LineageReadingModeTest {
 
     private val resolver get() = RuntimeEnvironment.getApplication().contentResolver

@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C309. Every migration test built a Preferences object, so nothing ever fed
@@ -21,7 +20,6 @@ import org.robolectric.annotation.Config
  * token redaction on export.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class PersistedBlobDecodeTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

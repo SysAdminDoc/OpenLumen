@@ -9,7 +9,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C287. A process the locked-boot path started lives on past unlock with no
@@ -17,7 +16,6 @@ import org.robolectric.annotation.Config
  * wait for the unlock broadcast instead.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class AfterUnlockTest {
 
     private val app: Application = RuntimeEnvironment.getApplication()

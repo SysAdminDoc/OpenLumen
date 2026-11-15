@@ -9,7 +9,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C335. Clearing either log is one tap with no confirmation, which is the way
@@ -18,7 +17,6 @@ import org.robolectric.annotation.Config
  * already holding back to these.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class LogUndoTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

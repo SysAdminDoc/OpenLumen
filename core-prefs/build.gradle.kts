@@ -24,6 +24,11 @@ android {
             // core-engine already runs Robolectric this way.
             isReturnDefaultValues = true
             isIncludeAndroidResources = true
+            all {
+                // Same reason as core-engine: SDK 36+ under Robolectric needs
+                // jdk.internal.access exported.
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+            }
         }
     }
 }
@@ -44,7 +49,4 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.robolectric)
-    // Robolectric drags in an older bcprov. Test scope only, but a resolved
-    // coordinate with a critical advisory is still a resolved coordinate.
-    testImplementation(libs.bouncycastle.prov)
 }

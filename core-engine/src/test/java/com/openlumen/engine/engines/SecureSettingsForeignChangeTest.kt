@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C346. The seven `Settings.Secure` rows this driver writes are shared state:
@@ -27,7 +26,6 @@ import org.robolectric.annotation.Config
  * that the row is handed over for good.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class SecureSettingsForeignChangeTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

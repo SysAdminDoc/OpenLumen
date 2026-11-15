@@ -11,7 +11,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C255. A Galaxy S22 on Android 16 ships Extra Dim and colour correction but
@@ -21,7 +20,6 @@ import org.robolectric.annotation.Config
  * the app said the filter was on.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class SecureSettingsNoNightLightTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

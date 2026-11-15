@@ -18,7 +18,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 
 /**
  * What TalkBack lands on when it walks Home, read from the merged semantics
@@ -31,7 +30,6 @@ import org.robolectric.annotation.Config
  * "Preview" was read twice.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class HomeTalkBackTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

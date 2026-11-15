@@ -12,7 +12,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C267. The launcher had no long-press shortcuts, so the only documented way
@@ -24,7 +23,6 @@ import org.robolectric.annotation.Config
  * the notification do, and nothing would notice.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ShortcutActivityTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

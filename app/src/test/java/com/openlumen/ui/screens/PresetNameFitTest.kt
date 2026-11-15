@@ -30,7 +30,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w360dp-h4000dp-xhdpi")
+@Config(qualifiers = "w360dp-h4000dp-xhdpi")
 class PresetNameFitTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

@@ -15,7 +15,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowWindowManagerImpl
 
@@ -28,7 +27,6 @@ import org.robolectric.shadows.ShadowWindowManagerImpl
  * a reboot.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class OverlayEngineInstallTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

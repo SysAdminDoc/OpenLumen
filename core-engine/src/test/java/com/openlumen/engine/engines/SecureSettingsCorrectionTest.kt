@@ -16,7 +16,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C282. The rootless driver carries one colour temperature, so a preset whose
@@ -26,7 +25,6 @@ import org.robolectric.annotation.Config
  * transform is a tint.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class SecureSettingsCorrectionTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

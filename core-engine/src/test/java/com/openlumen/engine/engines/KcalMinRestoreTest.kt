@@ -12,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C257. The engine raises `kcal_min` to [KcalEngine.SAFETY_MIN] on panels whose
@@ -23,11 +22,7 @@ import org.robolectric.annotation.Config
  * that failure then invalidates the path cache the original value used to live
  * in.
  */
-// Robolectric 4.16.1 ships no SDK 37 shadows, and a library module has no
-// targetSdk for the picker to fall back on, so it would otherwise try the
-// compileSdk and fail to start. 35 matches what `app` resolves to.
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class KcalMinRestoreTest {
 
     private val base = KcalEngine.CANDIDATE_BASES.first()

@@ -23,7 +23,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ServiceController
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowAlarmManager
 
 /**
@@ -35,7 +34,6 @@ import org.robolectric.shadows.ShadowAlarmManager
  * have put the tint back on the lock screen.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class LumenServiceStopMirrorTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

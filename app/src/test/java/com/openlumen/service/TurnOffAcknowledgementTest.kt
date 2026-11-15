@@ -10,7 +10,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C342. `startForegroundService` returning without throwing means the request
@@ -21,7 +20,6 @@ import org.robolectric.annotation.Config
  * fallback never fired because nothing reported a failure.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class TurnOffAcknowledgementTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

@@ -25,7 +25,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C261. `EngineController` owns every apply, clear, ramp and engine-switch
@@ -39,7 +38,6 @@ import org.robolectric.annotation.Config
  * test method that is not void.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class EngineControllerBehaviourTest {
 
     private val context: Context get() = RuntimeEnvironment.getApplication()

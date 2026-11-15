@@ -17,7 +17,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 
 /**
  * PR #31. A refused background start now keeps the switch on, so opening
@@ -25,7 +24,6 @@ import org.robolectric.annotation.Config
  * while nothing is running.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class MainActivityFilterRestartTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

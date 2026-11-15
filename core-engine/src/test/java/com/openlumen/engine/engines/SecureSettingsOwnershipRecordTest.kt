@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C339. `night_display_activated` and its neighbours are persistent system
@@ -22,7 +21,6 @@ import org.robolectric.annotation.Config
  * touch it and the filter reported itself off with the screen still orange.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class SecureSettingsOwnershipRecordTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

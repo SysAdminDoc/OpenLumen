@@ -30,7 +30,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * PR #27 (issue #20) through the real engine controller and Direct Boot
@@ -38,7 +37,6 @@ import org.robolectric.annotation.Config
  * and a reboot inside or outside the window restores what was on screen.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class DayFilterHandOverTest {
 
     private val context: Context get() = RuntimeEnvironment.getApplication()

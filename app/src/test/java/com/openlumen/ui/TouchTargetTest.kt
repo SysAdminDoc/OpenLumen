@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config
  * The window is tall so that no tab scrolls and nothing is clipped away.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w360dp-h4000dp-xhdpi")
+@Config(qualifiers = "w360dp-h4000dp-xhdpi")
 class TouchTargetTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

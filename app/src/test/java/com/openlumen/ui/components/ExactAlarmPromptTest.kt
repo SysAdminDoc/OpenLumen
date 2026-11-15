@@ -20,7 +20,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowAlarmManager
 
 /**
@@ -52,7 +51,6 @@ class ExactAlarmPromptTest {
 }
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ExactAlarmPromptCardTest {
 
     private var granted = 0

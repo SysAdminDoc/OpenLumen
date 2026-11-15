@@ -23,7 +23,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * #32. LineageOS reading mode and the system grayscale correction live in the
@@ -33,7 +32,6 @@ import org.robolectric.annotation.Config
  * lets go. The other drivers never touch that matrix and get the target as is.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class EngineControllerSystemGrayscaleTest {
 
     private val context: Context get() = RuntimeEnvironment.getApplication()

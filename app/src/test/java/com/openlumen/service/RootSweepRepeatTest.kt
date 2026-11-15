@@ -28,7 +28,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C325. A single "turn off" tap ran the blunt root reset three times: the
@@ -42,7 +41,6 @@ import org.robolectric.annotation.Config
  * measurement of it.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class RootSweepRepeatTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

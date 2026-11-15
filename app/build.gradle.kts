@@ -163,6 +163,9 @@ android {
             isIncludeAndroidResources = true
             all {
                 it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
+                // Tests pinned to SDK 36+ need this for Robolectric's
+                // ApplicationSharedMemory setup on JDK 17+.
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
             }
         }
     }
@@ -230,9 +233,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.robolectric)
-    // Robolectric drags in an older bcprov. Test scope only, but a resolved
-    // coordinate with a critical advisory is still a resolved coordinate.
-    testImplementation(libs.bouncycastle.prov)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     // Drives the widgets' Glance content in a test composition, so a test

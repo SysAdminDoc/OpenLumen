@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C341. A driver whose `clear()` failed may have left a transform on the
@@ -22,7 +21,6 @@ import org.robolectric.annotation.Config
  * and picking a different driver on the Driver tab is a routine action.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class EscalationScopeTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

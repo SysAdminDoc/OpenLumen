@@ -21,7 +21,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 
 /**
  * What TalkBack reads on Presets. On an Android 17 emulator every preset
@@ -29,7 +28,6 @@ import org.robolectric.annotation.Config
  * to favorites" stops, with nothing saying which preset each one acts on.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class PresetsTalkBackTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

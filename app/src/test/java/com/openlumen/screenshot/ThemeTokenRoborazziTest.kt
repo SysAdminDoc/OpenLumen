@@ -31,7 +31,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w360dp-h240dp-xxhdpi")
+@Config(qualifiers = "w360dp-h240dp-xxhdpi")
 class ThemeTokenRoborazziTest {
 
     @Test

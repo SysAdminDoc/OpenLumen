@@ -15,7 +15,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * PR #26 (issue #25). The notice the clock receiver posts after a timezone
@@ -23,7 +22,6 @@ import org.robolectric.annotation.Config
  * only, and a receiver that only the system can reach.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ZoneChangeNoticeTest {
 
     private val context: Context get() = RuntimeEnvironment.getApplication()

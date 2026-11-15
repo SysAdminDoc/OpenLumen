@@ -26,7 +26,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 
 /**
@@ -36,7 +35,6 @@ import org.robolectric.shadows.ShadowSettings
  * missing, and Retry, and each of those does its job exactly once.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class MainActivityBlockedStartTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

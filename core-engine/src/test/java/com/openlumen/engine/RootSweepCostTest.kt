@@ -9,7 +9,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * C325. The blunt reset is not free: every pass spawns `su`, which on a
@@ -23,10 +22,7 @@ import org.robolectric.annotation.Config
  * what it catches is a later change that turns one pass into several, such as
  * probing every candidate code rather than the one AOSP confirms.
  */
-// Robolectric 4.16.1 ships no SDK 37 shadows and a library module has no
-// targetSdk to fall back on, so the picker needs telling. 35 matches `app`.
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class RootSweepCostTest {
 
     private val commands = CopyOnWriteArrayList<String>()

@@ -15,7 +15,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C281. `AutomationReceiver` is the app's only exported control surface, and
@@ -32,7 +31,6 @@ import org.robolectric.annotation.Config
  * broadcast dispatch, which the receiver now tolerates.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class AutomationReceiverDeliveryTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

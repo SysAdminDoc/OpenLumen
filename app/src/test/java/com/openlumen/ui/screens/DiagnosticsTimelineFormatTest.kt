@@ -10,7 +10,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * C280. The diagnostics timeline printed Instant.toString() as its user-facing
@@ -20,7 +19,6 @@ import org.robolectric.annotation.Config
  * string.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class DiagnosticsTimelineFormatTest {
 
     /**

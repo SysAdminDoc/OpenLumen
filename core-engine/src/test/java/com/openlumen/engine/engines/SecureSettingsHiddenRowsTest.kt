@@ -13,7 +13,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C255. Android 12 stopped apps that target it from reading `@hide` settings
@@ -26,7 +25,6 @@ import org.robolectric.annotation.Config
  * how this got past every test here. These stand in for the device.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class SecureSettingsHiddenRowsTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

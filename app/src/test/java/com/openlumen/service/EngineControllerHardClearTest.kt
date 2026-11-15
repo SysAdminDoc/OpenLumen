@@ -21,7 +21,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C291. `night_display_activated`, `reduce_bright_colors_activated` and
@@ -33,7 +32,6 @@ import org.robolectric.annotation.Config
  * on every driver, including the rootless overlay.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class EngineControllerHardClearTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

@@ -8,7 +8,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C321. The widgets were hard-wired to Mocha, so a light launcher got two dark
@@ -17,7 +16,6 @@ import org.robolectric.annotation.Config
  * surface tone about 1.6:1 against the tile behind it.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class WidgetThemingTest {
 
     private fun colorIn(nightMode: Boolean, id: Int): Int {

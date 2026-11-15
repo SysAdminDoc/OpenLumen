@@ -22,7 +22,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
 
 /**
@@ -34,7 +33,6 @@ import androidx.compose.ui.text.intl.Locale as ComposeLocale
  * two bare dates under the track.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class DiagnosticsTimelineTalkBackTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

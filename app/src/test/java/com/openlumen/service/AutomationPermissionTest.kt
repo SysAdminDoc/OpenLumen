@@ -8,7 +8,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * PR #21. The permission was declared as the literal
@@ -22,7 +21,6 @@ import org.robolectric.annotation.Config
  * `com.openlumen`, so it stays `com.openlumen.permission.AUTOMATION`.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class AutomationPermissionTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

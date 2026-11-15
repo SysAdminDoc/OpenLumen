@@ -11,7 +11,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C326. The restore record outlives the process that wrote it, which is the
@@ -26,7 +25,6 @@ import org.robolectric.annotation.Config
  * ours and a floor above it is theirs.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class KcalStaleRecordTest {
 
     private val base = KcalEngine.CANDIDATE_BASES.first()

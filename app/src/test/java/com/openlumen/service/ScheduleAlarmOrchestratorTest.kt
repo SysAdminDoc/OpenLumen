@@ -16,7 +16,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ScheduleAlarmOrchestratorTest {
     private val logs = mutableListOf<String>()
 
@@ -36,7 +35,7 @@ class ScheduleAlarmOrchestratorTest {
     }
 
     @Test
-    @Config(sdk = [31, 35])
+    @Config(sdk = [31, 37])
     fun `direct service alarm remains the primary path across supported API levels`() {
         val alarms = FakeScheduleAlarmOps(exactAllowed = true)
 

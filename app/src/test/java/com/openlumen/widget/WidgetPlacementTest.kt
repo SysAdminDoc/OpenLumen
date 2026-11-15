@@ -6,7 +6,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 import org.xmlpull.v1.XmlPullParser
 
 /**
@@ -17,7 +16,6 @@ import org.xmlpull.v1.XmlPullParser
  * widget could be placed at all.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class WidgetPlacementTest {
 
     private fun providerAttribute(xmlId: Int, name: String): String? {

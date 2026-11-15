@@ -10,7 +10,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * Both widgets read the preferences once, before provideContent. While a
@@ -26,7 +25,6 @@ import org.robolectric.annotation.Config
  * is changed before the content starts rather than while it is showing.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class WidgetLiveStateTest {
 
     private val app get() = RuntimeEnvironment.getApplication()

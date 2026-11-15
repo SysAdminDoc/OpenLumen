@@ -6,7 +6,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C340. `ACTION_TURN_OFF` serves both the notification's Turn off button and
@@ -16,7 +15,6 @@ import org.robolectric.annotation.Config
  * correction the user set themselves.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class OrdinaryTurnOffTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

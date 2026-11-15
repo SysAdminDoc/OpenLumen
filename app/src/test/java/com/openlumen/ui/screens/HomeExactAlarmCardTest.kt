@@ -17,7 +17,6 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowAlarmManager
 
 /**
@@ -25,7 +24,6 @@ import org.robolectric.shadows.ShadowAlarmManager
  * alarms is said on Home, where the user lands, not only on the Schedule tab.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class HomeExactAlarmCardTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

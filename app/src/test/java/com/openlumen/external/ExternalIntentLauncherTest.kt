@@ -7,10 +7,8 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ExternalIntentLauncherTest {
 
     @Test fun `unresolved intent is reported without attempting launch`() {

@@ -28,6 +28,13 @@ android {
             // survives a failed apply, so this module now runs Robolectric the
             // way `app` already does.
             isIncludeAndroidResources = true
+            all {
+                // Robolectric's SDK 36+ runtime sets up ApplicationSharedMemory
+                // through jdk.internal.access, which JDK 17+ keeps unexported.
+                // A library module has no targetSdk, so its tests run on the
+                // newest SDK and need it.
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+            }
         }
     }
 }
@@ -44,7 +51,4 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.robolectric)
-    // Robolectric drags in an older bcprov. Test scope only, but a resolved
-    // coordinate with a critical advisory is still a resolved coordinate.
-    testImplementation(libs.bouncycastle.prov)
 }

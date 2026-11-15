@@ -14,11 +14,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /** C225: the Home notice for a refused tile or widget start, on its own. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class BlockedStartNoticeCardTest {
 
     private var retries = 0

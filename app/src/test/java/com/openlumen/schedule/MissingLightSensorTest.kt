@@ -11,7 +11,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * The Schedule tab collects lux whether or not the phone has a light sensor.
@@ -20,7 +19,6 @@ import org.robolectric.annotation.Config
  * crashed about six seconds after the tab opened.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class MissingLightSensorTest {
 
     @Test fun `a phone without a light sensor keeps running while a screen waits for lux`() {

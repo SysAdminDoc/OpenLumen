@@ -35,7 +35,7 @@ import org.robolectric.annotation.Config
  * but never placed, so they have no text layout to read.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w800dp-h1280dp-xhdpi")
+@Config(qualifiers = "w800dp-h1280dp-xhdpi")
 class RailContentColorTest {
 
     private var controller: ActivityController<ComponentActivity>? = null

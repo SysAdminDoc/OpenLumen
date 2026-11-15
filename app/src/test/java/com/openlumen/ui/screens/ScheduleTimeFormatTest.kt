@@ -7,7 +7,6 @@ import java.util.Locale
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * C311. The Schedule tab printed 21:30 to everyone and named timezones by
@@ -15,7 +14,6 @@ import org.robolectric.annotation.Config
  * a hint that read "America/New_York".
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ScheduleTimeFormatTest {
 
     @Test fun `a 12-hour device gets a 12-hour time`() {

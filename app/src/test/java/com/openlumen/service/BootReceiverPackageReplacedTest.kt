@@ -17,7 +17,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * PR #30. Installing an update kills the process and the service with it,
@@ -25,7 +24,6 @@ import org.robolectric.annotation.Config
  * frozen on its last tint (root drivers) until a reboot or a manual toggle.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class BootReceiverPackageReplacedTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

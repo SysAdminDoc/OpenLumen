@@ -26,7 +26,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ServiceController
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowAlarmManager
 
 /**
@@ -36,7 +35,6 @@ import org.robolectric.shadows.ShadowAlarmManager
  * was silently gone the next time they looked at the screen.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class LumenServiceForegroundRefusalTest {
 
     private val app: Application get() = RuntimeEnvironment.getApplication()

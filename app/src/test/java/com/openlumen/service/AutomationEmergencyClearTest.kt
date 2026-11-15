@@ -13,7 +13,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C296. The documented ADB escape hatch forwards to [LumenService], and the
@@ -25,7 +24,6 @@ import org.robolectric.annotation.Config
  * receiver used to log the refusal and give up.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class AutomationEmergencyClearTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

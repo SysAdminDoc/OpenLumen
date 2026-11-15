@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * C287. Each saved package name is handed to a command run through Shizuku,
@@ -21,7 +20,6 @@ import org.robolectric.annotation.Config
  * phone: exports leave it out and imports keep the one already here.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class AppSaturationPreferenceTest {
 
     private val context get() = RuntimeEnvironment.getApplication()

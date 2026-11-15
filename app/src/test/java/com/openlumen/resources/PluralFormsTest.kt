@@ -9,7 +9,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * C270. Three count-bearing strings were English "(s)" hacks or a bare %d in
@@ -18,7 +17,6 @@ import org.robolectric.annotation.Config
  * suffix cannot express at all.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class PluralFormsTest {
 
     private fun resourcesFor(locale: Locale): Resources {
