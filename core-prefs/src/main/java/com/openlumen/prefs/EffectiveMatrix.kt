@@ -47,7 +47,9 @@ fun Preferences.effectiveMatrix(): LumenMatrix {
  * Deliberately not the preset path above. The day filter is a second, simpler
  * setting, so the evening preset's intensity, gamma and contrast do not leak
  * into it; the AMOLED clamp is a property of the panel, not the preset, and
- * carries over.
+ * carries over. So does grayscale: it answers the reader's colour sensitivity
+ * rather than the preset, and the Grayscale tile stays lit through the day, so
+ * a day filter in full colour under a lit tile told the user something false.
  */
 fun Preferences.dayMatrix(): LumenMatrix {
     val rgb = Kelvin.toRgb(
@@ -59,7 +61,7 @@ fun Preferences.dayMatrix(): LumenMatrix {
         b = rgb.b,
         dim = schedule.dayDim.takeIf { it.isFinite() }?.coerceIn(0f, ScheduleDto.DAY_DIM_MAX) ?: 0f,
         amoledClamp = amoledBlackClamp
-    )
+    ).let { if (grayscale) it.withGrayscale(1f) else it }
 }
 
 /**

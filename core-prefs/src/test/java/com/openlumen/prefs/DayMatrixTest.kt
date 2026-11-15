@@ -1,6 +1,7 @@
 package com.openlumen.prefs
 
 import com.google.common.truth.Truth.assertThat
+import com.openlumen.engine.Daltonizer
 import com.openlumen.engine.Kelvin
 import org.junit.Test
 
@@ -24,6 +25,19 @@ class DayMatrixTest {
 
         assertThat(p.dayMatrix().dim).isEqualTo(0f)
         assertThat(p.dayMatrix().b).isEqualTo(Kelvin.toRgb(4000).b)
+    }
+
+    @Test fun `grayscale carries into the day, contrast does not`() {
+        // The Grayscale tile stays lit outside the window, so the screen has
+        // to be gray there too. Contrast belongs to the evening preset.
+        val p = day(kelvin = 4000).copy(grayscale = true, contrast = 1.5f)
+
+        val m = p.dayMatrix()
+
+        assertThat(m.daltonizer).isEqualTo(Daltonizer.MONOCHROMACY)
+        assertThat(m.hasColorMatrix).isTrue()
+        assertThat(m.biasR).isEqualTo(0f)
+        assertThat(day(kelvin = 4000).dayMatrix().hasColorMatrix).isFalse()
     }
 
     @Test fun `out of range values are clamped rather than applied`() {
