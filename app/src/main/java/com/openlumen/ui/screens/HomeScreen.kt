@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
@@ -422,10 +423,15 @@ fun HomeScreen(
             Column(Modifier.padding(16.dp)) {
                 val intensityPct = (intensityDraft * 100).toInt()
                 val intensityState = stringResource(R.string.home_percent_state, intensityPct)
-                Text(stringResource(R.string.home_intensity), style = MaterialTheme.typography.titleMedium)
+                // The slider below speaks its own name and value, so its
+                // visible label and value stay out of the accessibility tree
+                // instead of costing two extra TalkBack stops each.
+                Text(stringResource(R.string.home_intensity), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Text(stringResource(R.string.home_percent_value, intensityPct),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Slider(
                     value = intensityDraft,
                     onValueChange = { intensityDraft = it.coerceIn(0f, 1f) },
@@ -449,10 +455,12 @@ fun HomeScreen(
                 val dimPctF = dimDraft * 100f
                 val dimPct = dimPctF.toInt()
                 val dimState = stringResource(R.string.home_percent_state, dimPct)
-                Text(stringResource(R.string.home_dim), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_dim), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Text(stringResource(R.string.home_dim_value_precise, dimPctF),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Slider(
                     value = dimDraft,
                     onValueChange = { dimDraft = it.coerceIn(0f, 0.95f) },
@@ -487,7 +495,10 @@ fun HomeScreen(
                             .widthIn(min = 56.dp)
                             .semantics { contentDescription = fineDecLabel }
                     ) {
-                        Text("−", style = MaterialTheme.typography.titleMedium)
+                        // The glyph would otherwise merge into the button's
+                        // name, so TalkBack read "Decrease dim ... minus".
+                        Text("−", style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.clearAndSetSemantics {})
                     }
                     Text(
                         stringResource(R.string.home_dim_fine_hint),
@@ -505,16 +516,19 @@ fun HomeScreen(
                             .widthIn(min = 56.dp)
                             .semantics { contentDescription = fineIncLabel }
                     ) {
-                        Text("+", style = MaterialTheme.typography.titleMedium)
+                        Text("+", style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.clearAndSetSemantics {})
                     }
                 }
 
                 Spacer(Modifier.height(8.dp))
                 val contrastState = stringResource(R.string.home_contrast_state, contrastDraft)
-                Text(stringResource(R.string.home_contrast), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_contrast), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Text(stringResource(R.string.home_contrast_value, contrastDraft),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Slider(
                     value = contrastDraft,
                     onValueChange = {
@@ -551,8 +565,14 @@ fun HomeScreen(
                 )
 
                 Spacer(Modifier.height(8.dp))
+                // The whole row is the switch, as on the Night card, so
+                // TalkBack reads title, subtitle and state as one stop.
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().toggleable(
+                        value = prefs.amoledBlackClamp,
+                        role = Role.Switch,
+                        onValueChange = vm::setAmoledBlackClamp
+                    ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -566,11 +586,9 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    val amoledLabel = stringResource(R.string.home_amoled_clamp_title)
                     LumenSwitch(
                         checked = prefs.amoledBlackClamp,
-                        onCheckedChange = vm::setAmoledBlackClamp,
-                        modifier = Modifier.semantics { contentDescription = amoledLabel }
+                        onCheckedChange = null
                     )
                 }
 
@@ -579,7 +597,11 @@ fun HomeScreen(
                 // seems to do nothing.
                 Spacer(Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().toggleable(
+                        value = prefs.grayscale,
+                        role = Role.Switch,
+                        onValueChange = vm::setGrayscale
+                    ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -600,11 +622,9 @@ fun HomeScreen(
                             )
                         }
                     }
-                    val grayscaleLabel = stringResource(R.string.home_grayscale_title)
                     LumenSwitch(
                         checked = prefs.grayscale,
-                        onCheckedChange = vm::setGrayscale,
-                        modifier = Modifier.semantics { contentDescription = grayscaleLabel }
+                        onCheckedChange = null
                     )
                 }
             }
@@ -645,11 +665,11 @@ fun HomeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.home_preview), style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.size(8.dp))
-                    val previewLabel = stringResource(R.string.home_preview)
+                    // No name on the swatch: the "Preview" text beside it is
+                    // already read, and naming both made TalkBack say it twice.
                     Box(
                         modifier = Modifier
                             .size(28.dp)
-                            .semantics { contentDescription = previewLabel }
                             .background(
                                 color = Color(
                                     red = customR.coerceIn(0f, 1f),
@@ -670,11 +690,13 @@ fun HomeScreen(
         Card(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 val kelvinState = stringResource(R.string.home_kelvin_state, kelvinSliderK)
-                Text(stringResource(R.string.home_kelvin_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_kelvin_title), style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clearAndSetSemantics {})
                 Text(
                     stringResource(R.string.home_kelvin_value, kelvinSliderK),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {}
                 )
                 Slider(
                     value = kelvinSliderK.toFloat(),
@@ -758,7 +780,9 @@ private fun GammaSlider(
     onChange: (Float) -> Unit,
     onChangeFinished: () -> Unit
 ) {
-    val gammaState = stringResource(R.string.home_gamma_state, label, value)
+    // The slider carries the full name ("Red gamma"), so the state is the bare
+    // value and the one-letter label beside it stays out of TalkBack's path.
+    val gammaState = stringResource(R.string.home_gamma_value, value)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -766,7 +790,8 @@ private fun GammaSlider(
                 .background(color = track, shape = RoundedCornerShape(4.dp))
         )
         Spacer(Modifier.size(8.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1,
+            modifier = Modifier.clearAndSetSemantics {})
         Slider(
             value = value,
             onValueChange = onChange,
@@ -782,9 +807,9 @@ private fun GammaSlider(
             colors = lumenSliderColors(track)
         )
         Text(
-            stringResource(R.string.home_gamma_value, value),
+            gammaState,
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.widthIn(min = 44.dp),
+            modifier = Modifier.widthIn(min = 44.dp).clearAndSetSemantics {},
             textAlign = TextAlign.End,
             maxLines = 1
         )
@@ -801,7 +826,7 @@ private fun RgbSlider(
     onChangeFinished: () -> Unit
 ) {
     val percent = (value * 100).toInt()
-    val rgbState = stringResource(R.string.home_rgb_state, label, percent)
+    val rgbState = stringResource(R.string.home_percent_state, percent)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -809,7 +834,8 @@ private fun RgbSlider(
                 .background(color = track, shape = RoundedCornerShape(4.dp))
         )
         Spacer(Modifier.size(8.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1,
+            modifier = Modifier.clearAndSetSemantics {})
         Slider(
             value = value,
             onValueChange = onChange,
@@ -827,7 +853,7 @@ private fun RgbSlider(
         Text(
             stringResource(R.string.home_rgb_value, percent),
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.widthIn(min = 32.dp),
+            modifier = Modifier.widthIn(min = 32.dp).clearAndSetSemantics {},
             textAlign = TextAlign.End,
             maxLines = 1
         )

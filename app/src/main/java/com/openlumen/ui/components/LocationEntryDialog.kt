@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardActions
@@ -194,8 +195,17 @@ fun LocationEntryDialog(
                         )
                     }) { Text(stringResource(R.string.location_open_settings)) }
                 }
+                // The whole row is the switch. The switch alone had no
+                // name, so TalkBack read it as just "Off, switch".
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().toggleable(
+                        value = autoLocation,
+                        enabled = !locating,
+                        role = Role.Switch,
+                        onValueChange = { on ->
+                            if (on) requestLocate(true) else autoLocation = false
+                        }
+                    ),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -227,9 +237,7 @@ fun LocationEntryDialog(
                     }
                     LumenSwitch(
                         checked = autoLocation,
-                        onCheckedChange = { on ->
-                            if (on) requestLocate(true) else autoLocation = false
-                        },
+                        onCheckedChange = null,
                         enabled = !locating
                     )
                 }

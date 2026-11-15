@@ -37,9 +37,7 @@
     <string name="home_gamma_title">Gamma pro Kanal</string>
     <string name="home_gamma_hint">1,0 = neutral. Höhere Werte heben Mitteltöne an, niedrigere vertiefen sie.</string>
     <string name="home_gamma_value">%1$.2f</string>
-    <string name="home_gamma_state">%1$s Gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
-    <string name="home_rgb_state">%1$s-Kanal %2$d Prozent</string>
     <string name="home_rgb_red_name">Roter Kanal</string>
     <string name="home_rgb_green_name">Grüner Kanal</string>
     <string name="home_rgb_blue_name">Blauer Kanal</string>

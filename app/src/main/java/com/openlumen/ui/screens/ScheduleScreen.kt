@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
@@ -356,9 +358,12 @@ fun ScheduleScreen(
                         R.string.schedule_sunset_offset,
                         sunsetOffsetDraft.roundToInt()
                     )
+                    // Each slider here speaks its own label as its value, so
+                    // the visible copy above it stays out of TalkBack's path.
                     Text(
                         sunsetOffsetLabel,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.clearAndSetSemantics {}
                     )
                     Slider(
                         value = sunsetOffsetDraft,
@@ -384,7 +389,8 @@ fun ScheduleScreen(
                     )
                     Text(
                         sunriseOffsetLabel,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.clearAndSetSemantics {}
                     )
                     Slider(
                         value = sunriseOffsetDraft,
@@ -454,8 +460,21 @@ fun ScheduleScreen(
                 )
             ) {
                 Column(Modifier.padding(16.dp)) {
+                    // The whole row is the switch. The switch alone had no
+                    // name, so TalkBack read it as just "Off, switch".
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().toggleable(
+                            value = prefs.schedule.progressiveIntensity,
+                            role = Role.Switch,
+                            onValueChange = { on ->
+                                vm.setProgressiveIntensity(
+                                    enabled = on,
+                                    endHour = prefs.schedule.progressiveEndHour,
+                                    endMinute = prefs.schedule.progressiveEndMinute,
+                                    endIntensity = prefs.schedule.progressiveEndIntensity
+                                )
+                            }
+                        ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
@@ -471,14 +490,7 @@ fun ScheduleScreen(
                         }
                         LumenSwitch(
                             checked = prefs.schedule.progressiveIntensity,
-                            onCheckedChange = { on ->
-                                vm.setProgressiveIntensity(
-                                    enabled = on,
-                                    endHour = prefs.schedule.progressiveEndHour,
-                                    endMinute = prefs.schedule.progressiveEndMinute,
-                                    endIntensity = prefs.schedule.progressiveEndIntensity
-                                )
-                            }
+                            onCheckedChange = null
                         )
                     }
                     if (prefs.schedule.progressiveIntensity) {
@@ -505,7 +517,8 @@ fun ScheduleScreen(
                                 R.string.schedule_progressive_end_intensity,
                                 (progressiveEndIntensity * 100).roundToInt()
                             ),
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.clearAndSetSemantics {}
                         )
                         Slider(
                             value = progressiveEndIntensity,
@@ -558,7 +571,11 @@ fun ScheduleScreen(
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().toggleable(
+                            value = prefs.schedule.dayFilter,
+                            role = Role.Switch,
+                            onValueChange = { on -> saveDay(on) }
+                        ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
@@ -574,7 +591,7 @@ fun ScheduleScreen(
                         }
                         LumenSwitch(
                             checked = prefs.schedule.dayFilter,
-                            onCheckedChange = { on -> saveDay(on) }
+                            onCheckedChange = null
                         )
                     }
                     if (prefs.schedule.dayFilter) {
@@ -583,7 +600,8 @@ fun ScheduleScreen(
                             dayKelvin.roundToInt()
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text(kelvinLabel, style = MaterialTheme.typography.bodySmall)
+                        Text(kelvinLabel, style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.clearAndSetSemantics {})
                         Slider(
                             value = dayKelvin,
                             onValueChange = { dayKelvin = (it / 100f).roundToInt() * 100f },
@@ -600,7 +618,8 @@ fun ScheduleScreen(
                             R.string.schedule_day_filter_dim,
                             (dayDim * 100).roundToInt()
                         )
-                        Text(dimLabel, style = MaterialTheme.typography.bodySmall)
+                        Text(dimLabel, style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.clearAndSetSemantics {})
                         Slider(
                             value = dayDim,
                             onValueChange = { dayDim = it },
@@ -711,7 +730,8 @@ fun ScheduleScreen(
                         R.string.transition_custom_value,
                         customMinutes.roundToInt()
                     )
-                    Text(customLabel, style = MaterialTheme.typography.bodySmall)
+                    Text(customLabel, style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.clearAndSetSemantics {})
                     Slider(
                         value = customMinutes,
                         onValueChange = { customMinutes = it.roundToInt().toFloat() },

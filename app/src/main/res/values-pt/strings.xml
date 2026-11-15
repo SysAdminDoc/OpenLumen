@@ -37,9 +37,7 @@
     <string name="home_gamma_title">Gama por canal</string>
     <string name="home_gamma_hint">1.0 = neutro. Valores maiores clareiam tons médios e menores escurecem.</string>
     <string name="home_gamma_value">%1$.2f</string>
-    <string name="home_gamma_state">%1$s gama %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
-    <string name="home_rgb_state">canal %1$s %2$d porcento</string>
     <string name="home_rgb_red_name">Canal vermelho</string>
     <string name="home_rgb_green_name">Canal verde</string>
     <string name="home_rgb_blue_name">Canal azul</string>

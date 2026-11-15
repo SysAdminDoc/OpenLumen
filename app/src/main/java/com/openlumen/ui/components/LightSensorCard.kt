@@ -21,8 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import kotlin.math.roundToInt
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.openlumen.R
@@ -63,10 +64,17 @@ fun LightSensorCard(
             Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // The whole row is the switch, so TalkBack reads the title, the
+            // live reading and the state as one stop.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().toggleable(
+                    value = enabled && available,
+                    enabled = available,
+                    role = Role.Switch,
+                    onValueChange = onToggle
+                )
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -88,11 +96,9 @@ fun LightSensorCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                val sensorLabel = stringResource(R.string.light_sensor_title)
                 LumenSwitch(
                     checked = enabled && available,
-                    onCheckedChange = onToggle,
-                    modifier = Modifier.semantics { contentDescription = sensorLabel },
+                    onCheckedChange = null,
                     enabled = available
                 )
             }
@@ -100,13 +106,16 @@ fun LightSensorCard(
             val thresholdLux = thresholdDraft.toInt()
             val thresholdState = stringResource(R.string.light_sensor_threshold_state, thresholdLux)
             val disengageLux = AmbientLightGate.disengageThreshold(thresholdDraft).toInt()
+            // The slider speaks the threshold itself, so this visible copy
+            // stays out of TalkBack's path.
             Text(
                 stringResource(R.string.light_sensor_threshold, thresholdLux),
                 color = if (enabled && available) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                },
+                modifier = Modifier.clearAndSetSemantics {}
             )
             Slider(
                 value = thresholdDraft,

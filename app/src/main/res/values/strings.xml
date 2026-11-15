@@ -38,9 +38,7 @@
     <string name="home_gamma_title">Per-channel gamma</string>
     <string name="home_gamma_hint">1.0 = neutral. Higher lifts mid-tones and lower deepens them.</string>
     <string name="home_gamma_value">%1$.2f</string>
-    <string name="home_gamma_state">%1$s gamma %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
-    <string name="home_rgb_state">%1$s channel %2$d percent</string>
     <string name="home_rgb_red_name">Red channel</string>
     <string name="home_rgb_green_name">Green channel</string>
     <string name="home_rgb_blue_name">Blue channel</string>

@@ -37,9 +37,7 @@
     <string name="home_gamma_title">チャンネル別ガンマ</string>
     <string name="home_gamma_hint">1.0 = ニュートラル。高いほど中間調が明るくなり、低いほど暗くなります。</string>
     <string name="home_gamma_value">%1$.2f</string>
-    <string name="home_gamma_state">%1$s ガンマ %2$.2f</string>
     <string name="home_rgb_value">%1$d</string>
-    <string name="home_rgb_state">%1$sチャンネル %2$dパーセント</string>
     <string name="home_rgb_red_name">赤チャンネル</string>
     <string name="home_rgb_green_name">緑チャンネル</string>
     <string name="home_rgb_blue_name">青チャンネル</string>

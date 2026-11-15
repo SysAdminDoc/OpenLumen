@@ -11,9 +11,9 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -213,8 +213,14 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // The whole row is the switch, so TalkBack reads the
+                    // label and state as one stop.
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().toggleable(
+                            value = prefs.forcePinnedEngine,
+                            role = Role.Switch,
+                            onValueChange = { vm.setForcePinnedEngine(it) }
+                        ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -224,8 +230,7 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
                         )
                         LumenSwitch(
                             checked = prefs.forcePinnedEngine,
-                            onCheckedChange = { vm.setForcePinnedEngine(it) },
-                            modifier = Modifier.semantics { contentDescription = forceLabel }
+                            onCheckedChange = null
                         )
                     }
                     Text(

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -57,7 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -172,7 +173,6 @@ fun AboutScreen(
     val crashLogClearedMessage = stringResource(R.string.about_crash_log_cleared)
     val diagLogClearedMessage = stringResource(R.string.about_diag_log_cleared)
     val tokenRegeneratedMessage = stringResource(R.string.about_automation_token_regenerated)
-    val automationEnableLabel = stringResource(R.string.about_automation_enable)
     val automationTokenPending = stringResource(R.string.about_automation_token_pending)
     val automationTokenCopied = stringResource(R.string.about_automation_token_copied)
     val clipboardAutomationToken = stringResource(R.string.clipboard_automation_token)
@@ -472,8 +472,14 @@ fun AboutScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    // The whole row is the switch, so TalkBack reads the
+                    // label and state as one stop.
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().toggleable(
+                            value = currentPrefs.automationEnabled,
+                            role = Role.Switch,
+                            onValueChange = { vm.setAutomationEnabled(it) }
+                        ),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -484,10 +490,7 @@ fun AboutScreen(
                         )
                         LumenSwitch(
                             checked = currentPrefs.automationEnabled,
-                            onCheckedChange = { vm.setAutomationEnabled(it) },
-                            modifier = Modifier.semantics {
-                                contentDescription = automationEnableLabel
-                            }
+                            onCheckedChange = null
                         )
                     }
                     if (currentPrefs.automationEnabled) {
