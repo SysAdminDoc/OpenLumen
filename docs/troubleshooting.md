@@ -74,7 +74,8 @@ This is the worst case. Try in order:
 |---|---|---|
 | `SecureSettings` | `WRITE_SECURE_SETTINGS` not granted | Copy the `adb pm grant` command from the Driver tab and run it |
 | `SecureSettings` | Android 9 (API 28) or older | The `night_display_*` rows arrive in API 29. Use SurfaceFlinger or Overlay instead |
-| `SecureSettings` | Dim does nothing | Extra Dim needs API 31 and an OEM that ships it. The driver report lists which secure rows your device accepted |
+| `SecureSettings` | Samsung Galaxy, or any phone without Night Light | Samsung ships Eye Comfort Shield instead of Night Light, so the driver has nothing to tint with and Auto uses Overlay. The driver report says `night light: not on this device`. Forcing the driver still works for the colour-vision presets |
+| `SecureSettings` | Dim does nothing | Extra Dim needs API 31 and an OEM that ships it, and Android 12+ can hide those settings from apps (both Samsung phones tested do). The driver leaves Extra Dim alone when it can't read it, so use Overlay for dim. The driver report lists which secure rows your device accepted |
 | `SurfaceFlinger` | No root | Required. If you have root, see "su keeps prompting" below |
 | `KCAL` | Wrong SoC (Tensor / Exynos / Dimensity) | KCAL is Qualcomm-only. Use SurfaceFlinger or Overlay |
 | `KCAL` | Stock kernel without KCAL patch | Check: `adb shell ls /sys/devices/platform/kcal_ctrl.0/`. If empty, your kernel doesn't have KCAL — use SurfaceFlinger |
