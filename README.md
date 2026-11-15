@@ -70,16 +70,12 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 
 | Driver | Root? | SoC | Quality | Notes |
 |--------|------|-----|---------|-------|
-| `SecureSettings` | No¹ | Any | Framebuffer | Drives system Night Light and Extra Dim through `Settings.Secure`. API 29+. |
+| `SecureSettings` | No¹ | Any | Framebuffer | Drives system Night Light and Extra Dim through `Settings.Secure`. API 29+. Samsung phones have no Night Light, so it can't tint there. |
 | `SurfaceFlinger` | Yes | Any | Framebuffer | `service call SurfaceFlinger` color-transform. Works on Tensor/Exynos/MediaTek too. |
 | `KCAL` | Yes | Qualcomm | Panel driver | Requires custom kernel exposing `/sys/devices/platform/kcal_ctrl.0/kcal*`. |
 | `Overlay` | No | Any | Compositor blend | Universal fallback. Capped at ~80% opacity by Android 12+ rules. |
 
-**None of these rows has been confirmed on real hardware yet.** They describe
-what each driver does by construction, read from the platform sources they
-call. [docs/device-matrix.md](docs/device-matrix.md) is where confirmed
-results go, and every row in it currently says untested. If you run one, the
-Driver tab's Share report produces exactly what that file wants.
+Overlay and SecureSettings have been checked on two Samsung phones, a Galaxy S22 on Android 16 and an S25 Ultra on Android 17. Neither ships Night Light, so Auto picks Overlay on both. The two root drivers haven't been confirmed on hardware yet. [docs/device-matrix.md](docs/device-matrix.md) has the results, and if you run one, the Driver tab's Share report produces exactly what that file wants.
 
 ¹ Requires granting `WRITE_SECURE_SETTINGS` once:
 `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
