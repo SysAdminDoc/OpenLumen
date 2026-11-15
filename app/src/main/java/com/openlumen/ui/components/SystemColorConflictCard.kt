@@ -28,7 +28,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlumen.R
 import com.openlumen.engine.DriverProbe
 import com.openlumen.engine.EngineKind
+import com.openlumen.engine.LumenMatrix
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.prefs.Preferences
+import com.openlumen.service.driverTargets
 import com.openlumen.external.ExternalIntentLauncher
 import com.openlumen.external.ExternalIntentResult
 import com.openlumen.service.SystemColorConflict
@@ -176,11 +180,14 @@ private const val DEFAULT_NIGHT_LIGHT_START_MS = 22L * 60 * 60 * 1000
  * The driver the service will be running, as far as the UI can tell: a pin it
  * honours, otherwise Auto's choice from the probes. Mirrors
  * `EngineController.resolveDesiredEngineKind`; null until the probes are in.
+ * [targets] is `driverTargets` for the settings in question, the list the
+ * service resolves Auto against.
  */
 internal fun expectedEngineKind(
     selected: EngineKindDto,
     forcePinned: Boolean,
-    probes: List<DriverProbe.Probe>
+    probes: List<DriverProbe.Probe>,
+    targets: List<LumenMatrix>
 ): EngineKind? {
     val pinned = when (selected) {
         EngineKindDto.Auto -> null
@@ -193,5 +200,26 @@ internal fun expectedEngineKind(
         val available = probes.any { it.engine.kind == pinned && it.available }
         if (DriverProbe.honourPinnedEngine(forcePinned, available)) return pinned
     }
-    return DriverProbe.bestAvailableKind(probes)
+    return DriverProbe.bestAvailableKind(probes, targets)
+}
+
+/**
+ * What the system's Night Light shows in place of [matrix]'s warmth when
+ * [prefs] run on the System Night Light driver (C364). Null when it shows as
+ * asked, when another driver runs, or before the probes are in.
+ */
+internal fun nightLightClampFor(
+    prefs: Preferences,
+    probes: List<DriverProbe.Probe>,
+    matrix: LumenMatrix
+): SecureSettingsEngine.NightLightClamp? {
+    val kind = expectedEngineKind(
+        prefs.engine,
+        prefs.forcePinnedEngine,
+        probes,
+        driverTargets(prefs)
+    )
+    if (kind != EngineKind.COLOR_DISPLAY_MANAGER) return null
+    val engine = probes.firstOrNull { it.engine.kind == kind }?.engine as? SecureSettingsEngine
+    return engine?.nightLightClamp(matrix)
 }

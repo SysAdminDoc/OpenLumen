@@ -55,6 +55,8 @@ import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
 import com.openlumen.service.ExactAlarmAccess
+import com.openlumen.service.dayFilterTarget
+import com.openlumen.ui.components.nightLightClampFor
 import com.openlumen.ui.components.PreferencesPlaceholder
 import com.openlumen.ui.components.LightSensorCard
 import com.openlumen.ui.components.LumenButton
@@ -94,6 +96,7 @@ fun ScheduleScreen(
 
     val lux by vm.lux.collectAsStateWithLifecycle()
     val lightSensorAvailable by vm.lightSensorAvailable.collectAsStateWithLifecycle()
+    val probes by vm.probes.collectAsStateWithLifecycle()
 
     var canScheduleExactAlarms by remember(ctx, enableSystemActions) {
         mutableStateOf(
@@ -619,6 +622,25 @@ fun ScheduleScreen(
                             ),
                             colors = lumenSliderColors()
                         )
+                        // C364: the temperature as the slider stands, on the
+                        // driver those settings would run on.
+                        val dayDraft = prefs.copy(
+                            schedule = prefs.schedule.copy(dayKelvin = dayKelvin.roundToInt())
+                        )
+                        dayFilterTarget(dayDraft)
+                            ?.let { nightLightClampFor(dayDraft, probes, it) }
+                            ?.let { clamp ->
+                                Text(
+                                    stringResource(
+                                        R.string.night_light_range_day,
+                                        clamp.range.first,
+                                        clamp.range.last,
+                                        clamp.shownKelvin
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         val dimLabel = stringResource(
                             R.string.schedule_day_filter_dim,
                             (dayDim * 100).roundToInt()

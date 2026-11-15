@@ -55,8 +55,41 @@ internal class EngineController(
     private val rampMutex = Mutex()
     @Volatile private var lastApplied: LumenMatrix? = null
     private val applyGate = ApplyDecisionGate()
-    @Volatile private var cachedAutoKind: EngineKind? = null
+    /**
+     * Auto's last probe. The probe is what is expensive (`su` for the root
+     * drivers), and the choice it feeds also depends on the matrices the
+     * settings ask for (C364), so the probe is kept and the choice is made
+     * again on every resolve. Cleared wherever the old kind cache was.
+     */
+    @Volatile private var cachedAutoProbes: List<DriverProbe.Probe>? = null
     @Volatile private var lastEngineSelection: EngineKindDto? = null
+
+    /**
+     * Whether the overlay was available in the probe Auto last chose from,
+     * kept even when that choice was "nothing" and the filter sat in standby,
+     * which is a fresh install before any permission (C364). Null until Auto
+     * has resolved once. [refreshOverlayChoice] compares against it.
+     */
+    @Volatile private var lastAutoOverlayAnswer: Boolean? = null
+
+    /**
+     * One resolve at a time. The preference collector ([ensureEngineFor]) and
+     * the app's overlay check ([refreshOverlayChoice]) each resolve in their
+     * own coroutine, and a resolve
+     * suspends in the probe: an older answer landing second would switch
+     * back to the driver the other call just left.
+     */
+    private val ensureMutex = Mutex()
+
+    /**
+     * Bumped when every [hardClearOutputs] starts and again when it ends. A
+     * resolve suspends in the probe, so a turn-off can clear everything while
+     * one is in flight; the resolve then sees the generation moved and
+     * installs nothing, rather than putting a driver back on a filter that
+     * was just switched off. The second bump covers a resolve that began
+     * while the clear was still running.
+     */
+    @Volatile private var clearGeneration = 0
     private val secureWatch = SecureSettingsWatch(context, scope, onSecureRowsReleased)
 
     /**
@@ -84,9 +117,42 @@ internal class EngineController(
      */
     @Volatile private var rootTransformsSwept = false
 
-    suspend fun ensureEngineFor(prefs: Preferences) {
+    suspend fun ensureEngineFor(prefs: Preferences) = ensureMutex.withLock { ensureEngineForLocked(prefs) }
+
+    /**
+     * Look again at Auto's choice after "display over other apps" may have
+     * been granted or taken away (C364). Auto picks between System Night Light
+     * and the overlay on the overlay's answer, and a grant changes no setting,
+     * so nothing else would make it look.
+     *
+     * Only the overlay is read here. The full probe runs `su` for the root
+     * drivers, so a resolve follows only when the overlay's answer differs
+     * from the one Auto last chose with, and before Auto has chosen at all
+     * this does nothing. Returns true when the resolve changed the driver,
+     * and false when a turn-off cleared the outputs meanwhile, since then the
+     * change was the clear's and there is nothing to apply.
+     */
+    suspend fun refreshOverlayChoice(prefs: Preferences): Boolean = ensureMutex.withLock {
+        if (prefs.engine != EngineKindDto.Auto || lastEngineSelection != EngineKindDto.Auto) {
+            return@withLock false
+        }
+        val last = lastAutoOverlayAnswer ?: return@withLock false
+        val overlay = probe.engineOf(EngineKind.OVERLAY) ?: return@withLock false
+        val now = runCatching { overlay.isAvailable(context) }.getOrDefault(false)
+        if (now == last) return@withLock false
+        val before = engine?.kind
+        val generation = clearGeneration
+        ensureEngineForLocked(prefs)
+        clearGeneration == generation && engine?.kind != before
+    }
+
+    private fun overlayAvailable(probes: List<DriverProbe.Probe>): Boolean =
+        probes.any { it.engine.kind == EngineKind.OVERLAY && it.available }
+
+    private suspend fun ensureEngineForLocked(prefs: Preferences) {
+        val generation = clearGeneration
         if (prefs.engine != lastEngineSelection) {
-            cachedAutoKind = null
+            cachedAutoProbes = null
             lastEngineSelection = prefs.engine
         }
         val want = resolveDesiredEngineKind(prefs)
@@ -107,13 +173,17 @@ internal class EngineController(
                     applyGate.reset()
                 }
             }
-            cachedAutoKind = null
+            cachedAutoProbes = null
             Log.w(logTag, "no available display driver; filter is in standby")
             return
         }
         if (current?.kind == want) return
         cancelTransition()
         applyMutex.withLock {
+            if (clearGeneration != generation) {
+                Log.i(logTag, "outputs were cleared during the resolve; not installing $want")
+                return@withLock
+            }
             // The outgoing engine is about to be cleared, so whatever it owned
             // it no longer owns. Waiting for the next apply to notice would
             // leave an observer registered against a released row.
@@ -137,7 +207,7 @@ internal class EngineController(
                 engine = null
                 lastApplied = null
                 applyGate.reset()
-                cachedAutoKind = null
+                cachedAutoProbes = null
                 return@withLock
             }
             engine = next
@@ -210,6 +280,7 @@ internal class EngineController(
     suspend fun hardClearOutputs(reason: String, blunt: Boolean = false) {
         cancelTransition()
         applyMutex.withLock {
+            clearGeneration++
             val clearedEngine = engine
             engine?.let {
                 reportResult("engine.clear() during hard clear", runCatching {
@@ -260,7 +331,10 @@ internal class EngineController(
             engine = null
             lastApplied = null
             applyGate.reset()
-            cachedAutoKind = null
+            cachedAutoProbes = null
+            // Again at the end: a resolve that read the generation while this
+            // clear was still running would otherwise match it and install.
+            clearGeneration++
         }
     }
 
@@ -294,7 +368,7 @@ internal class EngineController(
                 }
                 is EngineResult.Failure -> {
                     Log.w(logTag, "direct-boot apply failed: ${result.message}")
-                    cachedAutoKind = null
+                    cachedAutoProbes = null
                 }
             }
         }
@@ -381,7 +455,7 @@ internal class EngineController(
     }
 
     private suspend fun resolveDesiredEngineKind(prefsSnapshot: Preferences): EngineKind? {
-        if (prefsSnapshot.engine == EngineKindDto.Auto) return resolveAutoEngineKind()
+        if (prefsSnapshot.engine == EngineKindDto.Auto) return resolveAutoEngineKind(prefsSnapshot)
 
         val requested = prefsSnapshot.engine.toEngineKind()
         val requestedAvailable = (
@@ -408,7 +482,7 @@ internal class EngineController(
             return requested
         }
 
-       val fallback = resolveAutoEngineKind()
+       val fallback = resolveAutoEngineKind(prefsSnapshot)
         if (fallback == null) {
             val message = "selected engine ${requested.name} unavailable and no fallback is available"
             Log.w(logTag, message)
@@ -441,8 +515,12 @@ internal class EngineController(
         return fallback
     }
 
-    private suspend fun resolveAutoEngineKind(): EngineKind? =
-        cachedAutoKind ?: probe.pickBest(context)?.kind?.also { cachedAutoKind = it }
+    private suspend fun resolveAutoEngineKind(prefsSnapshot: Preferences): EngineKind? {
+        val probes = cachedAutoProbes?.let { probe.withFreshOverlay(context, it) } ?: probe.probeAll(context)
+        lastAutoOverlayAnswer = overlayAvailable(probes)
+        return DriverProbe.bestAvailableKind(probes, driverTargets(prefsSnapshot))
+            ?.also { cachedAutoProbes = probes }
+    }
 
     private fun EngineKindDto.toEngineKind(): EngineKind = when (this) {
         EngineKindDto.Auto -> EngineKind.OVERLAY
@@ -558,7 +636,7 @@ internal class EngineController(
                     }
                     is EngineResult.Failure -> {
                         Log.w(logTag, "engine.apply() failed: ${result.message}")
-                       cachedAutoKind = null
+                       cachedAutoProbes = null
                         return@withLock false
                     }
                    }
@@ -621,6 +699,10 @@ internal class EngineController(
             return cdm.takeIf { runCatching { it.isAvailable(context) }.getOrDefault(false) }
         }
         return when (engine) {
+            // Root waits for the unlock. Night Light stays ahead of the overlay
+            // here even for a preset outside its range (C364): this restore is
+            // for the lock screen, which an overlay window never covers, so a
+            // clamped tint beats none.
             EngineKindDto.Auto ->
                 probe.probeAll(context)
                     .firstOrNull { it.available && !it.engine.kind.requiresRoot }

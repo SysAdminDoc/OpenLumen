@@ -231,25 +231,37 @@ object DriverReport {
                             appendLine("    kcal sysfs: $it")
                         }
                     }
-                    is SecureSettingsEngine -> {
-                        // C251: record which secure keys this device actually
-                        // honoured. Night Light alone and Night Light plus
-                        // Extra Dim are different capability states, and only
-                        // the second reaches below the minimum backlight.
-                        val accepted = e.acceptedKeys
-                        appendLine(
-                            "    secure keys accepted: " +
-                                if (accepted.isEmpty()) "(none)" else accepted.joinToString()
-                        )
-                        if (e.probedWithoutNightLight) {
-                            appendLine("    night light: not on this device")
-                        }
-                    }
+                    is SecureSettingsEngine -> secureSettingsLines(
+                        accepted = e.acceptedKeys,
+                        withoutNightLight = e.probedWithoutNightLight,
+                        nightLightRange = e.nightLightRange
+                    ).forEach { appendLine(it) }
                     else -> Unit
                 }
             }
         }
         appendLine()
+    }
+
+    /**
+     * The System Night Light driver's lines, kept apart from the probe so a
+     * test can hand it a probed state.
+     *
+     * C251: which secure keys this device actually honoured. Night Light alone
+     * and Night Light plus Extra Dim are different capability states, and only
+     * the second reaches below the minimum backlight.
+     *
+     * C364: the range the system clamps every temperature into, so a report
+     * explains a preset that came out warmer or cooler than it should.
+     */
+    internal fun secureSettingsLines(
+        accepted: List<String>,
+        withoutNightLight: Boolean,
+        nightLightRange: IntRange?
+    ): List<String> = buildList {
+        add("    secure keys accepted: " + if (accepted.isEmpty()) "(none)" else accepted.joinToString())
+        if (withoutNightLight) add("    night light: not on this device")
+        nightLightRange?.let { add("    night light range: ${it.first}-${it.last} K") }
     }
 
     private fun StringBuilder.appendConfig(prefs: Preferences) {

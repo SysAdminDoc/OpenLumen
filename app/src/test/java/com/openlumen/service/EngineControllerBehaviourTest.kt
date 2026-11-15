@@ -1,6 +1,7 @@
 package com.openlumen.service
 
 import android.content.Context
+import android.provider.Settings
 import com.google.common.truth.Truth.assertThat
 import com.openlumen.PresetKeyResolver
 import com.openlumen.engine.ColorEngine
@@ -10,21 +11,27 @@ import com.openlumen.engine.EngineKind
 import com.openlumen.engine.EngineResult
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.engine.Presets
+import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.prefs.DirectBootState
 import com.openlumen.prefs.EngineKindDto
 import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.PreferencesStore
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 
 /**
  * C261. `EngineController` owns every apply, clear, ramp and engine-switch
@@ -53,6 +60,15 @@ class EngineControllerBehaviourTest {
     )
 
     private fun prefsFor(kind: EngineKindDto) = Preferences(engine = kind)
+
+    /** A Night Light driver that is granted and clamps to AOSP's range (C364). */
+    private fun grantedNightLight(): SecureSettingsEngine {
+        shadowOf(RuntimeEnvironment.getApplication())
+            .grantPermissions(android.Manifest.permission.WRITE_SECURE_SETTINGS)
+        Settings.Secure.putInt(context.contentResolver, SecureSettingsEngine.KEY_NIGHT_AUTO_MODE, 0)
+        Settings.Secure.putInt(context.contentResolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 0)
+        return SecureSettingsEngine.withNightLightRange(2596..4082)
+    }
 
     @Test fun `switching driver clears the old one before the new one applies`() {
         val overlay = RecordingEngine(EngineKind.OVERLAY)
@@ -183,6 +199,238 @@ class EngineControllerBehaviourTest {
         assertThat(overlay.calls).containsExactly("apply")
     }
 
+    @Test fun `direct boot keeps Night Light for a preset outside its range`() {
+        // C364 moves Red to the overlay once the phone is unlocked. This
+        // restore is for the lock screen, which no overlay window covers, so
+        // a clamped Red there beats none.
+        val nightLight = grantedNightLight()
+        val overlay = RecordingEngine(EngineKind.OVERLAY)
+        val controller = controllerFor(nightLight, overlay)
+
+        runBlocking {
+            controller.restoreDirectBootState(
+                DirectBootState(
+                    enabled = true,
+                    active = true,
+                    engine = EngineKindDto.Auto,
+                    matrix = MatrixDto(r = Presets.RED.r, g = Presets.RED.g, b = Presets.RED.b)
+                )
+            )
+        }
+
+        assertThat(overlay.calls).isEmpty()
+        assertThat(
+            Settings.Secure.getInt(context.contentResolver, SecureSettingsEngine.KEY_NIGHT_ACTIVATED, 0)
+        ).isEqualTo(1)
+    }
+
+    @Test fun `an overlay granted later takes a clamped preset on the next resolve`() {
+        // Auto keeps its probe between resolves. Without the overlay being
+        // read again, Red stayed clamped on Night Light after the user
+        // granted "display over other apps".
+        val nightLight = grantedNightLight()
+        val overlay = RecordingEngine(EngineKind.OVERLAY, available = false)
+        val controller = controllerFor(nightLight, overlay)
+        val red = Preferences(engine = EngineKindDto.Auto, activePresetKey = "red")
+
+        runBlocking {
+            controller.ensureEngineFor(red)
+            overlay.available = true
+            controller.ensureEngineFor(red)
+            controller.applyIfNeeded(true, Presets.RED, transitionDurationMs = 0)
+        }
+
+        assertThat(overlay.calls).containsExactly("apply")
+        assertThat(overlay.applied.single()).isEqualTo(Presets.RED)
+    }
+
+    @Test fun `looking at the overlay again with nothing probed yet probes nothing`() {
+        // The app asks on every return. The full probe runs `su` for the
+        // root drivers, so with no earlier probe to compare against, this
+        // must leave it to the next ordinary resolve.
+        val surfaceFlinger = RecordingEngine(EngineKind.SURFACE_FLINGER, available = false)
+        val overlay = RecordingEngine(EngineKind.OVERLAY)
+        val controller = controllerFor(surfaceFlinger, overlay)
+
+        val switched = runBlocking { controller.refreshOverlayChoice(prefsFor(EngineKindDto.Auto)) }
+
+        assertThat(switched).isFalse()
+        assertThat(surfaceFlinger.availabilityChecks.get()).isEqualTo(0)
+        assertThat(overlay.availabilityChecks.get()).isEqualTo(0)
+        assertThat(controller.activeEngineKind()).isNull()
+    }
+
+    @Test fun `a granted overlay takes a clamped preset with only the overlay read again`() {
+        val nightLight = grantedNightLight()
+        val surfaceFlinger = RecordingEngine(EngineKind.SURFACE_FLINGER, available = false)
+        val overlay = RecordingEngine(EngineKind.OVERLAY, available = false)
+        val controller = controllerFor(surfaceFlinger, nightLight, overlay)
+        val red = Preferences(engine = EngineKindDto.Auto, activePresetKey = "red")
+
+        val switched = runBlocking {
+            controller.ensureEngineFor(red)
+            overlay.available = true
+            controller.refreshOverlayChoice(red)
+        }
+
+        assertThat(switched).isTrue()
+        assertThat(controller.activeEngineKind()).isEqualTo(EngineKind.OVERLAY)
+        assertThat(surfaceFlinger.availabilityChecks.get()).isEqualTo(1)
+    }
+
+    @Test fun `a filter in standby starts on the overlay once it is granted`() {
+        // A fresh install on Auto: no root, no Night Light grant, no overlay.
+        // The switch is on with nothing to draw, Home asks for "display over
+        // other apps", and the return from Settings has to start the filter.
+        val surfaceFlinger = RecordingEngine(EngineKind.SURFACE_FLINGER, available = false)
+        val overlay = RecordingEngine(EngineKind.OVERLAY, available = false)
+        val controller = controllerFor(surfaceFlinger, overlay)
+        val auto = prefsFor(EngineKindDto.Auto)
+
+        val switched = runBlocking {
+            controller.ensureEngineFor(auto)
+            overlay.available = true
+            controller.refreshOverlayChoice(auto)
+        }
+
+        assertThat(switched).isTrue()
+        assertThat(controller.activeEngineKind()).isEqualTo(EngineKind.OVERLAY)
+    }
+
+    @Test fun `an unchanged overlay answer leaves the driver where it is`() {
+        val nightLight = grantedNightLight()
+        val overlay = RecordingEngine(EngineKind.OVERLAY, available = false)
+        val controller = controllerFor(nightLight, overlay)
+        val red = Preferences(engine = EngineKindDto.Auto, activePresetKey = "red")
+
+        val switched = runBlocking {
+            controller.ensureEngineFor(red)
+            controller.refreshOverlayChoice(red)
+        }
+
+        assertThat(switched).isFalse()
+        assertThat(controller.activeEngineKind()).isEqualTo(EngineKind.COLOR_DISPLAY_MANAGER)
+        // The first resolve and this check. A third read would mean a resolve
+        // ran for an answer that had not changed.
+        assertThat(overlay.availabilityChecks.get()).isEqualTo(2)
+    }
+
+    @Test fun `an unchanged answer in standby runs no probe`() {
+        // Standby keeps no probe, so a resolve here would be the full one,
+        // `su` included, on every return to the app.
+        val surfaceFlinger = RecordingEngine(EngineKind.SURFACE_FLINGER, available = false)
+        val overlay = RecordingEngine(EngineKind.OVERLAY, available = false)
+        val controller = controllerFor(surfaceFlinger, overlay)
+        val auto = prefsFor(EngineKindDto.Auto)
+
+        val switched = runBlocking {
+            controller.ensureEngineFor(auto)
+            controller.refreshOverlayChoice(auto)
+        }
+
+        assertThat(switched).isFalse()
+        assertThat(controller.activeEngineKind()).isNull()
+        assertThat(surfaceFlinger.availabilityChecks.get()).isEqualTo(1)
+    }
+
+    @Test fun `a resolve that starts while a turn-off is still clearing installs nothing`() {
+        // The clear marks its start, then waits on the old driver. A resolve
+        // reading the mark in that gap used to match the finished clear and
+        // install anyway.
+        val clearing = CompletableDeferred<Unit>()
+        val finishClear = CompletableDeferred<Unit>()
+        val probed = CompletableDeferred<Unit>()
+        val surfaceFlinger = RecordingEngine(
+            EngineKind.SURFACE_FLINGER,
+            onClear = {
+                clearing.complete(Unit)
+                finishClear.await()
+            }
+        )
+        val overlay = RecordingEngine(EngineKind.OVERLAY, onAvailability = { probed.complete(Unit) })
+        val controller = controllerFor(surfaceFlinger, overlay)
+
+        runBlocking {
+            controller.ensureEngineFor(prefsFor(EngineKindDto.SurfaceFlinger))
+            val clear = scope.launch { controller.hardClearOutputs("filter disabled") }
+            withTimeout(5_000) { clearing.await() }
+            val resolve = scope.launch { controller.ensureEngineFor(prefsFor(EngineKindDto.Overlay)) }
+            withTimeout(5_000) { probed.await() }
+            finishClear.complete(Unit)
+            withTimeout(5_000) {
+                clear.join()
+                resolve.join()
+            }
+        }
+
+        assertThat(controller.activeEngineKind()).isNull()
+        assertThat(surfaceFlinger.calls).containsExactly("clear")
+    }
+
+    @Test fun `a turn-off during the overlay check is not reported as a switch`() {
+        // The service applies the preset when the check says the driver
+        // moved. A clear overtaking the check's resolve leaves no driver,
+        // which differs from Night Light but is the clear's doing.
+        val nightLight = grantedNightLight()
+        val reads = AtomicInteger()
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val overlay = RecordingEngine(
+            EngineKind.OVERLAY,
+            available = false,
+            onAvailability = {
+                // The first resolve, the check's own read, then the resolve
+                // it starts: hold that one.
+                if (reads.incrementAndGet() >= 3) {
+                    entered.complete(Unit)
+                    release.await()
+                }
+            }
+        )
+        val controller = controllerFor(nightLight, overlay)
+        val red = Preferences(engine = EngineKindDto.Auto, activePresetKey = "red")
+
+        val switched = runBlocking {
+            controller.ensureEngineFor(red)
+            overlay.available = true
+            val check = scope.async { controller.refreshOverlayChoice(red) }
+            withTimeout(5_000) { entered.await() }
+            controller.hardClearOutputs("filter disabled")
+            release.complete(Unit)
+            withTimeout(5_000) { check.await() }
+        }
+
+        assertThat(switched).isFalse()
+        assertThat(controller.activeEngineKind()).isNull()
+    }
+
+    @Test fun `a turn-off during a resolve keeps the resolved driver off the screen`() {
+        // The resolve suspends in the probe. A turn-off clearing everything
+        // in that gap used to be followed by the resolve installing its
+        // driver anyway, on a filter that was now off.
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val overlay = RecordingEngine(
+            EngineKind.OVERLAY,
+            onAvailability = {
+                entered.complete(Unit)
+                release.await()
+            }
+        )
+        val controller = controllerFor(overlay)
+
+        runBlocking {
+            val resolve = scope.launch { controller.ensureEngineFor(prefsFor(EngineKindDto.Overlay)) }
+            withTimeout(5_000) { entered.await() }
+            controller.hardClearOutputs("filter disabled")
+            release.complete(Unit)
+            withTimeout(5_000) { resolve.join() }
+        }
+
+        assertThat(controller.activeEngineKind()).isNull()
+        assertThat(overlay.calls).isEmpty()
+    }
+
     @Test fun `a system overwrite on SurfaceFlinger re-applies the committed target`() {
         // The gate would drop the same target as a duplicate, which is how
         // Night Light used to keep the screen after it overwrote the filter.
@@ -232,16 +480,30 @@ class EngineControllerBehaviourTest {
     }
 }
 
-/** Records the order of engine calls so a sequence can be asserted. */
+/**
+ * Records the order of engine calls so a sequence can be asserted.
+ *
+ * [onAvailability] and [onClear] sit before [applyResult] on purpose: a
+ * trailing lambda binds to the last parameter, and a Unit-returning one would
+ * swallow `{ EngineResult.Failure("no") }` without a compile error.
+ */
 private class RecordingEngine(
     override val kind: EngineKind,
+    @Volatile var available: Boolean = true,
+    private val onAvailability: suspend () -> Unit = {},
+    private val onClear: suspend () -> Unit = {},
     private val applyResult: () -> EngineResult = { EngineResult.Success }
 ) : ColorEngine {
     override val capabilities: Set<EngineCapability> = emptySet()
     val calls = CopyOnWriteArrayList<String>()
     val applied = CopyOnWriteArrayList<LumenMatrix>()
+    val availabilityChecks = AtomicInteger()
 
-    override suspend fun isAvailable(context: Context) = true
+    override suspend fun isAvailable(context: Context): Boolean {
+        availabilityChecks.incrementAndGet()
+        onAvailability()
+        return available
+    }
 
     override suspend fun apply(context: Context, matrix: LumenMatrix): EngineResult {
         calls += "apply"
@@ -251,6 +513,7 @@ private class RecordingEngine(
 
     override suspend fun clear(context: Context): EngineResult {
         calls += "clear"
+        onClear()
         return EngineResult.Success
     }
 }

@@ -6,7 +6,9 @@ import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.prefs.dayMatrix
+import com.openlumen.prefs.effectiveMatrix
 import com.openlumen.schedule.ScheduleMode
+import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
 import java.time.LocalTime
 import java.time.ZoneId
@@ -94,16 +96,53 @@ fun filterPhase(
     lightActive: Boolean
 ): FilterPhase {
     if (shouldFilterBeActive(prefs, scheduleActive, lightActive)) return FilterPhase.NIGHT
+    return if (dayFilterCanShow(prefs, mode)) FilterPhase.DAY else FilterPhase.OFF
+}
+
+/** Whether [filterPhase] ever answers [FilterPhase.DAY] for these settings. */
+private fun dayFilterCanShow(prefs: Preferences, mode: ScheduleMode): Boolean {
     val hasWindow = mode is ScheduleMode.FixedTime ||
         mode is ScheduleMode.Solar ||
         mode is ScheduleMode.UntilNextAlarm
     val explicitStandby = prefs.activePresetKey == Preferences.OFF_PRESET_KEY
-    return if (prefs.schedule.dayFilter && hasWindow && !explicitStandby) {
-        FilterPhase.DAY
-    } else {
-        FilterPhase.OFF
+    return prefs.schedule.dayFilter && hasWindow && !explicitStandby
+}
+
+/**
+ * Every matrix these settings put on screen over a day: the preset, and the
+ * day filter when the schedule leaves room for it. Auto chooses its driver
+ * against all of them (C364), so it does not switch drivers at the evening
+ * hand-over, and the screens pass the same list so what they describe is the
+ * driver the service runs.
+ *
+ * The progressive ramp moves the preset's intensity from one end to the other,
+ * and warmth moves the same way along it, so both ends stand in for the ramp.
+ * The far end only counts in the modes that run the ramp, the ones with an
+ * opening moment ([progressiveIntensityAt] answers null for the rest).
+ */
+fun driverTargets(prefs: Preferences): List<LumenMatrix> = listOfNotNull(
+    prefs.effectiveMatrix(),
+    prefs.copy(presetIntensity = prefs.schedule.progressiveEndIntensity)
+        .effectiveMatrix()
+        .takeIf { rampCanRun(prefs) },
+    dayFilterTarget(prefs)
+)
+
+private fun rampCanRun(prefs: Preferences): Boolean {
+    if (!prefs.schedule.progressiveIntensity) return false
+    return when (val mode = mapScheduleMode(prefs.schedule, nextAlarmAt = null)) {
+        // A window that starts where it ends never opens.
+        is ScheduleMode.FixedTime -> isValidFixedTimeWindow(mode.start, mode.end)
+        is ScheduleMode.Solar -> true
+        else -> false
     }
 }
+
+/** The day filter's matrix when these settings ever show it, otherwise null. */
+fun dayFilterTarget(prefs: Preferences): LumenMatrix? =
+    prefs.dayMatrix().takeIf {
+        dayFilterCanShow(prefs, mapScheduleMode(prefs.schedule, nextAlarmAt = null))
+    }
 
 /**
  * What the screen carries in [phase]. The service applies this and mirrors it

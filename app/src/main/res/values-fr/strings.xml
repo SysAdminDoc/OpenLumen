@@ -79,6 +79,7 @@
     <string name="preset_capability_dim">l’assombrissement sous le minimum de l’écran</string>
     <string name="preset_capability_gamma">le gamma par canal</string>
     <string name="preset_capability_system_correction">le mélange de couleurs propre à OpenLumen, auquel la correction des couleurs du système se substitue</string>
+    <string name="preset_capability_night_light_range">la chaleur hors de la plage de %1$d à %2$d K d’Éclairage nocturne (affichée à %3$d K)</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Sélectionnez un filtre pour voir les détails</string>
     <string name="import_preview_title">Aperçu de la sauvegarde importée</string>
@@ -460,6 +461,8 @@
     <string name="schedule_progressive_end_intensity_name">Force en fin de nuit</string>
     <string name="schedule_day_filter_title">Filtre en dehors de la programmation</string>
     <string name="schedule_day_filter_body">Au lieu de s\'éteindre, garder une température de couleur plus légère le reste de la journée. Dans la programmation, votre préréglage prend le relais.</string>
+    <string name="night_light_range_preset">Ici, Éclairage nocturne ne va que de %1$d à %2$d K, donc %3$s s’affiche à %4$d K.</string>
+    <string name="night_light_range_day">Ici, Éclairage nocturne ne va que de %1$d à %2$d K, donc le filtre en dehors de la programmation s’affiche à %3$d K.</string>
     <string name="schedule_day_filter_kelvin">Température de jour : %1$d K</string>
     <string name="schedule_day_filter_kelvin_name">Température de jour</string>
     <string name="schedule_day_filter_dim">Assombrissement de jour : %1$d %%</string>

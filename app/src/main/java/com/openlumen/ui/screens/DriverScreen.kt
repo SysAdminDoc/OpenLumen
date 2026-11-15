@@ -61,6 +61,7 @@ import com.openlumen.engine.engines.SecureSettingsEngine
 import com.openlumen.external.ExternalIntentLauncher
 import com.openlumen.external.ExternalIntentResult
 import com.openlumen.prefs.EngineKindDto
+import com.openlumen.service.driverTargets
 import com.openlumen.shizuku.ShizukuGrantOutcome
 import com.openlumen.shizuku.ShizukuState
 import com.openlumen.ui.components.CommandBlock
@@ -111,7 +112,7 @@ fun DriverScreen(vm: OpenLumenScreenModel = hiltViewModel<OpenLumenViewModel>())
 
         // Resolve which engine the "Auto" choice would pick right now from
         // the same ordered capability resolver used by EngineController.
-        val autoResolvedLabelRes: Int? = DriverProbe.bestAvailableKind(probes)
+        val autoResolvedLabelRes: Int? = DriverProbe.bestAvailableKind(probes, driverTargets(prefs))
             ?.let(::engineKindLabelRes)
 
         choices.forEach { (kind, label) ->

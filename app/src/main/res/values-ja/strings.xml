@@ -79,6 +79,7 @@
     <string name="preset_capability_dim">パネル最小輝度より暗くする調光</string>
     <string name="preset_capability_gamma">チャンネルごとのガンマ</string>
     <string name="preset_capability_system_correction">OpenLumen 独自の色の混合（システムの色彩補正が代わりに適用されます）</string>
+    <string name="preset_capability_night_light_range">夜間モードの%1$d〜%2$d Kの範囲外の色温度（%3$d Kで表示）</string>
     <string name="preset_capability_separator">、</string>
     <string name="preset_detail_empty">プリセットを選択して詳細を表示</string>
     <string name="import_preview_title">読み込むバックアップを確認</string>
@@ -457,6 +458,8 @@
     <string name="schedule_progressive_end_intensity_name">深夜の強さ</string>
     <string name="schedule_day_filter_title">スケジュール外のフィルタ</string>
     <string name="schedule_day_filter_body">オフにする代わりに、残りの時間は弱めの色温度を保ちます。スケジュール内ではプリセットが適用されます。</string>
+    <string name="night_light_range_preset">この端末の夜間モードは%1$d〜%2$d Kのみのため、%3$sは%4$d Kで表示されます。</string>
+    <string name="night_light_range_day">この端末の夜間モードは%1$d〜%2$d Kのみのため、スケジュール外のフィルタは%3$d Kで表示されます。</string>
     <string name="schedule_day_filter_kelvin">日中の色温度: %1$d K</string>
     <string name="schedule_day_filter_kelvin_name">日中の色温度</string>
     <string name="schedule_day_filter_dim">日中の減光: %1$d%%</string>

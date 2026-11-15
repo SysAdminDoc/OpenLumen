@@ -77,6 +77,12 @@ import com.openlumen.ui.components.ExactAlarmPromptCard
 import com.openlumen.ui.components.OverlayPermissionCard
 import com.openlumen.ui.components.SystemColorConflictCard
 import com.openlumen.ui.components.expectedEngineKind
+import com.openlumen.ui.components.nightLightClampFor
+import com.openlumen.engine.DriverProbe
+import com.openlumen.prefs.Preferences
+import com.openlumen.prefs.effectiveMatrix
+import com.openlumen.service.dayFilterTarget
+import com.openlumen.service.driverTargets
 import com.openlumen.ui.components.labeledSliderSemantics
 import com.openlumen.ui.components.lumenSliderColors
 import com.openlumen.ui.theme.lumenChannelColors
@@ -312,9 +318,15 @@ fun HomeScreen(
         // Only while the filter is on: with it off, the system's Night Light
         // is not overwriting anything and is what the user asked for.
         val probes by vm.probes.collectAsStateWithLifecycle()
-        val expectedEngine = expectedEngineKind(prefs.engine, prefs.forcePinnedEngine, probes)
+        val expectedEngine = expectedEngineKind(
+            prefs.engine,
+            prefs.forcePinnedEngine,
+            probes,
+            driverTargets(prefs)
+        )
         if (prefs.enabled) {
             SystemColorConflictCard(engine = expectedEngine)
+            NightLightRangeCard(prefs = prefs, probes = probes, presetLabel = activePresetLabel)
         }
 
         Card(
@@ -769,6 +781,57 @@ private fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+/**
+ * C364. When the System Night Light driver runs anyway (pinned, or Auto with
+ * no overlay permission to fall back on), the system clamps every temperature
+ * to its own range. This names the warmth it will actually show for the preset
+ * and the day filter; with nothing clamped it draws nothing.
+ */
+@Composable
+private fun NightLightRangeCard(
+    prefs: Preferences,
+    probes: List<DriverProbe.Probe>,
+    presetLabel: String
+) {
+    val preset = nightLightClampFor(prefs, probes, prefs.effectiveMatrix())
+    val day = dayFilterTarget(prefs)?.let { nightLightClampFor(prefs, probes, it) }
+    if (preset == null && day == null) return
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            preset?.let {
+                Text(
+                    stringResource(
+                        R.string.night_light_range_preset,
+                        it.range.first,
+                        it.range.last,
+                        presetLabel,
+                        it.shownKelvin
+                    ),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            day?.let {
+                Text(
+                    stringResource(
+                        R.string.night_light_range_day,
+                        it.range.first,
+                        it.range.last,
+                        it.shownKelvin
+                    ),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
 }
 
 @Composable

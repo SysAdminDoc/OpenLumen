@@ -7,6 +7,7 @@ import android.content.res.Resources
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import com.openlumen.engine.ColorEngine
 import com.openlumen.engine.Daltonizer
 import com.openlumen.engine.EngineCapability
@@ -163,7 +164,9 @@ class SecureSettingsEngine internal constructor(
     /** Overrides the framework's Extra Dim config, which Robolectric reports as absent. */
     private val extraDimShipped: ((Context) -> Boolean)? = null,
     /** Same, for Night Light. */
-    private val nightDisplayShipped: ((Context) -> Boolean)? = null
+    private val nightDisplayShipped: ((Context) -> Boolean)? = null,
+    /** Same, for the Kelvin range Night Light accepts. */
+    private val nightDisplayRange: ((Context) -> IntRange?)? = null
 ) : ColorEngine {
     constructor() : this({ cr, key, default -> Settings.Secure.getInt(cr, key, default) })
 
@@ -208,6 +211,16 @@ class SecureSettingsEngine internal constructor(
 
     /** For the diagnostics report: the last probe found no Night Light here. */
     val probedWithoutNightLight: Boolean get() = nightLightMissing
+
+    /**
+     * The Kelvin range the system's Night Light accepts on this device, from
+     * the last probe (C364). `ColorDisplayService` clamps every temperature
+     * this driver writes into it, 2596-4082 K on AOSP, so a warmer or cooler
+     * one shows as the nearest end. Null before a probe and on a device
+     * without Night Light.
+     */
+    @Volatile var nightLightRange: IntRange? = null
+        private set
 
     /**
      * True once this session has written the Extra Dim rows. Sessions that
@@ -277,6 +290,7 @@ class SecureSettingsEngine internal constructor(
         // its own Eye Comfort Shield in place of it (Galaxy S22, Android 16).
         val nightShipped = supportsNightDisplay(context)
         nightLightMissing = !nightShipped
+        nightLightRange = if (nightShipped) readNightLightRange(context) else null
         if (!nightShipped) {
             Log.i(tag, "device ships no Night Light; the secure-settings driver has nothing to tint with")
         }
@@ -319,8 +333,7 @@ class SecureSettingsEngine internal constructor(
             // Monochromacy plus Night Light is how the system draws a tinted
             // gray, so there both rows are wanted; `desaturation` is only set
             // when the scalars are that tint rather than a fallback.
-            val tinted = !isNeutralChromaticity(matrix) &&
-                (matrix.daltonizer == Daltonizer.NONE || matrix.desaturation >= 0.5f)
+            val tinted = tintsThroughNightLight(matrix)
             val correction = matrix.daltonizer
             // Pinning the driver gets past the probe, so a tint can still
             // arrive here on a device the probe found without Night Light.
@@ -980,14 +993,67 @@ class SecureSettingsEngine internal constructor(
             kotlin.math.abs(c[1] - c[2]) <= NEUTRAL_EPSILON
     }
 
+    /**
+     * Night Light reads `config_nightDisplayColorTemperatureMin` and `Max` the
+     * same way, through `ColorDisplayManager.getMinimumColorTemperature`. Null
+     * when either is missing or the pair makes no sense, which callers read as
+     * "nothing known to clamp".
+     */
+    internal fun readNightLightRange(context: Context): IntRange? {
+        nightDisplayRange?.let { return it(context) }
+        return runCatching {
+            val res = context.resources
+            val minId = res.getIdentifier(CONFIG_NIGHT_DISPLAY_MIN, "integer", "android")
+            val maxId = res.getIdentifier(CONFIG_NIGHT_DISPLAY_MAX, "integer", "android")
+            if (minId == 0 || maxId == 0) return@runCatching null
+            val min = res.getInteger(minId)
+            val max = res.getInteger(maxId)
+            (min..max).takeIf { min in 1..max }
+        }.getOrNull()
+    }
+
+    /**
+     * Whether [matrix] is drawn with Night Light at all. A neutral transform has
+     * no temperature worth writing, and a correction mode renders its own
+     * preset unless a gray stage sits under a tint the user chose (#32).
+     */
+    private fun tintsThroughNightLight(matrix: LumenMatrix): Boolean =
+        !isNeutralChromaticity(matrix) &&
+            (matrix.daltonizer == Daltonizer.NONE || matrix.desaturation >= 0.5f)
+
+    /** The temperature this driver writes for [matrix], or null when it writes none. */
+    fun nightLightKelvin(matrix: LumenMatrix): Int? =
+        temperatureFor(matrix).takeIf { tintsThroughNightLight(matrix) }
+
+    /** What Night Light shows for a temperature outside its range (C364). */
+    data class NightLightClamp(val askedKelvin: Int, val shownKelvin: Int, val range: IntRange)
+
+    /**
+     * How far the system will move [matrix]'s warmth, or null when it shows as
+     * asked. A temperature a few Kelvin past the end is not worth a note or a
+     * driver switch: a 4100 K day filter shows at 4082 K and nobody can see
+     * the difference, so anything within [NIGHT_LIGHT_SLACK_MIRED] counts as
+     * in range. Mireds, not Kelvin, because the eye tells warm temperatures
+     * apart in much finer Kelvin steps than cool ones.
+     */
+    fun nightLightClamp(matrix: LumenMatrix, range: IntRange? = nightLightRange): NightLightClamp? {
+        range ?: return null
+        val asked = nightLightKelvin(matrix) ?: return null
+        val shown = asked.coerceIn(range)
+        val gap = kotlin.math.abs(MIREDS_PER_KELVIN / asked - MIREDS_PER_KELVIN / shown)
+        return NightLightClamp(asked, shown, range).takeIf { gap > NIGHT_LIGHT_SLACK_MIRED }
+    }
+
     private fun temperatureFor(matrix: LumenMatrix): Int {
         val chromaticity = normalizeChromaticity(matrix.scalarRgb())
         return kelvinFromRgbScale(chromaticity[0], chromaticity[1], chromaticity[2])
     }
 
     /**
-     * Approximate inverse: given a user-tuned (r,g,b) scale on [0,1], pick the closest
-     * Kelvin value in the range AOSP supports (typically 1000-10000 K).
+     * Approximate inverse: given a user-tuned (r,g,b) scale on [0,1], pick the
+     * closest Kelvin value on [Kelvin]'s curve, 1000-10000 K. The system then
+     * clamps what is written to its own Night Light range ([nightLightRange],
+     * 2596-4082 K on AOSP), which [nightLightClamp] predicts.
      * Night Light is scalar-only compared with the framebuffer matrix path, but searching
      * against the same forward model used by the Kelvin picker keeps warm presets close
      * to their intended temperature and accounts for green-channel shape.
@@ -1017,6 +1083,20 @@ class SecureSettingsEngine internal constructor(
     )
 
     companion object {
+        /**
+         * This driver on a device that ships Night Light with [range] and no
+         * Extra Dim. For tests in other modules: the constructor that stands
+         * in for the framework's config is internal, and the app's choice
+         * between Night Light and the overlay (C364) needs a driver that clamps.
+         */
+        @VisibleForTesting
+        fun withNightLightRange(range: IntRange): SecureSettingsEngine = SecureSettingsEngine(
+            { cr, key, default -> Settings.Secure.getInt(cr, key, default) },
+            extraDimShipped = { false },
+            nightDisplayShipped = { true },
+            nightDisplayRange = { range }
+        )
+
         /** Durable mirror of the ownership record (C339). */
         private const val OWNERSHIP_FILE = "secure-settings-ownership"
 
@@ -1048,6 +1128,16 @@ class SecureSettingsEngine internal constructor(
 
         private const val CONFIG_REDUCE_BRIGHT_AVAILABLE = "config_reduceBrightColorsAvailable"
         private const val CONFIG_NIGHT_DISPLAY_AVAILABLE = "config_nightDisplayAvailable"
+        private const val CONFIG_NIGHT_DISPLAY_MIN = "config_nightDisplayColorTemperatureMin"
+        private const val CONFIG_NIGHT_DISPLAY_MAX = "config_nightDisplayColorTemperatureMax"
+
+        private const val MIREDS_PER_KELVIN = 1_000_000.0
+
+        /**
+         * About the smallest colour-temperature step people notice on a
+         * display (C364). 4082 K plus this is roughly 4250 K.
+         */
+        const val NIGHT_LIGHT_SLACK_MIRED: Double = 10.0
 
         /** `AUTO_MODE_DISABLED` in ColorDisplayManager: activation follows the flag we write. */
         const val AUTO_MODE_MANUAL: Int = 0

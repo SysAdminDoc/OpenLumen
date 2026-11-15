@@ -80,6 +80,7 @@
     <string name="preset_capability_dim">dimming below the panel minimum</string>
     <string name="preset_capability_gamma">per-channel gamma</string>
     <string name="preset_capability_system_correction">OpenLumen\'s own colour mixing, which the system\'s built-in correction stands in for</string>
+    <string name="preset_capability_night_light_range">warmth outside Night Light\'s %1$d to %2$d K range (it shows at %3$d K)</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Select a preset to see details</string>
     <string name="presets_sort_label">Sort</string>
@@ -473,6 +474,8 @@
     <string name="schedule_progressive_end_intensity_name">Late-night strength</string>
     <string name="schedule_day_filter_title">Filter outside the schedule</string>
     <string name="schedule_day_filter_body">Instead of switching off, keep a lighter color temperature for the rest of the day. Your preset takes over inside the schedule.</string>
+    <string name="night_light_range_preset">Night Light here only goes from %1$d to %2$d K, so %3$s shows at %4$d K.</string>
+    <string name="night_light_range_day">Night Light here only goes from %1$d to %2$d K, so the filter outside the schedule shows at %3$d K.</string>
     <string name="schedule_day_filter_kelvin">Day temperature: %1$d K</string>
     <string name="schedule_day_filter_kelvin_name">Day temperature</string>
     <string name="schedule_day_filter_dim">Day dim: %1$d%%</string>

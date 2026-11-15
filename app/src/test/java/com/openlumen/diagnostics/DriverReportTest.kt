@@ -39,6 +39,28 @@ class DriverReportTest {
     }
 
     @Test
+    fun `report prints the Night Light range the system clamps to`() {
+        // C364. A report from a phone whose preset came out at the wrong
+        // warmth has to say what range the system held it to.
+        assertThat(
+            DriverReport.secureSettingsLines(
+                accepted = listOf("night_display_activated"),
+                withoutNightLight = false,
+                nightLightRange = 2596..4082
+            )
+        ).containsExactly(
+            "    secure keys accepted: night_display_activated",
+            "    night light range: 2596-4082 K"
+        ).inOrder()
+        assertThat(
+            DriverReport.secureSettingsLines(emptyList(), withoutNightLight = true, nightLightRange = null)
+        ).containsExactly(
+            "    secure keys accepted: (none)",
+            "    night light: not on this device"
+        ).inOrder()
+    }
+
+    @Test
     fun `report says when Shizuku was not checked or not running`() {
         val context = org.robolectric.RuntimeEnvironment.getApplication()
 

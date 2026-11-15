@@ -1,6 +1,7 @@
 package com.openlumen
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -78,6 +79,44 @@ class MainActivity : ComponentActivity() {
         // would race that start.
         if (blockedStart != null) startBlockedIfReady() else restartFilterLeftOn()
         lifecycleScope.launch { autoLocation.refresh(applicationContext) }
+        // Android 10 and later follow a resume with the call below.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) checkOverlayChoice()
+    }
+
+    /**
+     * In split screen this activity stays resumed while the user grants the
+     * overlay in the other half, so getting the focus back is the signal.
+     * It also arrives after every ordinary resume.
+     */
+    override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
+        super.onTopResumedActivityChanged(isTopResumedActivity)
+        if (isTopResumedActivity) checkOverlayChoice()
+    }
+
+    /**
+     * Asks a running service on Auto to look at "display over other apps"
+     * again. Granting it in Settings changes nothing the service listens to,
+     * and Auto moves a warm preset from Night Light to the overlay once it
+     * may (C364). Sent on every return rather than on a change the activity
+     * saw: an activity created after the grant has nothing to compare with.
+     * The service re-reads only the overlay, so an unchanged answer costs a
+     * permission check. A service that is not running picks its driver
+     * fresh when it starts, and starting one here would race the blocked
+     * start and the restart above.
+     */
+    private fun checkOverlayChoice() {
+        if (!LumenService.running) return
+        lifecycleScope.launch {
+            val current = runCatching { prefs.flow.first() }.getOrNull() ?: return@launch
+            if (!current.enabled || current.engine != EngineKindDto.Auto || !LumenService.running) return@launch
+            LumenServiceStarter.start(
+                this@MainActivity,
+                Intent(this@MainActivity, LumenService::class.java).setAction(LumenService.ACTION_CHECK_OVERLAY),
+                logTag = "OpenLumen/OverlayCheck",
+                exemption = LumenServiceStarter.Exemption.USER_INTERACTION,
+                source = "overlay-check"
+            )
+        }
     }
 
     /**

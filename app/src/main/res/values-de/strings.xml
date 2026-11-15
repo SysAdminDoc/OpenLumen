@@ -79,6 +79,7 @@
     <string name="preset_capability_dim">Abdunkeln unter das Display-Minimum</string>
     <string name="preset_capability_gamma">Gamma pro Kanal</string>
     <string name="preset_capability_system_correction">die eigene Farbmischung von OpenLumen, für die die systemeigene Farbkorrektur einspringt</string>
+    <string name="preset_capability_night_light_range">Wärme außerhalb des Nachtlicht-Bereichs von %1$d bis %2$d K (angezeigt werden %3$d K)</string>
     <string name="preset_capability_separator">, </string>
     <string name="preset_detail_empty">Filter auswählen, um Details anzuzeigen</string>
     <string name="import_preview_title">Importiertes Backup ansehen</string>
@@ -460,6 +461,8 @@
     <string name="schedule_progressive_end_intensity_name">Stärke spät nachts</string>
     <string name="schedule_day_filter_title">Filter außerhalb des Zeitplans</string>
     <string name="schedule_day_filter_body">Statt auszuschalten, für den Rest des Tages eine leichtere Farbtemperatur halten. Innerhalb des Zeitplans übernimmt deine Voreinstellung.</string>
+    <string name="night_light_range_preset">Nachtlicht reicht hier nur von %1$d bis %2$d K, daher wird %3$s mit %4$d K angezeigt.</string>
+    <string name="night_light_range_day">Nachtlicht reicht hier nur von %1$d bis %2$d K, daher wird der Filter außerhalb des Zeitplans mit %3$d K angezeigt.</string>
     <string name="schedule_day_filter_kelvin">Tagestemperatur: %1$d K</string>
     <string name="schedule_day_filter_kelvin_name">Tagestemperatur</string>
     <string name="schedule_day_filter_dim">Tagesabdunklung: %1$d %%</string>

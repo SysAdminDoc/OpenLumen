@@ -69,6 +69,10 @@ import com.openlumen.engine.EngineCapability
 import com.openlumen.engine.unsupportedBy
 import com.openlumen.engine.Presets
 import com.openlumen.engine.LumenMatrix
+import com.openlumen.engine.engines.SecureSettingsEngine
+import com.openlumen.prefs.effectiveMatrix
+import com.openlumen.service.driverTargets
+import com.openlumen.ui.components.nightLightClampFor
 import com.openlumen.presetLabel
 import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.NamedProfile
@@ -100,11 +104,6 @@ fun PresetsScreen(
     }
 
     val probes by vm.probes.collectAsStateWithLifecycle()
-    val driverCapabilities = DriverProbe.activeCapabilities(
-        probes = probes,
-        pinned = prefs.engine.toEngineKind(),
-        forcePinned = prefs.forcePinnedEngine
-    )
     val ctx = LocalContext.current
     val nameResetMessage = stringResource(R.string.preset_name_reset)
     val favorites = prefs.favoritePresetKeys.toSet()
@@ -160,13 +159,27 @@ fun PresetsScreen(
                 val entry = builtinKey?.let(Presets::byKey)
                 if (entry != null) {
                     val selectedKey = checkNotNull(builtinKey)
+                    // Described as it would run once chosen: Auto picks its
+                    // driver against the preset it is given (C364), so the
+                    // current one is the wrong question for any other.
+                    val asActive = prefs.copy(activePresetKey = selectedKey)
                     PresetDetailPane(
                         entry = entry,
                         isSelected = selectedKey == prefs.activePresetKey,
                         isFavorite = selectedKey in favorites,
                         onFavoriteToggle = { vm.toggleFavorite(selectedKey) },
                         labelOverride = prefs.presetNameOverrides[selectedKey],
-                        driverCapabilities = driverCapabilities
+                        driverCapabilities = DriverProbe.activeCapabilities(
+                            probes = probes,
+                            pinned = prefs.engine.toEngineKind(),
+                            forcePinned = prefs.forcePinnedEngine,
+                            targets = driverTargets(asActive)
+                        ),
+                        nightLightClamp = nightLightClampFor(
+                            asActive,
+                            probes,
+                            asActive.effectiveMatrix()
+                        )
                     )
                 } else if (destination?.startsWith(PROFILE_DESTINATION_PREFIX) == true) {
                     val name = destination.removePrefix(PROFILE_DESTINATION_PREFIX)
@@ -488,7 +501,9 @@ private fun PresetDetailPane(
     onFavoriteToggle: () -> Unit,
     labelOverride: String? = null,
     /** Null until a driver is resolved; no note is shown while it is unknown. */
-    driverCapabilities: Set<EngineCapability>? = null
+    driverCapabilities: Set<EngineCapability>? = null,
+    /** Warmth the system's Night Light range moves this preset to, if any. */
+    nightLightClamp: SecureSettingsEngine.NightLightClamp? = null
 ) {
     val label = presetLabel(entry.key, entry.displayName, labelOverride)
     val m = entry.matrix
@@ -624,7 +639,7 @@ private fun PresetDetailPane(
         // capable approximates them, and the grayscale preset in particular
         // used to come out as a flat darkening with nothing saying so.
         val unsupported = driverCapabilities?.let { m.unsupportedBy(it) }.orEmpty()
-        if (unsupported.isNotEmpty()) {
+        if (unsupported.isNotEmpty() || nightLightClamp != null) {
             item {
                 Card(
                     shape = MaterialTheme.shapes.medium,
@@ -635,7 +650,7 @@ private fun PresetDetailPane(
                     Text(
                         text = stringResource(
                             R.string.preset_detail_approximated,
-                            approximationReason(unsupported)
+                            approximationReason(unsupported, nightLightClamp)
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(16.dp)
@@ -651,7 +666,18 @@ private fun PresetDetailPane(
  * the most visible loss reads first.
  */
 @Composable
-private fun approximationReason(missing: Set<EngineCapability>): String = listOfNotNull(
+private fun approximationReason(
+    missing: Set<EngineCapability>,
+    nightLightClamp: SecureSettingsEngine.NightLightClamp?
+): String = listOfNotNull(
+    nightLightClamp?.let {
+        stringResource(
+            R.string.preset_capability_night_light_range,
+            it.range.first,
+            it.range.last,
+            it.shownKelvin
+        )
+    },
     stringResource(R.string.preset_capability_color_matrix)
         .takeIf { EngineCapability.COLOR_MATRIX in missing },
     stringResource(R.string.preset_capability_system_correction)

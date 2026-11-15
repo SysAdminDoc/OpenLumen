@@ -15,7 +15,9 @@ import kotlinx.coroutines.sync.withLock
  * ranked from best to worst (rank descending).
  *
  * Auto mode picks the best available root engine first, then CDM, then an
- * available Overlay engine. If every engine is unavailable, Auto returns no
+ * available Overlay engine. CDM gives way to Overlay when the system's Night
+ * Light range would show a target at another warmth (C364). If every engine
+ * is unavailable, Auto returns no
  * selection so callers can expose a recoverable no-driver state instead of
  * pretending that an unpermissioned overlay is active.
  */
@@ -61,13 +63,30 @@ class DriverProbe(
      * (requires WRITE_SECURE_SETTINGS but produces framebuffer-level output),
      * then Overlay as the universal fallback.
      */
-    suspend fun pickBest(context: Context): ColorEngine? {
+    suspend fun pickBest(context: Context, targets: List<LumenMatrix> = emptyList()): ColorEngine? {
         val probes = probeAll(context)
-        return pickBestFrom(probes)
+        return pickBestFrom(probes, targets)
     }
 
-    internal fun pickBestFrom(probes: List<Probe>): ColorEngine? =
-        bestAvailableKind(probes)?.let { kind -> engines.firstOrNull { it.kind == kind } }
+    internal fun pickBestFrom(
+        probes: List<Probe>,
+        targets: List<LumenMatrix> = emptyList()
+    ): ColorEngine? =
+        bestAvailableKind(probes, targets)?.let { kind -> engines.firstOrNull { it.kind == kind } }
+
+    /**
+     * [cached] with the overlay probed again. Since C364 Auto can hand a warm
+     * preset from Night Light to the overlay, so a user who grants "display
+     * over other apps" while Night Light runs must not wait for something else
+     * to clear a cached probe. The overlay check only reads a permission; the
+     * root and secure-settings probes stay as they were, because they spawn
+     * `su` or write rows back.
+     */
+    suspend fun withFreshOverlay(context: Context, cached: List<Probe>): List<Probe> =
+        cached.map { p ->
+            if (p.engine.kind != EngineKind.OVERLAY) p
+            else Probe(p.engine, runCatching { p.engine.isAvailable(context) }.getOrDefault(false))
+        }
 
     /** Look up an engine by kind. Used when the user pins a specific driver. */
     fun engineOf(kind: EngineKind): ColorEngine? = engines.firstOrNull { it.kind == kind }
@@ -79,14 +98,49 @@ class DriverProbe(
          * Resolve Auto's ordered choice from an already-probed capability
          * list. Both the service and the UI use this so the explanation
          * cannot drift from the engine actually selected at runtime.
+         *
+         * [targets] are the matrices the user's settings will put on screen.
+         * The System Night Light driver can only write a temperature inside
+         * the system's range, so when it would show one of them at another
+         * warmth (a Red preset, a 5500 K day filter) an available Overlay
+         * draws it instead (C364). Every target counts, not just the one on
+         * screen now, so the driver does not change at the evening hand-over.
          */
-        fun bestAvailableKind(probes: List<Probe>): EngineKind? =
-            probes.firstOrNull { it.available && it.engine.kind.requiresRoot }?.engine?.kind
-                ?: probes.firstOrNull {
-                    it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER
-                }?.engine?.kind
-                ?: probes.firstOrNull { it.available && it.engine.kind == EngineKind.OVERLAY }
-                    ?.engine?.kind
+        fun bestAvailableKind(
+            probes: List<Probe>,
+            targets: List<LumenMatrix> = emptyList()
+        ): EngineKind? {
+            probes.firstOrNull { it.available && it.engine.kind.requiresRoot }
+                ?.let { return it.engine.kind }
+            val cdm = probes.firstOrNull {
+                it.available && it.engine.kind == EngineKind.COLOR_DISPLAY_MANAGER
+            }?.engine
+            val overlay = probes.firstOrNull {
+                it.available && it.engine.kind == EngineKind.OVERLAY
+            }?.engine
+            if (cdm != null && (overlay == null || !overlayRendersBetter(cdm, overlay, targets))) return cdm.kind
+            return overlay?.kind
+        }
+
+        /** True when [engine] would show any of [targets] at another warmth than asked. */
+        fun shiftsWarmth(engine: ColorEngine, targets: List<LumenMatrix>): Boolean =
+            engine is SecureSettingsEngine && targets.any { engine.nightLightClamp(it) != null }
+
+        /**
+         * Whether Auto should hand [targets] from Night Light ([cdm]) to
+         * [overlay]: Night Light would shift the warmth of one of them, and the
+         * overlay drops nothing about any of them that Night Light keeps. The
+         * overlay has no colour matrix, so grayscale or colour-vision
+         * correction on top of a warm preset stays on Night Light, clamped,
+         * rather than losing the gray.
+         */
+        fun overlayRendersBetter(
+            cdm: ColorEngine,
+            overlay: ColorEngine,
+            targets: List<LumenMatrix>
+        ): Boolean = shiftsWarmth(cdm, targets) && targets.all { target ->
+            (target.unsupportedBy(overlay.capabilities) - target.unsupportedBy(cdm.capabilities)).isEmpty()
+        }
 
         /**
          * What the driver that will actually run can express. [pinned] is the
@@ -108,16 +162,25 @@ class DriverProbe(
         fun activeCapabilities(
             probes: List<Probe>,
             pinned: EngineKind?,
-            forcePinned: Boolean = false
-        ): Set<EngineCapability>? {
+            forcePinned: Boolean = false,
+            targets: List<LumenMatrix> = emptyList()
+        ): Set<EngineCapability>? = activeEngine(probes, pinned, forcePinned, targets)?.capabilities
+
+        /** The driver behind [activeCapabilities], by the same rule. */
+        fun activeEngine(
+            probes: List<Probe>,
+            pinned: EngineKind?,
+            forcePinned: Boolean = false,
+            targets: List<LumenMatrix> = emptyList()
+        ): ColorEngine? {
             val honoured = pinned?.takeIf { kind ->
                 honourPinnedEngine(
                     forcePinned = forcePinned,
                     probeSaysAvailable = probes.any { it.engine.kind == kind && it.available }
                 )
             }
-            val kind = honoured ?: bestAvailableKind(probes) ?: return null
-            return probes.firstOrNull { it.engine.kind == kind }?.engine?.capabilities
+            val kind = honoured ?: bestAvailableKind(probes, targets) ?: return null
+            return probes.firstOrNull { it.engine.kind == kind }?.engine
         }
 
         /**

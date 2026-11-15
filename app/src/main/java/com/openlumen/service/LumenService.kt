@@ -241,6 +241,7 @@ class LumenService : LifecycleService() {
         if (foregroundStartBlocked) return
         registerScreenStateReceiver()
         ensurePreferencesObserved()
+        running = true
     }
 
     private fun registerScreenStateReceiver() {
@@ -312,6 +313,20 @@ class LumenService : LifecycleService() {
                     // changing the current filter state, so this is forced.
                     updateNotification(p, active, force = true)
                 }
+            }
+            ACTION_CHECK_OVERLAY -> lifecycleScope.launch {
+                // Auto's driver can change with no setting changing: a warm
+                // preset Night Light would clamp moves to the overlay once
+                // "display over other apps" is granted (C364). The controller
+                // re-reads only the overlay and reports whether that moved it.
+                if (!isUserUnlocked()) return@launch
+                val p = latestPrefs.get() ?: return@launch
+                if (!p.enabled || !engineController.refreshOverlayChoice(p)) return@launch
+                // The refresh may have waited on another resolve; apply what
+                // the settings say now, and nothing if they say off.
+                val fresh = latestPrefs.get()?.takeIf { it.enabled } ?: return@launch
+                val active = applyIfShouldBeActive(fresh)
+                updateNotification(fresh, active, force = true)
             }
             ACTION_RECONCILE_EXACT_ALARM -> lifecycleScope.launch {
                 if (isUserUnlocked()) {
@@ -931,6 +946,7 @@ class LumenService : LifecycleService() {
         systemColorWatcher.unregister()
         systemColorReassertJob?.cancel()
         inForeground = false
+        running = false
         engineController.cancelJobs()
         lightSubscription.cancel()
         // Cancelling here would also cancel the retry a refused start queued.
@@ -996,6 +1012,14 @@ class LumenService : LifecycleService() {
             private set
 
         /**
+         * Whether an instance in this process is up and owns the driver,
+         * foreground or not. [inForeground] misses one Android left running
+         * in the background, which still has a driver on the screen (C364).
+         */
+        @Volatile var running: Boolean = false
+            private set
+
+        /**
          * Refused foreground starts since the last one that went through.
          * Bounds the retries so a start that keeps being refused cannot keep
          * waking the phone.
@@ -1004,7 +1028,12 @@ class LumenService : LifecycleService() {
 
         internal fun resetForegroundStateForTest() {
             inForeground = false
+            running = false
             foregroundRefusalsInARow.set(0)
+        }
+
+        internal fun markRunningForTest() {
+            running = true
         }
 
         // Documented intent actions. Tied to roadmap candidates C13 (off),
@@ -1024,6 +1053,13 @@ class LumenService : LifecycleService() {
         const val ACTION_SET_INTENSITY = "com.openlumen.action.SET_INTENSITY"
         const val ACTION_SET_DIM = "com.openlumen.action.SET_DIM"
         const val ACTION_DIRECT_BOOT_RESTORE = "com.openlumen.action.DIRECT_BOOT_RESTORE"
+
+        /**
+         * The app is back in front and "display over other apps" may have
+         * changed (C364). Not one of the documented actions above: only
+         * MainActivity sends it, and it is a no-op when nothing moved.
+         */
+        internal const val ACTION_CHECK_OVERLAY = "com.openlumen.action.CHECK_OVERLAY"
 
         const val EXTRA_PRESET_KEY = "com.openlumen.extra.PRESET_KEY"
         const val EXTRA_VALUE = "com.openlumen.extra.VALUE"
