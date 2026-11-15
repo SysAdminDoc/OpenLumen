@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -453,16 +454,24 @@ class OpenLumenViewModel @Inject constructor(
         DriverReport.build(getApplication(), state.value, _probes.value, shizukuGrant.snapshot())
 
     private val shizukuGranting = MutableStateFlow(false)
-    private val shizukuOutcome = MutableStateFlow<ShizukuGrantOutcome?>(null)
+    private val shizukuAttempt = MutableStateFlow<ShizukuAttempt?>(null)
     override val shizuku: StateFlow<ShizukuUiState> =
-        combine(shizukuGrant.state, shizukuGranting, shizukuOutcome) { state, granting, outcome ->
-            ShizukuUiState(state = state, granting = granting, outcome = outcome)
+        combine(shizukuGrant.state, shizukuGranting, shizukuAttempt) { state, granting, attempt ->
+            ShizukuUiState(state = state, granting = granting, outcome = attempt?.keptIn(state)?.outcome)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, ShizukuUiState(shizukuGrant.state.value))
+
+    init {
+        // Forget an attempt once Shizuku moves on, so it does not come back
+        // when Shizuku returns to the state it ended in.
+        viewModelScope.launch {
+            shizukuGrant.state.collect { now -> shizukuAttempt.update { it?.keptIn(now) } }
+        }
+    }
 
     override fun grantWithShizuku() = viewModelScope.launch {
         // Single-flight: a second tap while Shizuku's prompt is up would ask twice.
         if (!shizukuGranting.compareAndSet(expect = false, update = true)) return@launch
-        shizukuOutcome.value = null
+        shizukuAttempt.value = null
         try {
             val outcome = shizukuGrant.grant()
             DiagnosticsLog.log(
@@ -474,7 +483,7 @@ class OpenLumenViewModel @Inject constructor(
             // The System Night Light driver's availability turns on this
             // permission; show the result without asking for a refresh.
             if (outcome == ShizukuGrantOutcome.Granted) probeAfterGrant()
-            shizukuOutcome.value = outcome
+            shizukuAttempt.value = ShizukuAttempt(outcome, shizukuGrant.state.value)
         } finally {
             shizukuGranting.value = false
         }
@@ -485,7 +494,7 @@ class OpenLumenViewModel @Inject constructor(
     }
 
     override fun consumeShizukuOutcome() {
-        shizukuOutcome.value = null
+        shizukuAttempt.value = null
     }
 
     private fun describe(outcome: ShizukuGrantOutcome): String = when (outcome) {
