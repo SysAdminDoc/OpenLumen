@@ -52,7 +52,7 @@ OpenLumen ships four `ColorEngine` implementations and probes each at first laun
 
 Overlay and SecureSettings have been checked on two Samsung phones, a Galaxy S22 on Android 16 and an S25 Ultra on Android 17. Neither ships Night Light, so Auto picks Overlay on both. The two root drivers haven't been confirmed on hardware yet. [docs/device-matrix.md](docs/device-matrix.md) has the results, and if you run one, the Driver tab's Share report produces exactly what that file wants.
 
-¹ You need to grant `WRITE_SECURE_SETTINGS` once, with `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`
+¹ You need to grant `WRITE_SECURE_SETTINGS` once, with `adb shell pm grant com.openlumen android.permission.WRITE_SECURE_SETTINGS`. No computer? If [Shizuku](https://github.com/RikkaApps/Shizuku) is running, tap Grant with Shizuku on the Driver tab instead.
 
 The secure-settings driver writes the same rows `ColorDisplayService` watches, so the compositor applies the tint. It covers the status bar, notification shade and lock screen, it doesn't block touches, and screenshots come out untinted. On devices that ship Extra Dim (Android 12+, and not every OEM does) it also dims below the panel's minimum backlight without root, which is the one thing the overlay driver can't do. It carries chromaticity as a colour temperature, though, so per-channel gamma and the colour-vision presets still need a root driver.
 
@@ -135,7 +135,7 @@ aapt dump permissions OpenLumen-release.apk | grep INTERNET
 ## Requirements
 
 - Android 8.0 (API 26) or higher
-- For best results, root with Magisk-managed `su`, or any Android 10+ device with `WRITE_SECURE_SETTINGS` granted over ADB (the secure-settings driver rides the system's own Night Light transform).
+- For best results, root with Magisk-managed `su`, or any Android 10+ device with `WRITE_SECURE_SETTINGS` granted over ADB or through Shizuku (the secure-settings driver rides the system's own Night Light transform).
 
 ## Build
 
@@ -267,7 +267,7 @@ The design sketches for candidates that were considered and set aside are here t
 
 After 0.8.0 the work worth naming is:
 
-- A Shizuku-backed privileged path, which would reach per-app colour without root and without the accessibility service this app refuses to ship.
+- A Shizuku-backed privileged path, which would reach per-app colour without root and without the accessibility service this app refuses to ship. Shizuku already runs the one-time grant, and on Android 16 its adb-level server can set a saturation level for a single app.
 - Real hardware beyond two Samsung phones. The root drivers and the system Night Light tint have no confirmed row yet in [docs/device-matrix.md](docs/device-matrix.md), and the Driver tab's Share report produces exactly what that file wants.
 
 ## License
@@ -278,3 +278,4 @@ GPL-3.0-or-later. See [LICENSE](LICENSE).
 
 - **Chainfire (Jorrit Jongma)** for the original CF.Lumen and for documenting the driver-backend approach so thoroughly that this project could be built without the original source.
 - **LibreShift/red-moon** for proving open-source overlay shifting works on Android.
+- **RikkaApps/Shizuku** for the API behind the on-device permission grant.
