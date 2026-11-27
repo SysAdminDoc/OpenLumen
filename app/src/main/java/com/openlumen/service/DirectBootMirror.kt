@@ -5,6 +5,7 @@ import com.openlumen.engine.Daltonizer
 import com.openlumen.engine.LumenMatrix
 import com.openlumen.prefs.DirectBootState
 import com.openlumen.prefs.DirectBootStateStore
+import com.openlumen.prefs.DirectBootStep
 import com.openlumen.prefs.MatrixDto
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.toDto
@@ -22,13 +23,19 @@ internal class DirectBootMirror(
 ) {
     private val lastMirroredState = AtomicReference<DirectBootState?>(null)
 
-    suspend fun mirror(prefs: Preferences, active: Boolean, matrix: LumenMatrix) {
+    suspend fun mirror(
+        prefs: Preferences,
+        active: Boolean,
+        matrix: LumenMatrix,
+        upcoming: List<DirectBootStep> = emptyList()
+    ) {
         val next = DirectBootState(
             enabled = prefs.enabled,
             active = active,
             engine = prefs.engine,
             matrix = matrix.toMatrixDto(),
-            amoledBlackClamp = matrix.amoledClamp
+            amoledBlackClamp = matrix.amoledClamp,
+            upcoming = upcoming
         )
         if (lastMirroredState.get() == next) return
         runCatching {
@@ -37,7 +44,8 @@ internal class DirectBootMirror(
                 active = next.active,
                 engine = next.engine,
                 matrix = next.matrix,
-                amoledBlackClamp = next.amoledBlackClamp
+                amoledBlackClamp = next.amoledBlackClamp,
+                upcoming = next.upcoming
             )
             lastMirroredState.set(next)
         }.onFailure {

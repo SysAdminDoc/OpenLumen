@@ -2,14 +2,19 @@ package com.openlumen.service
 
 import com.openlumen.diagnostics.MatrixPreview
 import com.openlumen.engine.LumenMatrix
+import com.openlumen.prefs.DirectBootState
+import com.openlumen.prefs.DirectBootStep
 import com.openlumen.prefs.Preferences
 import com.openlumen.prefs.ScheduleDto
 import com.openlumen.prefs.ScheduleModeDto
 import com.openlumen.prefs.dayMatrix
 import com.openlumen.prefs.effectiveMatrix
+import com.openlumen.prefs.toDto
 import com.openlumen.schedule.ScheduleMode
+import com.openlumen.schedule.isActive
 import com.openlumen.schedule.isValidFixedTimeWindow
 import com.openlumen.schedule.isValidSolarLocation
+import com.openlumen.schedule.nextTransition
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -161,6 +166,42 @@ fun phaseMatrix(
     FilterPhase.NIGHT -> MatrixPreview.matrixFor(prefs, now)
     FilterPhase.DAY -> prefs.dayMatrix()
     FilterPhase.OFF -> LumenMatrix.IDENTITY
+}
+
+/**
+ * The schedule's next flips after [now], for the Locked Boot mirror: when each
+ * happens and what the screen carries from then on. A phone that reboots just
+ * before a flip and stays locked past it otherwise keeps the old phase on
+ * screen until the first unlock.
+ *
+ * The light sensor is left out. It does not run before the first unlock, and
+ * a reading taken now says nothing about the room at the next flip.
+ */
+fun directBootSteps(
+    prefs: Preferences,
+    mode: ScheduleMode,
+    now: ZonedDateTime = ZonedDateTime.now(),
+    count: Int = DirectBootState.MAX_UPCOMING_STEPS,
+    next: (ScheduleMode, ZonedDateTime) -> ZonedDateTime? = { m, at -> nextTransition(m, at) }
+): List<DirectBootStep> {
+    val steps = ArrayList<DirectBootStep>(count)
+    var from = now
+    repeat(count) {
+        val at = next(mode, from)?.takeIf { it.isAfter(from) } ?: return steps
+        // A second in: the boundary itself still belongs to the phase before
+        // it for the solar schedule (strictly after sunset is night).
+        val inside = at.plusSeconds(1)
+        val phase = filterPhase(prefs, mode, isActive(mode, inside), lightActive = false)
+        val matrix = phaseMatrix(prefs, phase, inside)
+        steps += DirectBootStep(
+            atEpochMs = at.toInstant().toEpochMilli(),
+            active = phase != FilterPhase.OFF,
+            matrix = matrix.toDto(),
+            amoledBlackClamp = matrix.amoledClamp
+        )
+        from = at
+    }
+    return steps
 }
 
 /**

@@ -26,7 +26,9 @@ class LockedBootReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
             try {
                 val state = withTimeoutOrNull(8_000L) { directBootState.flow.first() }
-                if (state?.enabled != true || !state.active) {
+                // Off now but due on later (a reboot in the afternoon, no day
+                // filter) still starts the service: it arms the evening step.
+                if (state?.tintsAtSomePoint != true) {
                     Log.d(TAG, "No active direct-boot tint to restore")
                     return@launch
                 }

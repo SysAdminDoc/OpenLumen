@@ -166,6 +166,44 @@ internal class ScheduleAlarmOrchestrator(
         }
     }
 
+    /**
+     * Before the first unlock only the Locked Boot mirror is readable, so the
+     * ordinary schedule alarm cannot be set: it needs the schedule. This one
+     * wakes the restore path at the mirror's next step instead. It has its
+     * own request code, so [cancelAlarm] (which a direct-boot service that
+     * stops in between runs from onDestroy) leaves it in place, and
+     * [cancelDirectBootRestore] drops it once the user unlocks.
+     */
+    @Synchronized
+    fun scheduleDirectBootRestore(triggerMs: Long) {
+        val alarms = alarmOpsProvider(context) ?: return
+        val pi = directBootRestorePendingIntent()
+        val exactAllowed = runCatching { alarms.canScheduleExactAlarms() }.getOrDefault(false)
+        runCatching {
+            val exact = exactAllowed && try {
+                alarms.setExactAndAllowWhileIdle(triggerMs, pi)
+                true
+            } catch (e: SecurityException) {
+                Log.w(logTag, "exact direct-boot alarm rejected, falling back: ${e.message}")
+                false
+            }
+            if (!exact) alarms.setAndAllowWhileIdle(triggerMs, pi)
+            Log.i(
+                logTag,
+                "direct-boot step in ${(triggerMs - nowMs()) / 1000}s " +
+                    if (exact) "(exact)" else "(inexact)"
+            )
+        }.onFailure {
+            Log.e(logTag, "could not schedule the direct-boot step: ${it.message}")
+        }
+    }
+
+    @Synchronized
+    fun cancelDirectBootRestore() {
+        val alarms = alarmOpsProvider(context) ?: return
+        runCatching { alarms.cancel(directBootRestorePendingIntent()) }
+    }
+
     fun nextAlarmClockAt(): ZonedDateTime? {
         val alarms = alarmOpsProvider(context) ?: return null
         return runCatching {
@@ -207,6 +245,15 @@ internal class ScheduleAlarmOrchestrator(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
+    private fun directBootRestorePendingIntent(): PendingIntent =
+        PendingIntent.getForegroundService(
+            context,
+            DIRECT_BOOT_REQUEST_CODE,
+            Intent(context, LumenService::class.java)
+                .setAction(LumenService.ACTION_DIRECT_BOOT_RESTORE),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
     /** Broadcast retries can catch a blocked foreground-service start. */
     private fun blockedStartRetryPendingIntent(attempt: Int = 0): PendingIntent =
         PendingIntent.getBroadcast(
@@ -242,6 +289,7 @@ internal class ScheduleAlarmOrchestrator(
     private companion object {
         private const val SCHEDULE_REQUEST_CODE = 0
         private const val BLOCKED_RETRY_REQUEST_CODE = 1
+        private const val DIRECT_BOOT_REQUEST_CODE = 2
     }
 }
 

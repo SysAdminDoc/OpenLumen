@@ -18,12 +18,55 @@ data class DirectBootState(
     val active: Boolean = false,
     val engine: EngineKindDto = EngineKindDto.Auto,
     val matrix: MatrixDto = MatrixDto(),
-    val amoledBlackClamp: Boolean = false
+    val amoledBlackClamp: Boolean = false,
+    /**
+     * The schedule's next flips, soonest first, each with what the screen
+     * carries from that moment on. Before the first unlock the schedule
+     * itself cannot be read (it sits in credential-protected storage with the
+     * location), so without these a reboot at 07:26 restored the night preset
+     * and held it past a 07:34 sunrise until the user unlocked at 08:20.
+     */
+    val upcoming: List<DirectBootStep> = emptyList()
 ) {
+    /**
+     * This state as it stands at [nowMs]: the last step that has already
+     * begun replaces [active] and [matrix], and only the steps still ahead
+     * stay in [upcoming].
+     */
+    fun at(nowMs: Long): DirectBootState {
+        val begun = upcoming.lastOrNull { it.atEpochMs <= nowMs } ?: return this
+        return copy(
+            active = begun.active,
+            matrix = begun.matrix,
+            amoledBlackClamp = begun.amoledBlackClamp,
+            upcoming = upcoming.filter { it.atEpochMs > nowMs }
+        )
+    }
+
+    /** Whether anything here, now or later, puts a tint on screen. */
+    val tintsAtSomePoint: Boolean
+        get() = enabled && (active || upcoming.any { it.active })
+
     companion object {
         const val CURRENT_SCHEMA_VERSION: Int = 1
+
+        /**
+         * Two flips cover a day of a windowed schedule (evening and morning),
+         * so a phone left locked after a reboot still follows it until the
+         * next morning.
+         */
+        const val MAX_UPCOMING_STEPS: Int = 2
     }
 }
+
+/** One schedule flip mirrored for Locked Boot: from [atEpochMs] on, this. */
+@Serializable
+data class DirectBootStep(
+    val atEpochMs: Long,
+    val active: Boolean,
+    val matrix: MatrixDto = MatrixDto(),
+    val amoledBlackClamp: Boolean = false
+)
 
 /**
  * Device-protected mirror of the minimum state needed to restore the active tint
@@ -56,7 +99,8 @@ class DirectBootStateStore(context: Context) {
         active: Boolean,
         engine: EngineKindDto,
         matrix: MatrixDto,
-        amoledBlackClamp: Boolean
+        amoledBlackClamp: Boolean,
+        upcoming: List<DirectBootStep> = emptyList()
     ) {
         update {
             DirectBootState(
@@ -64,7 +108,8 @@ class DirectBootStateStore(context: Context) {
                 active = active,
                 engine = engine,
                 matrix = matrix,
-                amoledBlackClamp = amoledBlackClamp
+                amoledBlackClamp = amoledBlackClamp,
+                upcoming = upcoming
             )
         }
     }
@@ -102,7 +147,14 @@ internal const val MAX_DIRECT_BOOT_BYTES: Int = 16 * 1024
 internal fun sanitizeDirectBootState(state: DirectBootState): DirectBootState =
     state.copy(
         schemaVersion = DirectBootState.CURRENT_SCHEMA_VERSION,
-        matrix = sanitizeDirectBootMatrix(state.matrix)
+        matrix = sanitizeDirectBootMatrix(state.matrix),
+        // Sorted and capped: [DirectBootState.at] reads them in order, and a
+        // corrupt mirror must not carry an unbounded list into Locked Boot.
+        upcoming = state.upcoming
+            .filter { it.atEpochMs > 0L }
+            .sortedBy { it.atEpochMs }
+            .take(DirectBootState.MAX_UPCOMING_STEPS)
+            .map { it.copy(matrix = sanitizeDirectBootMatrix(it.matrix)) }
     )
 
 /**
