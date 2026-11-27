@@ -148,4 +148,54 @@ class DirectBootStateSerializerTest {
 
         assertThat(decoded).isEqualTo(DirectBootState())
     }
+
+    @Test fun `upcoming steps round trip, sorted and capped`() = runBlocking {
+        val state = DirectBootState(
+            enabled = true,
+            active = true,
+            upcoming = listOf(
+                DirectBootStep(atEpochMs = 3_000L, active = true, matrix = MatrixDto(r = 0.5f)),
+                DirectBootStep(atEpochMs = 1_000L, active = false),
+                DirectBootStep(atEpochMs = 2_000L, active = true, matrix = MatrixDto(g = 7f))
+            )
+        )
+
+        val out = ByteArrayOutputStream()
+        DirectBootStateSerializer.writeTo(state, out)
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(out.toByteArray()))
+
+        assertThat(decoded.upcoming.map { it.atEpochMs }).containsExactly(1_000L, 2_000L).inOrder()
+        assertThat(decoded.upcoming[1].matrix.g).isEqualTo(1f)
+    }
+
+    @Test fun `a mirror written before steps existed decodes with none`() = runBlocking {
+        val old = """{"schemaVersion":1,"enabled":true,"active":true,"engine":"Auto",""" +
+            """"matrix":{"r":1.0,"g":0.5,"b":0.2},"amoledBlackClamp":false}"""
+
+        val decoded = DirectBootStateSerializer.readFrom(ByteArrayInputStream(old.toByteArray()))
+
+        assertThat(decoded.active).isTrue()
+        assertThat(decoded.upcoming).isEmpty()
+        assertThat(decoded.at(Long.MAX_VALUE)).isEqualTo(decoded)
+    }
+
+    @Test fun `the state at a moment takes the last step that has begun`() {
+        val state = DirectBootState(
+            enabled = true,
+            active = true,
+            matrix = MatrixDto(r = 1f, g = 0.1f, b = 0f),
+            upcoming = listOf(
+                DirectBootStep(atEpochMs = 1_000L, active = false),
+                DirectBootStep(atEpochMs = 2_000L, active = true, matrix = MatrixDto(b = 0.3f))
+            )
+        )
+
+        assertThat(state.at(999L)).isEqualTo(state)
+        assertThat(state.at(1_000L).active).isFalse()
+        assertThat(state.at(1_500L).upcoming.map { it.atEpochMs }).containsExactly(2_000L)
+        assertThat(state.at(2_500L).matrix.b).isEqualTo(0.3f)
+        assertThat(state.at(2_500L).upcoming).isEmpty()
+        assertThat(state.tintsAtSomePoint).isTrue()
+        assertThat(state.at(1_000L).tintsAtSomePoint).isTrue()
+    }
 }
